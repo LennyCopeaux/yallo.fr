@@ -12,12 +12,12 @@ export async function sendWelcomeEmail(
 ): Promise<void> {
   try {
     await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "Yalla <onboarding@yalla.fr>",
+      from: process.env.RESEND_FROM_EMAIL || "Yallo <onboarding@yallo.fr>",
       to: email,
-      subject: "Bienvenue sur Yalla - Vos identifiants de connexion",
+      subject: "Bienvenue sur Yallo - Vos identifiants de connexion",
       text: `Bonjour,
 
-Bienvenue sur Yalla ! Votre compte a été créé avec succès.
+Bienvenue sur Yallo ! Votre compte a été créé avec succès.
 
 Voici vos identifiants de connexion :
 Email : ${email}
@@ -28,7 +28,7 @@ Mot de passe temporaire : ${tempPassword}
 Vous pouvez vous connecter ici : ${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login
 
 À bientôt,
-L'équipe Yalla`,
+L'équipe Yallo`,
     });
   } catch (error) {
     console.error("Erreur lors de l'envoi de l'email:", error);

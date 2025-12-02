@@ -17,7 +17,7 @@ export default function MarketingLayout({
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2">
                   <span className="text-2xl sm:text-3xl font-black gradient-text">
-                    Yalla
+                    Yallo
                   </span>
                 </Link>
 

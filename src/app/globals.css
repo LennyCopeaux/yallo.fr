@@ -24,7 +24,7 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   
-  /* Brand Yalla Yellow */
+  /* Brand Yallo Yellow */
   --color-brand: hsl(var(--brand));
   --color-brand-foreground: hsl(var(--brand-foreground));
 }
@@ -39,7 +39,7 @@
   --card-foreground: 0 0% 98%;
   --popover: 0 0% 7%;
   --popover-foreground: 0 0% 98%;
-  /* Primary: Yalla Yellow #f6cf62 */
+  /* Primary: Yallo Yellow #f6cf62 */
   --primary: 45 89% 67%;
   --primary-foreground: 0 0% 0%;
   /* Secondary: Dark zinc */
@@ -57,7 +57,7 @@
   --ring: 45 89% 67%;
   --radius: 0.625rem;
   
-  /* Brand Yalla Yellow */
+  /* Brand Yallo Yellow */
   --brand: 45 89% 67%;
   --brand-foreground: 0 0% 0%;
   
@@ -135,7 +135,7 @@
   border: 1px solid hsl(var(--border) / 0.6);
 }
 
-/* Gradient text - Yalla Yellow */
+/* Gradient text - Yallo Yellow */
 .gradient-text {
   background: linear-gradient(135deg, #f6cf62, #e5b84a);
   -webkit-background-clip: text;

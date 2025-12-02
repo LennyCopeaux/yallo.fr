@@ -28,7 +28,7 @@ export default async function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <span className="text-xl font-black gradient-text">Yalla</span>
+              <span className="text-xl font-black gradient-text">Yallo</span>
               <span className="text-muted-foreground text-sm hidden sm:block">/ Dashboard</span>
             </div>
             <div className="flex items-center gap-4">

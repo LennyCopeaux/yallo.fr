@@ -73,7 +73,7 @@ export default function LoginPage() {
         <CardHeader className="text-center space-y-2 pb-2">
           <Link href="/" className="inline-block">
             <CardTitle className="text-3xl font-black gradient-text">
-              Yalla
+              Yallo
             </CardTitle>
           </Link>
           <CardDescription className="text-muted-foreground">

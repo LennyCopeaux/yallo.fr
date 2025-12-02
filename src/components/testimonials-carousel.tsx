@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 const testimonials = [
   {
-    quote: "Depuis qu'on a Yalla, on ne rate plus un appel le midi. CA +20%.",
+    quote: "Depuis qu'on a Yallo, on ne rate plus un appel le midi. CA +20%.",
     author: "Mehdi",
     company: "Istanbul Kebab",
   },

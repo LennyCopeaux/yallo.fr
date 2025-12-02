@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Yalla - IA Vocale pour Restaurants",
+  title: "Yallo - IA Vocale pour Restaurants",
   description:
     "L'IA vocale qui prend les commandes de votre Kebab/Snack par téléphone. 24/7. Sans accent.",
 };

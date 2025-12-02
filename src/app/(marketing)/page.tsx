@@ -180,7 +180,7 @@ export default function Home() {
                   {/* Status bar */}
                   <div className="bg-card/50 px-4 py-2 flex items-center justify-between border-b border-white/5">
                     <span className="text-xs font-medium text-muted-foreground">
-                      Yalla Dashboard
+                      Yallo Dashboard
                     </span>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-[#f6cf62] animate-pulse-dot" />
@@ -340,7 +340,7 @@ export default function Home() {
                 Le client appelle
               </h3>
               <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-                Un client appelle votre restaurant. Yalla décroche automatiquement 
+                Un client appelle votre restaurant. Yallo décroche automatiquement 
                 en moins de 2 secondes. Aucune attente, aucun appel manqué.
               </p>
               <div className="flex flex-wrap gap-3">
@@ -382,7 +382,7 @@ export default function Home() {
                   </div>
                   <div className="flex gap-3">
                     <div className="flex-1 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-medium">
-                      Yalla décroche...
+                      Yallo décroche...
                     </div>
                   </div>
                 </div>
@@ -406,7 +406,7 @@ export default function Home() {
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
                       <Bot className="w-5 h-5 text-[#f6cf62]" />
-                      <span className="text-sm text-white font-medium">Yalla IA</span>
+                      <span className="text-sm text-white font-medium">Yallo IA</span>
                       </div>
                     <Badge className="bg-[#f6cf62]/10 text-[#f6cf62] border-[#f6cf62]/20">
                       En écoute
@@ -436,7 +436,7 @@ export default function Home() {
                       <p className="text-white">&quot;Je voudrais un kebab viande et une frite stp&quot;</p>
                         </div>
                     <div className="glass rounded-lg p-3 border-[#f6cf62]/20 bg-[#f6cf62]/5">
-                      <p className="text-sm text-[#f6cf62]">Yalla :</p>
+                      <p className="text-sm text-[#f6cf62]">Yallo :</p>
                       <p className="text-white">&quot;Parfait ! Sauce de votre choix ?&quot;</p>
                           </div>
                         </div>
@@ -908,7 +908,7 @@ export default function Home() {
                 Questions Fréquentes
             </h2>
               <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-                Tout ce que vous devez savoir sur Yalla et comment nous pouvons transformer votre prise de commande.
+                Tout ce que vous devez savoir sur Yallo et comment nous pouvons transformer votre prise de commande.
               </p>
               
               {/* Support Block */}
@@ -921,10 +921,10 @@ export default function Home() {
                     <h4 className="font-semibold text-white mb-1">Une autre question ?</h4>
                     <p className="text-sm text-muted-foreground mb-3">Notre équipe vous répond sous 24h.</p>
                     <a 
-                      href="mailto:support@yalla.com" 
+                      href="mailto:support@yallo.com" 
                       className="text-[#f6cf62] hover:text-[#f6cf62]/80 font-medium text-sm transition-colors inline-flex items-center gap-1.5"
                     >
-                      support@yalla.com
+                      support@yallo.com
                       <ArrowRight className="w-3.5 h-3.5" />
                     </a>
                   </div>
@@ -946,7 +946,7 @@ export default function Home() {
                 { q: "Comment l'IA comprend-elle les accents ?", a: "Notre modèle a été entraîné sur des milliers d'heures d'appels réels avec différents accents français, régionaux et étrangers. Elle comprend parfaitement le slang ('un grec', 'naan') et les demandes complexes." },
                 { q: "Puis-je transférer l'appel à un humain ?", a: "Oui ! L'IA peut transférer l'appel à votre équipe à tout moment. Elle détecte aussi automatiquement les situations complexes ou sensibles nécessitant une intervention humaine." },
                 { q: "Combien de temps prend l'intégration ?", a: "Moins de 30 minutes. Notre équipe vous accompagne pour configurer votre menu et connecter votre imprimante. Vous pouvez recevoir des commandes le jour même." },
-                { q: "Que se passe-t-il en cas de panne internet ?", a: "Yalla dispose d'un système de fallback robuste. Les appels sont automatiquement redirigés vers votre téléphone fixe ou mobile. Aucune commande n'est perdue." },
+                { q: "Que se passe-t-il en cas de panne internet ?", a: "Yallo dispose d'un système de fallback robuste. Les appels sont automatiquement redirigés vers votre téléphone fixe ou mobile. Aucune commande n'est perdue." },
                 { q: "L'IA peut-elle gérer les modifications de commande ?", a: "Absolument ! L'IA gère les modifications, les allergies, les demandes spéciales ('sans oignon', 'bien cuit') et même les annulations. Elle pose les bonnes questions pour s'assurer que tout est correct." },
                 { q: "Quel est le coût par commande ?", a: "Avec notre formule commission, vous payez 5% par commande traitée. Aucun frais fixe, aucun engagement. Vous ne payez que ce que vous utilisez réellement." },
                 ].map((item, i) => (
@@ -1064,7 +1064,7 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 border-t border-white/5">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-black gradient-text">Yalla</span>
+            <span className="text-2xl font-black gradient-text">Yallo</span>
               <span className="text-muted-foreground text-sm">
                 © {new Date().getFullYear()}. Tous droits réservés.
             </span>
@@ -1076,10 +1076,10 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Giant YALLA text */}
+        {/* Giant YALLO text */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none select-none">
           <div className="text-[12rem] sm:text-[18rem] md:text-[24rem] font-black text-white/[0.02] leading-none tracking-tighter whitespace-nowrap">
-            YALLA
+            YALLO
           </div>
         </div>
       </footer>
