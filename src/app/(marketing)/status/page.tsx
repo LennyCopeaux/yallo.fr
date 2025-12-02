@@ -1,12 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 export default function StatusPage() {
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
   const currentDate = new Date().toLocaleDateString("fr-FR", {
     year: "numeric",
     month: "long",
@@ -17,24 +13,31 @@ export default function StatusPage() {
 
   const services = [
     {
-      name: "Téléphonie (Twilio)",
-      status: "operational",
-      label: "Opérationnel",
+      name: "Téléphonie",
+      status: "development",
+      label: "En cours de développement",
     },
     {
-      name: "Intelligence Artificielle",
-      status: "operational",
-      label: "Opérationnel",
+      name: "IA",
+      status: "development",
+      label: "En cours de développement",
     },
     {
-      name: "Dashboard Cuisine",
+      name: "Dashboard",
+      status: "development",
+      label: "En cours de développement",
+    },
+    {
+      name: "Mailing",
       status: "operational",
       label: "Opérationnel",
     },
   ];
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <>
+      <ScrollToTop />
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-4xl font-bold text-white mb-12 text-center">
           État des services Yallo
@@ -47,7 +50,13 @@ export default function StatusPage() {
               className="bg-card/30 rounded-lg p-6 border border-white/10 flex items-center justify-between"
             >
               <div className="flex items-center gap-4">
-                <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    service.status === "operational"
+                      ? "bg-emerald-500 animate-pulse"
+                      : "bg-amber-500"
+                  }`}
+                />
                 <div>
                   <h3 className="text-lg font-semibold text-white">
                     {service.name}
@@ -55,7 +64,13 @@ export default function StatusPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-emerald-400 font-medium">
+                <span
+                  className={`font-medium ${
+                    service.status === "operational"
+                      ? "text-emerald-400"
+                      : "text-amber-400"
+                  }`}
+                >
                   {service.label}
                 </span>
               </div>
@@ -82,6 +97,7 @@ export default function StatusPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

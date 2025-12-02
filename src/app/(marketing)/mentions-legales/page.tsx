@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 export default function MentionsLegalesPage() {
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <>
+      <ScrollToTop />
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12">
       <div className="max-w-4xl mx-auto prose prose-invert prose-lg">
         <h1 className="text-4xl font-bold text-white mb-8">Mentions légales</h1>
         
@@ -102,5 +100,6 @@ export default function MentionsLegalesPage() {
         </section>
       </div>
     </div>
+    </>
   );
 }

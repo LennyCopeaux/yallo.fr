@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { submitContactForm } from "./actions";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 const contactFormSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
@@ -72,10 +73,6 @@ function ContactForm() {
   const selectedSubject = watch("subject");
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
     const mappedSubject = mapUrlSubjectToValue(urlSubject);
     if (mappedSubject) {
       setValue("subject", mappedSubject);
@@ -103,8 +100,10 @@ function ContactForm() {
   };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
-      <div className="max-w-2xl mx-auto">
+    <>
+      <ScrollToTop />
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12 w-full">
+        <div className="max-w-2xl mx-auto">
         <Card className="bg-card/50 border-white/10 backdrop-blur-sm">
           <CardHeader className="text-center">
             <CardTitle className="text-3xl font-bold text-white">
@@ -200,30 +199,33 @@ function ContactForm() {
             </form>
           </CardContent>
         </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
 export default function ContactPage() {
   return (
-    <Suspense fallback={
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="max-w-2xl mx-auto">
-          <Card className="bg-card/50 border-white/10 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <CardTitle className="text-3xl font-bold text-white">
-                Contactez-nous
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center text-muted-foreground">Chargement...</div>
-            </CardContent>
-          </Card>
+    <div className="h-[calc(100vh-7rem)] overflow-hidden flex items-center">
+      <Suspense fallback={
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12 w-full">
+          <div className="max-w-2xl mx-auto">
+            <Card className="bg-card/50 border-white/10 backdrop-blur-sm">
+              <CardHeader className="text-center">
+                <CardTitle className="text-3xl font-bold text-white">
+                  Contactez-nous
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center text-muted-foreground">Chargement...</div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
-    }>
-      <ContactForm />
-    </Suspense>
+      }>
+        <ContactForm />
+      </Suspense>
+    </div>
   );
 }

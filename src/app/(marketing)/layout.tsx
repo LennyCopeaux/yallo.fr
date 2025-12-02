@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AppLoginButton } from "@/components/app-login-button";
+import { MarketingLogoLink } from "@/components/marketing-logo-link";
 
 export default function MarketingLayout({
   children,
@@ -16,11 +17,7 @@ export default function MarketingLayout({
             <div className="container mx-auto px-4 sm:px-6">
               <div className="flex h-16 items-center justify-between">
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-2">
-                  <span className="text-2xl sm:text-3xl font-black gradient-text">
-                    Yallo
-                  </span>
-                </Link>
+                <MarketingLogoLink />
 
                 {/* Navigation */}
                 <div className="hidden md:flex items-center gap-8">
