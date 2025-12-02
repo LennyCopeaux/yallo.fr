@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { MarketingHomeLink } from "@/components/marketing-home-link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -152,12 +153,9 @@ export default function LoginPage() {
           </form>
           
           <div className="mt-6 text-center">
-            <Link 
-              href="/" 
-              className="text-sm text-muted-foreground hover:text-[#f6cf62] transition-colors"
-            >
+            <MarketingHomeLink className="text-sm text-muted-foreground hover:text-[#f6cf62] transition-colors">
               ← Retour à l&apos;accueil
-            </Link>
+            </MarketingHomeLink>
           </div>
         </CardContent>
       </Card>
