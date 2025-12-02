@@ -125,7 +125,7 @@ export async function toggleIngredientAvailability(
     isAvailable,
   });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
@@ -169,7 +169,7 @@ export async function updateIngredientPrice(
 
   const validation = updateIngredientPriceSchema.safeParse({ ingredientId, price });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
@@ -219,7 +219,7 @@ export async function updateVariationPrice(
 
   const validation = updateVariationPriceSchema.safeParse({ variationId, price });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
@@ -272,7 +272,7 @@ export async function updateModifierPrice(
 
   const validation = updateModifierPriceSchema.safeParse({ modifierId, priceExtra });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
@@ -467,7 +467,7 @@ export async function createIngredientCategory(formData: FormData): Promise<Acti
   });
 
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
@@ -525,7 +525,7 @@ export async function updateIngredientCategory(
   });
 
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
@@ -623,7 +623,7 @@ export async function createIngredient(formData: FormData): Promise<ActionResult
   });
 
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
@@ -695,7 +695,7 @@ export async function updateIngredient(
   });
 
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
@@ -779,7 +779,7 @@ export async function createCategoryV2(formData: FormData): Promise<ActionResult
   });
 
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
@@ -837,7 +837,7 @@ export async function updateCategory(
   });
 
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
@@ -920,7 +920,7 @@ export async function createVariation(formData: FormData): Promise<ActionResult>
   });
 
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
@@ -993,7 +993,7 @@ export async function updateVariation(
   });
 
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
@@ -1072,7 +1072,7 @@ export async function createModifierGroup(formData: FormData): Promise<ActionRes
   });
 
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
@@ -1224,7 +1224,7 @@ export async function createModifier(formData: FormData): Promise<ActionResult> 
   });
 
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
@@ -1346,7 +1346,7 @@ export async function addMissingIngredientsToGroup(formData: FormData): Promise<
   });
 
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0]?.message || "Erreur de validation" };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
