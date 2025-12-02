@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { AppLoginButton } from "@/components/app-login-button";
 
 export default function MarketingLayout({
   children,
@@ -36,11 +37,7 @@ export default function MarketingLayout({
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <Link href="/login">
-                    <Button variant="ghost" size="sm" className="hidden sm:flex text-muted-foreground hover:text-white">
-                      Connexion
-                    </Button>
-                  </Link>
+                  <AppLoginButton />
                   <Button size="sm" className="bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90 btn-shine font-semibold">
                     Démo gratuite
                   </Button>

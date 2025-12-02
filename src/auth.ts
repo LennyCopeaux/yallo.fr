@@ -20,6 +20,7 @@ declare module "next-auth" {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
+  trustHost: true, // Permet d'utiliser localhost et app.localhost en développement
   session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user }) {
