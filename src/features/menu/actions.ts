@@ -117,7 +117,7 @@ export async function createCategory(formData: FormData): Promise<ActionResult> 
 
   const validation = createCategorySchema.safeParse(rawData);
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0].message };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   const { name, restaurantId } = validation.data;
@@ -167,7 +167,7 @@ export async function updateCategoryOrder(
 
   const validation = updateCategoryOrderSchema.safeParse({ categoryId, rank });
   if (!validation.success) {
-    return { success: false, error: validation.error.errors[0].message };
+    return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
 
   try {
