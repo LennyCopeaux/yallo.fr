@@ -1,9 +1,11 @@
 import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogOut, Phone, TrendingUp, Clock, Utensils } from "lucide-react";
 import Link from "next/link";
+import { buildAppUrlServer } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -41,7 +43,10 @@ export default async function DashboardPage() {
               <form
                 action={async () => {
                   "use server";
-                  await signOut({ redirectTo: "/login" });
+                  const headersList = await headers();
+                  const host = headersList.get("host") || "";
+                  const loginUrl = buildAppUrlServer("/login", host);
+                  await signOut({ redirectTo: loginUrl });
                 }}
               >
                 <Button type="submit" variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-white/5">

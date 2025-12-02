@@ -1,4 +1,6 @@
 import { auth, signOut } from "@/auth";
+import { headers } from "next/headers";
+import { buildAppUrlServer } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { restaurants, users } from "@/db/schema";
@@ -112,7 +114,10 @@ export default async function AdminPage() {
               <form
                 action={async () => {
                   "use server";
-                  await signOut({ redirectTo: "/login" });
+                  const headersList = await headers();
+                  const host = headersList.get("host") || "";
+                  const loginUrl = buildAppUrlServer("/login", host);
+                  await signOut({ redirectTo: loginUrl });
                 }}
               >
                 <Button type="submit" variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-white/5">

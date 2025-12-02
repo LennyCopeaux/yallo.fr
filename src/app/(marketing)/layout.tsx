@@ -24,11 +24,14 @@ export default function MarketingLayout({
 
                 {/* Navigation */}
                 <div className="hidden md:flex items-center gap-8">
+                  <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-white transition-colors">
+                    Comment ça marche
+                  </Link>
                   <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-white transition-colors">
                     Fonctionnalités
                   </Link>
                   <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-white transition-colors">
-                    Tarifs
+                    Tarification
                   </Link>
                   <Link href="#faq" className="text-sm font-medium text-muted-foreground hover:text-white transition-colors">
                     FAQ

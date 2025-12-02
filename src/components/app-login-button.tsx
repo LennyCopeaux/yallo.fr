@@ -2,27 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 
-/**
- * Bouton de connexion qui redirige vers le sous-domaine App
- * Détecte automatiquement l'environnement (localhost vs production)
- */
 export function AppLoginButton() {
   const handleLoginClick = () => {
-    // Détection dynamique de l'environnement depuis le client
     const hostname = window.location.hostname;
     const port = window.location.port || "3000";
     
-    let appUrl: string;
+    const appUrl = hostname.includes("localhost")
+      ? `http://app.localhost:${port}/login`
+      : `https://app.yallo.fr/login`;
     
-    if (hostname.includes("localhost")) {
-      // En développement/localhost
-      appUrl = `http://app.localhost:${port}/login`;
-    } else {
-      // En production
-      appUrl = `https://app.yallo.fr/login`;
-    }
-    
-    // Redirection vers le sous-domaine App
     window.location.href = appUrl;
   };
 
@@ -37,4 +25,3 @@ export function AppLoginButton() {
     </Button>
   );
 }
-

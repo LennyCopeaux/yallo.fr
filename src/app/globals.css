@@ -282,3 +282,13 @@ html {
   width: 2px;
   background: #f6cf62;
 }
+
+/* Hide scrollbar utility */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

@@ -17,10 +17,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { DotPatternHero, DotPatternSubtle } from "@/components/ui/dot-pattern";
-import { TestimonialsCarousel } from "@/components/testimonials-carousel";
+import { ConversationStream } from "@/components/conversation-stream";
 import {
   Mic,
-  Printer,
   TrendingUp,
   Phone,
   Bot,
@@ -35,10 +34,14 @@ import {
   Gift,
   Clock,
   Settings,
+  UtensilsCrossed,
+  Pizza,
+  ChefHat,
+  Coffee,
+  ToggleRight,
 } from "lucide-react";
 import Link from "next/link";
 
-// Animation variants
 const fadeInUp = {
   initial: { opacity: 0, y: 40 },
   animate: { opacity: 1, y: 0 },
@@ -62,13 +65,11 @@ const staggerContainer = {
   },
 };
 
-// Données
-const trustedRestaurants = [
-  "Chamas Tacos",
-  "G la Dalle",
-  "Le Kiosque à Pizzas",
-  "O'Tacos Bordeaux",
-  "Food Asia",
+const restaurantTypes = [
+  { icon: UtensilsCrossed, label: "Kebab/Tacos" },
+  { icon: Pizza, label: "Pizzeria" },
+  { icon: ChefHat, label: "Burger" },
+  { icon: Coffee, label: "Asiatique" },
 ];
 
 export default function Home() {
@@ -273,7 +274,7 @@ export default function Home() {
       </section>
 
       {/* ===================== SOCIAL PROOF ===================== */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 border-y border-white/5">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 border-y border-white/5">
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -281,21 +282,26 @@ export default function Home() {
           transition={{ duration: 0.8 }}
           className="text-center"
         >
-          <p className="text-sm text-muted-foreground mb-8 uppercase tracking-wider font-medium">
-            Ils nous font confiance
+          <p className="text-xs text-muted-foreground mb-4 uppercase tracking-wider font-medium pt-4">
+            Conçu pour votre restaurant
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
-            {trustedRestaurants.map((name, i) => (
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 pb-4">
+            {restaurantTypes.map((type, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 0.4 }}
-                whileHover={{ opacity: 1 }}
+                whileInView={{ opacity: 1 }}
+                whileHover={{ scale: 1.05 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="text-lg sm:text-xl font-semibold text-white/70 hover:text-[#f6cf62] transition-all duration-300 cursor-default"
+                className="flex flex-col items-center gap-2 cursor-default"
               >
-                {name}
+                <div className="w-12 h-12 rounded-xl bg-[#f6cf62]/10 flex items-center justify-center border border-[#f6cf62]/20 hover:bg-[#f6cf62]/20 transition-all duration-300">
+                  <type.icon className="w-6 h-6 text-[#f6cf62]" />
+                </div>
+                <span className="text-xs font-medium text-white/60 hover:text-[#f6cf62] transition-colors">
+                  {type.label}
+                </span>
               </motion.div>
             ))}
           </div>
@@ -303,7 +309,7 @@ export default function Home() {
       </section>
 
       {/* ===================== HOW IT WORKS - ZIG ZAG ===================== */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-32">
+      <section id="how-it-works" className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-32">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -372,9 +378,21 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-16 h-16 rounded-full bg-[#f6cf62]/20 flex items-center justify-center">
+                    <motion.div 
+                      className="w-16 h-16 rounded-full bg-[#f6cf62]/20 flex items-center justify-center"
+                      animate={{
+                        scale: [1, 1.1, 1],
+                        rotate: [0, -5, 5, 0],
+                      }}
+                      transition={{
+                        duration: 0.5,
+                        repeat: Infinity,
+                        repeatDelay: 2,
+                        ease: "easeInOut",
+                      }}
+                    >
                       <Phone className="w-8 h-8 text-[#f6cf62]" />
-                    </div>
+                    </motion.div>
                     <div>
                       <div className="text-xl font-bold text-white">06 12 34 56 78</div>
                       <div className="text-muted-foreground">Client régulier</div>
@@ -412,34 +430,10 @@ export default function Home() {
                       En écoute
                     </Badge>
                   </div>
-                  {/* Audio waveform */}
-                  <div className="flex items-center justify-center gap-1 h-24 mb-6">
-                    {[40, 60, 35, 70, 45, 80, 50, 65, 40, 75, 55, 70, 45, 60, 50, 75, 40, 65, 55, 70].map((height, i) => (
-                      <motion.div
-                        key={i}
-                        className="w-1.5 bg-[#f6cf62]/60 rounded-full"
-                        animate={{
-                          height: [20, height, 20],
-                        }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                          delay: i * 0.05,
-                          ease: "easeInOut",
-                        }}
-                          />
-                        ))}
-                      </div>
-                  <div className="space-y-2">
-                    <div className="glass rounded-lg p-3 border-white/5">
-                      <p className="text-sm text-muted-foreground">Client :</p>
-                      <p className="text-white">&quot;Je voudrais un kebab viande et une frite stp&quot;</p>
-                        </div>
-                    <div className="glass rounded-lg p-3 border-[#f6cf62]/20 bg-[#f6cf62]/5">
-                      <p className="text-sm text-[#f6cf62]">Yallo :</p>
-                      <p className="text-white">&quot;Parfait ! Sauce de votre choix ?&quot;</p>
-                          </div>
-                        </div>
+                  {/* Conversation Stream */}
+                  <div className="mb-6">
+                    <ConversationStream />
+                  </div>
                       </div>
               </div>
             </motion.div>
@@ -491,11 +485,10 @@ export default function Home() {
                 <span className="text-[#f6cf62] font-medium text-sm uppercase tracking-wider">Étape 3</span>
               </div>
               <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-                Le ticket s&apos;imprime
+                La commande arrive sur votre tablette
               </h3>
               <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-                La commande arrive instantanément sur votre imprimante cuisine. 
-                Votre équipe prépare, le client vient récupérer. Simple.
+                Instantanément après l&apos;appel, la commande s&apos;affiche sur votre tableau de bord Yallo.
               </p>
               <div className="flex flex-wrap gap-3">
                 {["Impression instantanée", "Intégration simple", "Temps réel"].map((tag) => (
@@ -529,7 +522,7 @@ export default function Home() {
                       <div className="text-center">
                         <Receipt className="w-8 h-8 text-[#f6cf62] mx-auto mb-2" />
                         <div className="text-lg font-bold text-white">COMMANDE #2847</div>
-                        <div className="text-xs text-muted-foreground">14:32 - Tel: 06 12 34 56 78</div>
+                        <div className="text-xs text-muted-foreground">Pour 14:45 - Tel: 06 12 34 56 78</div>
                   </div>
                   </div>
                     <div className="space-y-2 text-sm mb-4">
@@ -640,7 +633,7 @@ export default function Home() {
 
           {/* Regular cards */}
           {[
-            { icon: Printer, title: "Impression instantanée", desc: "Les tickets arrivent en cuisine en temps réel." },
+            { icon: ToggleRight, title: "Gestion des Stocks en Temps Réel", desc: "Plus de sauce blanche ? Désactivez-la en un clic sur votre tablette, l'IA ne la proposera plus aux clients." },
             { icon: Zap, title: "Temps réel", desc: "Suivi en direct des commandes et alertes push." },
           ].map((feature, i) => (
             <motion.div
@@ -714,6 +707,7 @@ export default function Home() {
       </section>
 
       {/* ===================== TESTIMONIALS ===================== */}
+      {/* Section commentée pour le lancement
       <section className="py-20 sm:py-28 overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -742,6 +736,7 @@ export default function Home() {
           <TestimonialsCarousel />
         </motion.div>
       </section>
+      */}
 
       {/* ===================== PRICING ===================== */}
       <section id="pricing" className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 border-t border-white/5 overflow-hidden">
@@ -773,18 +768,18 @@ export default function Home() {
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.5 }}
           >
-            <Card className="h-full bg-card/30 border-white/10 hover:border-white/30 transition-all duration-300 noise group">
+            <Card className="flex flex-col h-full bg-card/30 border-white/10 hover:border-white/30 transition-all duration-300 noise group">
               <CardHeader className="pb-8">
                 <CardTitle className="text-2xl text-white mb-2">Abonnement</CardTitle>
                 <div className="flex items-baseline gap-2">
                   <span className="text-5xl font-black text-white">299€</span>
                   <span className="text-muted-foreground text-lg">/mois</span>
                 </div>
-                <CardDescription className="text-base mt-4">
+                <CardDescription className="text-base mt-4 min-h-[3rem]">
                   Pour les gros volumes. Moins cher qu&apos;un temps partiel.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex flex-col flex-1 space-y-4">
                 {[
                   { text: "Commandes illimitées", icon: Check },
                   { text: "Support prioritaire 7j/7", icon: Check },
@@ -799,7 +794,7 @@ export default function Home() {
                     <span className={`text-sm ${item.highlight ? 'text-[#f6cf62] font-medium' : 'text-muted-foreground'}`}>{item.text}</span>
                   </div>
                 ))}
-                <Button variant="outline" className="w-full mt-6 h-12 border-white/20 hover:border-white/40 hover:bg-white/5 transition-all duration-300" size="lg">
+                <Button variant="outline" className="w-full mt-auto h-12 border-white/20 hover:border-white/40 hover:bg-white/5 transition-all duration-300" size="lg">
                   Choisir ce plan
                 </Button>
               </CardContent>
@@ -817,7 +812,7 @@ export default function Home() {
             {/* Glow effect behind card */}
             <div className="absolute -inset-1 bg-[#f6cf62]/20 rounded-3xl blur-xl opacity-60" />
             
-            <Card className="relative h-full border-[#f6cf62] overflow-hidden noise" style={{
+            <Card className="relative flex flex-col h-full border-[#f6cf62] overflow-hidden noise" style={{
               background: 'radial-gradient(ellipse at top, rgba(246, 207, 98, 0.08) 0%, hsl(var(--card)) 70%)'
             }}>
               {/* Popular badge */}
@@ -834,11 +829,11 @@ export default function Home() {
                   <span className="text-5xl font-black gradient-text">5%</span>
                   <span className="text-muted-foreground text-lg">par commande</span>
                 </div>
-                <CardDescription className="text-base mt-4 text-white/70">
+                <CardDescription className="text-base mt-4 text-white/70 min-h-[3rem]">
                   Zéro risque. Vous ne payez que si vous vendez.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex flex-col flex-1 space-y-4">
                 {[
                   { text: "Aucun frais fixe", icon: Check },
                   { text: "Toutes les fonctionnalités", icon: Check },
@@ -852,13 +847,10 @@ export default function Home() {
                     <span className={`text-sm ${item.highlight ? 'text-white font-medium' : 'text-white/70'}`}>{item.text}</span>
                   </div>
                 ))}
-                <Button className="w-full mt-6 h-12 bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90 btn-shine font-semibold shadow-lg shadow-[#f6cf62]/30 transition-all duration-300" size="lg">
+                <Button className="w-full mt-auto h-12 bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90 btn-shine font-semibold shadow-lg shadow-[#f6cf62]/30 transition-all duration-300" size="lg">
                   Commencer gratuitement
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
-                <p className="text-center text-xs text-muted-foreground mt-3">
-                  Pas de carte bancaire requise
-                </p>
               </CardContent>
             </Card>
           </motion.div>
@@ -889,7 +881,7 @@ export default function Home() {
       </section>
 
       {/* ===================== FAQ ===================== */}
-      <section id="faq" className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+      <section id="faq" className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16">
           {/* Left Column - Title & Support */}
         <motion.div
@@ -941,29 +933,31 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="lg:col-span-2"
           >
-            <Accordion type="single" collapsible className="w-full space-y-3">
-              {[
-                { q: "Comment l'IA comprend-elle les accents ?", a: "Notre modèle a été entraîné sur des milliers d'heures d'appels réels avec différents accents français, régionaux et étrangers. Elle comprend parfaitement le slang ('un grec', 'naan') et les demandes complexes." },
-                { q: "Puis-je transférer l'appel à un humain ?", a: "Oui ! L'IA peut transférer l'appel à votre équipe à tout moment. Elle détecte aussi automatiquement les situations complexes ou sensibles nécessitant une intervention humaine." },
-                { q: "Combien de temps prend l'intégration ?", a: "Moins de 30 minutes. Notre équipe vous accompagne pour configurer votre menu et connecter votre imprimante. Vous pouvez recevoir des commandes le jour même." },
-                { q: "Que se passe-t-il en cas de panne internet ?", a: "Yallo dispose d'un système de fallback robuste. Les appels sont automatiquement redirigés vers votre téléphone fixe ou mobile. Aucune commande n'est perdue." },
-                { q: "L'IA peut-elle gérer les modifications de commande ?", a: "Absolument ! L'IA gère les modifications, les allergies, les demandes spéciales ('sans oignon', 'bien cuit') et même les annulations. Elle pose les bonnes questions pour s'assurer que tout est correct." },
-                { q: "Quel est le coût par commande ?", a: "Avec notre formule commission, vous payez 5% par commande traitée. Aucun frais fixe, aucun engagement. Vous ne payez que ce que vous utilisez réellement." },
-                ].map((item, i) => (
-                  <AccordionItem
-                    key={i}
-                    value={`item-${i}`}
-                  className="border border-white/5 rounded-xl px-5 data-[state=open]:border-[#f6cf62]/30 data-[state=open]:bg-[#f6cf62]/5 transition-all duration-300"
-                  >
-                  <AccordionTrigger className="text-left text-white hover:no-underline hover:text-[#f6cf62] transition-colors py-5 text-base">
-                      {item.q}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-muted-foreground pb-5 leading-relaxed">
-                      {item.a}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
+            <div className="w-full space-y-3 mb-6">
+              <Accordion type="single" collapsible className="w-full">
+                {[
+                  { q: "Comment l'IA comprend-elle les accents ?", a: "Notre modèle a été entraîné sur des milliers d'heures d'appels réels avec différents accents français, régionaux et étrangers. Elle comprend parfaitement le slang ('un grec', 'naan') et les demandes complexes." },
+                  { q: "Puis-je transférer l'appel à un humain ?", a: "Oui ! L'IA peut transférer l'appel à votre équipe à tout moment. Elle détecte aussi automatiquement les situations complexes ou sensibles nécessitant une intervention humaine." },
+                  { q: "Combien de temps prend l'intégration ?", a: "Moins de 30 minutes. Notre équipe vous accompagne pour configurer votre menu et connecter votre imprimante. Vous pouvez recevoir des commandes le jour même." },
+                  { q: "Que se passe-t-il en cas de panne internet ?", a: "Yallo dispose d'un système de fallback robuste. Les appels sont automatiquement redirigés vers votre téléphone fixe ou mobile. Aucune commande n'est perdue." },
+                  { q: "L'IA peut-elle gérer les modifications de commande ?", a: "Absolument ! L'IA gère les modifications, les allergies, les demandes spéciales ('sans oignon', 'bien cuit') et même les annulations. Elle pose les bonnes questions pour s'assurer que tout est correct." },
+                  { q: "Quel est le coût par commande ?", a: "Avec notre formule commission, vous payez 5% par commande traitée. Aucun frais fixe, aucun engagement. Vous ne payez que ce que vous utilisez réellement." },
+                  ].map((item, i) => (
+                    <AccordionItem
+                      key={i}
+                      value={`item-${i}`}
+                      className={`border border-white/5 rounded-xl px-5 data-[state=open]:border-[#f6cf62]/30 data-[state=open]:bg-[#f6cf62]/5 transition-all duration-300 ${i === 5 ? 'mb-0' : 'mb-3'}`}
+                    >
+                      <AccordionTrigger className="text-left text-white hover:no-underline hover:text-[#f6cf62] transition-colors py-5 text-base">
+                        {item.q}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground pb-5 leading-relaxed">
+                        {item.a}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
               </Accordion>
+            </div>
         </motion.div>
         </div>
       </section>
@@ -1012,49 +1006,94 @@ export default function Home() {
             <div>
               <h4 className="font-semibold text-white mb-4">Produit</h4>
               <ul className="space-y-3">
-                {["Fonctionnalités", "Tarifs", "Intégrations", "API"].map((link) => (
-                  <li key={link}>
-                    <Link href="#" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
-                      {link}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-white mb-4">Société</h4>
-              <ul className="space-y-3">
-                {["À propos", "Blog", "Carrières", "Contact"].map((link) => (
-                  <li key={link}>
-                    <Link href="#" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
-                      {link}
-                    </Link>
-                  </li>
-                ))}
+                <li>
+                  <Link href="/#how-it-works" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                    Comment ça marche
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/#features" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                    Fonctionnalités
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/#pricing" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                    Tarification
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/#faq" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                    FAQ
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-white mb-4">Légal</h4>
               <ul className="space-y-3">
-                {["Confidentialité", "CGV", "Mentions légales", "RGPD"].map((link) => (
-                  <li key={link}>
-                    <Link href="#" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
-                      {link}
-                    </Link>
-                  </li>
-                ))}
+                <li>
+                  <Link href="/confidentialite" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                    Confidentialité
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/cgv" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                    CGV
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/mentions-legales" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                    Mentions légales
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-4">Contact</h4>
+              <ul className="space-y-3">
+                <li>
+                  <Link href="/contact?subject=support" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                    Support Technique
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact?subject=demo" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                    Réserver une démo
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact?subject=autre" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                    Devenir Partenaire
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-white mb-4">Ressources</h4>
               <ul className="space-y-3">
-                {["Documentation", "Guides", "Support", "Statut"].map((link) => (
-                  <li key={link}>
-                    <Link href="#" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
-                      {link}
-                    </Link>
-                  </li>
-                ))}
+                <li>
+                  <a href="#" onClick={(e) => {
+                    e.preventDefault();
+                    const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+                    const port = typeof window !== "undefined" && window.location.port ? window.location.port : "3000";
+                    const appUrl = hostname.includes("localhost") 
+                      ? `http://app.localhost:${port}/login`
+                      : "https://app.yallo.fr/login";
+                    window.location.href = appUrl;
+                  }} className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                    Espace Restaurateur
+                  </a>
+                </li>
+                <li>
+                  <Link href="/guide" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                    Guide de démarrage
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/status" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                    État du service
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>

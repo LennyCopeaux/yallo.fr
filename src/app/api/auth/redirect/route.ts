@@ -1,24 +1,35 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
+
+function buildAppUrl(pathname: string, host: string): URL {
+  const isDev = host.includes("localhost");
+  
+  if (isDev) {
+    const port = host.split(":")[1] || "3000";
+    return new URL(`http://app.localhost:${port}${pathname}`);
+  }
+  
+  return new URL(`https://app.yallo.fr${pathname}`);
+}
 
 export async function GET() {
   const session = await auth();
+  const headersList = await headers();
+  const host = headersList.get("host") || "";
 
   if (!session?.user) {
-    return NextResponse.redirect(new URL("/login", process.env.NEXTAUTH_URL || "http://localhost:3000"));
+    return NextResponse.redirect(buildAppUrl("/login", host), 307);
   }
 
-  // Si l'utilisateur doit changer son mot de passe, redirige vers /update-password
   if (session.user.mustChangePassword === true) {
-    return NextResponse.redirect(new URL("/update-password", process.env.NEXTAUTH_URL || "http://localhost:3000"));
+    return NextResponse.redirect(buildAppUrl("/update-password", host), 307);
   }
 
-  // Redirection basée sur le rôle
   if (session.user.role === "ADMIN") {
-    return NextResponse.redirect(new URL("/admin", process.env.NEXTAUTH_URL || "http://localhost:3000"));
+    return NextResponse.redirect(buildAppUrl("/admin", host), 307);
   }
 
-  // Par défaut, OWNER va vers dashboard
-  return NextResponse.redirect(new URL("/dashboard", process.env.NEXTAUTH_URL || "http://localhost:3000"));
+  return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
 }
 

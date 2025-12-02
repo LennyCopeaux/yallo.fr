@@ -2,7 +2,6 @@ import NextAuth from "next-auth";
 import authConfig from "@/auth.config";
 import type { UserRole } from "@/db/schema";
 
-// Extension des types Next-Auth pour inclure le rôle et must_change_password
 declare module "next-auth" {
   interface User {
     role?: UserRole;
@@ -20,11 +19,10 @@ declare module "next-auth" {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
-  trustHost: true, // Permet d'utiliser localhost et app.localhost en développement
+  trustHost: true,
   session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user }) {
-      // Lors de la connexion initiale, récupère les données de l'utilisateur
       if (user) {
         token.role = user.role;
         token.id = user.id;
@@ -42,4 +40,3 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
 });
-
