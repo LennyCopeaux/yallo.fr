@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AppLoginButton } from "@/components/app-login-button";
 import { MarketingLogoLink } from "@/components/marketing-logo-link";
+import { ModeToggle } from "@/components/mode-toggle";
 
 export default function MarketingLayout({
   children,
@@ -10,10 +11,10 @@ export default function MarketingLayout({
 }) {
   return (
     <div className="relative min-h-screen bg-background overflow-hidden">
-      {/* Floating Navbar - Dark glassmorphism */}
+      {/* Floating Navbar - Glassmorphism */}
       <nav className="fixed top-0 left-0 right-0 z-50">
         <div className="mx-4 mt-4 sm:mx-6 lg:mx-8">
-          <div className="glass-strong rounded-2xl border-white/5">
+          <div className="glass-strong rounded-2xl border-border/50">
             <div className="container mx-auto px-4 sm:px-6">
               <div className="flex h-16 items-center justify-between">
                 {/* Logo */}
@@ -21,22 +22,23 @@ export default function MarketingLayout({
 
                 {/* Navigation */}
                 <div className="hidden md:flex items-center gap-8">
-                  <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-white transition-colors">
+                  <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                     Comment ça marche
                   </Link>
-                  <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-white transition-colors">
+                  <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                     Fonctionnalités
                   </Link>
-                  <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-white transition-colors">
+                  <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                     Tarification
                   </Link>
-                  <Link href="#faq" className="text-sm font-medium text-muted-foreground hover:text-white transition-colors">
+                  <Link href="#faq" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                     FAQ
                   </Link>
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 sm:gap-3">
+                  <ModeToggle />
                   <AppLoginButton />
                   <Button size="sm" className="bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90 btn-shine font-semibold">
                     Démo gratuite
