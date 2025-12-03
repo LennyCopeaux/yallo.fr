@@ -29,8 +29,51 @@
   --color-brand-foreground: hsl(var(--brand-foreground));
 }
 
-/* Dark Mode Only - Deep Dark Tech (Vapi.ai / Linear style) */
+/* ============================================
+   LIGHT MODE - Tech/Pro Yallo Palette
+   Clean, professional, easy on the eyes
+   ============================================ */
 :root {
+  /* Background: Soft off-white #fcfcfc - avoids harsh pure white */
+  --background: 0 0% 99%;
+  --foreground: 240 10% 10%;
+  /* Card: Pure white with subtle warmth */
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 10%;
+  /* Primary: Yallo Yellow #f6cf62 - slightly deeper for light mode contrast */
+  --primary: 45 89% 62%;
+  --primary-foreground: 240 10% 4%;
+  /* Secondary: Light neutral gray */
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 240 10% 10%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 46%;
+  --accent: 220 14% 96%;
+  --accent-foreground: 240 10% 10%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  /* Borders: Subtle and fine */
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 45 89% 55%;
+  --radius: 0.625rem;
+  
+  /* Brand Yallo Yellow */
+  --brand: 45 89% 62%;
+  --brand-foreground: 240 10% 4%;
+  
+  /* Grid - Light mode */
+  --grid-color: rgba(0, 0, 0, 0.03);
+  
+  color-scheme: light;
+}
+
+/* ============================================
+   DARK MODE - Deep Dark Tech (Vapi.ai / Linear style)
+   ============================================ */
+.dark {
   /* Background: Deep black #0a0a0a */
   --background: 0 0% 4%;
   --foreground: 0 0% 98%;
@@ -55,7 +98,6 @@
   --border: 0 0% 15%;
   --input: 0 0% 15%;
   --ring: 45 89% 67%;
-  --radius: 0.625rem;
   
   /* Brand Yallo Yellow */
   --brand: 45 89% 67%;
@@ -64,7 +106,6 @@
   /* Grid */
   --grid-color: rgba(255, 255, 255, 0.02);
   
-  /* Force dark color scheme */
   color-scheme: dark;
 }
 
@@ -120,19 +161,29 @@
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
-/* Glassmorphism utilities - Dark mode optimized */
+/* Glassmorphism utilities - Adaptive for Light & Dark */
 .glass {
-  background: hsl(var(--card) / 0.6);
+  background: hsl(var(--card) / 0.7);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid hsl(var(--border) / 0.5);
 }
 
+.dark .glass {
+  background: hsl(var(--card) / 0.6);
+}
+
 .glass-strong {
-  background: hsl(var(--card) / 0.8);
+  background: hsl(var(--card) / 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid hsl(var(--border) / 0.6);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
+
+.dark .glass-strong {
+  background: hsl(var(--card) / 0.8);
+  box-shadow: none;
 }
 
 /* Gradient text - Yallo Yellow */
@@ -143,7 +194,16 @@
   background-clip: text;
 }
 
+/* Light mode: dark to yellow gradient */
 .gradient-text-hero {
+  background: linear-gradient(135deg, #1a1a2e 0%, #d4a843 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Dark mode: white to yellow gradient */
+.dark .gradient-text-hero {
   background: linear-gradient(135deg, #ffffff 0%, #f6cf62 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -178,10 +238,18 @@
 
 /* Glow effect for yellow accent */
 .glow-yellow {
+  box-shadow: 0 0 40px rgba(246, 207, 98, 0.2);
+}
+
+.dark .glow-yellow {
   box-shadow: 0 0 40px rgba(246, 207, 98, 0.3);
 }
 
 .glow-yellow-subtle {
+  box-shadow: 0 0 60px rgba(246, 207, 98, 0.1);
+}
+
+.dark .glow-yellow-subtle {
   box-shadow: 0 0 60px rgba(246, 207, 98, 0.15);
 }
 
@@ -237,7 +305,7 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar - Dark theme */
+/* Custom scrollbar - Adaptive for both themes */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -248,12 +316,16 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
+  background: hsl(var(--muted-foreground) / 0.3);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.5);
+}
+
+.dark::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
 }
 
 /* Focus ring - Yellow */
@@ -264,11 +336,20 @@ html {
 
 /* Table row hover - subtle */
 .table-row-hover:hover {
+  background: rgba(246, 207, 98, 0.08);
+}
+
+.dark .table-row-hover:hover {
   background: rgba(246, 207, 98, 0.02);
 }
 
 /* Sidebar active state */
 .sidebar-active {
+  background: rgba(246, 207, 98, 0.15);
+  color: #d4a843;
+}
+
+.dark .sidebar-active {
   background: rgba(246, 207, 98, 0.1);
   color: #f6cf62;
 }
@@ -280,6 +361,10 @@ html {
   top: 0;
   bottom: 0;
   width: 2px;
+  background: #d4a843;
+}
+
+.dark .sidebar-active::before {
   background: #f6cf62;
 }
 
