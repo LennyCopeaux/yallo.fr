@@ -140,11 +140,11 @@ export function ConversationStream() {
                 }`}
               >
                 <p className={`text-xs mb-1 font-medium ${
-                  message.speaker === "yallo" ? "text-[#f6cf62]" : "text-white/60"
+                  message.speaker === "yallo" ? "text-[#f6cf62]" : "text-muted-foreground"
                 }`}>
                   {message.speaker === "yallo" ? "Yallo" : "Client"}
                 </p>
-                <p className="text-sm text-white/90 leading-relaxed">{message.displayedText}</p>
+                <p className="text-sm text-foreground leading-relaxed">{message.displayedText}</p>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -166,11 +166,11 @@ export function ConversationStream() {
               }`}
             >
               <p className={`text-xs mb-1 font-medium ${
-                typingMessage.speaker === "yallo" ? "text-[#f6cf62]" : "text-white/60"
+                typingMessage.speaker === "yallo" ? "text-[#f6cf62]" : "text-muted-foreground"
               }`}>
                 {typingMessage.speaker === "yallo" ? "Yallo" : "Client"}
               </p>
-              <p className="text-sm text-white/90 leading-relaxed min-h-[1.25rem]">
+              <p className="text-sm text-foreground leading-relaxed min-h-[1.25rem]">
                 {typingText}
                 <motion.span 
                   className="inline-block w-0.5 h-4 bg-[#f6cf62] ml-0.5 align-middle"

@@ -11,7 +11,7 @@ export default function GuidePage() {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-4xl font-bold text-white mb-12 text-center">
+        <h1 className="text-4xl font-bold text-zinc-950 dark:text-white mb-12 text-center">
           Démarrez en 5 minutes
         </h1>
         
@@ -22,7 +22,7 @@ export default function GuidePage() {
                 <span className="text-xl font-bold text-[#f6cf62]">1</span>
               </div>
               <div>
-                <h2 className="text-2xl font-semibold text-white mb-3">
+                <h2 className="text-2xl font-semibold text-zinc-950 dark:text-white mb-3">
                   Contactez-nous
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">
@@ -42,7 +42,7 @@ export default function GuidePage() {
                 <span className="text-xl font-bold text-[#f6cf62]">2</span>
               </div>
               <div>
-                <h2 className="text-2xl font-semibold text-white mb-3">
+                <h2 className="text-2xl font-semibold text-zinc-950 dark:text-white mb-3">
                   Création de vos accès
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">
@@ -58,7 +58,7 @@ export default function GuidePage() {
                 <span className="text-xl font-bold text-[#f6cf62]">3</span>
               </div>
               <div>
-                <h2 className="text-2xl font-semibold text-white mb-3">
+                <h2 className="text-2xl font-semibold text-zinc-950 dark:text-white mb-3">
                   Réinitialisation du mot de passe
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">
@@ -74,7 +74,7 @@ export default function GuidePage() {
                 <span className="text-xl font-bold text-[#f6cf62]">4</span>
               </div>
               <div>
-                <h2 className="text-2xl font-semibold text-white mb-3">
+                <h2 className="text-2xl font-semibold text-zinc-950 dark:text-white mb-3">
                   Configuration du menu
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">
@@ -91,7 +91,7 @@ export default function GuidePage() {
                 <span className="text-xl font-bold text-[#f6cf62]">5</span>
               </div>
               <div>
-                <h2 className="text-2xl font-semibold text-white mb-3">
+                <h2 className="text-2xl font-semibold text-zinc-950 dark:text-white mb-3">
                   Activation du transfert d&apos;appel
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">

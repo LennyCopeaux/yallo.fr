@@ -103,9 +103,9 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-[1.1] tracking-tight"
             >
-              <span className="text-white">Votre prise de</span>{" "}
+              <span className="text-zinc-950 dark:text-white">Votre prise de</span>{" "}
               <span className="gradient-text-hero">commande</span>{" "}
-              <span className="text-white">automatisée</span>
+              <span className="text-zinc-950 dark:text-white">automatisée</span>
             </motion.h1>
 
             <motion.p
@@ -114,7 +114,7 @@ export default function Home() {
               className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed"
             >
               L&apos;IA vocale qui prend les commandes de votre{" "}
-              <span className="text-white font-medium">Fast Food</span> par
+              <span className="text-zinc-950 dark:text-white font-medium">Fast Food</span> par
               téléphone. Disponible{" "}
               <span className="text-[#f6cf62] font-semibold">24/7</span>, sans
               accent, sans attente.
@@ -194,7 +194,7 @@ export default function Home() {
                   {/* Dashboard content */}
                   <div className="p-4 sm:p-6 space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-lg text-white">
+                      <h3 className="font-semibold text-lg text-zinc-950 dark:text-white">
                         Commandes en cours
                       </h3>
                       <Badge className="bg-[#f6cf62]/10 text-[#f6cf62] border-[#f6cf62]/20">
@@ -217,7 +217,7 @@ export default function Home() {
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="font-bold text-white">{order.id}</span>
+                              <span className="font-bold text-zinc-950 dark:text-white">{order.id}</span>
                               <span className={`${order.color} ${order.color === 'bg-[#f6cf62]' ? 'text-black' : 'text-white'} text-xs px-2 py-0.5 rounded-full font-medium`}>
                                 {order.status}
                               </span>
@@ -247,7 +247,7 @@ export default function Home() {
                     <Phone className="w-4 h-4 text-[#f6cf62]" />
                   </div>
                   <div>
-                    <div className="text-xs font-medium text-white">Appel entrant</div>
+                    <div className="text-xs font-medium text-zinc-950 dark:text-white">Appel entrant</div>
                     <div className="text-xs text-muted-foreground">06 ** ** 42</div>
                   </div>
                 </div>
@@ -263,7 +263,7 @@ export default function Home() {
                     <Bot className="w-4 h-4 text-[#f6cf62]" />
                   </div>
                   <div>
-                    <div className="text-xs font-medium text-white">IA Active</div>
+                    <div className="text-xs font-medium text-zinc-950 dark:text-white">IA Active</div>
                     <div className="text-xs text-[#f6cf62]">Prend la commande...</div>
                   </div>
                 </div>
@@ -299,7 +299,7 @@ export default function Home() {
                 <div className="w-12 h-12 rounded-xl bg-[#f6cf62]/10 flex items-center justify-center border border-[#f6cf62]/20 hover:bg-[#f6cf62]/20 transition-all duration-300">
                   <type.icon className="w-6 h-6 text-[#f6cf62]" />
                 </div>
-                <span className="text-xs font-medium text-white/60 hover:text-[#f6cf62] transition-colors">
+                <span className="text-xs font-medium text-muted-foreground hover:text-[#f6cf62] transition-colors">
                   {type.label}
                 </span>
               </motion.div>
@@ -317,10 +317,10 @@ export default function Home() {
           transition={{ duration: 0.6 }}
           className="text-center mb-20"
         >
-          <Badge className="mb-4 px-4 py-1.5 bg-white/5 text-white border-white/10">
+          <Badge className="mb-4 px-4 py-1.5 bg-white/5 text-foreground border-white/10">
             Simple comme bonjour
           </Badge>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-zinc-950 dark:text-white">
             Comment ça marche ?
           </h2>
         </motion.div>
@@ -342,7 +342,7 @@ export default function Home() {
                 </div>
                 <span className="text-[#f6cf62] font-medium text-sm uppercase tracking-wider">Étape 1</span>
               </div>
-              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              <h3 className="text-2xl sm:text-3xl font-bold text-zinc-950 dark:text-white mb-4">
                 Le client appelle
               </h3>
               <p className="text-muted-foreground text-lg leading-relaxed mb-6">
@@ -394,7 +394,7 @@ export default function Home() {
                       <Phone className="w-8 h-8 text-[#f6cf62]" />
                     </motion.div>
                     <div>
-                      <div className="text-xl font-bold text-white">06 12 34 56 78</div>
+                      <div className="text-xl font-bold text-zinc-950 dark:text-white">06 12 34 56 78</div>
                       <div className="text-muted-foreground">Client régulier</div>
                     </div>
                   </div>
@@ -424,7 +424,7 @@ export default function Home() {
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
                       <Bot className="w-5 h-5 text-[#f6cf62]" />
-                      <span className="text-sm text-white font-medium">Yallo IA</span>
+                      <span className="text-sm text-zinc-950 dark:text-white font-medium">Yallo IA</span>
                       </div>
                     <Badge className="bg-[#f6cf62]/10 text-[#f6cf62] border-[#f6cf62]/20">
                       En écoute
@@ -451,7 +451,7 @@ export default function Home() {
                 </div>
                 <span className="text-[#f6cf62] font-medium text-sm uppercase tracking-wider">Étape 2</span>
               </div>
-              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              <h3 className="text-2xl sm:text-3xl font-bold text-zinc-950 dark:text-white mb-4">
                 L&apos;IA prend la commande
               </h3>
               <p className="text-muted-foreground text-lg leading-relaxed mb-6">
@@ -484,7 +484,7 @@ export default function Home() {
                 </div>
                 <span className="text-[#f6cf62] font-medium text-sm uppercase tracking-wider">Étape 3</span>
               </div>
-              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              <h3 className="text-2xl sm:text-3xl font-bold text-zinc-950 dark:text-white mb-4">
                 La commande arrive sur votre tablette
               </h3>
               <p className="text-muted-foreground text-lg leading-relaxed mb-6">
@@ -521,28 +521,28 @@ export default function Home() {
                     <div className="border-b border-dashed border-white/10 pb-4 mb-4">
                       <div className="text-center">
                         <Receipt className="w-8 h-8 text-[#f6cf62] mx-auto mb-2" />
-                        <div className="text-lg font-bold text-white">COMMANDE #2847</div>
+                        <div className="text-lg font-bold text-zinc-950 dark:text-white">COMMANDE #2847</div>
                         <div className="text-xs text-muted-foreground">Pour 14:45 - Tel: 06 12 34 56 78</div>
                   </div>
                   </div>
                     <div className="space-y-2 text-sm mb-4">
                       <div className="flex justify-between">
-                        <span className="text-white">1x Kebab Viande</span>
+                        <span className="text-zinc-950 dark:text-white">1x Kebab Viande</span>
                         <span className="text-muted-foreground">8.50€</span>
                 </div>
                       <div className="text-xs text-muted-foreground pl-4">→ Sauce blanche + harissa</div>
                       <div className="flex justify-between">
-                        <span className="text-white">1x Frites</span>
+                        <span className="text-zinc-950 dark:text-white">1x Frites</span>
                         <span className="text-muted-foreground">3.00€</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-white">1x Coca-Cola</span>
+                        <span className="text-zinc-950 dark:text-white">1x Coca-Cola</span>
                         <span className="text-muted-foreground">2.50€</span>
                       </div>
                     </div>
                     <div className="border-t border-dashed border-white/10 pt-4">
                       <div className="flex justify-between font-bold">
-                        <span className="text-white">TOTAL</span>
+                        <span className="text-zinc-950 dark:text-white">TOTAL</span>
                         <span className="text-[#f6cf62]">14.00€</span>
                       </div>
                     </div>
@@ -563,10 +563,10 @@ export default function Home() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <Badge className="mb-4 px-4 py-1.5 bg-white/5 text-white border-white/10">
+          <Badge className="mb-4 px-4 py-1.5 bg-white/5 text-foreground border-white/10">
             Fonctionnalités
           </Badge>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-zinc-950 dark:text-white">
             Tout ce dont vous avez besoin
           </h2>
         </motion.div>
@@ -586,7 +586,7 @@ export default function Home() {
                 <div className="w-14 h-14 rounded-2xl bg-[#f6cf62]/10 flex items-center justify-center mb-4 group-hover:bg-[#f6cf62]/20 transition-colors">
                   <Mic className="w-7 h-7 text-[#f6cf62]" />
                 </div>
-                <CardTitle className="text-2xl text-white">Compréhension vocale avancée</CardTitle>
+                <CardTitle className="text-2xl text-zinc-950 dark:text-white">Compréhension vocale avancée</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-base leading-relaxed">
@@ -617,7 +617,7 @@ export default function Home() {
                 <div className="w-14 h-14 rounded-2xl bg-[#f6cf62]/10 flex items-center justify-center mb-4 group-hover:bg-[#f6cf62]/20 transition-colors">
                   <TrendingUp className="w-7 h-7 text-[#f6cf62]" />
                 </div>
-                <CardTitle className="text-xl text-white">Upsell intelligent</CardTitle>
+                <CardTitle className="text-xl text-zinc-950 dark:text-white">Upsell intelligent</CardTitle>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col">
                 <CardDescription className="text-base leading-relaxed flex-1">
@@ -649,7 +649,7 @@ export default function Home() {
                   <div className="w-12 h-12 rounded-xl bg-[#f6cf62]/10 flex items-center justify-center mb-3 group-hover:bg-[#f6cf62]/20 transition-colors">
                     <feature.icon className="w-6 h-6 text-[#f6cf62]" />
                   </div>
-                  <CardTitle className="text-lg text-white">{feature.title}</CardTitle>
+                  <CardTitle className="text-lg text-zinc-950 dark:text-white">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription className="leading-relaxed">{feature.desc}</CardDescription>
@@ -672,7 +672,7 @@ export default function Home() {
                   <Shield className="w-7 h-7 text-[#f6cf62]" />
                     </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Transfert humain</h3>
+                  <h3 className="text-xl font-semibold text-zinc-950 dark:text-white mb-2">Transfert humain</h3>
                   <p className="text-muted-foreground">
                     En cas de demande complexe, l&apos;IA transfère l&apos;appel à votre équipe en un clic.
                   </p>
@@ -694,7 +694,7 @@ export default function Home() {
                 <div className="w-12 h-12 rounded-xl bg-[#f6cf62]/10 flex items-center justify-center mb-3 group-hover:bg-[#f6cf62]/20 transition-colors">
                   <Sparkles className="w-6 h-6 text-[#f6cf62]" />
                 </div>
-                <CardTitle className="text-lg text-white">Menu personnalisé</CardTitle>
+                <CardTitle className="text-lg text-zinc-950 dark:text-white">Menu personnalisé</CardTitle>
                   </CardHeader>
                   <CardContent>
                 <CardDescription className="leading-relaxed">
@@ -749,10 +749,10 @@ export default function Home() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <Badge className="mb-4 px-4 py-1.5 bg-white/5 text-white border-white/10">
+          <Badge className="mb-4 px-4 py-1.5 bg-white/5 text-foreground border-white/10">
             Tarification
           </Badge>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-zinc-950 dark:text-white mb-4">
             Un prix simple et transparent
           </h2>
           <p className="text-muted-foreground text-lg">
@@ -770,9 +770,9 @@ export default function Home() {
           >
             <Card className="flex flex-col h-full bg-card/30 border-white/10 hover:border-white/30 transition-all duration-300 noise group">
               <CardHeader className="pb-8">
-                <CardTitle className="text-2xl text-white mb-2">Abonnement</CardTitle>
+                <CardTitle className="text-2xl text-zinc-950 dark:text-white mb-2">Abonnement</CardTitle>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-5xl font-black text-white">299€</span>
+                  <span className="text-5xl font-black text-zinc-950 dark:text-white">299€</span>
                   <span className="text-muted-foreground text-lg">/mois</span>
                 </div>
                 <CardDescription className="text-base mt-4 min-h-[3rem]">
@@ -789,7 +789,7 @@ export default function Home() {
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${item.highlight ? 'bg-[#f6cf62]/20' : 'bg-white/10'}`}>
-                      <item.icon className={`w-3 h-3 ${item.highlight ? 'text-[#f6cf62]' : 'text-white'}`} />
+                      <item.icon className={`w-3 h-3 ${item.highlight ? 'text-[#f6cf62]' : 'text-zinc-950 dark:text-white'}`} />
                     </div>
                     <span className={`text-sm ${item.highlight ? 'text-[#f6cf62] font-medium' : 'text-muted-foreground'}`}>{item.text}</span>
                   </div>
@@ -824,12 +824,12 @@ export default function Home() {
               </div>
 
               <CardHeader className="pb-8">
-                <CardTitle className="text-2xl text-white mb-2">Commission</CardTitle>
+                <CardTitle className="text-2xl text-zinc-950 dark:text-white mb-2">Commission</CardTitle>
                 <div className="flex items-baseline gap-2">
                   <span className="text-5xl font-black gradient-text">5%</span>
                   <span className="text-muted-foreground text-lg">par commande</span>
                 </div>
-                <CardDescription className="text-base mt-4 text-white/70 min-h-[3rem]">
+                <CardDescription className="text-base mt-4 text-muted-foreground min-h-[3rem]">
                   Zéro risque. Vous ne payez que si vous vendez.
                 </CardDescription>
               </CardHeader>
@@ -844,7 +844,7 @@ export default function Home() {
                     <div className="w-5 h-5 rounded-full bg-[#f6cf62]/20 flex items-center justify-center shrink-0">
                       <item.icon className="w-3 h-3 text-[#f6cf62]" />
                     </div>
-                    <span className={`text-sm ${item.highlight ? 'text-white font-medium' : 'text-white/70'}`}>{item.text}</span>
+                    <span className={`text-sm ${item.highlight ? 'text-zinc-950 dark:text-white font-medium' : 'text-muted-foreground'}`}>{item.text}</span>
                   </div>
                 ))}
                 <Button className="w-full mt-auto h-12 bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90 btn-shine font-semibold shadow-lg shadow-[#f6cf62]/30 transition-all duration-300" size="lg">
@@ -869,7 +869,7 @@ export default function Home() {
               <Settings className="w-6 h-6 text-[#f6cf62]" />
             </div>
             <div className="text-center sm:text-left">
-              <p className="text-lg font-semibold text-white mb-1">
+              <p className="text-lg font-semibold text-zinc-950 dark:text-white mb-1">
                 Frais de mise en service unique : <span className="text-[#f6cf62]">199€ HT</span>
               </p>
               <p className="text-sm text-muted-foreground">
@@ -892,11 +892,11 @@ export default function Home() {
             className="lg:col-span-1"
         >
             <div className="lg:sticky lg:top-32">
-              <Badge className="mb-4 px-4 py-1.5 bg-white/5 text-white border-white/10">
+              <Badge className="mb-4 px-4 py-1.5 bg-white/5 text-foreground border-white/10">
                 <MessageCircleQuestion className="w-3.5 h-3.5 mr-1.5" />
               FAQ
             </Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              <h2 className="text-3xl sm:text-4xl font-bold text-zinc-950 dark:text-white mb-4">
                 Questions Fréquentes
             </h2>
               <p className="text-muted-foreground text-lg leading-relaxed mb-8">
@@ -910,7 +910,7 @@ export default function Home() {
                     <Mail className="w-6 h-6 text-[#f6cf62]" />
           </div>
                   <div>
-                    <h4 className="font-semibold text-white mb-1">Une autre question ?</h4>
+                    <h4 className="font-semibold text-zinc-950 dark:text-white mb-1">Une autre question ?</h4>
                     <p className="text-sm text-muted-foreground mb-3">Notre équipe vous répond sous 24h.</p>
                     <a 
                       href="mailto:support@yallo.com" 
@@ -948,7 +948,7 @@ export default function Home() {
                       value={`item-${i}`}
                       className={`border border-white/5 rounded-xl px-5 data-[state=open]:border-[#f6cf62]/30 data-[state=open]:bg-[#f6cf62]/5 transition-all duration-300 ${i === 5 ? 'mb-0' : 'mb-3'}`}
                     >
-                      <AccordionTrigger className="text-left text-white hover:no-underline hover:text-[#f6cf62] transition-colors py-5 text-base">
+                      <AccordionTrigger className="text-left text-zinc-950 dark:text-white hover:no-underline hover:text-[#f6cf62] transition-colors py-5 text-base">
                         {item.q}
                       </AccordionTrigger>
                       <AccordionContent className="text-muted-foreground pb-5 leading-relaxed">
@@ -976,7 +976,7 @@ export default function Home() {
           transition={{ duration: 0.6 }}
             className="text-center max-w-3xl mx-auto"
             >
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-6">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-zinc-950 dark:text-white mb-6">
               Prêt à automatiser vos commandes ?
               </h2>
             <p className="text-lg sm:text-xl text-muted-foreground mb-10">
@@ -1004,7 +1004,7 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-white/5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div>
-              <h4 className="font-semibold text-white mb-4">Produit</h4>
+              <h4 className="font-semibold text-zinc-950 dark:text-white mb-4">Produit</h4>
               <ul className="space-y-3">
                 <li>
                   <Link href="/#how-it-works" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
@@ -1029,7 +1029,7 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-4">Légal</h4>
+              <h4 className="font-semibold text-zinc-950 dark:text-white mb-4">Légal</h4>
               <ul className="space-y-3">
                 <li>
                   <Link href="/confidentialite" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
@@ -1049,7 +1049,7 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-4">Contact</h4>
+              <h4 className="font-semibold text-zinc-950 dark:text-white mb-4">Contact</h4>
               <ul className="space-y-3">
                 <li>
                   <Link href="/contact?subject=support" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
@@ -1069,7 +1069,7 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-4">Ressources</h4>
+              <h4 className="font-semibold text-zinc-950 dark:text-white mb-4">Ressources</h4>
               <ul className="space-y-3">
                 <li>
                   <a href="#" onClick={(e) => {
@@ -1117,7 +1117,7 @@ export default function Home() {
 
         {/* Giant YALLO text */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none select-none">
-          <div className="text-[12rem] sm:text-[18rem] md:text-[24rem] font-black text-white/[0.02] leading-none tracking-tighter whitespace-nowrap">
+          <div className="text-[12rem] sm:text-[18rem] md:text-[24rem] font-black text-zinc-950/[0.02] dark:text-white/[0.02] leading-none tracking-tighter whitespace-nowrap">
             YALLO
           </div>
         </div>
