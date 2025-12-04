@@ -106,7 +106,7 @@ function ContactForm() {
         <div className="max-w-2xl mx-auto">
         <Card className="bg-card/50 border-white/10 backdrop-blur-sm">
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold text-white">
+            <CardTitle className="text-3xl font-bold text-zinc-950 dark:text-white">
               Contactez-nous
             </CardTitle>
             <CardDescription className="text-muted-foreground">
@@ -116,7 +116,7 @@ function ContactForm() {
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-white">
+                <Label htmlFor="name" className="text-foreground">
                   Nom <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -132,7 +132,7 @@ function ContactForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-white">
+                <Label htmlFor="email" className="text-foreground">
                   Email <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -149,7 +149,7 @@ function ContactForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="subject" className="text-white">
+                <Label htmlFor="subject" className="text-foreground">
                   Sujet <span className="text-red-500">*</span>
                 </Label>
                 <Select
@@ -174,7 +174,7 @@ function ContactForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="message" className="text-white">
+                <Label htmlFor="message" className="text-foreground">
                   Message <span className="text-red-500">*</span>
                 </Label>
                 <Textarea
@@ -213,7 +213,7 @@ export default function ContactPage() {
           <div className="max-w-2xl mx-auto">
             <Card className="bg-card/50 border-white/10 backdrop-blur-sm">
               <CardHeader className="text-center">
-                <CardTitle className="text-3xl font-bold text-white">
+                <CardTitle className="text-3xl font-bold text-zinc-950 dark:text-white">
                   Contactez-nous
                 </CardTitle>
               </CardHeader>

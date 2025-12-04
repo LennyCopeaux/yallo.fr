@@ -152,7 +152,7 @@ export default function UpdatePasswordPage() {
           <div className="w-16 h-16 rounded-full bg-[#f6cf62]/10 flex items-center justify-center mx-auto mb-2">
             <Shield className="w-8 h-8 text-[#f6cf62]" />
           </div>
-          <CardTitle className="text-2xl font-bold text-white">
+          <CardTitle className="text-2xl font-bold text-zinc-950 dark:text-white">
             Changer votre mot de passe
           </CardTitle>
           <CardDescription className="text-muted-foreground">
@@ -253,7 +253,7 @@ export default function UpdatePasswordPage() {
           
           <div className="mt-6 text-center">
             <p className="text-xs text-muted-foreground">
-              Connecté en tant que : <span className="text-white font-medium">{session.user.email}</span>
+              Connecté en tant que : <span className="text-zinc-950 dark:text-white font-medium">{session.user.email}</span>
             </p>
           </div>
         </CardContent>

@@ -18,7 +18,7 @@ export function AppLoginButton() {
     <Button 
       variant="ghost" 
       size="sm" 
-      className="hidden sm:flex text-muted-foreground hover:text-white"
+      className="hidden sm:flex text-muted-foreground hover:text-foreground"
       onClick={handleLoginClick}
     >
       Connexion

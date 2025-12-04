@@ -115,7 +115,7 @@ export function TestimonialsCarousel() {
                       <Quote
                         className={cn(
                           "w-8 h-8 mb-4 transition-colors duration-500",
-                          isCenter ? "text-[#f6cf62]/60" : "text-white/10"
+                          isCenter ? "text-[#f6cf62]/60" : "text-muted-foreground/20"
                         )}
                       />
                       <div className="flex gap-1 mb-4">
@@ -126,7 +126,7 @@ export function TestimonialsCarousel() {
                               "w-4 h-4 transition-colors duration-500",
                               isCenter
                                 ? "fill-[#f6cf62] text-[#f6cf62]"
-                                : "fill-white/20 text-white/20"
+                                : "fill-muted-foreground/20 text-muted-foreground/20"
                             )}
                           />
                         ))}
@@ -134,7 +134,7 @@ export function TestimonialsCarousel() {
                       <blockquote
                         className={cn(
                           "mb-6 leading-relaxed text-base transition-colors duration-500",
-                          isCenter ? "text-white" : "text-white/60"
+                          isCenter ? "text-foreground" : "text-muted-foreground"
                         )}
                       >
                         &ldquo;{testimonial.quote}&rdquo;
@@ -145,7 +145,7 @@ export function TestimonialsCarousel() {
                             "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500",
                             isCenter
                               ? "bg-[#f6cf62]/20 text-[#f6cf62]"
-                              : "bg-white/5 text-white/40"
+                              : "bg-muted/5 text-muted-foreground/60"
                           )}
                         >
                           {testimonial.author[0]}
@@ -154,7 +154,7 @@ export function TestimonialsCarousel() {
                           <div
                             className={cn(
                               "font-semibold text-sm transition-colors duration-500",
-                              isCenter ? "text-white" : "text-white/60"
+                              isCenter ? "text-foreground" : "text-muted-foreground"
                             )}
                           >
                             {testimonial.author}
@@ -173,8 +173,8 @@ export function TestimonialsCarousel() {
         </CarouselContent>
         
         {/* Navigation arrows - positioned better */}
-        <CarouselPrevious className="-left-2 sm:-left-4 md:-left-12 bg-card/80 border-white/10 hover:bg-white/10 hover:border-[#f6cf62]/30 text-white backdrop-blur-sm" />
-        <CarouselNext className="-right-2 sm:-right-4 md:-right-12 bg-card/80 border-white/10 hover:bg-white/10 hover:border-[#f6cf62]/30 text-white backdrop-blur-sm" />
+        <CarouselPrevious className="-left-2 sm:-left-4 md:-left-12 bg-card/80 border-white/10 hover:bg-white/10 hover:border-[#f6cf62]/30 text-foreground backdrop-blur-sm" />
+        <CarouselNext className="-right-2 sm:-right-4 md:-right-12 bg-card/80 border-white/10 hover:bg-white/10 hover:border-[#f6cf62]/30 text-foreground backdrop-blur-sm" />
       </Carousel>
       
       {/* Dots indicator */}
