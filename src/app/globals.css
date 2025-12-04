@@ -3,7 +3,7 @@
 @theme {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  
+
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
@@ -23,93 +23,145 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  
-  /* Brand Yallo Yellow */
-  --color-brand: hsl(var(--brand));
-  --color-brand-foreground: hsl(var(--brand-foreground));
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
 }
 
 /* ============================================
-   LIGHT MODE - Tech/Pro Yallo Palette
-   Clean, professional, easy on the eyes
+   LIGHT MODE - Shadcn Zinc Base + Brand Yellow
    ============================================ */
 :root {
-  /* Background: Soft off-white #fcfcfc - avoids harsh pure white */
-  --background: 0 0% 99%;
-  --foreground: 240 10% 10%;
-  /* Card: Pure white with subtle warmth */
+  /* Base - Zinc palette */
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+
+  /* Card & Popover */
   --card: 0 0% 100%;
-  --card-foreground: 240 10% 10%;
+  --card-foreground: 240 10% 3.9%;
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 10%;
-  /* Primary: Yallo Yellow #f6cf62 - slightly deeper for light mode contrast */
-  --primary: 45 89% 62%;
-  --primary-foreground: 240 10% 4%;
-  /* Secondary: Light neutral gray */
-  --secondary: 220 14% 96%;
-  --secondary-foreground: 240 10% 10%;
-  --muted: 220 14% 96%;
-  --muted-foreground: 220 9% 46%;
-  --accent: 220 14% 96%;
-  --accent-foreground: 240 10% 10%;
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 100%;
-  /* Borders: Subtle and fine */
-  --border: 220 13% 91%;
-  --input: 220 13% 91%;
-  --ring: 45 89% 55%;
+  --popover-foreground: 240 10% 3.9%;
+
+  /* Primary - Brand Yellow #f6cf62 */
+  --primary: 44 89% 67%;
+  --primary-foreground: 240 10% 3.9%;
+
+  /* Secondary - Zinc-100 */
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+
+  /* Muted - Zinc-100/500 */
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+
+  /* Accent - Zinc-100 */
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+
+  /* Destructive */
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* Borders & Input - Zinc-200 (visible in light mode) */
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 44 89% 55%;
+
+  /* Radius */
   --radius: 0.625rem;
-  
-  /* Brand Yallo Yellow */
-  --brand: 45 89% 62%;
-  --brand-foreground: 240 10% 4%;
-  
-  /* Grid - Light mode */
-  --grid-color: rgba(0, 0, 0, 0.03);
-  
+
+  /* Charts */
+  --chart-1: 44 89% 67%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
+
+  /* Sidebar */
+  --sidebar: 0 0% 98%;
+  --sidebar-foreground: 240 5.3% 26.1%;
+  --sidebar-primary: 44 89% 67%;
+  --sidebar-primary-foreground: 240 10% 3.9%;
+  --sidebar-accent: 240 4.8% 95.9%;
+  --sidebar-accent-foreground: 240 5.9% 10%;
+  --sidebar-border: 240 5.9% 90%;
+  --sidebar-ring: 44 89% 55%;
+
   color-scheme: light;
 }
 
 /* ============================================
-   DARK MODE - Deep Dark Tech (Vapi.ai / Linear style)
+   DARK MODE - Shadcn Zinc Base + Brand Yellow
    ============================================ */
 .dark {
-  /* Background: Deep black #0a0a0a */
-  --background: 0 0% 4%;
+  /* Base - Zinc-950/50 */
+  --background: 240 10% 3.9%;
   --foreground: 0 0% 98%;
-  /* Card: Slightly lighter #111111 */
-  --card: 0 0% 7%;
+
+  /* Card & Popover - Slightly elevated */
+  --card: 240 10% 3.9%;
   --card-foreground: 0 0% 98%;
-  --popover: 0 0% 7%;
+  --popover: 240 10% 3.9%;
   --popover-foreground: 0 0% 98%;
-  /* Primary: Yallo Yellow #f6cf62 */
-  --primary: 45 89% 67%;
-  --primary-foreground: 0 0% 0%;
-  /* Secondary: Dark zinc */
-  --secondary: 0 0% 12%;
+
+  /* Primary - Brand Yellow #f6cf62 */
+  --primary: 44 89% 67%;
+  --primary-foreground: 240 10% 3.9%;
+
+  /* Secondary - Zinc-800 */
+  --secondary: 240 3.7% 15.9%;
   --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 12%;
-  --muted-foreground: 0 0% 55%;
-  --accent: 0 0% 12%;
+
+  /* Muted - Zinc-800/400 */
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+
+  /* Accent - Zinc-800 */
+  --accent: 240 3.7% 15.9%;
   --accent-foreground: 0 0% 98%;
-  --destructive: 0 62% 50%;
-  --destructive-foreground: 0 0% 100%;
-  /* Borders: Very dark, subtle */
-  --border: 0 0% 15%;
-  --input: 0 0% 15%;
-  --ring: 45 89% 67%;
-  
-  /* Brand Yallo Yellow */
-  --brand: 45 89% 67%;
-  --brand-foreground: 0 0% 0%;
-  
-  /* Grid */
-  --grid-color: rgba(255, 255, 255, 0.02);
-  
+
+  /* Destructive */
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* Borders & Input - Zinc-800 */
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 44 89% 67%;
+
+  /* Charts */
+  --chart-1: 44 89% 67%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+
+  /* Sidebar */
+  --sidebar: 240 5.9% 10%;
+  --sidebar-foreground: 240 4.8% 95.9%;
+  --sidebar-primary: 44 89% 67%;
+  --sidebar-primary-foreground: 240 10% 3.9%;
+  --sidebar-accent: 240 3.7% 15.9%;
+  --sidebar-accent-foreground: 240 4.8% 95.9%;
+  --sidebar-border: 240 3.7% 15.9%;
+  --sidebar-ring: 44 89% 67%;
+
   color-scheme: dark;
 }
 
-/* Custom animations */
+/* ============================================
+   Animations
+   ============================================ */
 @keyframes float {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
   50% { transform: translateY(-20px) rotate(3deg); }
@@ -161,7 +213,9 @@
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
-/* Glassmorphism utilities - Adaptive for Light & Dark */
+/* ============================================
+   Glassmorphism - Semantic Colors Only
+   ============================================ */
 .glass {
   background: hsl(var(--card) / 0.7);
   backdrop-filter: blur(16px);
@@ -178,7 +232,7 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid hsl(var(--border) / 0.6);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 30px hsl(var(--foreground) / 0.05);
 }
 
 .dark .glass-strong {
@@ -186,31 +240,33 @@
   box-shadow: none;
 }
 
-/* Gradient text - Yallo Yellow */
+/* ============================================
+   Gradient Text - Uses Primary Color
+   ============================================ */
 .gradient-text {
-  background: linear-gradient(135deg, #f6cf62, #e5b84a);
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(44 89% 55%));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Light mode: dark to yellow gradient */
 .gradient-text-hero {
-  background: linear-gradient(135deg, #1a1a2e 0%, #d4a843 100%);
+  background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(44 75% 50%) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Dark mode: white to yellow gradient */
 .dark .gradient-text-hero {
-  background: linear-gradient(135deg, #ffffff 0%, #f6cf62 100%);
+  background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--primary)) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Button shine effect */
+/* ============================================
+   Button Shine Effect
+   ============================================ */
 .btn-shine {
   position: relative;
   overflow: hidden;
@@ -226,7 +282,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.3),
+    hsl(var(--background) / 0.3),
     transparent
   );
   transform: translateX(-100%);
@@ -236,33 +292,65 @@
   animation: shine 0.6s ease-in-out;
 }
 
-/* Glow effect for yellow accent */
+/* ============================================
+   Glow Effects - Primary Color Based
+   ============================================ */
+.glow-primary {
+  box-shadow: 0 0 40px hsl(var(--primary) / 0.2);
+}
+
+.dark .glow-primary {
+  box-shadow: 0 0 40px hsl(var(--primary) / 0.3);
+}
+
+.glow-primary-subtle {
+  box-shadow: 0 0 60px hsl(var(--primary) / 0.1);
+}
+
+.dark .glow-primary-subtle {
+  box-shadow: 0 0 60px hsl(var(--primary) / 0.15);
+}
+
+/* Legacy alias - glow-yellow */
 .glow-yellow {
-  box-shadow: 0 0 40px rgba(246, 207, 98, 0.2);
+  box-shadow: 0 0 40px hsl(var(--primary) / 0.2);
 }
 
 .dark .glow-yellow {
-  box-shadow: 0 0 40px rgba(246, 207, 98, 0.3);
+  box-shadow: 0 0 40px hsl(var(--primary) / 0.3);
 }
 
 .glow-yellow-subtle {
-  box-shadow: 0 0 60px rgba(246, 207, 98, 0.1);
+  box-shadow: 0 0 60px hsl(var(--primary) / 0.1);
 }
 
 .dark .glow-yellow-subtle {
-  box-shadow: 0 0 60px rgba(246, 207, 98, 0.15);
+  box-shadow: 0 0 60px hsl(var(--primary) / 0.15);
 }
 
-/* Card hover with yellow border */
+/* ============================================
+   Card Hover Effects
+   ============================================ */
+.card-hover-primary {
+  transition: all 0.3s ease;
+}
+
+.card-hover-primary:hover {
+  border-color: hsl(var(--primary) / 0.3);
+}
+
+/* Legacy alias - card-hover-yellow */
 .card-hover-yellow {
   transition: all 0.3s ease;
 }
 
 .card-hover-yellow:hover {
-  border-color: rgba(246, 207, 98, 0.3);
+  border-color: hsl(var(--primary) / 0.3);
 }
 
-/* Status badge animations */
+/* ============================================
+   Status Indicators
+   ============================================ */
 .status-online {
   position: relative;
 }
@@ -276,11 +364,13 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #f6cf62;
+  background: hsl(var(--primary));
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
-/* Noise texture overlay */
+/* ============================================
+   Noise Texture Overlay
+   ============================================ */
 .noise {
   position: relative;
 }
@@ -295,17 +385,31 @@
   border-radius: inherit;
 }
 
-/* Selection color */
+/* ============================================
+   Selection & Focus
+   ============================================ */
 ::selection {
   background: hsl(var(--primary) / 0.3);
 }
 
-/* Smooth scrolling */
+.focus-ring-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary));
+}
+
+/* Legacy alias - focus-ring-yellow */
+.focus-ring-yellow:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary));
+}
+
+/* ============================================
+   Scrolling & Scrollbar
+   ============================================ */
 html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar - Adaptive for both themes */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -324,34 +428,28 @@ html {
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
-.dark::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
-}
-
-/* Focus ring - Yellow */
-.focus-ring-yellow:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px #f6cf62;
-}
-
-/* Table row hover - subtle */
+/* ============================================
+   Table Row Hover
+   ============================================ */
 .table-row-hover:hover {
-  background: rgba(246, 207, 98, 0.08);
+  background: hsl(var(--primary) / 0.08);
 }
 
 .dark .table-row-hover:hover {
-  background: rgba(246, 207, 98, 0.02);
+  background: hsl(var(--primary) / 0.04);
 }
 
-/* Sidebar active state */
+/* ============================================
+   Sidebar Active State
+   ============================================ */
 .sidebar-active {
-  background: rgba(246, 207, 98, 0.15);
-  color: #d4a843;
+  background: hsl(var(--primary) / 0.15);
+  color: hsl(44 75% 45%);
 }
 
 .dark .sidebar-active {
-  background: rgba(246, 207, 98, 0.1);
-  color: #f6cf62;
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
 }
 
 .sidebar-active::before {
@@ -361,14 +459,16 @@ html {
   top: 0;
   bottom: 0;
   width: 2px;
-  background: #d4a843;
+  background: hsl(44 75% 45%);
 }
 
 .dark .sidebar-active::before {
-  background: #f6cf62;
+  background: hsl(var(--primary));
 }
 
-/* Hide scrollbar utility */
+/* ============================================
+   Utility Classes
+   ============================================ */
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

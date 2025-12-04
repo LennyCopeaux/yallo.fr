@@ -106,7 +106,7 @@ export default async function AdminPage() {
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#f6cf62] animate-pulse-dot" />
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse-dot" />
                 <span className="text-sm text-muted-foreground hidden sm:block">
                   {session.user.email}
                 </span>
@@ -120,7 +120,7 @@ export default async function AdminPage() {
                   await signOut({ redirectTo: loginUrl });
                 }}
               >
-                <Button type="submit" variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-white/5">
+                <Button type="submit" variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent">
                   <LogOut className="w-4 h-4" />
                   <span className="hidden sm:inline ml-2">Déconnexion</span>
                 </Button>
@@ -133,17 +133,17 @@ export default async function AdminPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="bg-card/30 border border-white/5 p-1">
+          <TabsList className="bg-card/30 border border-border p-1">
             <TabsTrigger 
               value="users" 
-              className="flex items-center gap-2 data-[state=active]:bg-[#f6cf62]/10 data-[state=active]:text-[#f6cf62] data-[state=active]:shadow-none"
+              className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
             >
               <Users className="w-4 h-4" />
               Utilisateurs
             </TabsTrigger>
             <TabsTrigger 
               value="restaurants" 
-              className="flex items-center gap-2 data-[state=active]:bg-[#f6cf62]/10 data-[state=active]:text-[#f6cf62] data-[state=active]:shadow-none"
+              className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
             >
               <UtensilsCrossed className="w-4 h-4" />
               Restaurants
@@ -164,11 +164,11 @@ export default async function AdminPage() {
               <AddUserDialog />
             </div>
 
-            <div className="border border-white/5 rounded-xl bg-card/20 overflow-hidden">
+            <div className="border border-border rounded-xl bg-card/20 overflow-hidden">
               {usersList.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                  <div className="w-16 h-16 rounded-full bg-[#f6cf62]/10 flex items-center justify-center mb-4">
-                    <Users className="w-8 h-8 text-[#f6cf62]/50" />
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <Users className="w-8 h-8 text-primary/50" />
                   </div>
                   <h3 className="font-semibold text-lg mb-1">Aucun utilisateur</h3>
                   <p className="text-muted-foreground text-sm">
@@ -178,7 +178,7 @@ export default async function AdminPage() {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-white/5 hover:bg-transparent">
+                    <TableRow className="border-border hover:bg-transparent">
                       <TableHead className="text-muted-foreground font-medium">Email</TableHead>
                       <TableHead className="text-muted-foreground font-medium">Rôle</TableHead>
                       <TableHead className="text-muted-foreground font-medium">Inscription</TableHead>
@@ -187,14 +187,14 @@ export default async function AdminPage() {
                   </TableHeader>
                   <TableBody>
                     {usersList.map((user) => (
-                      <TableRow key={user.id} className="border-white/5 hover:bg-[#f6cf62]/[0.02]">
+                      <TableRow key={user.id} className="border-border hover:bg-primary/[0.02]">
                         <TableCell className="font-medium">{user.email}</TableCell>
                         <TableCell>
                           <Badge
                             className={
                               user.role === "ADMIN"
                                 ? "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/15"
-                                : "bg-[#f6cf62]/10 text-[#f6cf62] border-[#f6cf62]/20 hover:bg-[#f6cf62]/15"
+                                : "bg-primary/10 text-primary border-primary/20 hover:bg-primary/15"
                             }
                           >
                             {user.role}
@@ -232,7 +232,7 @@ export default async function AdminPage() {
                 {" • "}
                 <span className="text-red-400">{usersList.filter((u) => u.role === "ADMIN").length} admin</span>
                 {" • "}
-                <span className="text-[#f6cf62]">{usersList.filter((u) => u.role === "OWNER").length} owner</span>
+                <span className="text-primary">{usersList.filter((u) => u.role === "OWNER").length} owner</span>
               </div>
             )}
           </TabsContent>
@@ -258,11 +258,11 @@ export default async function AdminPage() {
               </div>
             </div>
 
-            <div className="border border-white/5 rounded-xl bg-card/20 overflow-hidden">
+            <div className="border border-border rounded-xl bg-card/20 overflow-hidden">
               {restaurantsList.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                  <div className="w-16 h-16 rounded-full bg-[#f6cf62]/10 flex items-center justify-center mb-4">
-                    <UtensilsCrossed className="w-8 h-8 text-[#f6cf62]/50" />
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <UtensilsCrossed className="w-8 h-8 text-primary/50" />
                   </div>
                   <h3 className="font-semibold text-lg mb-1">Aucun restaurant</h3>
                   <p className="text-muted-foreground text-sm">
@@ -274,7 +274,7 @@ export default async function AdminPage() {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-white/5 hover:bg-transparent">
+                    <TableRow className="border-border hover:bg-transparent">
                       <TableHead className="text-muted-foreground font-medium">Restaurant</TableHead>
                       <TableHead className="text-muted-foreground font-medium">Gérant</TableHead>
                       <TableHead className="text-muted-foreground font-medium">Téléphone</TableHead>
@@ -284,7 +284,7 @@ export default async function AdminPage() {
                   </TableHeader>
                   <TableBody>
                     {restaurantsList.map((restaurant) => (
-                      <TableRow key={restaurant.id} className="border-white/5 hover:bg-[#f6cf62]/[0.02]">
+                      <TableRow key={restaurant.id} className="border-border hover:bg-primary/[0.02]">
                         <TableCell className="font-medium">
                           <div>
                             <div>{restaurant.name}</div>

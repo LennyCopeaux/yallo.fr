@@ -54,11 +54,11 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Yellow glow - Top right, off-canvas for ambiance */}
-        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-[#f6cf62]/15 blur-[120px]" />
+        {/* Primary glow - Top right, off-canvas for ambiance */}
+        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-primary/15 blur-[120px]" />
         
         {/* Subtle bottom left glow */}
-        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-[#f6cf62]/5 blur-[100px]" />
+        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-primary/5 blur-[100px]" />
         
         {/* Grid overlay */}
         <div 
@@ -70,7 +70,7 @@ export default function LoginPage() {
         />
       </div>
 
-      <Card className="w-full max-w-md mx-4 relative z-10 bg-card/50 border-white/5 backdrop-blur-xl noise">
+      <Card className="w-full max-w-md mx-4 relative z-10 bg-card/50 border-border/50 backdrop-blur-xl noise">
         <CardHeader className="text-center space-y-2 pb-2">
           <Link href="/" className="inline-block">
             <CardTitle className="text-3xl font-black gradient-text">
@@ -96,7 +96,7 @@ export default function LoginPage() {
                 required
                 autoComplete="email"
                 disabled={isLoading}
-                className="bg-background/50 border-white/10 focus:border-[#f6cf62]/50 focus:ring-[#f6cf62]/20 h-11"
+                className="bg-background/50 border-border focus:border-ring focus:ring-ring/20 h-11"
               />
             </div>
             <div className="space-y-2">
@@ -113,7 +113,7 @@ export default function LoginPage() {
                   required
                   autoComplete="current-password"
                   disabled={isLoading}
-                  className="bg-background/50 border-white/10 focus:border-[#f6cf62]/50 focus:ring-[#f6cf62]/20 h-11 pr-10"
+                  className="bg-background/50 border-border focus:border-ring focus:ring-ring/20 h-11 pr-10"
                 />
                 <button
                   type="button"
@@ -138,7 +138,7 @@ export default function LoginPage() {
             
             <Button
               type="submit"
-              className="w-full h-11 bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90 font-semibold btn-shine"
+              className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold btn-shine"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -153,7 +153,7 @@ export default function LoginPage() {
           </form>
           
           <div className="mt-6 text-center">
-            <MarketingHomeLink className="text-sm text-muted-foreground hover:text-[#f6cf62] transition-colors">
+            <MarketingHomeLink className="text-sm text-muted-foreground hover:text-primary transition-colors">
               ← Retour à l&apos;accueil
             </MarketingHomeLink>
           </div>

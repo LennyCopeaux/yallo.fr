@@ -39,7 +39,7 @@ export default async function MenuPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-white/5 bg-card/50 backdrop-blur-xl sticky top-0 z-10">
+      <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
@@ -48,7 +48,7 @@ export default async function MenuPage() {
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#f6cf62] animate-pulse-dot" />
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse-dot" />
                 <span className="text-sm text-muted-foreground hidden sm:block">
                   {session.user.email}
                 </span>

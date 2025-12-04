@@ -86,17 +86,17 @@ export function MenuClientV2({ menuData }: MenuClientV2Props) {
 
       {/* Tabs principaux */}
       <Tabs defaultValue="ingredients" className="w-full">
-        <TabsList className="bg-card/30 border-white/5 p-1 h-12">
+        <TabsList className="bg-card/30 border-border p-1 h-12">
           <TabsTrigger
             value="ingredients"
-            className="flex items-center gap-2 data-[state=active]:bg-[#f6cf62]/10 data-[state=active]:text-[#f6cf62] h-10"
+            className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary h-10"
           >
             <ShoppingCart className="w-4 h-4" />
             Ingrédients & Stock
           </TabsTrigger>
           <TabsTrigger
             value="products"
-            className="flex items-center gap-2 data-[state=active]:bg-[#f6cf62]/10 data-[state=active]:text-[#f6cf62] h-10"
+            className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary h-10"
           >
             <Utensils className="w-4 h-4" />
             Produits

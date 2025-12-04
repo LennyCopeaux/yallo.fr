@@ -95,13 +95,13 @@ export function RestaurantActionsCell({ restaurant, owners }: RestaurantActionsC
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/5">
+          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-accent">
             <MoreHorizontal className="h-4 w-4" />
             <span className="sr-only">Actions</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="bg-card border-white/10">
-          <DropdownMenuItem onClick={() => setIsEditOpen(true)} className="hover:bg-white/5">
+        <DropdownMenuContent align="end" className="bg-card border-border">
+          <DropdownMenuItem onClick={() => setIsEditOpen(true)} className="hover:bg-accent">
             <Pencil className="mr-2 h-4 w-4" />
             Modifier
           </DropdownMenuItem>
@@ -117,7 +117,7 @@ export function RestaurantActionsCell({ restaurant, owners }: RestaurantActionsC
 
       {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="bg-card/95 backdrop-blur-xl border-white/10">
+        <DialogContent className="bg-card/95 backdrop-blur-xl border-border">
           <DialogHeader>
             <DialogTitle>Modifier le restaurant</DialogTitle>
             <DialogDescription>
@@ -132,7 +132,7 @@ export function RestaurantActionsCell({ restaurant, owners }: RestaurantActionsC
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={isLoading}
-                className="bg-background/50 border-white/10 focus:border-[#f6cf62]/50"
+                className="bg-background/50 border-border focus:border-ring"
               />
             </div>
             <div className="space-y-2">
@@ -143,20 +143,20 @@ export function RestaurantActionsCell({ restaurant, owners }: RestaurantActionsC
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 disabled={isLoading}
-                className="bg-background/50 border-white/10 focus:border-[#f6cf62]/50"
+                className="bg-background/50 border-border focus:border-ring"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-owner">Propriétaire</Label>
               <Select value={ownerId} onValueChange={setOwnerId} disabled={isLoading}>
-                <SelectTrigger className="bg-background/50 border-white/10 focus:border-[#f6cf62]/50">
+                <SelectTrigger className="bg-background/50 border-border focus:border-ring">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-white/10">
+                <SelectContent className="bg-card border-border">
                   {owners.map((owner) => (
                     <SelectItem key={owner.id} value={owner.id}>
                       <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-[#f6cf62]" />
+                        <User className="h-4 w-4 text-primary" />
                         {owner.email}
                       </div>
                     </SelectItem>
@@ -170,14 +170,14 @@ export function RestaurantActionsCell({ restaurant, owners }: RestaurantActionsC
               variant="outline"
               onClick={() => setIsEditOpen(false)}
               disabled={isLoading}
-              className="border-white/10 hover:bg-white/5"
+              className="border-border hover:bg-accent"
             >
               Annuler
             </Button>
             <Button 
               onClick={handleUpdate} 
               disabled={isLoading}
-              className="bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isLoading ? (
                 <>
@@ -194,7 +194,7 @@ export function RestaurantActionsCell({ restaurant, owners }: RestaurantActionsC
 
       {/* Delete Alert Dialog */}
       <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-white/10">
+        <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-border">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-destructive">
               Supprimer le restaurant ?
@@ -205,7 +205,7 @@ export function RestaurantActionsCell({ restaurant, owners }: RestaurantActionsC
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading} className="border-white/10 hover:bg-white/5">
+            <AlertDialogCancel disabled={isLoading} className="border-border hover:bg-accent">
               Annuler
             </AlertDialogCancel>
             <AlertDialogAction
