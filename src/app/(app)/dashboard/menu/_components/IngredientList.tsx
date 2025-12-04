@@ -235,7 +235,7 @@ export function IngredientList({ ingredients, ingredientCategories }: Ingredient
   const isLoading = (id: string) => loadingId === id || isPending;
 
   return (
-    <Card className="bg-card/30 border-white/5">
+    <Card className="bg-card/30 border-border">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <ShoppingCart className="w-5 h-5" />
@@ -324,7 +324,7 @@ export function IngredientList({ ingredients, ingredientCategories }: Ingredient
                   setIngredientIsAvailable(true);
                   setSelectedIngredientCategoryId("");
                 }}
-                className="bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Ajouter un ingrédient
@@ -466,7 +466,7 @@ export function IngredientList({ ingredients, ingredientCategories }: Ingredient
             const categoryIngredients = ingredientsByCategory[category.id] || [];
             return (
               <div key={category.id} className="space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                <div className="flex items-center justify-between pb-2 border-b border-border">
                   <div className="flex items-center gap-2">
                     <h3 className="text-lg font-semibold text-primary">{category.name}</h3>
                     <span className="text-sm text-muted-foreground">
@@ -512,7 +512,7 @@ export function IngredientList({ ingredients, ingredientCategories }: Ingredient
                         className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${
                           !ingredient.isAvailable
                             ? "opacity-50 bg-destructive/5 border-destructive/20"
-                            : "bg-background/50 border-white/5 hover:border-white/10"
+                            : "bg-background/50 border-border hover:border-border"
                         }`}
                       >
                         <div className="flex-1 min-w-0">
@@ -521,7 +521,7 @@ export function IngredientList({ ingredients, ingredientCategories }: Ingredient
 
                         <div className="flex items-center gap-2 min-w-[100px]">
                           {ingredient.price > 0 && (
-                            <span className="text-sm font-medium text-[#f6cf62]">
+                            <span className="text-sm font-medium text-primary">
                               {formatPrice(ingredient.price)}
                             </span>
                           )}
@@ -567,7 +567,7 @@ export function IngredientList({ ingredients, ingredientCategories }: Ingredient
                                 className="scale-110"
                               />
                               <span className={`text-sm font-medium ${
-                                ingredient.isAvailable ? "text-[#f6cf62]" : "text-muted-foreground"
+                                ingredient.isAvailable ? "text-primary" : "text-muted-foreground"
                               }`}>
                                 {ingredient.isAvailable ? "Disponible" : "Épuisé"}
                               </span>

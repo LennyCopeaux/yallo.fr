@@ -109,7 +109,7 @@ export default function UpdatePasswordPage() {
   if (!isMounted || status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-[#f6cf62]" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -118,7 +118,7 @@ export default function UpdatePasswordPage() {
   if (!session) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-[#f6cf62]" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -127,7 +127,7 @@ export default function UpdatePasswordPage() {
   if (session.user.mustChangePassword === false) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-[#f6cf62]" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -136,8 +136,8 @@ export default function UpdatePasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-[#f6cf62]/15 blur-[120px]" />
-        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-[#f6cf62]/5 blur-[100px]" />
+        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-primary/15 blur-[120px]" />
+        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-primary/5 blur-[100px]" />
         <div 
           className="absolute inset-0" 
           style={{ 
@@ -147,12 +147,12 @@ export default function UpdatePasswordPage() {
         />
       </div>
 
-      <Card className="w-full max-w-md mx-4 relative z-10 bg-card/50 border-white/5 backdrop-blur-xl noise">
+      <Card className="w-full max-w-md mx-4 relative z-10 bg-card/50 border-border/50 backdrop-blur-xl noise">
         <CardHeader className="text-center space-y-2 pb-2">
-          <div className="w-16 h-16 rounded-full bg-[#f6cf62]/10 flex items-center justify-center mx-auto mb-2">
-            <Shield className="w-8 h-8 text-[#f6cf62]" />
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+            <Shield className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold text-zinc-950 dark:text-white">
+          <CardTitle className="text-2xl font-bold text-foreground">
             Changer votre mot de passe
           </CardTitle>
           <CardDescription className="text-muted-foreground">
@@ -176,7 +176,7 @@ export default function UpdatePasswordPage() {
                   required
                   autoComplete="new-password"
                   disabled={isLoading}
-                  className="bg-background/50 border-white/10 focus:border-[#f6cf62]/50 focus:ring-[#f6cf62]/20 h-11 pr-10"
+                  className="bg-background/50 border-border focus:border-ring focus:ring-ring/20 h-11 pr-10"
                   minLength={6}
                 />
                 <button
@@ -211,7 +211,7 @@ export default function UpdatePasswordPage() {
                   required
                   autoComplete="new-password"
                   disabled={isLoading}
-                  className="bg-background/50 border-white/10 focus:border-[#f6cf62]/50 focus:ring-[#f6cf62]/20 h-11 pr-10"
+                  className="bg-background/50 border-border focus:border-ring focus:ring-ring/20 h-11 pr-10"
                   minLength={6}
                 />
                 <button
@@ -237,7 +237,7 @@ export default function UpdatePasswordPage() {
             
             <Button
               type="submit"
-              className="w-full h-11 bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90 font-semibold btn-shine"
+              className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold btn-shine"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -253,7 +253,7 @@ export default function UpdatePasswordPage() {
           
           <div className="mt-6 text-center">
             <p className="text-xs text-muted-foreground">
-              Connecté en tant que : <span className="text-zinc-950 dark:text-white font-medium">{session.user.email}</span>
+              Connecté en tant que : <span className="text-foreground font-medium">{session.user.email}</span>
             </p>
           </div>
         </CardContent>

@@ -60,13 +60,13 @@ export function RestaurantStatusCell({
             disabled={isLoading}
             className={`scale-110 ${
               currentStatus
-                ? "data-[state=checked]:bg-[#f6cf62]"
-                : "data-[state=unchecked]:bg-white/10"
+                ? "data-[state=checked]:bg-primary"
+                : "data-[state=unchecked]:bg-muted"
             }`}
           />
           <span
             className={`text-sm font-medium ${
-              currentStatus ? "text-[#f6cf62]" : "text-muted-foreground"
+              currentStatus ? "text-primary" : "text-muted-foreground"
             }`}
           >
             {currentStatus ? "Actif" : "Inactif"}

@@ -26,7 +26,7 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-white/5 bg-card/50 backdrop-blur-xl sticky top-0 z-10">
+      <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
@@ -35,7 +35,7 @@ export default async function DashboardPage() {
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#f6cf62] animate-pulse-dot" />
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse-dot" />
                 <span className="text-sm text-muted-foreground hidden sm:block">
                   {session.user.email}
                 </span>
@@ -49,7 +49,7 @@ export default async function DashboardPage() {
                   await signOut({ redirectTo: loginUrl });
                 }}
               >
-                <Button type="submit" variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-white/5">
+                <Button type="submit" variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent">
                   <LogOut className="w-4 h-4" />
                   <span className="hidden sm:inline ml-2">Déconnexion</span>
                 </Button>
@@ -67,7 +67,7 @@ export default async function DashboardPage() {
             Bienvenue 👋
           </h1>
           <p className="text-muted-foreground">
-            Votre assistant vocal est <span className="text-[#f6cf62]">en ligne</span> et prêt à prendre des commandes.
+            Votre assistant vocal est <span className="text-primary">en ligne</span> et prêt à prendre des commandes.
           </p>
         </div>
 
@@ -93,7 +93,7 @@ export default async function DashboardPage() {
               change: "Bientôt disponible" 
             },
           ].map((stat, i) => (
-            <Card key={i} className="bg-card/30 border-white/5 noise">
+            <Card key={i} className="bg-card/30 border-border noise">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div>
@@ -101,8 +101,8 @@ export default async function DashboardPage() {
                     <p className="text-3xl font-bold">{stat.value}</p>
                     <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-[#f6cf62]/10 flex items-center justify-center">
-                    <stat.icon className="w-5 h-5 text-[#f6cf62]" />
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <stat.icon className="w-5 h-5 text-primary" />
                   </div>
                 </div>
               </CardContent>
@@ -113,7 +113,7 @@ export default async function DashboardPage() {
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <Link href="/dashboard/menu">
-            <Card className="bg-card/30 border-white/5 noise hover:border-[#f6cf62]/30 transition-all cursor-pointer h-full">
+            <Card className="bg-card/30 border-border noise hover:border-primary/30 transition-all cursor-pointer h-full">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div>
@@ -122,8 +122,8 @@ export default async function DashboardPage() {
                       Gérez vos produits, catégories et disponibilité
                     </p>
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-[#f6cf62]/10 flex items-center justify-center">
-                    <Utensils className="w-6 h-6 text-[#f6cf62]" />
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Utensils className="w-6 h-6 text-primary" />
                   </div>
                 </div>
               </CardContent>
@@ -132,13 +132,13 @@ export default async function DashboardPage() {
         </div>
 
         {/* Coming Soon Card */}
-        <Card className="bg-card/30 border-white/5 noise">
+        <Card className="bg-card/30 border-border noise">
           <CardHeader>
             <CardTitle className="text-xl">Dashboard Restaurant</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-20 h-20 rounded-full bg-[#f6cf62]/10 flex items-center justify-center mb-6">
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
                 <span className="text-4xl">🚀</span>
               </div>
               <h3 className="text-xl font-semibold mb-2">En cours de développement</h3>
@@ -147,8 +147,8 @@ export default async function DashboardPage() {
                 la gestion des commandes et le suivi des performances arrive bientôt.
               </p>
               <div className="mt-6 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#f6cf62] animate-pulse-dot" />
-                <span className="text-sm text-[#f6cf62]">Votre IA est active et prend les commandes</span>
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse-dot" />
+                <span className="text-sm text-primary">Votre IA est active et prend les commandes</span>
               </div>
             </div>
           </CardContent>

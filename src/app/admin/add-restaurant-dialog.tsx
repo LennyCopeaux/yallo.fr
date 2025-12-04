@@ -69,13 +69,13 @@ export function AddRestaurantDialog({ owners }: AddRestaurantDialogProps) {
       <DialogTrigger asChild>
         <Button 
           disabled={!hasOwners}
-          className="bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90 btn-shine font-semibold disabled:opacity-50"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 btn-shine font-semibold disabled:opacity-50"
         >
           <Plus className="w-4 h-4 mr-2" />
           Créer un restaurant
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-card/95 backdrop-blur-xl border-white/10">
+      <DialogContent className="bg-card/95 backdrop-blur-xl border-border">
         <DialogHeader>
           <DialogTitle>Nouveau restaurant</DialogTitle>
           <DialogDescription>
@@ -92,7 +92,7 @@ export function AddRestaurantDialog({ owners }: AddRestaurantDialogProps) {
                 placeholder="Istanbul Kebab Bordeaux"
                 required
                 disabled={isLoading}
-                className="bg-background/50 border-white/10 focus:border-[#f6cf62]/50"
+                className="bg-background/50 border-border focus:border-ring"
               />
             </div>
 
@@ -105,7 +105,7 @@ export function AddRestaurantDialog({ owners }: AddRestaurantDialogProps) {
                 placeholder="+33612345678"
                 required
                 disabled={isLoading}
-                className="bg-background/50 border-white/10 focus:border-[#f6cf62]/50"
+                className="bg-background/50 border-border focus:border-ring"
               />
               <p className="text-xs text-muted-foreground">
                 Numéro qui recevra les commandes
@@ -120,14 +120,14 @@ export function AddRestaurantDialog({ owners }: AddRestaurantDialogProps) {
                 disabled={isLoading}
                 required
               >
-                <SelectTrigger className="bg-background/50 border-white/10 focus:border-[#f6cf62]/50">
+                <SelectTrigger className="bg-background/50 border-border focus:border-ring">
                   <SelectValue placeholder="Sélectionner un propriétaire" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-white/10">
+                <SelectContent className="bg-card border-border">
                   {owners.map((owner) => (
                     <SelectItem key={owner.id} value={owner.id}>
                       <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-[#f6cf62]" />
+                        <User className="w-4 h-4 text-primary" />
                         {owner.email}
                       </div>
                     </SelectItem>
@@ -152,14 +152,14 @@ export function AddRestaurantDialog({ owners }: AddRestaurantDialogProps) {
               variant="outline"
               onClick={() => setOpen(false)}
               disabled={isLoading}
-              className="border-white/10 hover:bg-white/5"
+              className="border-border hover:bg-accent"
             >
               Annuler
             </Button>
             <Button 
               type="submit" 
               disabled={isLoading || !selectedOwnerId}
-              className="bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isLoading ? (
                 <>

@@ -40,7 +40,7 @@ export default function MarketingLayout({
                 <div className="flex items-center gap-2 sm:gap-3">
                   <ModeToggle />
                   <AppLoginButton />
-                  <Button size="sm" className="bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90 btn-shine font-semibold">
+                  <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 btn-shine font-semibold">
                     Démo gratuite
                   </Button>
                 </div>
