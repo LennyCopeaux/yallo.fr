@@ -20,28 +20,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createUser } from "./actions";
-import { Plus, Loader2 } from "lucide-react";
+import { createUser } from "../../actions";
+import { Plus, Loader2, Shield, User } from "lucide-react";
+import { toast } from "sonner";
 
 export function AddUserDialog() {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [role, setRole] = useState<string>("");
+  const [selectedRole, setSelectedRole] = useState<string>("");
 
   async function handleSubmit(formData: FormData) {
-    setError("");
-    setIsLoading(true);
+    if (!selectedRole) {
+      toast.error("Veuillez sélectionner un rôle");
+      return;
+    }
 
-    formData.set("role", role);
+    setIsLoading(true);
+    formData.set("role", selectedRole);
 
     const result = await createUser(formData);
 
     if (result.success) {
+      toast.success("Utilisateur créé - Un email a été envoyé avec les identifiants");
       setOpen(false);
-      setRole("");
+      setSelectedRole("");
     } else {
-      setError(result.error || "Une erreur est survenue");
+      toast.error(result.error || "Une erreur est survenue");
     }
 
     setIsLoading(false);
@@ -51,27 +55,26 @@ export function AddUserDialog() {
     <Dialog open={open} onOpenChange={(isOpen) => {
       setOpen(isOpen);
       if (!isOpen) {
-        setError("");
-        setRole("");
+        setSelectedRole("");
       }
     }}>
       <DialogTrigger asChild>
-        <Button className="bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90 btn-shine font-semibold">
+        <Button className="bg-primary text-black hover:bg-primary/90 font-semibold">
           <Plus className="w-4 h-4 mr-2" />
-          Créer un utilisateur
+          Nouvel utilisateur
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-card/95 backdrop-blur-xl border-white/10">
+      <DialogContent className="bg-card/95 backdrop-blur-xl border-border sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Inviter un utilisateur</DialogTitle>
+          <DialogTitle>Créer un utilisateur</DialogTitle>
           <DialogDescription>
-            Un email avec un mot de passe temporaire sera envoyé à l&apos;utilisateur. Il devra le changer lors de sa première connexion.
+            Un email sera envoyé avec un mot de passe temporaire.
           </DialogDescription>
         </DialogHeader>
         <form action={handleSubmit}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email *</Label>
               <Input
                 id="email"
                 name="email"
@@ -79,43 +82,46 @@ export function AddUserDialog() {
                 placeholder="utilisateur@exemple.com"
                 required
                 disabled={isLoading}
-                className="bg-background/50 border-white/10 focus:border-[#f6cf62]/50"
+                className="bg-background/50 border-border focus:border-primary/50"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="role">Rôle</Label>
+              <Label htmlFor="role">Rôle *</Label>
               <Select
-                value={role}
-                onValueChange={setRole}
+                value={selectedRole}
+                onValueChange={setSelectedRole}
                 disabled={isLoading}
                 required
               >
-                <SelectTrigger className="bg-background/50 border-white/10 focus:border-[#f6cf62]/50">
+                <SelectTrigger className="bg-background/50 border-border focus:border-primary/50">
                   <SelectValue placeholder="Sélectionner un rôle" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-white/10">
+                <SelectContent className="bg-card border-border">
                   <SelectItem value="OWNER">
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#f6cf62]" />
-                      OWNER - Gérant
+                      <User className="w-4 h-4 text-primary" />
+                      <div>
+                        <span className="font-medium">Owner</span>
+                        <span className="text-muted-foreground ml-2">— Propriétaire de restaurant</span>
+                      </div>
                     </div>
                   </SelectItem>
                   <SelectItem value="ADMIN">
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-red-500" />
-                      ADMIN - Super admin
+                      <Shield className="w-4 h-4 text-red-400" />
+                      <div>
+                        <span className="font-medium">Admin</span>
+                        <span className="text-muted-foreground ml-2">— Accès complet</span>
+                      </div>
                     </div>
                   </SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            {error && (
-              <p className="text-sm text-center bg-destructive/10 text-destructive p-2 rounded-md border border-destructive/20">
-                {error}
+              <p className="text-xs text-muted-foreground">
+                Les Owners ne peuvent gérer que leur restaurant
               </p>
-            )}
+            </div>
           </div>
 
           <DialogFooter>
@@ -124,14 +130,14 @@ export function AddUserDialog() {
               variant="outline"
               onClick={() => setOpen(false)}
               disabled={isLoading}
-              className="border-white/10 hover:bg-white/5"
+              className="border-border hover:bg-muted/50"
             >
               Annuler
             </Button>
             <Button 
               type="submit" 
-              disabled={isLoading || !role}
-              className="bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90"
+              disabled={isLoading || !selectedRole}
+              className="bg-primary text-black hover:bg-primary/90"
             >
               {isLoading ? (
                 <>
@@ -139,7 +145,7 @@ export function AddUserDialog() {
                   Création...
                 </>
               ) : (
-                "Créer l'utilisateur"
+                "Créer et envoyer l'email"
               )}
             </Button>
           </DialogFooter>
@@ -148,3 +154,4 @@ export function AddUserDialog() {
     </Dialog>
   );
 }
+

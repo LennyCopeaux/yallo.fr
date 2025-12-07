@@ -107,15 +107,15 @@ export function TestimonialsCarousel() {
                     className={cn(
                       "h-full transition-all duration-500 noise",
                       isCenter
-                        ? "bg-card/50 border-[#f6cf62]/40 shadow-lg shadow-[#f6cf62]/10"
-                        : "bg-card/30 border-white/5"
+                        ? "bg-card/50 border-primary/40 shadow-lg shadow-primary/10"
+                        : "bg-card/30 border-border"
                     )}
                   >
                     <CardContent className="p-6">
                       <Quote
                         className={cn(
                           "w-8 h-8 mb-4 transition-colors duration-500",
-                          isCenter ? "text-[#f6cf62]/60" : "text-white/10"
+                          isCenter ? "text-primary/60" : "text-white/10"
                         )}
                       />
                       <div className="flex gap-1 mb-4">
@@ -125,7 +125,7 @@ export function TestimonialsCarousel() {
                             className={cn(
                               "w-4 h-4 transition-colors duration-500",
                               isCenter
-                                ? "fill-[#f6cf62] text-[#f6cf62]"
+                                ? "fill-primary text-primary"
                                 : "fill-white/20 text-white/20"
                             )}
                           />
@@ -144,8 +144,8 @@ export function TestimonialsCarousel() {
                           className={cn(
                             "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500",
                             isCenter
-                              ? "bg-[#f6cf62]/20 text-[#f6cf62]"
-                              : "bg-white/5 text-white/40"
+                              ? "bg-primary/20 text-primary"
+                              : "bg-muted/50 text-white/40"
                           )}
                         >
                           {testimonial.author[0]}
@@ -173,8 +173,8 @@ export function TestimonialsCarousel() {
         </CarouselContent>
         
         {/* Navigation arrows - positioned better */}
-        <CarouselPrevious className="-left-2 sm:-left-4 md:-left-12 bg-card/80 border-white/10 hover:bg-white/10 hover:border-[#f6cf62]/30 text-white backdrop-blur-sm" />
-        <CarouselNext className="-right-2 sm:-right-4 md:-right-12 bg-card/80 border-white/10 hover:bg-white/10 hover:border-[#f6cf62]/30 text-white backdrop-blur-sm" />
+        <CarouselPrevious className="-left-2 sm:-left-4 md:-left-12 bg-card/80 border-border hover:bg-muted hover:border-primary/30 text-white backdrop-blur-sm" />
+        <CarouselNext className="-right-2 sm:-right-4 md:-right-12 bg-card/80 border-border hover:bg-muted hover:border-primary/30 text-white backdrop-blur-sm" />
       </Carousel>
       
       {/* Dots indicator */}
@@ -186,7 +186,7 @@ export function TestimonialsCarousel() {
             className={cn(
               "h-2 rounded-full transition-all duration-300",
               current === index
-                ? "bg-[#f6cf62] w-6"
+                ? "bg-primary w-6"
                 : "bg-white/20 hover:bg-white/40 w-2"
             )}
             aria-label={`Go to slide ${index + 1}`}

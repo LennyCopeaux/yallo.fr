@@ -363,7 +363,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
 
   if (categories.length === 0) {
     return (
-      <Card className="bg-card/30 border-white/5">
+      <Card className="bg-card/30 border-border">
         <CardContent className="flex flex-col items-center justify-center py-12">
           <Package className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
           <p className="text-muted-foreground mb-4">Aucune catégorie de produits</p>
@@ -411,12 +411,12 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
       <Tabs defaultValue={categories[0]?.id} className="w-full">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <TabsList className="bg-card/30 border-white/5 p-1">
+            <TabsList className="bg-card/30 border-border p-1">
               {categories.map((category) => (
                 <TabsTrigger
                   key={category.id}
                   value={category.id}
-                  className="data-[state=active]:bg-[#f6cf62]/10 data-[state=active]:text-[#f6cf62]"
+                  className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
                 >
                   {category.name}
                 </TabsTrigger>
@@ -593,7 +593,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
             </div>
 
             {category.variations.length === 0 ? (
-              <Card className="bg-card/30 border-white/5">
+              <Card className="bg-card/30 border-border">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Package className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
                   <p className="text-muted-foreground">Aucune variation dans cette catégorie</p>
@@ -602,7 +602,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
             ) : (
               <div className="space-y-4">
                 {category.variations.map((variation) => (
-                  <Card key={variation.id} className="bg-card/20 border-white/5">
+                  <Card key={variation.id} className="bg-card/20 border-border">
                     <CardContent className="p-4 space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
@@ -636,7 +636,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                             </div>
                           ) : (
                             <div className="flex items-center gap-2 mt-2">
-                              <span className="text-2xl font-bold text-[#f6cf62]">
+                              <span className="text-2xl font-bold text-primary">
                                 {(variation.price / 100).toFixed(2)} €
                               </span>
                               <Button
@@ -679,7 +679,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
 
                       {/* Groupes de modificateurs */}
                       {variation.modifierGroups.length > 0 && (
-                        <div className="space-y-3 pt-2 border-t border-white/5">
+                        <div className="space-y-3 pt-2 border-t border-border">
                           {variation.modifierGroups.map((group) => (
                             <div key={group.id} className="space-y-2">
                               <div className="flex items-center justify-between">
@@ -724,7 +724,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                                       <span>{ingredient.name}</span>
                                       <div className="flex items-center gap-2">
                                         {modifier.priceExtra > 0 && (
-                                          <span className="text-[#f6cf62] font-medium">
+                                          <span className="text-primary font-medium">
                                             {formatPrice(modifier.priceExtra)}
                                           </span>
                                         )}
@@ -752,7 +752,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                       )}
 
                       {/* Bouton pour ajouter une catégorie d'ingrédients */}
-                      <div className="pt-2 border-t border-white/5">
+                      <div className="pt-2 border-t border-border">
                         <Dialog
                           open={modifierGroupDialogOpen && selectedVariationId === variation.id}
                           onOpenChange={(open) => {
@@ -890,7 +890,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                 </div>
 
                 {editingVariationFull.modifierGroups.map((group) => (
-                  <Card key={group.id} className="bg-card/20 border-white/5">
+                  <Card key={group.id} className="bg-card/20 border-border">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base">{group.ingredientCategory.name}</CardTitle>
@@ -928,7 +928,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                               <span className="text-sm">{ingredient.name}</span>
                               <div className="flex items-center gap-2">
                                 {modifier.priceExtra > 0 && (
-                                  <span className="text-sm text-[#f6cf62] font-medium">
+                                  <span className="text-sm text-primary font-medium">
                                     {formatPrice(modifier.priceExtra)}
                                   </span>
                                 )}

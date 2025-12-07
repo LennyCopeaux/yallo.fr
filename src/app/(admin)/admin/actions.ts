@@ -1,0 +1,515 @@
+"use server";
+
+import { auth, signIn } from "@/auth";
+import { db } from "@/db";
+import { users, restaurants, RestaurantStatus, RestaurantPlan } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+import { revalidatePath } from "next/cache";
+import { sendWelcomeEmail } from "@/lib/mail";
+import { z } from "zod";
+import { cookies } from "next/headers";
+
+// ============================================
+// SCHEMAS ZOD
+// ============================================
+
+const createUserSchema = z.object({
+  email: z.string().email("Email invalide"),
+  role: z.enum(["ADMIN", "OWNER"], { required_error: "Rôle requis" }),
+});
+
+const updateUserSchema = z.object({
+  email: z.string().email("Email invalide").optional(),
+  role: z.enum(["ADMIN", "OWNER"]).optional(),
+});
+
+const createRestaurantSchema = z.object({
+  name: z.string().min(2, "Nom trop court").max(100, "Nom trop long"),
+  phoneNumber: z.string().min(10, "Numéro invalide"),
+  ownerId: z.string().uuid("ID propriétaire invalide"),
+  address: z.string().optional(),
+});
+
+const updateRestaurantGeneralSchema = z.object({
+  name: z.string().min(2, "Nom trop court").max(100, "Nom trop long").optional(),
+  slug: z.string().min(2, "Slug trop court").max(50, "Slug trop long").optional(),
+  address: z.string().max(500, "Adresse trop longue").optional().nullable(),
+  ownerId: z.string().uuid("ID propriétaire invalide").optional(),
+  status: z.enum(["active", "suspended", "onboarding"]).optional(),
+});
+
+const updateRestaurantAISchema = z.object({
+  vapiAssistantId: z.string().max(100).optional().nullable(),
+  systemPrompt: z.string().max(10000, "Prompt trop long").optional().nullable(),
+  menuContext: z.string().max(50000, "Menu trop long").optional().nullable(),
+});
+
+const updateRestaurantTelephonySchema = z.object({
+  phoneNumber: z.string().min(10, "Numéro invalide").optional(),
+  twilioPhoneNumber: z.string().max(20).optional().nullable(),
+  forwardingPhoneNumber: z.string().max(20).optional().nullable(),
+  businessHours: z.string().max(5000).optional().nullable(),
+});
+
+const updateRestaurantBillingSchema = z.object({
+  plan: z.enum(["fixed", "commission"]).optional(),
+  commissionRate: z.number().min(0).max(100).optional().nullable(),
+  stripeCustomerId: z.string().max(100).optional().nullable(),
+});
+
+// Type de retour standardisé
+export type ActionResult<T = void> = {
+  success: boolean;
+  error?: string;
+  data?: T;
+};
+
+// ============================================
+// UTILS
+// ============================================
+
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .trim();
+}
+
+function generateTempPassword(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  let password = "";
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
+
+async function requireAdmin() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    throw new Error("Non autorisé");
+  }
+  return session;
+}
+
+// ============================================
+// USERS - CRUD
+// ============================================
+
+export async function createUser(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    
+    const parsed = createUserSchema.safeParse({
+      email: formData.get("email"),
+      role: formData.get("role"),
+    });
+
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || "Données invalides" };
+    }
+
+    const { email, role } = parsed.data;
+    const tempPassword = generateTempPassword();
+
+    // Envoie l'email AVANT de créer l'utilisateur
+    await sendWelcomeEmail(email, tempPassword);
+
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+    await db.insert(users).values({
+      email,
+      passwordHash,
+      role,
+      mustChangePassword: true,
+    });
+
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur création utilisateur:", error);
+    if (error instanceof Error) {
+      if (error.message.includes("users_email_unique")) {
+        return { success: false, error: "Cet email est déjà utilisé" };
+      }
+      if (error.message.includes("email")) {
+        return { success: false, error: "Erreur lors de l'envoi de l'email" };
+      }
+    }
+    return { success: false, error: "Erreur lors de la création" };
+  }
+}
+
+export async function updateUser(
+  id: string,
+  data: z.infer<typeof updateUserSchema>
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    if (!id) {
+      return { success: false, error: "ID utilisateur requis" };
+    }
+
+    const parsed = updateUserSchema.safeParse(data);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || "Données invalides" };
+    }
+
+    const updateData: Partial<{ email: string; role: "ADMIN" | "OWNER" }> = {};
+    if (parsed.data.email) updateData.email = parsed.data.email;
+    if (parsed.data.role) updateData.role = parsed.data.role;
+
+    if (Object.keys(updateData).length === 0) {
+      return { success: false, error: "Aucune donnée à mettre à jour" };
+    }
+
+    await db.update(users).set(updateData).where(eq(users.id, id));
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur mise à jour utilisateur:", error);
+    if (error instanceof Error && error.message.includes("users_email_unique")) {
+      return { success: false, error: "Cet email est déjà utilisé" };
+    }
+    return { success: false, error: "Erreur lors de la mise à jour" };
+  }
+}
+
+export async function deleteUser(id: string): Promise<ActionResult> {
+  try {
+    const session = await requireAdmin();
+
+    if (!id) {
+      return { success: false, error: "ID utilisateur requis" };
+    }
+
+    if (session.user.id === id) {
+      return { success: false, error: "Vous ne pouvez pas vous supprimer vous-même" };
+    }
+
+    await db.delete(users).where(eq(users.id, id));
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur suppression utilisateur:", error);
+    return { success: false, error: "Erreur lors de la suppression" };
+  }
+}
+
+// ============================================
+// RESTAURANTS - CRUD
+// ============================================
+
+export async function createRestaurant(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    const parsed = createRestaurantSchema.safeParse({
+      name: formData.get("name"),
+      phoneNumber: formData.get("phoneNumber"),
+      ownerId: formData.get("ownerId"),
+      address: formData.get("address") || undefined,
+    });
+
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || "Données invalides" };
+    }
+
+    const { name, phoneNumber, ownerId, address } = parsed.data;
+    const slug = generateSlug(name);
+
+    await db.insert(restaurants).values({
+      name,
+      slug,
+      phoneNumber,
+      ownerId,
+      address: address || null,
+      status: "onboarding",
+    });
+
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur création restaurant:", error);
+    if (error instanceof Error && error.message.includes("restaurants_slug_unique")) {
+      return { success: false, error: "Un restaurant avec ce nom existe déjà" };
+    }
+    return { success: false, error: "Erreur lors de la création" };
+  }
+}
+
+export async function updateRestaurantGeneral(
+  id: string,
+  data: z.infer<typeof updateRestaurantGeneralSchema>
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    if (!id) {
+      return { success: false, error: "ID restaurant requis" };
+    }
+
+    const parsed = updateRestaurantGeneralSchema.safeParse(data);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || "Données invalides" };
+    }
+
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+
+    if (parsed.data.name !== undefined) {
+      updateData.name = parsed.data.name;
+      // Génère un nouveau slug si pas de slug personnalisé fourni
+      if (!parsed.data.slug) {
+        updateData.slug = generateSlug(parsed.data.name);
+      }
+    }
+    if (parsed.data.slug !== undefined) updateData.slug = parsed.data.slug;
+    if (parsed.data.address !== undefined) updateData.address = parsed.data.address;
+    if (parsed.data.ownerId !== undefined) updateData.ownerId = parsed.data.ownerId;
+    if (parsed.data.status !== undefined) {
+      updateData.status = parsed.data.status as RestaurantStatus;
+      // Sync isActive avec status
+      updateData.isActive = parsed.data.status === "active";
+    }
+
+    await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
+    revalidatePath("/admin");
+    revalidatePath(`/admin/restaurants/${id}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur mise à jour restaurant:", error);
+    if (error instanceof Error && error.message.includes("restaurants_slug_unique")) {
+      return { success: false, error: "Un restaurant avec ce slug existe déjà" };
+    }
+    return { success: false, error: "Erreur lors de la mise à jour" };
+  }
+}
+
+export async function updateRestaurantAI(
+  id: string,
+  data: z.infer<typeof updateRestaurantAISchema>
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    if (!id) {
+      return { success: false, error: "ID restaurant requis" };
+    }
+
+    const parsed = updateRestaurantAISchema.safeParse(data);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || "Données invalides" };
+    }
+
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+
+    if (parsed.data.vapiAssistantId !== undefined) updateData.vapiAssistantId = parsed.data.vapiAssistantId;
+    if (parsed.data.systemPrompt !== undefined) updateData.systemPrompt = parsed.data.systemPrompt;
+    if (parsed.data.menuContext !== undefined) updateData.menuContext = parsed.data.menuContext;
+
+    await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
+    revalidatePath("/admin");
+    revalidatePath(`/admin/restaurants/${id}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur mise à jour IA restaurant:", error);
+    return { success: false, error: "Erreur lors de la mise à jour" };
+  }
+}
+
+export async function updateRestaurantTelephony(
+  id: string,
+  data: z.infer<typeof updateRestaurantTelephonySchema>
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    if (!id) {
+      return { success: false, error: "ID restaurant requis" };
+    }
+
+    const parsed = updateRestaurantTelephonySchema.safeParse(data);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || "Données invalides" };
+    }
+
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+
+    if (parsed.data.phoneNumber !== undefined) updateData.phoneNumber = parsed.data.phoneNumber;
+    if (parsed.data.twilioPhoneNumber !== undefined) updateData.twilioPhoneNumber = parsed.data.twilioPhoneNumber;
+    if (parsed.data.forwardingPhoneNumber !== undefined) updateData.forwardingPhoneNumber = parsed.data.forwardingPhoneNumber;
+    if (parsed.data.businessHours !== undefined) updateData.businessHours = parsed.data.businessHours;
+
+    await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
+    revalidatePath("/admin");
+    revalidatePath(`/admin/restaurants/${id}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur mise à jour téléphonie restaurant:", error);
+    return { success: false, error: "Erreur lors de la mise à jour" };
+  }
+}
+
+export async function updateRestaurantBilling(
+  id: string,
+  data: z.infer<typeof updateRestaurantBillingSchema>
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    if (!id) {
+      return { success: false, error: "ID restaurant requis" };
+    }
+
+    const parsed = updateRestaurantBillingSchema.safeParse(data);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || "Données invalides" };
+    }
+
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+
+    if (parsed.data.plan !== undefined) updateData.plan = parsed.data.plan as RestaurantPlan;
+    if (parsed.data.commissionRate !== undefined) updateData.commissionRate = parsed.data.commissionRate;
+    if (parsed.data.stripeCustomerId !== undefined) updateData.stripeCustomerId = parsed.data.stripeCustomerId;
+
+    await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
+    revalidatePath("/admin");
+    revalidatePath(`/admin/restaurants/${id}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur mise à jour facturation restaurant:", error);
+    return { success: false, error: "Erreur lors de la mise à jour" };
+  }
+}
+
+export async function deleteRestaurant(id: string): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    if (!id) {
+      return { success: false, error: "ID restaurant requis" };
+    }
+
+    await db.delete(restaurants).where(eq(restaurants.id, id));
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur suppression restaurant:", error);
+    return { success: false, error: "Erreur lors de la suppression" };
+  }
+}
+
+// ============================================
+// IMPERSONATION - Se connecter en tant que
+// ============================================
+
+export async function impersonateRestaurant(restaurantId: string): Promise<ActionResult<string>> {
+  try {
+    await requireAdmin();
+
+    if (!restaurantId) {
+      return { success: false, error: "ID restaurant requis" };
+    }
+
+    // Récupère le restaurant et son owner
+    const [restaurant] = await db
+      .select({
+        id: restaurants.id,
+        ownerId: restaurants.ownerId,
+        ownerEmail: users.email,
+      })
+      .from(restaurants)
+      .innerJoin(users, eq(restaurants.ownerId, users.id))
+      .where(eq(restaurants.id, restaurantId))
+      .limit(1);
+
+    if (!restaurant) {
+      return { success: false, error: "Restaurant non trouvé" };
+    }
+
+    // Stocke l'ID admin dans un cookie pour permettre le retour
+    const cookieStore = await cookies();
+    const session = await auth();
+    cookieStore.set("admin_impersonator_id", session!.user.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60, // 1 heure
+    });
+
+    // Retourne l'URL de redirection vers le dashboard
+    return { 
+      success: true, 
+      data: `/dashboard?impersonate=${restaurant.ownerId}` 
+    };
+  } catch (error) {
+    console.error("Erreur impersonation:", error);
+    return { success: false, error: "Erreur lors de l'impersonation" };
+  }
+}
+
+export async function stopImpersonation(): Promise<ActionResult<string>> {
+  try {
+    const cookieStore = await cookies();
+    const impersonatorId = cookieStore.get("admin_impersonator_id")?.value;
+
+    if (!impersonatorId) {
+      return { success: false, error: "Pas d'impersonation active" };
+    }
+
+    // Supprime le cookie
+    cookieStore.delete("admin_impersonator_id");
+
+    return { success: true, data: "/admin" };
+  } catch (error) {
+    console.error("Erreur arrêt impersonation:", error);
+    return { success: false, error: "Erreur lors de l'arrêt de l'impersonation" };
+  }
+}
+
+// ============================================
+// LEGACY - Toggle status (pour compatibilité)
+// ============================================
+
+export async function toggleRestaurantStatus(
+  id: string,
+  isActive: boolean
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    if (!id) {
+      return { success: false, error: "ID restaurant requis" };
+    }
+
+    await db
+      .update(restaurants)
+      .set({ 
+        isActive,
+        status: isActive ? "active" : "suspended",
+        updatedAt: new Date(),
+      })
+      .where(eq(restaurants.id, id));
+
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur toggle statut restaurant:", error);
+    return { success: false, error: "Erreur lors de la mise à jour du statut" };
+  }
+}
+

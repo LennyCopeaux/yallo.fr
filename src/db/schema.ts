@@ -1,11 +1,23 @@
-import { pgTable, text, timestamp, uuid, boolean, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, boolean, integer, pgEnum } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // Enum pour les rôles utilisateur
 export const userRoleEnum = ["ADMIN", "OWNER"] as const;
 export type UserRole = (typeof userRoleEnum)[number];
 
-// Plus besoin de l'enum, on utilise une table ingredient_categories
+// Enum pour les statuts de commande
+export const orderStatusEnum = ["NEW", "PREPARING", "READY", "DELIVERED", "CANCELLED"] as const;
+export type OrderStatus = (typeof orderStatusEnum)[number];
+
+// Enum pour le statut du restaurant
+export const restaurantStatusEnum = ["active", "suspended", "onboarding"] as const;
+export type RestaurantStatus = (typeof restaurantStatusEnum)[number];
+export const restaurantStatusPgEnum = pgEnum("restaurant_status", restaurantStatusEnum);
+
+// Enum pour le plan de facturation
+export const restaurantPlanEnum = ["fixed", "commission"] as const;
+export type RestaurantPlan = (typeof restaurantPlanEnum)[number];
+export const restaurantPlanPgEnum = pgEnum("restaurant_plan", restaurantPlanEnum);
 
 // Table Users
 export const users = pgTable("users", {
@@ -17,17 +29,38 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Table Restaurants
+// Table Restaurants - CRM complet
 export const restaurants = pgTable("restaurants", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   slug: text("slug").unique().notNull(),
-  phoneNumber: text("phone_number").notNull(),
+  address: text("address"), // Adresse physique du restaurant
+  phoneNumber: text("phone_number").notNull(), // Numéro de contact principal
   ownerId: uuid("owner_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  isActive: boolean("is_active").default(true).notNull(),
+  
+  // Statut du compte
+  status: restaurantStatusPgEnum("status").default("onboarding").notNull(),
+  isActive: boolean("is_active").default(true).notNull(), // Legacy - kept for compatibility
+  
+  // Facturation
+  plan: restaurantPlanPgEnum("plan").default("commission"),
+  commissionRate: integer("commission_rate").default(5), // Pourcentage (ex: 5 = 5%)
+  stripeCustomerId: text("stripe_customer_id"),
+  
+  // Intégration Voice AI (Vapi)
+  vapiAssistantId: text("vapi_assistant_id"),
+  systemPrompt: text("system_prompt"), // Surcharge du prompt système spécifique
+  menuContext: text("menu_context"), // Menu brut/JSON pour l'IA
+  
+  // Téléphonie (Twilio)
+  twilioPhoneNumber: text("twilio_phone_number"), // Numéro +33 acheté
+  forwardingPhoneNumber: text("forwarding_phone_number"), // Numéro de secours du patron
+  businessHours: text("business_hours"), // Horaires en JSON
+  
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Relations
@@ -46,6 +79,7 @@ export const restaurantsRelations = relations(restaurants, ({ one, many }) => ({
   categories: many(categories),
   ingredients: many(ingredients),
   ingredientCategories: many(ingredientCategories),
+  orders: many(orders),
 }));
 
 // ============================================
@@ -129,6 +163,41 @@ export const modifiers = pgTable("modifiers", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// ============================================
+// ORDERS TABLES - COMMANDES
+// ============================================
+
+// Table Orders - Commandes
+export const orders = pgTable("orders", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  restaurantId: uuid("restaurant_id")
+    .notNull()
+    .references(() => restaurants.id, { onDelete: "cascade" }),
+  orderNumber: text("order_number").notNull(), // Ex: "#2847"
+  customerName: text("customer_name"), // Nom du client (optionnel)
+  customerPhone: text("customer_phone"), // Téléphone du client
+  status: text("status", { enum: orderStatusEnum }).default("NEW").notNull(),
+  totalAmount: integer("total_amount").default(0).notNull(), // Total en centimes
+  pickupTime: timestamp("pickup_time"), // Heure de retrait prévue
+  notes: text("notes"), // Notes spéciales
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Table Order Items - Lignes de commande
+export const orderItems = pgTable("order_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  orderId: uuid("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  productName: text("product_name").notNull(), // Nom du produit (snapshot)
+  quantity: integer("quantity").default(1).notNull(),
+  unitPrice: integer("unit_price").notNull(), // Prix unitaire en centimes
+  totalPrice: integer("total_price").notNull(), // Prix total de la ligne en centimes
+  options: text("options"), // Options choisies (JSON ou texte) ex: "Sauce blanche, Sans oignon"
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const ingredientCategoriesRelations = relations(ingredientCategories, ({ one, many }) => ({
   restaurant: one(restaurants, {
@@ -190,6 +259,21 @@ export const modifiersRelations = relations(modifiers, ({ one }) => ({
   }),
 }));
 
+export const ordersRelations = relations(orders, ({ one, many }) => ({
+  restaurant: one(restaurants, {
+    fields: [orders.restaurantId],
+    references: [restaurants.id],
+  }),
+  items: many(orderItems),
+}));
+
+export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderItems.orderId],
+    references: [orders.id],
+  }),
+}));
+
 // Types exportés
 export type SelectUser = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
@@ -207,3 +291,7 @@ export type SelectModifierGroup = typeof modifierGroups.$inferSelect;
 export type InsertModifierGroup = typeof modifierGroups.$inferInsert;
 export type SelectModifier = typeof modifiers.$inferSelect;
 export type InsertModifier = typeof modifiers.$inferInsert;
+export type SelectOrder = typeof orders.$inferSelect;
+export type InsertOrder = typeof orders.$inferInsert;
+export type SelectOrderItem = typeof orderItems.$inferSelect;
+export type InsertOrderItem = typeof orderItems.$inferInsert;

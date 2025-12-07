@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import { submitContactForm } from "./actions";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { BackToHomeLink } from "@/components/back-to-home-link";
 
 const contactFormSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
@@ -104,9 +105,10 @@ function ContactForm() {
       <ScrollToTop />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12 w-full">
         <div className="max-w-2xl mx-auto">
-        <Card className="bg-card/50 border-white/10 backdrop-blur-sm">
+        <BackToHomeLink />
+        <Card className="bg-card/50 border-border backdrop-blur-sm">
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold text-white">
+            <CardTitle className="text-3xl font-bold text-foreground">
               Contactez-nous
             </CardTitle>
             <CardDescription className="text-muted-foreground">
@@ -116,13 +118,13 @@ function ContactForm() {
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-white">
+                <Label htmlFor="name" className="text-foreground">
                   Nom <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="name"
                   {...register("name")}
-                  className="bg-background/50 border-white/10"
+                  className="bg-background/50 border-border"
                   placeholder="Votre nom"
                   disabled={isSubmitting}
                 />
@@ -132,14 +134,14 @@ function ContactForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-white">
+                <Label htmlFor="email" className="text-foreground">
                   Email <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="email"
                   type="email"
                   {...register("email")}
-                  className="bg-background/50 border-white/10"
+                  className="bg-background/50 border-border"
                   placeholder="votre@email.com"
                   disabled={isSubmitting}
                 />
@@ -149,7 +151,7 @@ function ContactForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="subject" className="text-white">
+                <Label htmlFor="subject" className="text-foreground">
                   Sujet <span className="text-red-500">*</span>
                 </Label>
                 <Select
@@ -157,7 +159,7 @@ function ContactForm() {
                   onValueChange={(value) => setValue("subject", value)}
                   disabled={isSubmitting}
                 >
-                  <SelectTrigger className="w-full bg-background/50 border-white/10">
+                  <SelectTrigger className="w-full bg-background/50 border-border">
                     <SelectValue placeholder="Sélectionnez un sujet" />
                   </SelectTrigger>
                   <SelectContent>
@@ -174,13 +176,13 @@ function ContactForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="message" className="text-white">
+                <Label htmlFor="message" className="text-foreground">
                   Message <span className="text-red-500">*</span>
                 </Label>
                 <Textarea
                   id="message"
                   {...register("message")}
-                  className="bg-background/50 border-white/10 min-h-[150px]"
+                  className="bg-background/50 border-border min-h-[150px]"
                   placeholder="Votre message..."
                   disabled={isSubmitting}
                 />
@@ -191,7 +193,7 @@ function ContactForm() {
 
               <Button
                 type="submit"
-                className="w-full bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90 font-semibold"
+                className="w-full bg-primary text-black hover:bg-primary/90 font-semibold"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Envoi en cours..." : "Envoyer le message"}
@@ -211,9 +213,9 @@ export default function ContactPage() {
       <Suspense fallback={
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12 w-full">
           <div className="max-w-2xl mx-auto">
-            <Card className="bg-card/50 border-white/10 backdrop-blur-sm">
+            <Card className="bg-card/50 border-border backdrop-blur-sm">
               <CardHeader className="text-center">
-                <CardTitle className="text-3xl font-bold text-white">
+                <CardTitle className="text-3xl font-bold text-foreground">
                   Contactez-nous
                 </CardTitle>
               </CardHeader>

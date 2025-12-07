@@ -78,7 +78,7 @@ export default function Home() {
       {/* ===================== HERO SECTION ===================== */}
       <section className="relative container mx-auto px-4 sm:px-6 lg:px-8 pb-20 sm:pb-32">
         {/* Yellow glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[#f6cf62]/10 blur-[150px] opacity-50 pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/10 blur-[150px] opacity-50 pointer-events-none" />
 
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center relative">
           {/* Left - Content */}
@@ -92,7 +92,7 @@ export default function Home() {
               variants={fadeInUp}
               transition={{ duration: 0.6 }}
             >
-              <Badge className="mb-6 px-4 py-1.5 text-sm bg-[#f6cf62]/10 text-[#f6cf62] border-[#f6cf62]/20 hover:bg-[#f6cf62]/15">
+              <Badge className="mb-6 px-4 py-1.5 text-sm bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                 Nouveau : Support multilingue
               </Badge>
@@ -103,9 +103,9 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-[1.1] tracking-tight"
             >
-              <span className="text-white">Votre prise de</span>{" "}
+              <span className="text-foreground">Votre prise de</span>{" "}
               <span className="gradient-text-hero">commande</span>{" "}
-              <span className="text-white">automatisée</span>
+              <span className="text-foreground">automatisée</span>
             </motion.h1>
 
             <motion.p
@@ -114,9 +114,9 @@ export default function Home() {
               className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed"
             >
               L&apos;IA vocale qui prend les commandes de votre{" "}
-              <span className="text-white font-medium">Fast Food</span> par
+              <span className="text-foreground font-medium">Fast Food</span> par
               téléphone. Disponible{" "}
-              <span className="text-[#f6cf62] font-semibold">24/7</span>, sans
+              <span className="text-primary font-semibold">24/7</span>, sans
               accent, sans attente.
             </motion.p>
 
@@ -127,7 +127,7 @@ export default function Home() {
             >
               <Button
                 size="lg"
-                className="text-base sm:text-lg px-8 h-14 bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90 btn-shine font-semibold glow-yellow-subtle"
+                className="text-base sm:text-lg px-8 h-14 bg-primary text-black hover:bg-primary/90 btn-shine font-semibold glow-yellow-subtle"
               >
                 Essayer la démo
                 <ArrowRight className="w-5 h-5 ml-2" />
@@ -135,7 +135,7 @@ export default function Home() {
               <Button
                 variant="outline"
                 size="lg"
-                className="text-base sm:text-lg px-8 h-14 border-white/10 hover:border-white/20 hover:bg-white/5"
+                className="text-base sm:text-lg px-8 h-14 border-border hover:border-primary/50 hover:bg-accent"
               >
                 Voir une vidéo
               </Button>
@@ -153,7 +153,7 @@ export default function Home() {
                 { value: "24/7", label: "Disponibilité" },
               ].map((stat, i) => (
                 <div key={i} className="text-center">
-                  <div className="text-2xl sm:text-3xl font-bold text-[#f6cf62]">
+                  <div className="text-2xl sm:text-3xl font-bold text-primary">
                     {stat.value}
                   </div>
                   <div className="text-sm text-muted-foreground">
@@ -173,19 +173,19 @@ export default function Home() {
           >
             <div className="relative mx-auto max-w-md lg:max-w-none">
               {/* Yellow glow behind */}
-              <div className="absolute inset-0 bg-[#f6cf62]/20 blur-[80px] scale-90 opacity-30" />
+              <div className="absolute inset-0 bg-primary/20 blur-[80px] scale-90 opacity-30" />
 
               {/* Dashboard frame */}
-              <div className="relative glass-strong rounded-3xl p-3 sm:p-4 border-white/10">
-                <div className="bg-background/80 rounded-2xl overflow-hidden border border-white/5">
+              <div className="relative glass-strong rounded-3xl p-3 sm:p-4 border-border">
+                <div className="bg-background/80 rounded-2xl overflow-hidden border border-border">
                   {/* Status bar */}
-                  <div className="bg-card/50 px-4 py-2 flex items-center justify-between border-b border-white/5">
+                  <div className="bg-card/50 px-4 py-2 flex items-center justify-between border-b border-border">
                     <span className="text-xs font-medium text-muted-foreground">
                       Yallo Dashboard
                     </span>
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-[#f6cf62] animate-pulse-dot" />
-                      <span className="text-xs text-[#f6cf62] font-medium">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse-dot" />
+                      <span className="text-xs text-primary font-medium">
                         En ligne
                       </span>
                     </div>
@@ -194,17 +194,17 @@ export default function Home() {
                   {/* Dashboard content */}
                   <div className="p-4 sm:p-6 space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-lg text-white">
+                      <h3 className="font-semibold text-lg text-foreground">
                         Commandes en cours
                       </h3>
-                      <Badge className="bg-[#f6cf62]/10 text-[#f6cf62] border-[#f6cf62]/20">
+                      <Badge className="bg-primary/10 text-primary border-primary/20">
                         3 nouvelles
                       </Badge>
                     </div>
 
                     {[
                       { id: "#2847", items: "2x Kebab Viande, 1x Frites", status: "En préparation", color: "bg-amber-500" },
-                      { id: "#2848", items: "1x Tacos XL, 2x Coca", status: "Nouveau", color: "bg-[#f6cf62]" },
+                      { id: "#2848", items: "1x Tacos XL, 2x Coca", status: "Nouveau", color: "bg-primary" },
                       { id: "#2849", items: "3x Naan Poulet", status: "Prêt", color: "bg-emerald-500" },
                     ].map((order, i) => (
                       <motion.div
@@ -212,13 +212,13 @@ export default function Home() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.6 + i * 0.15 }}
-                        className="bg-card/30 rounded-xl p-4 border border-white/5 hover:border-white/10 transition-colors"
+                        className="bg-card/30 rounded-xl p-4 border border-border hover:border-primary/20 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="font-bold text-white">{order.id}</span>
-                              <span className={`${order.color} ${order.color === 'bg-[#f6cf62]' ? 'text-black' : 'text-white'} text-xs px-2 py-0.5 rounded-full font-medium`}>
+                              <span className="font-bold text-foreground">{order.id}</span>
+                              <span className={`${order.color} ${order.color === 'bg-primary' ? 'text-black' : 'text-white'} text-xs px-2 py-0.5 rounded-full font-medium`}>
                                 {order.status}
                               </span>
                             </div>
@@ -226,7 +226,7 @@ export default function Home() {
                               {order.items}
                             </p>
                           </div>
-                          <Button size="sm" variant="ghost" className="shrink-0 hover:bg-white/5">
+                          <Button size="sm" variant="ghost" className="shrink-0">
                             Voir
                           </Button>
                         </div>
@@ -240,14 +240,14 @@ export default function Home() {
               <motion.div
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-4 -right-4 sm:-top-6 sm:-right-6 glass rounded-2xl p-3 border-white/10"
+                className="absolute -top-4 -right-4 sm:-top-6 sm:-right-6 glass rounded-2xl p-3 border-border"
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[#f6cf62]/20 flex items-center justify-center">
-                    <Phone className="w-4 h-4 text-[#f6cf62]" />
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Phone className="w-4 h-4 text-primary" />
                   </div>
                   <div>
-                    <div className="text-xs font-medium text-white">Appel entrant</div>
+                    <div className="text-xs font-medium text-foreground">Appel entrant</div>
                     <div className="text-xs text-muted-foreground">06 ** ** 42</div>
                   </div>
                 </div>
@@ -256,15 +256,15 @@ export default function Home() {
               <motion.div
                 animate={{ y: [0, 8, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="absolute -bottom-4 -left-4 sm:-bottom-6 sm:-left-6 glass rounded-2xl p-3 border-white/10"
+                className="absolute -bottom-4 -left-4 sm:-bottom-6 sm:-left-6 glass rounded-2xl p-3 border-border"
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[#f6cf62]/20 flex items-center justify-center">
-                    <Bot className="w-4 h-4 text-[#f6cf62]" />
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Bot className="w-4 h-4 text-primary" />
                   </div>
                   <div>
-                    <div className="text-xs font-medium text-white">IA Active</div>
-                    <div className="text-xs text-[#f6cf62]">Prend la commande...</div>
+                    <div className="text-xs font-medium text-foreground">IA Active</div>
+                    <div className="text-xs text-primary">Prend la commande...</div>
                   </div>
                 </div>
               </motion.div>
@@ -274,7 +274,7 @@ export default function Home() {
       </section>
 
       {/* ===================== SOCIAL PROOF ===================== */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 border-y border-white/5">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 border-y border-border">
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -296,10 +296,10 @@ export default function Home() {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 className="flex flex-col items-center gap-2 cursor-default"
               >
-                <div className="w-12 h-12 rounded-xl bg-[#f6cf62]/10 flex items-center justify-center border border-[#f6cf62]/20 hover:bg-[#f6cf62]/20 transition-all duration-300">
-                  <type.icon className="w-6 h-6 text-[#f6cf62]" />
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 hover:bg-primary/20 transition-all duration-300">
+                  <type.icon className="w-6 h-6 text-primary" />
                 </div>
-                <span className="text-xs font-medium text-white/60 hover:text-[#f6cf62] transition-colors">
+                <span className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors">
                   {type.label}
                 </span>
               </motion.div>
@@ -317,10 +317,10 @@ export default function Home() {
           transition={{ duration: 0.6 }}
           className="text-center mb-20"
         >
-          <Badge className="mb-4 px-4 py-1.5 bg-white/5 text-white border-white/10">
+          <Badge className="mb-4 px-4 py-1.5 bg-muted/50 dark:bg-muted/50 text-foreground border-border">
             Simple comme bonjour
           </Badge>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
             Comment ça marche ?
           </h2>
         </motion.div>
@@ -337,12 +337,12 @@ export default function Home() {
               className="order-2 lg:order-1"
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-[#f6cf62] text-black flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-full bg-primary text-black flex items-center justify-center font-bold">
                   1
                 </div>
-                <span className="text-[#f6cf62] font-medium text-sm uppercase tracking-wider">Étape 1</span>
+                <span className="text-primary font-medium text-sm uppercase tracking-wider">Étape 1</span>
               </div>
-              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
                 Le client appelle
               </h3>
               <p className="text-muted-foreground text-lg leading-relaxed mb-6">
@@ -351,7 +351,7 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-3">
                 {["Réponse instantanée", "24h/24", "Sans file d'attente"].map((tag) => (
-                  <span key={tag} className="text-sm px-3 py-1 rounded-full bg-white/5 text-muted-foreground border border-white/5">
+                  <span key={tag} className="text-sm px-3 py-1 rounded-full bg-muted/50 text-muted-foreground border border-border">
                     {tag}
                   </span>
                 ))}
@@ -368,8 +368,8 @@ export default function Home() {
             >
               {/* Incoming call visual */}
               <div className="relative">
-                <div className="absolute inset-0 bg-[#f6cf62]/10 blur-[60px] scale-90" />
-                <div className="relative glass rounded-3xl p-6 border-white/10">
+                <div className="absolute inset-0 bg-primary/10 blur-[60px] scale-90" />
+                <div className="relative glass rounded-3xl p-6 border-border">
                   <div className="flex items-center justify-between mb-6">
                     <span className="text-sm text-muted-foreground">Appel entrant</span>
                     <div className="flex items-center gap-2">
@@ -379,7 +379,7 @@ export default function Home() {
                   </div>
                   <div className="flex items-center gap-4 mb-6">
                     <motion.div 
-                      className="w-16 h-16 rounded-full bg-[#f6cf62]/20 flex items-center justify-center"
+                      className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center"
                       animate={{
                         scale: [1, 1.1, 1],
                         rotate: [0, -5, 5, 0],
@@ -391,10 +391,10 @@ export default function Home() {
                         ease: "easeInOut",
                       }}
                     >
-                      <Phone className="w-8 h-8 text-[#f6cf62]" />
+                      <Phone className="w-8 h-8 text-primary" />
                     </motion.div>
                     <div>
-                      <div className="text-xl font-bold text-white">06 12 34 56 78</div>
+                      <div className="text-xl font-bold text-foreground">06 12 34 56 78</div>
                       <div className="text-muted-foreground">Client régulier</div>
                     </div>
                   </div>
@@ -419,14 +419,14 @@ export default function Home() {
             >
               {/* AI Processing visual */}
               <div className="relative">
-                <div className="absolute inset-0 bg-[#f6cf62]/10 blur-[60px] scale-90" />
-                <div className="relative glass rounded-3xl p-6 border-white/10">
+                <div className="absolute inset-0 bg-primary/10 blur-[60px] scale-90" />
+                <div className="relative glass rounded-3xl p-6 border-border">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
-                      <Bot className="w-5 h-5 text-[#f6cf62]" />
-                      <span className="text-sm text-white font-medium">Yallo IA</span>
+                      <Bot className="w-5 h-5 text-primary" />
+                      <span className="text-sm text-foreground font-medium">Yallo IA</span>
                       </div>
-                    <Badge className="bg-[#f6cf62]/10 text-[#f6cf62] border-[#f6cf62]/20">
+                    <Badge className="bg-primary/10 text-primary border-primary/20">
                       En écoute
                     </Badge>
                   </div>
@@ -446,12 +446,12 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-[#f6cf62] text-black flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-full bg-primary text-black flex items-center justify-center font-bold">
                   2
                 </div>
-                <span className="text-[#f6cf62] font-medium text-sm uppercase tracking-wider">Étape 2</span>
+                <span className="text-primary font-medium text-sm uppercase tracking-wider">Étape 2</span>
               </div>
-              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
                 L&apos;IA prend la commande
               </h3>
               <p className="text-muted-foreground text-lg leading-relaxed mb-6">
@@ -460,7 +460,7 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-3">
                 {["Compréhension vocale", "Upsell intelligent", "Multilingue"].map((tag) => (
-                  <span key={tag} className="text-sm px-3 py-1 rounded-full bg-white/5 text-muted-foreground border border-white/5">
+                  <span key={tag} className="text-sm px-3 py-1 rounded-full bg-muted/50 text-muted-foreground border border-border">
                     {tag}
                   </span>
                 ))}
@@ -479,12 +479,12 @@ export default function Home() {
               className="order-2 lg:order-1"
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-[#f6cf62] text-black flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-full bg-primary text-black flex items-center justify-center font-bold">
                   3
                 </div>
-                <span className="text-[#f6cf62] font-medium text-sm uppercase tracking-wider">Étape 3</span>
+                <span className="text-primary font-medium text-sm uppercase tracking-wider">Étape 3</span>
               </div>
-              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
                 La commande arrive sur votre tablette
               </h3>
               <p className="text-muted-foreground text-lg leading-relaxed mb-6">
@@ -492,7 +492,7 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-3">
                 {["Impression instantanée", "Intégration simple", "Temps réel"].map((tag) => (
-                  <span key={tag} className="text-sm px-3 py-1 rounded-full bg-white/5 text-muted-foreground border border-white/5">
+                  <span key={tag} className="text-sm px-3 py-1 rounded-full bg-muted/50 text-muted-foreground border border-border">
                     {tag}
                   </span>
                 ))}
@@ -509,41 +509,41 @@ export default function Home() {
             >
               {/* Receipt visual */}
               <div className="relative">
-                <div className="absolute inset-0 bg-[#f6cf62]/10 blur-[60px] scale-90" />
+                <div className="absolute inset-0 bg-primary/10 blur-[60px] scale-90" />
                 <div className="relative flex justify-center">
                   <motion.div
                     initial={{ y: -20 }}
                     whileInView={{ y: 0 }}
                 viewport={{ once: true }}
                     transition={{ duration: 0.8, delay: 0.3 }}
-                    className="glass rounded-t-3xl rounded-b-lg p-6 border-white/10 w-72"
+                    className="glass rounded-t-3xl rounded-b-lg p-6 border-border w-72"
                   >
-                    <div className="border-b border-dashed border-white/10 pb-4 mb-4">
+                    <div className="border-b border-dashed border-border pb-4 mb-4">
                       <div className="text-center">
-                        <Receipt className="w-8 h-8 text-[#f6cf62] mx-auto mb-2" />
-                        <div className="text-lg font-bold text-white">COMMANDE #2847</div>
+                        <Receipt className="w-8 h-8 text-primary mx-auto mb-2" />
+                        <div className="text-lg font-bold text-foreground">COMMANDE #2847</div>
                         <div className="text-xs text-muted-foreground">Pour 14:45 - Tel: 06 12 34 56 78</div>
                   </div>
                   </div>
                     <div className="space-y-2 text-sm mb-4">
                       <div className="flex justify-between">
-                        <span className="text-white">1x Kebab Viande</span>
+                        <span className="text-foreground">1x Kebab Viande</span>
                         <span className="text-muted-foreground">8.50€</span>
                 </div>
                       <div className="text-xs text-muted-foreground pl-4">→ Sauce blanche + harissa</div>
                       <div className="flex justify-between">
-                        <span className="text-white">1x Frites</span>
+                        <span className="text-foreground">1x Frites</span>
                         <span className="text-muted-foreground">3.00€</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-white">1x Coca-Cola</span>
+                        <span className="text-foreground">1x Coca-Cola</span>
                         <span className="text-muted-foreground">2.50€</span>
                       </div>
                     </div>
-                    <div className="border-t border-dashed border-white/10 pt-4">
+                    <div className="border-t border-dashed border-border pt-4">
                       <div className="flex justify-between font-bold">
-                        <span className="text-white">TOTAL</span>
-                        <span className="text-[#f6cf62]">14.00€</span>
+                        <span className="text-foreground">TOTAL</span>
+                        <span className="text-primary">14.00€</span>
                       </div>
                     </div>
               </motion.div>
@@ -555,7 +555,7 @@ export default function Home() {
       </section>
 
       {/* ===================== BENTO FEATURES GRID ===================== */}
-      <section id="features" className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 border-t border-white/5">
+      <section id="features" className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 border-t border-border">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -563,10 +563,10 @@ export default function Home() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <Badge className="mb-4 px-4 py-1.5 bg-white/5 text-white border-white/10">
+          <Badge className="mb-4 px-4 py-1.5 bg-muted/50 dark:bg-muted/50 text-foreground border-border">
             Fonctionnalités
           </Badge>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
             Tout ce dont vous avez besoin
           </h2>
         </motion.div>
@@ -581,12 +581,12 @@ export default function Home() {
             transition={{ duration: 0.5 }}
             className="lg:col-span-2 group"
           >
-            <Card className="h-full bg-card/30 border-white/5 hover:border-[#f6cf62]/30 transition-colors duration-300 noise overflow-hidden">
+            <Card className="h-full bg-card/30 border-border hover:border-primary/30 transition-colors duration-300 noise overflow-hidden">
               <CardHeader className="pb-2">
-                <div className="w-14 h-14 rounded-2xl bg-[#f6cf62]/10 flex items-center justify-center mb-4 group-hover:bg-[#f6cf62]/20 transition-colors">
-                  <Mic className="w-7 h-7 text-[#f6cf62]" />
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                  <Mic className="w-7 h-7 text-primary" />
                 </div>
-                <CardTitle className="text-2xl text-white">Compréhension vocale avancée</CardTitle>
+                <CardTitle className="text-2xl text-foreground">Compréhension vocale avancée</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-base leading-relaxed">
@@ -595,7 +595,7 @@ export default function Home() {
                 </CardDescription>
                 <div className="mt-6 flex gap-2 flex-wrap">
                   {["Accents", "Slang", "Multilingue", "24/7"].map((tag) => (
-                    <span key={tag} className="text-xs px-3 py-1 rounded-full bg-white/5 text-muted-foreground border border-white/5">
+                    <span key={tag} className="text-xs px-3 py-1 rounded-full bg-muted/50 text-muted-foreground border border-border">
                       {tag}
                     </span>
                   ))}
@@ -612,19 +612,19 @@ export default function Home() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="md:row-span-2 group"
           >
-            <Card className="h-full bg-card/30 border-white/5 hover:border-[#f6cf62]/30 transition-colors duration-300 noise">
+            <Card className="h-full bg-card/30 border-border hover:border-primary/30 transition-colors duration-300 noise">
               <CardHeader>
-                <div className="w-14 h-14 rounded-2xl bg-[#f6cf62]/10 flex items-center justify-center mb-4 group-hover:bg-[#f6cf62]/20 transition-colors">
-                  <TrendingUp className="w-7 h-7 text-[#f6cf62]" />
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                  <TrendingUp className="w-7 h-7 text-primary" />
                 </div>
-                <CardTitle className="text-xl text-white">Upsell intelligent</CardTitle>
+                <CardTitle className="text-xl text-foreground">Upsell intelligent</CardTitle>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col">
                 <CardDescription className="text-base leading-relaxed flex-1">
                   L&apos;IA suggère boissons et accompagnements en fonction de la commande.
                 </CardDescription>
-                <div className="mt-6 p-4 rounded-xl bg-[#f6cf62]/5 border border-[#f6cf62]/10">
-                  <div className="text-3xl font-bold text-[#f6cf62] mb-1">+18%</div>
+                <div className="mt-6 p-4 rounded-xl bg-primary/5 border border-primary/10">
+                  <div className="text-3xl font-bold text-primary mb-1">+18%</div>
                   <div className="text-sm text-muted-foreground">Panier moyen</div>
                 </div>
               </CardContent>
@@ -644,12 +644,12 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0.1 * (i + 2) }}
               className="group"
             >
-              <Card className="h-full bg-card/30 border-white/5 hover:border-[#f6cf62]/30 transition-colors duration-300 noise">
+              <Card className="h-full bg-card/30 border-border hover:border-primary/30 transition-colors duration-300 noise">
                   <CardHeader>
-                  <div className="w-12 h-12 rounded-xl bg-[#f6cf62]/10 flex items-center justify-center mb-3 group-hover:bg-[#f6cf62]/20 transition-colors">
-                    <feature.icon className="w-6 h-6 text-[#f6cf62]" />
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                    <feature.icon className="w-6 h-6 text-primary" />
                   </div>
-                  <CardTitle className="text-lg text-white">{feature.title}</CardTitle>
+                  <CardTitle className="text-lg text-foreground">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription className="leading-relaxed">{feature.desc}</CardDescription>
@@ -666,13 +666,13 @@ export default function Home() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="lg:col-span-2 group"
           >
-            <Card className="h-full bg-card/30 border-white/5 hover:border-[#f6cf62]/30 transition-colors duration-300 noise">
+            <Card className="h-full bg-card/30 border-border hover:border-primary/30 transition-colors duration-300 noise">
               <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                <div className="w-14 h-14 rounded-2xl bg-[#f6cf62]/10 flex items-center justify-center shrink-0 group-hover:bg-[#f6cf62]/20 transition-colors">
-                  <Shield className="w-7 h-7 text-[#f6cf62]" />
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <Shield className="w-7 h-7 text-primary" />
                     </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Transfert humain</h3>
+                  <h3 className="text-xl font-semibold text-foreground mb-2">Transfert humain</h3>
                   <p className="text-muted-foreground">
                     En cas de demande complexe, l&apos;IA transfère l&apos;appel à votre équipe en un clic.
                   </p>
@@ -689,12 +689,12 @@ export default function Home() {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="group"
           >
-            <Card className="h-full bg-card/30 border-white/5 hover:border-[#f6cf62]/30 transition-colors duration-300 noise">
+            <Card className="h-full bg-card/30 border-border hover:border-primary/30 transition-colors duration-300 noise">
               <CardHeader>
-                <div className="w-12 h-12 rounded-xl bg-[#f6cf62]/10 flex items-center justify-center mb-3 group-hover:bg-[#f6cf62]/20 transition-colors">
-                  <Sparkles className="w-6 h-6 text-[#f6cf62]" />
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                  <Sparkles className="w-6 h-6 text-primary" />
                 </div>
-                <CardTitle className="text-lg text-white">Menu personnalisé</CardTitle>
+                <CardTitle className="text-lg text-foreground">Menu personnalisé</CardTitle>
                   </CardHeader>
                   <CardContent>
                 <CardDescription className="leading-relaxed">
@@ -717,7 +717,7 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <Badge className="mb-4 px-4 py-1.5 bg-white/5 text-white border-white/10">
+            <Badge className="mb-4 px-4 py-1.5 bg-muted/50 text-white border-border">
               Témoignages
             </Badge>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
@@ -739,7 +739,7 @@ export default function Home() {
       */}
 
       {/* ===================== PRICING ===================== */}
-      <section id="pricing" className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 border-t border-white/5 overflow-hidden">
+      <section id="pricing" className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 border-t border-border overflow-hidden">
         <DotPatternSubtle className="z-0" />
         
         <motion.div
@@ -749,10 +749,10 @@ export default function Home() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <Badge className="mb-4 px-4 py-1.5 bg-white/5 text-white border-white/10">
+          <Badge className="mb-4 px-4 py-1.5 bg-muted/50 dark:bg-muted/50 text-foreground border-border">
             Tarification
           </Badge>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
             Un prix simple et transparent
           </h2>
           <p className="text-muted-foreground text-lg">
@@ -768,11 +768,11 @@ export default function Home() {
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.5 }}
           >
-            <Card className="flex flex-col h-full bg-card/30 border-white/10 hover:border-white/30 transition-all duration-300 noise group">
+            <Card className="flex flex-col h-full bg-card/30 border-border hover:border-primary/30 transition-all duration-300 noise group">
               <CardHeader className="pb-8">
-                <CardTitle className="text-2xl text-white mb-2">Abonnement</CardTitle>
+                <CardTitle className="text-2xl text-foreground mb-2">Abonnement</CardTitle>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-5xl font-black text-white">299€</span>
+                  <span className="text-5xl font-black text-foreground">299€</span>
                   <span className="text-muted-foreground text-lg">/mois</span>
                 </div>
                 <CardDescription className="text-base mt-4 min-h-[3rem]">
@@ -788,13 +788,13 @@ export default function Home() {
                   { text: "Frais d'installation offerts", icon: Gift, highlight: true },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${item.highlight ? 'bg-[#f6cf62]/20' : 'bg-white/10'}`}>
-                      <item.icon className={`w-3 h-3 ${item.highlight ? 'text-[#f6cf62]' : 'text-white'}`} />
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${item.highlight ? 'bg-primary/20' : 'bg-muted dark:bg-muted'}`}>
+                      <item.icon className={`w-3 h-3 ${item.highlight ? 'text-primary' : 'text-foreground'}`} />
                     </div>
-                    <span className={`text-sm ${item.highlight ? 'text-[#f6cf62] font-medium' : 'text-muted-foreground'}`}>{item.text}</span>
+                    <span className={`text-sm ${item.highlight ? 'text-primary font-medium' : 'text-muted-foreground'}`}>{item.text}</span>
                   </div>
                 ))}
-                <Button variant="outline" className="w-full mt-auto h-12 border-white/20 hover:border-white/40 hover:bg-white/5 transition-all duration-300" size="lg">
+                <Button variant="outline" className="w-full mt-auto h-12 border-border hover:border-primary hover:bg-accent transition-all duration-300" size="lg">
                   Choisir ce plan
                 </Button>
               </CardContent>
@@ -810,26 +810,26 @@ export default function Home() {
             className="relative"
           >
             {/* Glow effect behind card */}
-            <div className="absolute -inset-1 bg-[#f6cf62]/20 rounded-3xl blur-xl opacity-60" />
+            <div className="absolute -inset-1 bg-primary/20 rounded-3xl blur-xl opacity-60" />
             
-            <Card className="relative flex flex-col h-full border-[#f6cf62] overflow-hidden noise" style={{
+            <Card className="relative flex flex-col h-full border-primary overflow-hidden noise" style={{
               background: 'radial-gradient(ellipse at top, rgba(246, 207, 98, 0.08) 0%, hsl(var(--card)) 70%)'
             }}>
               {/* Popular badge */}
               <div className="absolute top-4 right-4">
-                <Badge className="bg-[#f6cf62] text-black font-semibold shadow-lg shadow-[#f6cf62]/30">
+                <Badge className="bg-primary text-black font-semibold shadow-lg shadow-primary/30">
                   <Sparkles className="w-3 h-3 mr-1" />
                   Populaire
                 </Badge>
               </div>
 
               <CardHeader className="pb-8">
-                <CardTitle className="text-2xl text-white mb-2">Commission</CardTitle>
+                <CardTitle className="text-2xl text-foreground mb-2">Commission</CardTitle>
                 <div className="flex items-baseline gap-2">
                   <span className="text-5xl font-black gradient-text">5%</span>
                   <span className="text-muted-foreground text-lg">par commande</span>
                 </div>
-                <CardDescription className="text-base mt-4 text-white/70 min-h-[3rem]">
+                <CardDescription className="text-base mt-4 min-h-[3rem]">
                   Zéro risque. Vous ne payez que si vous vendez.
                 </CardDescription>
               </CardHeader>
@@ -841,13 +841,13 @@ export default function Home() {
                   { text: "Sans engagement de durée", icon: Clock, highlight: true },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-[#f6cf62]/20 flex items-center justify-center shrink-0">
-                      <item.icon className="w-3 h-3 text-[#f6cf62]" />
+                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                      <item.icon className="w-3 h-3 text-primary" />
                     </div>
-                    <span className={`text-sm ${item.highlight ? 'text-white font-medium' : 'text-white/70'}`}>{item.text}</span>
+                    <span className={`text-sm ${item.highlight ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>{item.text}</span>
                   </div>
                 ))}
-                <Button className="w-full mt-auto h-12 bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90 btn-shine font-semibold shadow-lg shadow-[#f6cf62]/30 transition-all duration-300" size="lg">
+                <Button className="w-full mt-auto h-12 bg-primary text-black hover:bg-primary/90 btn-shine font-semibold shadow-lg shadow-primary/30 transition-all duration-300" size="lg">
                   Commencer gratuitement
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -864,13 +864,13 @@ export default function Home() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="relative z-10 mt-12 max-w-2xl mx-auto"
         >
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 p-6 rounded-2xl bg-card/30 border border-white/10 noise">
-            <div className="w-12 h-12 rounded-xl bg-[#f6cf62]/10 flex items-center justify-center shrink-0">
-              <Settings className="w-6 h-6 text-[#f6cf62]" />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 p-6 rounded-2xl bg-card/30 border border-border noise">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Settings className="w-6 h-6 text-primary" />
             </div>
             <div className="text-center sm:text-left">
-              <p className="text-lg font-semibold text-white mb-1">
-                Frais de mise en service unique : <span className="text-[#f6cf62]">199€ HT</span>
+              <p className="text-lg font-semibold text-foreground mb-1">
+                Frais de mise en service unique : <span className="text-primary">199€ HT</span>
               </p>
               <p className="text-sm text-muted-foreground">
                 Inclut la configuration de votre menu, la création de votre ligne téléphonique IA et la formation de votre équipe.
@@ -892,11 +892,11 @@ export default function Home() {
             className="lg:col-span-1"
         >
             <div className="lg:sticky lg:top-32">
-              <Badge className="mb-4 px-4 py-1.5 bg-white/5 text-white border-white/10">
+              <Badge className="mb-4 px-4 py-1.5 bg-muted/50 dark:bg-muted/50 text-foreground border-border">
                 <MessageCircleQuestion className="w-3.5 h-3.5 mr-1.5" />
               FAQ
             </Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
                 Questions Fréquentes
             </h2>
               <p className="text-muted-foreground text-lg leading-relaxed mb-8">
@@ -904,17 +904,17 @@ export default function Home() {
               </p>
               
               {/* Support Block */}
-              <div className="p-5 rounded-2xl bg-card/30 border border-white/5 noise">
+              <div className="p-5 rounded-2xl bg-card/30 border border-border noise">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#f6cf62]/10 flex items-center justify-center shrink-0">
-                    <Mail className="w-6 h-6 text-[#f6cf62]" />
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Mail className="w-6 h-6 text-primary" />
           </div>
                   <div>
-                    <h4 className="font-semibold text-white mb-1">Une autre question ?</h4>
+                    <h4 className="font-semibold text-foreground mb-1">Une autre question ?</h4>
                     <p className="text-sm text-muted-foreground mb-3">Notre équipe vous répond sous 24h.</p>
                     <a 
                       href="mailto:support@yallo.com" 
-                      className="text-[#f6cf62] hover:text-[#f6cf62]/80 font-medium text-sm transition-colors inline-flex items-center gap-1.5"
+                      className="text-primary hover:text-primary/80 font-medium text-sm transition-colors inline-flex items-center gap-1.5"
                     >
                       support@yallo.com
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -946,9 +946,9 @@ export default function Home() {
                     <AccordionItem
                       key={i}
                       value={`item-${i}`}
-                      className={`border border-white/5 rounded-xl px-5 data-[state=open]:border-[#f6cf62]/30 data-[state=open]:bg-[#f6cf62]/5 transition-all duration-300 ${i === 5 ? 'mb-0' : 'mb-3'}`}
+                      className={`border border-border rounded-xl px-5 data-[state=open]:border-primary/30 data-[state=open]:bg-primary/5 transition-all duration-300 ${i === 5 ? 'mb-0' : 'mb-3'}`}
                     >
-                      <AccordionTrigger className="text-left text-white hover:no-underline hover:text-[#f6cf62] transition-colors py-5 text-base">
+                      <AccordionTrigger className="text-left text-foreground hover:no-underline hover:text-primary transition-colors py-5 text-base">
                         {item.q}
                       </AccordionTrigger>
                       <AccordionContent className="text-muted-foreground pb-5 leading-relaxed">
@@ -963,7 +963,7 @@ export default function Home() {
       </section>
 
       {/* ===================== CTA BANNER ===================== */}
-      <section className="relative border-t border-white/5 overflow-hidden">
+      <section className="relative border-t border-border overflow-hidden">
         {/* Dot Pattern Background */}
         <DotPatternHero className="z-0" />
         
@@ -976,18 +976,18 @@ export default function Home() {
           transition={{ duration: 0.6 }}
             className="text-center max-w-3xl mx-auto"
             >
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-6">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-foreground mb-6">
               Prêt à automatiser vos commandes ?
               </h2>
             <p className="text-lg sm:text-xl text-muted-foreground mb-10">
               Rejoignez les centaines de restaurants qui ont déjà automatisé leur prise de commande.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-[#f6cf62] text-black hover:bg-[#f6cf62]/90 h-14 px-8 text-lg btn-shine font-semibold glow-yellow">
+              <Button size="lg" className="bg-primary text-black hover:bg-primary/90 h-14 px-8 text-lg btn-shine font-semibold glow-yellow">
                   Démarrer l&apos;essai gratuit
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
-              <Button size="lg" variant="outline" className="border-white/10 hover:border-white/20 h-14 px-8 text-lg">
+              <Button size="lg" variant="outline" className="border-border hover:border-primary hover:bg-accent h-14 px-8 text-lg">
                   Parler à un expert
                 </Button>
               </div>
@@ -1001,75 +1001,75 @@ export default function Home() {
       {/* ===================== FAT FOOTER ===================== */}
       <footer className="relative overflow-hidden">
         {/* Links Grid */}
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-white/5">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-border">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div>
-              <h4 className="font-semibold text-white mb-4">Produit</h4>
+              <h4 className="font-semibold text-foreground mb-4">Produit</h4>
               <ul className="space-y-3">
                 <li>
-                  <Link href="/#how-it-works" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                  <Link href="/#how-it-works" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                     Comment ça marche
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#features" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                  <Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                     Fonctionnalités
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#pricing" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                  <Link href="/#pricing" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                     Tarification
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#faq" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                  <Link href="/#faq" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                     FAQ
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-4">Légal</h4>
+              <h4 className="font-semibold text-foreground mb-4">Légal</h4>
               <ul className="space-y-3">
                 <li>
-                  <Link href="/confidentialite" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                  <Link href="/confidentialite" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                     Confidentialité
                   </Link>
                 </li>
                 <li>
-                  <Link href="/cgv" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                  <Link href="/cgv" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                     CGV
                   </Link>
                 </li>
                 <li>
-                  <Link href="/mentions-legales" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                  <Link href="/mentions-legales" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                     Mentions légales
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-4">Contact</h4>
+              <h4 className="font-semibold text-foreground mb-4">Contact</h4>
               <ul className="space-y-3">
                 <li>
-                  <Link href="/contact?subject=support" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                  <Link href="/contact?subject=support" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                     Support Technique
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact?subject=demo" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                  <Link href="/contact?subject=demo" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                     Réserver une démo
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact?subject=autre" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                  <Link href="/contact?subject=autre" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                     Devenir Partenaire
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-4">Ressources</h4>
+              <h4 className="font-semibold text-foreground mb-4">Ressources</h4>
               <ul className="space-y-3">
                 <li>
                   <a href="#" onClick={(e) => {
@@ -1080,17 +1080,17 @@ export default function Home() {
                       ? `http://app.localhost:${port}/login`
                       : "https://app.yallo.fr/login";
                     window.location.href = appUrl;
-                  }} className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                  }} className="text-muted-foreground hover:text-primary transition-colors text-sm">
                     Espace Restaurateur
                   </a>
                 </li>
                 <li>
-                  <Link href="/guide" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                  <Link href="/guide" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                     Guide de démarrage
                   </Link>
                 </li>
                 <li>
-                  <Link href="/status" className="text-muted-foreground hover:text-[#f6cf62] transition-colors text-sm">
+                  <Link href="/status" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                     État du service
                   </Link>
                 </li>
@@ -1100,7 +1100,7 @@ export default function Home() {
         </div>
 
         {/* Bottom bar */}
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 border-t border-white/5">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 border-t border-border">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="text-2xl font-black gradient-text">Yallo</span>
@@ -1117,7 +1117,7 @@ export default function Home() {
 
         {/* Giant YALLO text */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none select-none">
-          <div className="text-[12rem] sm:text-[18rem] md:text-[24rem] font-black text-white/[0.02] leading-none tracking-tighter whitespace-nowrap">
+          <div className="text-[12rem] sm:text-[18rem] md:text-[24rem] font-black text-foreground/[0.12] dark:text-foreground/[0.03] leading-none tracking-tighter whitespace-nowrap">
             YALLO
           </div>
         </div>

@@ -29,8 +29,50 @@
   --color-brand-foreground: hsl(var(--brand-foreground));
 }
 
-/* Dark Mode Only - Deep Dark Tech (Vapi.ai / Linear style) */
+/* ============================================
+   LIGHT MODE - Clean Professional Dashboard
+   ============================================ */
 :root {
+  /* Background: Warm white paper */
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  /* Card: Slightly off-white */
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  /* Primary: Yallo Yellow */
+  --primary: 45 89% 55%;
+  --primary-foreground: 0 0% 0%;
+  /* Secondary: Light gray */
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 100%;
+  /* Borders: Light subtle */
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 45 89% 55%;
+  --radius: 0.625rem;
+  
+  /* Brand Yallo Yellow */
+  --brand: 45 89% 55%;
+  --brand-foreground: 0 0% 0%;
+  
+  /* Grid */
+  --grid-color: rgba(0, 0, 0, 0.02);
+  
+  color-scheme: light;
+}
+
+/* ============================================
+   DARK MODE - Deep Dark Tech (Vapi.ai style)
+   ============================================ */
+.dark {
   /* Background: Deep black #0a0a0a */
   --background: 0 0% 4%;
   --foreground: 0 0% 98%;
@@ -55,7 +97,6 @@
   --border: 0 0% 15%;
   --input: 0 0% 15%;
   --ring: 45 89% 67%;
-  --radius: 0.625rem;
   
   /* Brand Yallo Yellow */
   --brand: 45 89% 67%;
@@ -64,7 +105,6 @@
   /* Grid */
   --grid-color: rgba(255, 255, 255, 0.02);
   
-  /* Force dark color scheme */
   color-scheme: dark;
 }
 
@@ -120,7 +160,7 @@
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
-/* Glassmorphism utilities - Dark mode optimized */
+/* Glassmorphism utilities - Works in both modes */
 .glass {
   background: hsl(var(--card) / 0.6);
   backdrop-filter: blur(16px);
@@ -135,16 +175,16 @@
   border: 1px solid hsl(var(--border) / 0.6);
 }
 
-/* Gradient text - Yallo Yellow */
+/* Gradient text - Yallo Yellow (adapts to theme) */
 .gradient-text {
-  background: linear-gradient(135deg, #f6cf62, #e5b84a);
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .gradient-text-hero {
-  background: linear-gradient(135deg, #ffffff 0%, #f6cf62 100%);
+  background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--primary)) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -176,22 +216,40 @@
   animation: shine 0.6s ease-in-out;
 }
 
-/* Glow effect for yellow accent */
+/* Glow effect for primary accent */
+.glow-primary {
+  box-shadow: 0 0 40px hsl(var(--primary) / 0.3);
+}
+
+.glow-primary-subtle {
+  box-shadow: 0 0 60px hsl(var(--primary) / 0.15);
+}
+
+/* Legacy aliases */
 .glow-yellow {
-  box-shadow: 0 0 40px rgba(246, 207, 98, 0.3);
+  box-shadow: 0 0 40px hsl(var(--primary) / 0.3);
 }
 
 .glow-yellow-subtle {
-  box-shadow: 0 0 60px rgba(246, 207, 98, 0.15);
+  box-shadow: 0 0 60px hsl(var(--primary) / 0.15);
 }
 
-/* Card hover with yellow border */
+/* Card hover with primary border */
+.card-hover-primary {
+  transition: all 0.3s ease;
+}
+
+.card-hover-primary:hover {
+  border-color: hsl(var(--primary) / 0.3);
+}
+
+/* Legacy alias */
 .card-hover-yellow {
   transition: all 0.3s ease;
 }
 
 .card-hover-yellow:hover {
-  border-color: rgba(246, 207, 98, 0.3);
+  border-color: hsl(var(--primary) / 0.3);
 }
 
 /* Status badge animations */
@@ -208,7 +266,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #f6cf62;
+  background: hsl(var(--primary));
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
@@ -237,7 +295,7 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar - Dark theme */
+/* Custom scrollbar - Adapts to theme */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -256,21 +314,27 @@ html {
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* Focus ring - Yellow */
+/* Focus ring - Primary */
+.focus-ring-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary));
+}
+
+/* Legacy alias */
 .focus-ring-yellow:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px #f6cf62;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary));
 }
 
 /* Table row hover - subtle */
 .table-row-hover:hover {
-  background: rgba(246, 207, 98, 0.02);
+  background: hsl(var(--primary) / 0.02);
 }
 
 /* Sidebar active state */
 .sidebar-active {
-  background: rgba(246, 207, 98, 0.1);
-  color: #f6cf62;
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
 }
 
 .sidebar-active::before {
@@ -280,7 +344,7 @@ html {
   top: 0;
   bottom: 0;
   width: 2px;
-  background: #f6cf62;
+  background: hsl(var(--primary));
 }
 
 /* Hide scrollbar utility */
@@ -291,4 +355,62 @@ html {
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* ============================================
+   ORDER TICKET STYLES
+   ============================================ */
+
+/* Receipt paper effect - Light mode */
+.ticket-paper {
+  background: linear-gradient(180deg, #fefefe 0%, #faf9f6 100%);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Receipt paper effect - Dark mode */
+.dark .ticket-paper {
+  background: linear-gradient(180deg, hsl(0 0% 10%) 0%, hsl(0 0% 8%) 100%);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Zigzag bottom border for ticket effect */
+.ticket-edge {
+  position: relative;
+}
+
+.ticket-edge::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: linear-gradient(135deg, hsl(var(--card)) 25%, transparent 25%) -8px 0,
+              linear-gradient(225deg, hsl(var(--card)) 25%, transparent 25%) -8px 0,
+              linear-gradient(315deg, hsl(var(--card)) 25%, transparent 25%),
+              linear-gradient(45deg, hsl(var(--card)) 25%, transparent 25%);
+  background-size: 16px 16px;
+  background-color: transparent;
+}
+
+/* Light mode zigzag */
+:root .ticket-edge::after {
+  background: linear-gradient(135deg, #faf9f6 25%, transparent 25%) -8px 0,
+              linear-gradient(225deg, #faf9f6 25%, transparent 25%) -8px 0,
+              linear-gradient(315deg, #faf9f6 25%, transparent 25%),
+              linear-gradient(45deg, #faf9f6 25%, transparent 25%);
+  background-size: 16px 16px;
+}
+
+/* Dark mode zigzag */
+.dark .ticket-edge::after {
+  background: linear-gradient(135deg, hsl(0 0% 8%) 25%, transparent 25%) -8px 0,
+              linear-gradient(225deg, hsl(0 0% 8%) 25%, transparent 25%) -8px 0,
+              linear-gradient(315deg, hsl(0 0% 8%) 25%, transparent 25%),
+              linear-gradient(45deg, hsl(0 0% 8%) 25%, transparent 25%);
+  background-size: 16px 16px;
 }

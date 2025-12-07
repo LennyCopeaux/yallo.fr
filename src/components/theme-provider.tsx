@@ -3,12 +3,20 @@
 import * as React from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 
+interface ThemeProviderProps extends React.ComponentProps<typeof NextThemesProvider> {
+  forcedTheme?: string;
+}
+
 export function ThemeProvider({
   children,
+  forcedTheme,
   ...props
-}: React.ComponentProps<typeof NextThemesProvider>) {
+}: ThemeProviderProps) {
   return (
-    <NextThemesProvider forcedTheme="dark" {...props}>
+    <NextThemesProvider 
+      {...props}
+      {...(forcedTheme ? { forcedTheme } : {})}
+    >
       {children}
     </NextThemesProvider>
   );

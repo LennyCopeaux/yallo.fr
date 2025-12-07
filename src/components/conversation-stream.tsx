@@ -135,16 +135,18 @@ export function ConversationStream() {
                 }}
                 className={`rounded-lg p-3 border backdrop-blur-sm ${
                   message.speaker === "yallo"
-                    ? "border-[#f6cf62]/20 bg-[#f6cf62]/5"
-                    : "border-white/10 bg-white/5"
+                    ? "border-primary/20 bg-primary/5"
+                    : "border-border bg-muted/50"
                 }`}
               >
                 <p className={`text-xs mb-1 font-medium ${
-                  message.speaker === "yallo" ? "text-[#f6cf62]" : "text-white/60"
+                  message.speaker === "yallo" ? "text-primary" : "text-muted-foreground"
                 }`}>
                   {message.speaker === "yallo" ? "Yallo" : "Client"}
                 </p>
-                <p className="text-sm text-white/90 leading-relaxed">{message.displayedText}</p>
+                <p className={`text-sm leading-relaxed ${
+                  message.speaker === "yallo" ? "text-foreground" : "text-foreground/90"
+                }`}>{message.displayedText}</p>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -161,19 +163,21 @@ export function ConversationStream() {
               }}
               className={`rounded-lg p-3 border backdrop-blur-sm ${
                 typingMessage.speaker === "yallo"
-                  ? "border-[#f6cf62]/20 bg-[#f6cf62]/5"
-                  : "border-white/10 bg-white/5"
+                  ? "border-primary/20 bg-primary/5"
+                  : "border-border bg-muted/50"
               }`}
             >
               <p className={`text-xs mb-1 font-medium ${
-                typingMessage.speaker === "yallo" ? "text-[#f6cf62]" : "text-white/60"
+                typingMessage.speaker === "yallo" ? "text-primary" : "text-muted-foreground"
               }`}>
                 {typingMessage.speaker === "yallo" ? "Yallo" : "Client"}
               </p>
-              <p className="text-sm text-white/90 leading-relaxed min-h-[1.25rem]">
+              <p className={`text-sm leading-relaxed min-h-[1.25rem] ${
+                typingMessage.speaker === "yallo" ? "text-foreground" : "text-foreground/90"
+              }`}>
                 {typingText}
                 <motion.span 
-                  className="inline-block w-0.5 h-4 bg-[#f6cf62] ml-0.5 align-middle"
+                  className="inline-block w-0.5 h-4 bg-primary ml-0.5 align-middle"
                   animate={{ opacity: [1, 0] }}
                   transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
                 />

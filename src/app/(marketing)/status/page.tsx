@@ -39,7 +39,7 @@ export default function StatusPage() {
       <ScrollToTop />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-4xl font-bold text-white mb-12 text-center">
+        <h1 className="text-4xl font-bold text-foreground mb-12 text-center">
           État des services Yallo
         </h1>
 
@@ -47,7 +47,7 @@ export default function StatusPage() {
           {services.map((service, index) => (
             <div
               key={index}
-              className="bg-card/30 rounded-lg p-6 border border-white/10 flex items-center justify-between"
+              className="bg-card/30 rounded-lg p-6 border border-border flex items-center justify-between"
             >
               <div className="flex items-center gap-4">
                 <div
@@ -58,7 +58,7 @@ export default function StatusPage() {
                   }`}
                 />
                 <div>
-                  <h3 className="text-lg font-semibold text-white">
+                  <h3 className="text-lg font-semibold text-foreground">
                     {service.name}
                   </h3>
                 </div>
@@ -78,7 +78,7 @@ export default function StatusPage() {
           ))}
         </div>
 
-        <div className="bg-card/30 rounded-lg p-6 border border-white/10 text-center">
+        <div className="bg-card/30 rounded-lg p-6 border border-border text-center">
           <p className="text-sm text-muted-foreground">
             Dernière mise à jour : {currentDate}
           </p>
@@ -89,7 +89,7 @@ export default function StatusPage() {
             Vous rencontrez un problème ?{" "}
             <a
               href="mailto:support@yallo.fr"
-              className="text-[#f6cf62] hover:text-[#f6cf62]/80"
+              className="text-primary hover:text-primary/80"
             >
               Contactez notre équipe
             </a>
