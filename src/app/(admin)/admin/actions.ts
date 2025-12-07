@@ -16,7 +16,7 @@ import { cookies } from "next/headers";
 
 const createUserSchema = z.object({
   email: z.string().email("Email invalide"),
-  role: z.enum(["ADMIN", "OWNER"], { required_error: "Rôle requis" }),
+  role: z.enum(["ADMIN", "OWNER"]),
 });
 
 const updateUserSchema = z.object({
@@ -111,7 +111,7 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
     });
 
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || "Données invalides" };
+      return { success: false, error: parsed.error.issues[0]?.message || "Données invalides" };
     }
 
     const { email, role } = parsed.data;
@@ -158,7 +158,7 @@ export async function updateUser(
 
     const parsed = updateUserSchema.safeParse(data);
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || "Données invalides" };
+      return { success: false, error: parsed.error.issues[0]?.message || "Données invalides" };
     }
 
     const updateData: Partial<{ email: string; role: "ADMIN" | "OWNER" }> = {};
@@ -218,7 +218,7 @@ export async function createRestaurant(formData: FormData): Promise<ActionResult
     });
 
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || "Données invalides" };
+      return { success: false, error: parsed.error.issues[0]?.message || "Données invalides" };
     }
 
     const { name, phoneNumber, ownerId, address } = parsed.data;
@@ -257,7 +257,7 @@ export async function updateRestaurantGeneral(
 
     const parsed = updateRestaurantGeneralSchema.safeParse(data);
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || "Données invalides" };
+      return { success: false, error: parsed.error.issues[0]?.message || "Données invalides" };
     }
 
     const updateData: Record<string, unknown> = {
@@ -306,7 +306,7 @@ export async function updateRestaurantAI(
 
     const parsed = updateRestaurantAISchema.safeParse(data);
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || "Données invalides" };
+      return { success: false, error: parsed.error.issues[0]?.message || "Données invalides" };
     }
 
     const updateData: Record<string, unknown> = {
@@ -340,7 +340,7 @@ export async function updateRestaurantTelephony(
 
     const parsed = updateRestaurantTelephonySchema.safeParse(data);
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || "Données invalides" };
+      return { success: false, error: parsed.error.issues[0]?.message || "Données invalides" };
     }
 
     const updateData: Record<string, unknown> = {
@@ -375,7 +375,7 @@ export async function updateRestaurantBilling(
 
     const parsed = updateRestaurantBillingSchema.safeParse(data);
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || "Données invalides" };
+      return { success: false, error: parsed.error.issues[0]?.message || "Données invalides" };
     }
 
     const updateData: Record<string, unknown> = {
