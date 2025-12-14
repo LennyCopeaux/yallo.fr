@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Autoriser la navigation entre sous-domaines en dev
+  allowedDevOrigins: [
+    "http://localhost:3000",
+    "http://app.localhost:3000",
+  ],
 };
 
 export default nextConfig;

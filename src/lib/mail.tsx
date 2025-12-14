@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import { render } from "@react-email/render";
+import { WelcomeEmail } from "./emails/welcome-email";
 
 if (!process.env.RESEND_API_KEY) {
   throw new Error("RESEND_API_KEY is not set in environment variables");
@@ -11,11 +13,18 @@ export async function sendWelcomeEmail(
   tempPassword: string
 ): Promise<void> {
   try {
-    await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "Yallo <onboarding@yallo.fr>",
-      to: email,
-      subject: "Bienvenue sur Yallo - Vos identifiants de connexion",
-      text: `Bonjour,
+    const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://app.localhost:3000"}/login`;
+    
+    const html = await render(
+      <WelcomeEmail
+        email={email}
+        tempPassword={tempPassword}
+        loginUrl={loginUrl}
+      />
+    );
+
+    // Version texte pour les clients email qui ne supportent pas HTML
+    const text = `Bonjour,
 
 Bienvenue sur Yallo ! Votre compte a été créé avec succès.
 
@@ -25,14 +34,20 @@ Mot de passe temporaire : ${tempPassword}
 
 ⚠️ IMPORTANT : Pour des raisons de sécurité, vous devrez changer ce mot de passe lors de votre première connexion.
 
-Vous pouvez vous connecter ici : ${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login
+Vous pouvez vous connecter ici : ${loginUrl}
 
 À bientôt,
-L'équipe Yallo`,
+L'équipe Yallo`;
+
+    await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || "Yallo <onboarding@yallo.fr>",
+      to: email,
+      subject: "Bienvenue sur Yallo - Vos identifiants de connexion",
+      html,
+      text,
     });
   } catch (error) {
     console.error("Erreur lors de l'envoi de l'email:", error);
     throw new Error("Impossible d'envoyer l'email de bienvenue");
   }
 }
-

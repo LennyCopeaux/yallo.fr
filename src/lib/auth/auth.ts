@@ -1,5 +1,5 @@
 import NextAuth from "next-auth";
-import authConfig from "@/auth.config";
+import authConfig from "@/lib/auth/auth.config";
 import type { UserRole } from "@/db/schema";
 
 declare module "next-auth" {
@@ -32,8 +32,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async session({ session, token }) {
       if (session.user && token) {
+        // Validation stricte : le rôle doit être présent dans le token
+        if (!token.role || (token.role !== "ADMIN" && token.role !== "OWNER")) {
+          console.error(
+            "[AUTH ERROR] Session invalide : rôle manquant ou invalide",
+            { userId: token.id, email: session.user.email, tokenRole: token.role }
+          );
+          // Invalider la session en ne retournant pas les données utilisateur
+          return session;
+        }
+
         session.user.id = token.id as string;
-        session.user.role = (token.role as UserRole) ?? "OWNER";
+        session.user.role = token.role as UserRole;
         session.user.mustChangePassword = Boolean(token.mustChangePassword ?? false);
       }
       return session;

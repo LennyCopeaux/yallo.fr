@@ -41,7 +41,7 @@
   --card-foreground: 240 10% 3.9%;
   --popover: 0 0% 100%;
   --popover-foreground: 240 10% 3.9%;
-  /* Primary: Yallo Yellow */
+  /* Primary: Yallo Yellow #f2bf26 */
   --primary: 45 89% 55%;
   --primary-foreground: 0 0% 0%;
   /* Secondary: Light gray */
@@ -81,8 +81,8 @@
   --card-foreground: 0 0% 98%;
   --popover: 0 0% 7%;
   --popover-foreground: 0 0% 98%;
-  /* Primary: Yallo Yellow #f6cf62 */
-  --primary: 45 89% 67%;
+  /* Primary: Yallo Yellow #f2bf26 */
+  --primary: 45 89% 55%;
   --primary-foreground: 0 0% 0%;
   /* Secondary: Dark zinc */
   --secondary: 0 0% 12%;
@@ -96,10 +96,10 @@
   /* Borders: Very dark, subtle */
   --border: 0 0% 15%;
   --input: 0 0% 15%;
-  --ring: 45 89% 67%;
+  --ring: 45 89% 55%;
   
   /* Brand Yallo Yellow */
-  --brand: 45 89% 67%;
+  --brand: 45 89% 55%;
   --brand-foreground: 0 0% 0%;
   
   /* Grid */

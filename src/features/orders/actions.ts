@@ -2,9 +2,23 @@
 
 import { db } from "@/db";
 import { orders, orderItems, restaurants, type OrderStatus } from "@/db/schema";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth/auth";
 import { eq, desc, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+
+// Récupérer le restaurant de l'utilisateur connecté
+export async function getUserRestaurant() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  const restaurant = await db.query.restaurants.findFirst({
+    where: eq(restaurants.ownerId, session.user.id),
+  });
+
+  return restaurant || null;
+}
 
 // Récupérer les commandes du restaurant de l'utilisateur connecté
 export async function getOrders() {
@@ -158,4 +172,3 @@ export async function simulateOrder() {
   revalidatePath("/dashboard");
   return { success: true, orderNumber };
 }
-

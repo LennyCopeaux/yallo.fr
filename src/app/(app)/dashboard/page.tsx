@@ -1,14 +1,14 @@
-import { auth, signOut } from "@/auth";
+import { auth, signOut } from "@/lib/auth/auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { LogOut, Utensils } from "lucide-react";
+import { LogOut, Utensils, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { buildAppUrlServer } from "@/lib/utils";
 import { ModeToggle } from "@/components/mode-toggle";
 import { DashboardContent } from "./dashboard-content";
-import { getOrders } from "@/features/orders/actions";
+import { getOrders, getUserRestaurant } from "@/features/orders/actions";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -26,8 +26,11 @@ export default async function DashboardPage() {
     redirect("/admin");
   }
 
-  // Récupérer les commandes
-  const ordersData = await getOrders();
+  // Vérifier si l'utilisateur a un restaurant
+  const restaurant = await getUserRestaurant();
+  
+  // Récupérer les commandes (sera vide si pas de restaurant)
+  const ordersData = restaurant ? await getOrders() : [];
   
   // Transformer les données pour le composant
   const orders = ordersData.map((order) => ({
@@ -94,34 +97,65 @@ export default async function DashboardPage() {
           <h1 className="text-3xl font-bold mb-2">
             Bienvenue 👋
           </h1>
-          <p className="text-muted-foreground">
-            Votre assistant vocal est <span className="text-emerald-500 font-medium">en ligne</span> et prêt à prendre des commandes.
-          </p>
+          {restaurant ? (
+            <p className="text-muted-foreground">
+              Votre assistant vocal est <span className="text-emerald-500 font-medium">en ligne</span> et prêt à prendre des commandes.
+            </p>
+          ) : (
+            <p className="text-muted-foreground">
+              Votre compte est actif mais n&apos;est pas encore rattaché à un restaurant.
+            </p>
+          )}
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <Link href="/dashboard/menu">
-            <Card className="bg-card border-border hover:border-primary/30 transition-all cursor-pointer h-full">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Gestion du Menu</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Gérez vos produits, catégories et disponibilité
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Utensils className="w-6 h-6 text-primary" />
-                  </div>
+        {/* Alert si pas de restaurant */}
+        {!restaurant && (
+          <Card className="bg-amber-500/10 border-amber-500/30 mb-8">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-6 h-6 text-amber-500" />
                 </div>
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2 text-amber-500">Aucun restaurant associé</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Votre compte n&apos;est pas encore rattaché à un restaurant. 
+                    Contactez l&apos;administrateur pour qu&apos;il vous associe à votre établissement.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Email de contact : <a href="mailto:contact@yallo.fr" className="text-primary hover:underline">contact@yallo.fr</a>
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Dashboard Content with KPIs, Graph, and Orders */}
-        <DashboardContent orders={orders} />
+        {/* Quick Actions - seulement si restaurant */}
+        {restaurant && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <Link href="/dashboard/menu">
+              <Card className="bg-card border-border hover:border-primary/30 transition-all cursor-pointer h-full">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Gestion du Menu</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Gérez vos produits, catégories et disponibilité
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Utensils className="w-6 h-6 text-primary" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+        )}
+
+        {/* Dashboard Content with KPIs, Graph, and Orders - seulement si restaurant */}
+        {restaurant && <DashboardContent orders={orders} />}
       </main>
     </div>
   );

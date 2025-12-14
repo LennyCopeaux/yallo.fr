@@ -1,4 +1,4 @@
-import { auth, signOut } from "@/auth";
+import { auth, signOut } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { buildAppUrlServer } from "@/lib/utils";
 import { redirect } from "next/navigation";

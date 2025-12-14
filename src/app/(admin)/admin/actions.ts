@@ -1,6 +1,6 @@
 "use server";
 
-import { auth, signIn } from "@/auth";
+import { auth, signIn } from "@/lib/auth/auth";
 import { db } from "@/db";
 import { users, restaurants, RestaurantStatus, RestaurantPlan } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -115,19 +115,36 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
     }
 
     const { email, role } = parsed.data;
+
+    // Vérifier si l'utilisateur existe AVANT d'envoyer l'email
+    const existingUser = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+
+    if (existingUser.length > 0) {
+      return { success: false, error: "Cet email est déjà utilisé" };
+    }
+
     const tempPassword = generateTempPassword();
-
-    // Envoie l'email AVANT de créer l'utilisateur
-    await sendWelcomeEmail(email, tempPassword);
-
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
+    // Créer l'utilisateur d'abord
     await db.insert(users).values({
       email,
       passwordHash,
       role,
       mustChangePassword: true,
     });
+
+    // Envoyer l'email APRÈS la création réussie
+    try {
+      await sendWelcomeEmail(email, tempPassword);
+    } catch (emailError) {
+      console.error("Erreur envoi email (utilisateur créé):", emailError);
+      // L'utilisateur est créé, on continue mais on log l'erreur
+    }
 
     revalidatePath("/admin");
     return { success: true };
@@ -137,11 +154,49 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
       if (error.message.includes("users_email_unique")) {
         return { success: false, error: "Cet email est déjà utilisé" };
       }
-      if (error.message.includes("email")) {
-        return { success: false, error: "Erreur lors de l'envoi de l'email" };
-      }
     }
     return { success: false, error: "Erreur lors de la création" };
+  }
+}
+
+export async function resendWelcomeEmail(userId: string): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    if (!userId) {
+      return { success: false, error: "ID utilisateur requis" };
+    }
+
+    // Récupérer l'utilisateur
+    const [user] = await db
+      .select({ email: users.email, mustChangePassword: users.mustChangePassword })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      return { success: false, error: "Utilisateur non trouvé" };
+    }
+
+    // Ne renvoyer que si l'utilisateur doit encore changer son mot de passe
+    if (!user.mustChangePassword) {
+      return { success: false, error: "Cet utilisateur a déjà changé son mot de passe" };
+    }
+
+    // Générer un nouveau mot de passe temporaire
+    const tempPassword = generateTempPassword();
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+    // Mettre à jour le mot de passe
+    await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
+
+    // Envoyer l'email
+    await sendWelcomeEmail(user.email, tempPassword);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur renvoi email:", error);
+    return { success: false, error: "Erreur lors du renvoi de l'email" };
   }
 }
 

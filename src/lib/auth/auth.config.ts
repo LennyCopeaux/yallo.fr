@@ -53,4 +53,3 @@ export default {
     signIn: "/login",
   },
 } satisfies NextAuthConfig;
-

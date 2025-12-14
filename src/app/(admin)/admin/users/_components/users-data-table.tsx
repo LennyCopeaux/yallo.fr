@@ -29,9 +29,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { MoreHorizontal, Trash2, Loader2, AlertCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { deleteUser } from "../../actions";
+import { deleteUser, resendWelcomeEmail } from "../../actions";
 
 type User = {
   id: string;
@@ -49,6 +49,7 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [resendingFor, setResendingFor] = useState<string | null>(null);
 
   const handleDelete = async () => {
     if (!userToDelete) return;
@@ -63,6 +64,18 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
       setUserToDelete(null);
     } else {
       toast.error(result.error || "Erreur lors de la suppression");
+    }
+  };
+
+  const handleResendEmail = async (userId: string) => {
+    setResendingFor(userId);
+    const result = await resendWelcomeEmail(userId);
+    setResendingFor(null);
+    
+    if (result.success) {
+      toast.success("Nouveaux identifiants envoyés par email");
+    } else {
+      toast.error(result.error || "Erreur lors de l'envoi");
     }
   };
 
@@ -125,6 +138,19 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
                     <DropdownMenuContent align="end" className="bg-card border-border">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuSeparator className="bg-muted/50" />
+                      {user.mustChangePassword && (
+                        <DropdownMenuItem
+                          onClick={() => handleResendEmail(user.id)}
+                          disabled={resendingFor === user.id}
+                        >
+                          {resendingFor === user.id ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Mail className="w-4 h-4 mr-2" />
+                          )}
+                          Renvoyer les identifiants
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         className="text-red-400 focus:text-red-400"
                         onClick={() => {

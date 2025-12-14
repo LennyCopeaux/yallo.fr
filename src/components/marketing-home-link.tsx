@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export function MarketingHomeLink({ 
   children, 
@@ -9,22 +9,24 @@ export function MarketingHomeLink({
   children: React.ReactNode;
   className?: string;
 }) {
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    
+  const [href, setHref] = useState("/");
+
+  useEffect(() => {
     const hostname = window.location.hostname;
     const port = window.location.port || "3000";
     
-    const marketingUrl = hostname.includes("localhost") || hostname.includes("app.localhost")
-      ? `http://localhost:${port}/`
-      : `https://yallo.fr/`;
-    
-    window.location.href = marketingUrl;
-  };
+    if (hostname === "app.localhost") {
+      setHref(`http://localhost:${port}/`);
+    } else if (hostname.startsWith("app.") && hostname.includes("yallo")) {
+      setHref("https://yallo.fr/");
+    } else {
+      setHref("/");
+    }
+  }, []);
 
   return (
-    <Link href="#" onClick={handleClick} className={className}>
+    <a href={href} className={className}>
       {children}
-    </Link>
+    </a>
   );
 }

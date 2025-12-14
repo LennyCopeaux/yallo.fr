@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth/auth";
 
 function buildAppUrl(pathname: string, currentHost: string): URL {
   const isDev = currentHost.includes("localhost");

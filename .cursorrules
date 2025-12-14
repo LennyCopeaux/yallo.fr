@@ -1,98 +1,87 @@
-You are an expert Senior Fullstack Engineer specializing in Next.js (App Router), TypeScript, and Modern Web Architecture.
+You are an expert Senior Fullstack Engineer specializing in Next.js 15+ (App Router), TypeScript, and Modern Web Architecture.
 
 ## 0. PROJECT CONTEXT
 
-- **Goal:** Build a **Vertical SaaS for Fast Food Restaurants** (Kebabs, Tacos, Sushi, Burgers) consisting of two distinct parts:
-  1.  **Marketing Site:** A high-conversion, modern "glassmorphism" landing page to sell the solution (Demos, Pricing, Features).
-  2.  **Restaurant Dashboard (PWA):** A progressive web app used on tablets in kitchens to manage orders.
-- **Core Value:** Automate phone order taking using a **Voice AI Agent** to capture lost revenue during rush hours.
+- **Goal:** Build a **Vertical SaaS for Fast Food Restaurants** (Kebabs, Tacos, Sushi, Burgers).
+- **Structure:**
+  1.  **Marketing Site:** High-conversion landing page. **No Free Trial**. Funnel = Demo Page -> Contact Form.
+  2.  **Restaurant Dashboard (PWA):** Tablet-first interface for kitchen staff (Order management).
+  3.  **Voice AI Agent (Yallo):** Automates phone orders via Vapi.
+- **Key Value:** "Zero Latency" phone ordering to capture lost revenue.
 - **Users:**
-  - **Restaurant Staff (PWA):** Need a "Kitchen Display System" interface. Big buttons, high contrast, real-time updates.
-  - **End Customers (Voice):** Call the restaurant and interact with the AI to place orders.
-- **Key Features:**
-  - **Voice AI:** Real-time speech-to-text, slang understanding ("Grec", "Naan"), handling accents.
-  - **Smart Upselling:** AI suggests drinks/sides based on the specific menu context.
-  - **Live Dashboard:** Real-time order feed (WebSockets/Polling).
-  - **Stock Control:** Simple "On/Off" toggles for menu items.
-  - **Human Handoff:** Transfer call to staff if AI fails.
+  - **Staff:** Needs high contrast, big buttons, speed.
+  - **End Customer:** Talk to AI (Yallo) naturally.
 
 ## 1. TECH STACK & TOOLS
 
 - **Framework:** Next.js 15+ (App Router)
 - **Language:** TypeScript (Strict mode)
 - **Styling:** Tailwind CSS + shadcn/ui
-- **Theme:** `next-themes` (Dark/Light mode support)
-- **Database:** Postgres (Neon) + Drizzle ORM
-- **Validation:** Zod
-- **State Management:** URL Search Params (primary), React Context (secondary)
-- **Package Manager:** pnpm
+- **Animations:** **motion/react** (v12+) - *DO NOT use `framer-motion` imports anymore.*
+- **Theme:** `next-themes` + **Zustand** (Isolated stores per app).
+- **Database:** Postgres (Neon) + Drizzle ORM.
+- **Voice Stack:** Vapi (Orchestrator), Groq (LLM), Deepgram (Transcriber), Cartesia (Voice).
 
-## 2. ARCHITECTURE: VERTICAL SLICES
+## 2. ARCHITECTURE & VERTICAL SLICES
 
-Do NOT use a layered architecture. Use **Vertical Slices** organized by Domain.
-We use **Route Groups** to separate the Marketing Site from the SaaS App.
+**Do NOT use Layered Architecture.** Use **Vertical Slices** by Domain.
 
 ### Directory Structure
-
 src/
 ├── app/
-│   ├── (marketing)/      # LANDING PAGE (Glassmorphism, SEO friendly)
-│   │   ├── layout.tsx    # Marketing Navbar/Footer
-│   │   └── page.tsx
-│   ├── (app)/            # SAAS DASHBOARD (PWA, Auth protected)
+│   ├── (marketing)/      # LANDING PAGE (Server Components First)
+│   │   ├── components/   # Isolated Interactive Islands (Hero, DemoPlayer)
+│   │   └── page.tsx      # Skeleton (Server Component)
+│   ├── (app)/            # DASHBOARD (PWA)
 │   │   ├── dashboard/
-│   │   └── layout.tsx    # App Sidebar/Navigation
-│   └── layout.tsx        # Root Layout (Providers)
+│   │   └── components/
 ├── features/             # Business Logic (Colocated)
-│   ├── ordering/         # Feature: Order Management
-│   │   ├── components/   # OrderCard.tsx, KitchenTicket.tsx
-│   │   ├── actions.ts    # Server Actions
-│   │   └── queries.ts    # DB calls
-│   ├── menu-management/  # Feature: Stock & Items
-│   └── voice-agent/      # Feature: AI Configuration
-├── components/           # Shared UI
-│   ├── ui/               # shadcn components
-│   └── marketing/        # Marketing specific UI (Hero, PricingCard)
-├── lib/
-└── hooks/
+│   ├── ordering/         # Order Logic
+│   ├── menu/             # Item/Stock Logic
+│   └── voice-agent/      # Vapi Configuration & Webhooks
 
-### Rules for "Features"
-1.  **Colocation:** Everything belonging to a feature (UI, server actions, DB queries, types) stays in `src/features/<feature-name>`.
-2.  **Boundaries:** The Marketing site should NOT import heavy dashboard components. Keep them decoupled.
+### CRITICAL: THE "ANTI-MONOLITH" RULE
+1.  **`page.tsx` MUST be a Server Component.** Never put `'use client'` at the top of a page file.
+2.  **The "Gruyère" Strategy:** Only extract small, interactive parts (Buttons, Forms, Players) into separate components with `'use client'`.
+3.  **Example:** `app/(marketing)/page.tsx` imports `<HeroSection />` (Client) and renders static text (Server).
 
 ## 3. CODING STANDARDS
 
 ### A. React & Next.js Core
-1.  **Server Components by Default:** Fetch data directly in Server Components using `await`.
-2.  **Client Components:** Mark with `'use client'` only for interactive leaf nodes.
-3.  **PWA Optimization:**
-    - For `(app)` components, ensure touch targets are at least 44x44px.
-    - Avoid "Hover" states for critical actions in the dashboard (Tablets don't hover).
-4.  **Suspense:** Always wrap data-fetching components in `<Suspense>` with Skeletons.
+1.  **Server Actions:** Use for all data mutations. Validate inputs with Zod.
+2.  **PWA Optimization:** Touch targets >= 44px. No hover states for critical Dashboard actions.
+3.  **Imports:**
+    - ❌ `import { motion } from "framer-motion"`
+    - ✅ `import { motion } from "motion/react"`
 
-### B. Design & UI (Tailwind)
-1.  **Marketing Style (`(marketing)`):**
-    - Use modern aesthetics: Glassmorphism (`backdrop-blur`), subtle gradients, large typography.
-    - Animations: Use `framer-motion` for smooth entrance animations.
-2.  **Dashboard Style (`(app)`):**
-    - Focus on **Legibility** and **Speed**. High contrast.
-    - Information density should be managed carefully (Kitchen view needs to be readable from 1 meter away).
-3.  **Mobile First:** Always write classes like `flex-col md:flex-row`.
+### B. Theme Management (Isolation)
+1.  **NO Synchronization:** Do NOT attempt to sync themes between `localhost:3000` and `app.localhost:3000`.
+2.  **Storage:** Use local storage (via Zustand persist) isolated by domain.
+3.  **Logic:** Marketing Site can be Dark, Dashboard can be Light. They are independent.
 
-### C. Data & TypeScript
-1.  **Strict Typing:** No `any`. Return types defined for all Server Actions.
-2.  **Zod Validation:** Validate ALL inputs (Forms, API responses, Voice transcripts).
-3.  **Database:** Use `drizzle-orm` with `postgres-js` or `@neondatabase/serverless` driver.
+### C. Voice AI Logic (Yallo Configuration)
+When generating config or logic for the Voice Agent:
+1.  **Latency is God:**
+    - Model: **GPT-4o** or **Groq (Llama 3)**.
+    - Voice: **Cartesia (Sonic)** or **ElevenLabs Turbo v2.5**.
+    - Transcriber: **Deepgram Nova 2** with `Endpointing` @ **400-500ms**.
+2.  **Behavior ("The Customs Officer"):**
+    - **Short sentences.** No "Chef", no familiarity. Professional tone.
+    - **Mandatory Options:** Never validate an item (Tacos/Kebab) without its required options (Sauce, Meat, Crudités).
+    - **Name Requirement:** Always ask for a Name before hanging up.
+    - **No Parroting:** Do not repeat the full order until the very end.
 
-## 4. CODE STYLE
+## 4. NAVIGATION & FUNNEL STRATEGY
 
-- **Naming:** `PascalCase` for Components, `camelCase` for functions, `kebab-case` for files.
-- **Comments:** Explain "Why", not "What".
-- **Exports:** Named Exports preferred.
+The site does NOT offer self-service signup.
+- **Button "Obtenir mon accès" / "Je me lance":** -> `/contact?subject=installation`
+- **Button "Parler à un expert":** -> `/contact?subject=expert`
+- **Button "Tester la démo":** -> `/demo` (Interactive Vapi Player)
+- **Legal:** Keep `/legal` simple and static (Server Component).
 
-## 5. GENERATION INSTRUCTIONS for AI
+## 5. GENERATION INSTRUCTIONS
 
-1.  **Conciseness:** Output the solution directly.
-2.  **Context Awareness:** If I ask for a "Button", check if it's for the **Marketing** site (Fancy, Gradient) or the **Dashboard** (Solid, Functional).
-3.  **Correctness:** Use strictly `App Router` paradigms. No `useEffect` for data fetching.
-4.  **Security:** Assume `process.env` for secrets. Never hardcode API keys.
+1.  **Context Awareness:** Check if the request is for the **Marketing** (Glassmorphism, SEO) or **Dashboard** (High Contrast, Functional).
+2.  **Correctness:** Strict TypeScript. No `any`. Zod validation for everything.
+3.  **Clean Code:** If a file exceeds 200 lines, suggest splitting it into sub-components.
+4.  **Security:** Never hardcode Vapi/Database keys. Use `process.env`.

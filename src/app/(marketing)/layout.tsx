@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AppLoginButton } from "@/components/app-login-button";
 import { MarketingLogoLink } from "@/components/marketing-logo-link";
-import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/mode-toggle";
 
 export default function MarketingLayout({
@@ -11,12 +10,7 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider
-      attribute="class"
-      forcedTheme="dark"
-      disableTransitionOnChange
-    >
-      <div className="relative min-h-screen bg-background overflow-hidden">
+    <div className="relative min-h-screen bg-background overflow-hidden">
         {/* Floating Navbar - Dark glassmorphism */}
         <nav className="fixed top-0 left-0 right-0 z-50">
           <div className="mx-4 mt-4 sm:mx-6 lg:mx-8">
@@ -28,16 +22,16 @@ export default function MarketingLayout({
 
                   {/* Navigation */}
                   <div className="hidden md:flex items-center gap-8">
-                    <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                    <Link href="/#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                       Comment ça marche
                     </Link>
-                    <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                    <Link href="/#features" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                       Fonctionnalités
                     </Link>
-                    <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                    <Link href="/#pricing" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                       Tarification
                     </Link>
-                    <Link href="#faq" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                    <Link href="/#faq" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
                       FAQ
                     </Link>
                   </div>
@@ -46,9 +40,11 @@ export default function MarketingLayout({
                   <div className="flex items-center gap-2 sm:gap-3">
                     <ModeToggle />
                     <AppLoginButton />
-                    <Button size="sm" className="bg-primary text-black hover:bg-primary/90 btn-shine font-semibold">
-                      Démo gratuite
-                    </Button>
+                    <Link href="/demo">
+                      <Button size="sm" className="bg-primary text-black hover:bg-primary/90 btn-shine font-semibold">
+                        Démo gratuite
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -61,6 +57,5 @@ export default function MarketingLayout({
           {children}
         </main>
       </div>
-    </ThemeProvider>
   );
 }
