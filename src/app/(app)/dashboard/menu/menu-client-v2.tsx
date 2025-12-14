@@ -2,7 +2,7 @@
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ShoppingCart, Utensils } from "lucide-react";
-import { IngredientList, ProductGrid } from "./_components";
+import { IngredientList, ProductGrid } from "@/components/menu";
 
 // Types
 interface IngredientCategory {

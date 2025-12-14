@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createRestaurant } from "../actions";
+import { createRestaurant } from "@/app/(admin)/admin/restaurants/actions";
 import { Plus, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 
@@ -189,4 +189,3 @@ export function AddRestaurantDialog({ owners }: AddRestaurantDialogProps) {
     </Dialog>
   );
 }
-

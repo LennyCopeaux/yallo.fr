@@ -17,7 +17,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Save, CreditCard, Percent, Building, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { updateRestaurantBilling } from "../../../actions";
+import { updateRestaurantBilling } from "@/app/(admin)/admin/restaurants/actions";
 
 const formSchema = z.object({
   plan: z.enum(["fixed", "commission"]),
@@ -269,4 +269,3 @@ export function BillingTab({ restaurant }: BillingTabProps) {
     </div>
   );
 }
-

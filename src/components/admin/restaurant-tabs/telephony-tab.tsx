@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Save, Phone, PhoneForwarded, Clock, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { updateRestaurantTelephony } from "../../../actions";
+import { updateRestaurantTelephony } from "@/app/(admin)/admin/restaurants/actions";
 
 const formSchema = z.object({
   phoneNumber: z.string().min(10, "Numéro invalide"),
@@ -251,4 +251,3 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
     </div>
   );
 }
-

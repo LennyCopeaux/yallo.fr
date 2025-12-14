@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { MoreHorizontal, Trash2, Loader2, AlertCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { deleteUser, resendWelcomeEmail } from "../../actions";
+import { deleteUser, resendWelcomeEmail } from "@/app/(admin)/admin/actions";
 
 type User = {
   id: string;
@@ -202,4 +202,3 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
     </div>
   );
 }
-

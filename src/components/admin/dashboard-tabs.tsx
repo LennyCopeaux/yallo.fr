@@ -1,11 +1,11 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UtensilsCrossed, Users, PhoneCall } from "lucide-react";
-import { RestaurantsDataTable } from "../restaurants/_components/restaurants-data-table";
-import { UsersDataTable } from "../users/_components/users-data-table";
-import { AddRestaurantDialog } from "../restaurants/_components/add-restaurant-dialog";
-import { AddUserDialog } from "../users/_components/add-user-dialog";
+import { UtensilsCrossed, Users } from "lucide-react";
+import { RestaurantsDataTable } from "@/components/admin/restaurants-data-table";
+import { UsersDataTable } from "@/components/admin/users-data-table";
+import { AddRestaurantDialog } from "@/components/admin/add-restaurant-dialog";
+import { AddUserDialog } from "@/components/admin/add-user-dialog";
 
 type Restaurant = {
   id: string;
@@ -157,4 +157,3 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, default
     </Tabs>
   );
 }
-

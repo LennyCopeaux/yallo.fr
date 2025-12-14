@@ -2,10 +2,10 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Bot, Phone, CreditCard } from "lucide-react";
-import { GeneralTab } from "./tabs/general-tab";
-import { AITab } from "./tabs/ai-tab";
-import { TelephonyTab } from "./tabs/telephony-tab";
-import { BillingTab } from "./tabs/billing-tab";
+import { GeneralTab } from "@/components/admin/restaurant-tabs/general-tab";
+import { AITab } from "@/components/admin/restaurant-tabs/ai-tab";
+import { TelephonyTab } from "@/components/admin/restaurant-tabs/telephony-tab";
+import { BillingTab } from "@/components/admin/restaurant-tabs/billing-tab";
 
 type Restaurant = {
   id: string;
@@ -92,4 +92,3 @@ export function RestaurantDetailTabs({ restaurant, owners }: RestaurantDetailTab
     </Tabs>
   );
 }
-

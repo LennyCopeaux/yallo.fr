@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Save, Bot, Brain, FileText, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { updateRestaurantAI } from "../../../actions";
+import { updateRestaurantAI } from "@/app/(admin)/admin/restaurants/actions";
 
 const formSchema = z.object({
   vapiAssistantId: z.string().max(100).optional(),
@@ -246,4 +246,3 @@ Règles importantes :
     </div>
   );
 }
-

@@ -18,7 +18,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Save, User } from "lucide-react";
 import { toast } from "sonner";
-import { updateRestaurantGeneral } from "../../../actions";
+import { updateRestaurantGeneral } from "@/app/(admin)/admin/restaurants/actions";
 
 const formSchema = z.object({
   name: z.string().min(2, "Nom trop court").max(100, "Nom trop long"),
@@ -267,4 +267,3 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
     </Card>
   );
 }
-

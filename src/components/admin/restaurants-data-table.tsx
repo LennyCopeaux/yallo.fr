@@ -42,17 +42,13 @@ import {
 import { 
   MoreHorizontal, 
   Search, 
-  Bot, 
   Eye, 
-  Pencil, 
   Trash2,
   UserCheck,
-  Phone,
-  ExternalLink,
   Loader2
 } from "lucide-react";
 import { toast } from "sonner";
-import { deleteRestaurant, impersonateRestaurant } from "../actions";
+import { deleteRestaurant, impersonateRestaurant } from "@/app/(admin)/admin/restaurants/actions";
 
 type Restaurant = {
   id: string;
@@ -380,4 +376,3 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
     </div>
   );
 }
-

@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RestaurantDetailTabs } from "./_components/restaurant-detail-tabs";
+import { RestaurantDetailTabs } from "@/components/admin";
 
 // Récupère les OWNERS pour le dropdown
 async function getOwners() {

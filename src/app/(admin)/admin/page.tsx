@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { restaurants, users, orders } from "@/db/schema";
 import { eq, sql, and } from "drizzle-orm";
-import { DashboardTabs } from "./_components/dashboard-tabs";
+import { DashboardTabs } from "@/components/admin";
 import { Suspense } from "react";
 
 // Récupère les OWNERS pour le dropdown

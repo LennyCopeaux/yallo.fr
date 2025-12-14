@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createUser } from "../../actions";
+import { createUser } from "@/app/(admin)/admin/actions";
 import { Plus, Loader2, Shield, User } from "lucide-react";
 import { toast } from "sonner";
 
@@ -154,4 +154,3 @@ export function AddUserDialog() {
     </Dialog>
   );
 }
-
