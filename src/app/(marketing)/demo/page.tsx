@@ -10,7 +10,7 @@ export const metadata = {
   description: "Testez gratuitement Yallo en appelant notre numéro de démonstration. Découvrez l'IA vocale en action avec 30 secondes gratuites.",
 };
 
-const phoneNumber = "0939035299";
+const phoneNumber = "0000000000";
 const formattedPhoneNumber = "+33 0 00 00 00 00";
 
 const menuSandwichs = [
