@@ -11,7 +11,7 @@ export const metadata = {
 };
 
 const phoneNumber = "0939035299";
-const formattedPhoneNumber = "+33 9 39 03 52 99";
+const formattedPhoneNumber = "+33 0 00 00 00 00";
 
 const menuSandwichs = [
   { name: "Kebab (Veau/Dinde)", price: "7€" },
