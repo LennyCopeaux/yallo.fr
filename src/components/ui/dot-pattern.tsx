@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 
 interface DotPatternProps {
   className?: string;
-  dotColor?: string;
   dotSize?: number;
   spacing?: number;
   withVignette?: boolean;
@@ -13,16 +12,12 @@ interface DotPatternProps {
 
 export function DotPattern({
   className,
-  dotColor,
   dotSize = 1,
   spacing = 20,
   withVignette = true,
 }: DotPatternProps) {
   // useId() generates stable IDs across server/client renders
   const patternId = useId();
-  
-  // Use provided color or default adaptive (will be overridden by CSS classes)
-  const defaultDotColor = dotColor || "currentColor";
 
   return (
     <div className={cn("absolute inset-0 overflow-hidden pointer-events-none", className)}>
@@ -43,7 +38,7 @@ export function DotPattern({
               cx={spacing / 2} 
               cy={spacing / 2} 
               r={dotSize} 
-              className="fill-foreground/[0.08] dark:fill-foreground/[0.15]"
+              className="fill-pattern"
             />
           </pattern>
         </defs>

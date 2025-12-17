@@ -104,7 +104,7 @@ export function FooterSection() {
 
       {/* Giant YALLO text */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none select-none">
-        <div className="text-[12rem] sm:text-[18rem] md:text-[24rem] font-black text-foreground/[0.12] dark:text-foreground/[0.03] leading-none tracking-tighter whitespace-nowrap">
+        <div className="text-[12rem] sm:text-[18rem] md:text-[24rem] font-black text-pattern leading-none tracking-tighter whitespace-nowrap">
           YALLO
         </div>
       </div>
