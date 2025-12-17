@@ -38,7 +38,7 @@ export function DotPattern({
               cx={spacing / 2} 
               cy={spacing / 2} 
               r={dotSize} 
-              style={{ fill: 'var(--pattern)', fillOpacity: 0.5 }}
+              style={{ fill: 'var(--pattern)', fillOpacity: 'var(--dot-opacity)' }}
             />
           </pattern>
         </defs>

@@ -106,7 +106,7 @@ export function FooterSection() {
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none select-none z-0">
         <div 
           className="text-[12rem] sm:text-[18rem] md:text-[24rem] font-black leading-none tracking-tighter whitespace-nowrap"
-          style={{ color: 'var(--pattern)', opacity: 0.15 }}
+          style={{ color: 'var(--pattern)', opacity: 0.10 }}
         >
           YALLO
         </div>
