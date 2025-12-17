@@ -112,7 +112,7 @@
   --grid-color: rgba(255, 255, 255, 0.02);
   
   /* Decorative Pattern Color (dots, grids, watermarks) */
-  --pattern: #919191;
+  --pattern: #cfcfcf;
   
   color-scheme: dark;
 }
