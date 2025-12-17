@@ -71,6 +71,7 @@
   
   /* Decorative Pattern Color (dots, grids, watermarks) */
   --pattern: #cfcfcf;
+  --dot-opacity: 0.5;
   
   color-scheme: light;
 }
@@ -112,7 +113,8 @@
   --grid-color: rgba(255, 255, 255, 0.02);
   
   /* Decorative Pattern Color (dots, grids, watermarks) */
-  --pattern: #919191;
+  --pattern: #cfcfcf;
+  --dot-opacity: 0.4;
   
   color-scheme: dark;
 }
