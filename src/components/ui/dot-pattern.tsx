@@ -38,7 +38,7 @@ export function DotPattern({
               cx={spacing / 2} 
               cy={spacing / 2} 
               r={dotSize} 
-              className="fill-pattern"
+              className="fill-pattern/30 dark:fill-pattern/50"
             />
           </pattern>
         </defs>
