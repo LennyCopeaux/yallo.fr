@@ -16,7 +16,7 @@ export function FooterSection() {
   return (
     <footer className="relative overflow-hidden">
       {/* Links Grid */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-border">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-border">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
             <h4 className="font-semibold text-foreground mb-4">Produit</h4>
@@ -91,7 +91,7 @@ export function FooterSection() {
       </div>
 
       {/* Bottom bar */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 border-t border-border">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-6 border-t border-border">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="text-2xl font-black gradient-text">Yallo</span>
@@ -102,9 +102,9 @@ export function FooterSection() {
         </div>
       </div>
 
-      {/* Giant YALLO text */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none select-none">
-        <div className="text-[12rem] sm:text-[18rem] md:text-[24rem] font-black text-foreground/[0.12] dark:text-foreground/[0.03] leading-none tracking-tighter whitespace-nowrap">
+      {/* Giant YALLO text - behind all content */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none select-none z-0">
+        <div className="text-[12rem] sm:text-[18rem] md:text-[24rem] font-black text-pattern/20 dark:text-pattern/10 leading-none tracking-tighter whitespace-nowrap">
           YALLO
         </div>
       </div>

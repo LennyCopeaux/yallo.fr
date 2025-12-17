@@ -27,6 +27,9 @@
   /* Brand Yallo Yellow */
   --color-brand: hsl(var(--brand));
   --color-brand-foreground: hsl(var(--brand-foreground));
+  
+  /* Decorative Pattern Color (dots, grids, watermarks) */
+  --color-pattern: var(--pattern);
 }
 
 /* ============================================
@@ -66,6 +69,9 @@
   /* Grid */
   --grid-color: rgba(0, 0, 0, 0.02);
   
+  /* Decorative Pattern Color (dots, grids, watermarks) */
+  --pattern: #cfcfcf;
+  
   color-scheme: light;
 }
 
@@ -104,6 +110,9 @@
   
   /* Grid */
   --grid-color: rgba(255, 255, 255, 0.02);
+  
+  /* Decorative Pattern Color (dots, grids, watermarks) */
+  --pattern: #919191;
   
   color-scheme: dark;
 }
