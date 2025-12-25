@@ -7,31 +7,22 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Save, CreditCard, Percent, Building, AlertCircle } from "lucide-react";
+import { Loader2, Save, CreditCard, Calendar, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { updateRestaurantBilling } from "@/app/(admin)/admin/restaurants/actions";
 
 const formSchema = z.object({
-  plan: z.enum(["fixed", "commission"]),
-  commissionRate: z.number().min(0).max(100).optional(),
   stripeCustomerId: z.string().max(100).optional(),
+  billingStartDate: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 type Restaurant = {
   id: string;
-  plan: "fixed" | "commission" | null;
-  commissionRate: number | null;
   stripeCustomerId: string | null;
+  billingStartDate?: string | null;
 };
 
 interface BillingTabProps {
@@ -41,24 +32,31 @@ interface BillingTabProps {
 export function BillingTab({ restaurant }: BillingTabProps) {
   const [isLoading, setIsLoading] = useState(false);
 
+  // Formate la date pour l'input date (YYYY-MM-DD)
+  const formatDateForInput = (dateString: string | null | undefined): string => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      return date.toISOString().split("T")[0];
+    } catch {
+      return "";
+    }
+  };
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      plan: restaurant.plan || "commission",
-      commissionRate: restaurant.commissionRate ?? 5,
       stripeCustomerId: restaurant.stripeCustomerId || "",
+      billingStartDate: formatDateForInput(restaurant.billingStartDate),
     },
   });
-
-  const selectedPlan = form.watch("plan");
 
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
     
     const result = await updateRestaurantBilling(restaurant.id, {
-      plan: data.plan,
-      commissionRate: data.plan === "commission" ? data.commissionRate : null,
       stripeCustomerId: data.stripeCustomerId || null,
+      billingStartDate: data.billingStartDate || null,
     });
 
     if (result.success) {
@@ -71,105 +69,35 @@ export function BillingTab({ restaurant }: BillingTabProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Current Plan Card */}
-      <Card className={`border ${selectedPlan === 'fixed' ? 'border-blue-400/20 bg-blue-400/5' : 'border-purple-400/20 bg-purple-400/5'}`}>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg ${selectedPlan === 'fixed' ? 'bg-blue-400/10' : 'bg-purple-400/10'} flex items-center justify-center`}>
-              {selectedPlan === "fixed" ? (
-                <Building className="w-5 h-5 text-blue-400" />
-              ) : (
-                <Percent className="w-5 h-5 text-purple-400" />
-              )}
-            </div>
-            <div>
-              <p className={`font-medium ${selectedPlan === 'fixed' ? 'text-blue-400' : 'text-purple-400'}`}>
-                Plan {selectedPlan === "fixed" ? "Fixe" : "Commission"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {selectedPlan === "fixed" 
-                  ? 'Abonnement mensuel fixe'
-                  : `Commission de ${form.watch("commissionRate") || 5}% par commande`
-                }
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Plan de facturation */}
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Date de début de facturation */}
         <Card className="border-border bg-card/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-primary" />
-              Plan de facturation
+              <Calendar className="w-5 h-5 text-primary" />
+              Date de début de facturation
             </CardTitle>
             <CardDescription>
-              Choisissez le modèle de facturation pour ce restaurant
+              Définissez à partir de quelle date le client commencera à être facturé
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Plan */}
+          <CardContent>
             <div className="space-y-2">
-              <Label htmlFor="plan">Type de plan *</Label>
-              <Select
-                value={form.watch("plan")}
-                onValueChange={(value: "fixed" | "commission") => form.setValue("plan", value)}
+              <Label htmlFor="billingStartDate">Date de début *</Label>
+              <Input
+                id="billingStartDate"
+                type="date"
+                {...form.register("billingStartDate")}
                 disabled={isLoading}
-              >
-                <SelectTrigger className="bg-background/50 border-border focus:border-primary/50">
-                  <SelectValue placeholder="Sélectionner" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="fixed">
-                    <div className="flex items-center gap-2">
-                      <Building className="w-4 h-4 text-blue-400" />
-                      <div>
-                        <span className="font-medium">Fixe</span>
-                        <span className="text-muted-foreground ml-2">— Abonnement mensuel</span>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="commission">
-                    <div className="flex items-center gap-2">
-                      <Percent className="w-4 h-4 text-purple-400" />
-                      <div>
-                        <span className="font-medium">Commission</span>
-                        <span className="text-muted-foreground ml-2">— % par commande</span>
-                      </div>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                className="bg-background/50 border-border focus:border-primary/50"
+              />
+              {form.formState.errors.billingStartDate && (
+                <p className="text-sm text-red-400">{form.formState.errors.billingStartDate.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Exemple : Le client commencera à payer à compter du 1er janvier 2025
+              </p>
             </div>
-
-            {/* Commission Rate - visible seulement si plan = commission */}
-            {selectedPlan === "commission" && (
-              <div className="space-y-2">
-                <Label htmlFor="commissionRate">Taux de commission (%)</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="commissionRate"
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={0.5}
-                    {...form.register("commissionRate", { valueAsNumber: true })}
-                    disabled={isLoading}
-                    className="bg-background/50 border-border focus:border-primary/50 w-24"
-                  />
-                  <span className="text-muted-foreground">%</span>
-                </div>
-                {form.formState.errors.commissionRate && (
-                  <p className="text-sm text-red-400">{form.formState.errors.commissionRate.message}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Pourcentage prélevé sur chaque commande passée via l&apos;IA
-                </p>
-              </div>
-            )}
           </CardContent>
         </Card>
 
@@ -194,7 +122,7 @@ export function BillingTab({ restaurant }: BillingTabProps) {
                 <div className="text-sm">
                   <p className="text-[#635BFF] font-medium">Connexion Stripe</p>
                   <p className="text-muted-foreground mt-1">
-                    L&apos;ID client Stripe est utilisé pour facturer automatiquement les abonnements ou les commissions.
+                    L&apos;ID client Stripe est utilisé pour facturer automatiquement l&apos;abonnement Yallo Infinity.
                   </p>
                 </div>
               </div>
@@ -211,35 +139,6 @@ export function BillingTab({ restaurant }: BillingTabProps) {
                 <p className="text-xs text-muted-foreground">
                   Format : cus_xxxxxxxxxxxxxx (depuis le dashboard Stripe)
                 </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Summary Card */}
-        <Card className="border-border bg-card/30">
-          <CardHeader>
-            <CardTitle>Résumé facturation</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center py-2 border-b border-border">
-                <span className="text-muted-foreground">Type de plan</span>
-                <span className="font-medium">
-                  {selectedPlan === "fixed" ? "Abonnement Fixe" : "Commission"}
-                </span>
-              </div>
-              {selectedPlan === "commission" && (
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-muted-foreground">Taux de commission</span>
-                  <span className="font-medium">{form.watch("commissionRate") || 5}%</span>
-                </div>
-              )}
-              <div className="flex justify-between items-center py-2">
-                <span className="text-muted-foreground">Client Stripe</span>
-                <span className={`font-mono text-sm ${form.watch("stripeCustomerId") ? 'text-emerald-400' : 'text-muted-foreground'}`}>
-                  {form.watch("stripeCustomerId") || "Non configuré"}
-                </span>
               </div>
             </div>
           </CardContent>
@@ -266,6 +165,5 @@ export function BillingTab({ restaurant }: BillingTabProps) {
           </Button>
         </div>
       </form>
-    </div>
   );
 }

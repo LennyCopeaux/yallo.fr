@@ -6,7 +6,7 @@ import { users, restaurants, RestaurantStatus, RestaurantPlan } from "@/db/schem
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { sendWelcomeEmail } from "@/lib/mail";
+import { sendWelcomeEmail, sendResetPasswordEmail } from "@/lib/mail";
 import { z } from "zod";
 import { cookies } from "next/headers";
 
@@ -16,11 +16,15 @@ import { cookies } from "next/headers";
 
 const createUserSchema = z.object({
   email: z.string().email("Email invalide"),
+  firstName: z.string().max(100).optional(),
+  lastName: z.string().max(100).optional(),
   role: z.enum(["ADMIN", "OWNER"]),
 });
 
 const updateUserSchema = z.object({
   email: z.string().email("Email invalide").optional(),
+  firstName: z.string().max(100).optional().nullable(),
+  lastName: z.string().max(100).optional().nullable(),
   role: z.enum(["ADMIN", "OWNER"]).optional(),
 });
 
@@ -48,14 +52,12 @@ const updateRestaurantAISchema = z.object({
 const updateRestaurantTelephonySchema = z.object({
   phoneNumber: z.string().min(10, "Numéro invalide").optional(),
   twilioPhoneNumber: z.string().max(20).optional().nullable(),
-  forwardingPhoneNumber: z.string().max(20).optional().nullable(),
   businessHours: z.string().max(5000).optional().nullable(),
 });
 
 const updateRestaurantBillingSchema = z.object({
-  plan: z.enum(["fixed", "commission"]).optional(),
-  commissionRate: z.number().min(0).max(100).optional().nullable(),
   stripeCustomerId: z.string().max(100).optional().nullable(),
+  billingStartDate: z.string().optional().nullable(),
 });
 
 // Type de retour standardisé
@@ -89,6 +91,15 @@ function generateTempPassword(): string {
   return password;
 }
 
+function generateResetToken(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  let token = "";
+  for (let i = 0; i < 32; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+}
+
 async function requireAdmin() {
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -107,6 +118,8 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
     
     const parsed = createUserSchema.safeParse({
       email: formData.get("email"),
+      firstName: formData.get("firstName") || undefined,
+      lastName: formData.get("lastName") || undefined,
       role: formData.get("role"),
     });
 
@@ -114,7 +127,7 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
       return { success: false, error: parsed.error.issues[0]?.message || "Données invalides" };
     }
 
-    const { email, role } = parsed.data;
+    const { email, firstName, lastName, role } = parsed.data;
 
     // Vérifier si l'utilisateur existe AVANT d'envoyer l'email
     const existingUser = await db
@@ -134,6 +147,8 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
     await db.insert(users).values({
       email,
       passwordHash,
+      firstName: firstName || null,
+      lastName: lastName || null,
       role,
       mustChangePassword: true,
     });
@@ -216,9 +231,11 @@ export async function updateUser(
       return { success: false, error: parsed.error.issues[0]?.message || "Données invalides" };
     }
 
-    const updateData: Partial<{ email: string; role: "ADMIN" | "OWNER" }> = {};
-    if (parsed.data.email) updateData.email = parsed.data.email;
-    if (parsed.data.role) updateData.role = parsed.data.role;
+    const updateData: Partial<{ email: string; firstName: string | null; lastName: string | null; role: "ADMIN" | "OWNER" }> = {};
+    if (parsed.data.email !== undefined) updateData.email = parsed.data.email;
+    if (parsed.data.firstName !== undefined) updateData.firstName = parsed.data.firstName;
+    if (parsed.data.lastName !== undefined) updateData.lastName = parsed.data.lastName;
+    if (parsed.data.role !== undefined) updateData.role = parsed.data.role;
 
     if (Object.keys(updateData).length === 0) {
       return { success: false, error: "Aucune donnée à mettre à jour" };
@@ -233,6 +250,57 @@ export async function updateUser(
       return { success: false, error: "Cet email est déjà utilisé" };
     }
     return { success: false, error: "Erreur lors de la mise à jour" };
+  }
+}
+
+export async function sendPasswordResetEmail(userId: string): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    if (!userId) {
+      return { success: false, error: "ID utilisateur requis" };
+    }
+
+    // Récupérer l'utilisateur
+    const [user] = await db
+      .select({ 
+        email: users.email, 
+        mustChangePassword: users.mustChangePassword 
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      return { success: false, error: "Utilisateur non trouvé" };
+    }
+
+    // Ne peut envoyer que si l'utilisateur a déjà changé son mot de passe initial
+    if (user.mustChangePassword) {
+      return { success: false, error: "Cet utilisateur doit d'abord changer son mot de passe initial" };
+    }
+
+    // Générer un token de réinitialisation (valide 1 heure)
+    const resetToken = generateResetToken();
+    const resetTokenExpires = new Date();
+    resetTokenExpires.setHours(resetTokenExpires.getHours() + 1);
+
+    // Stocker le token dans la base de données
+    await db
+      .update(users)
+      .set({
+        resetToken,
+        resetTokenExpires,
+      })
+      .where(eq(users.id, userId));
+
+    // Envoyer l'email
+    await sendResetPasswordEmail(user.email, resetToken);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur envoi email réinitialisation:", error);
+    return { success: false, error: "Erreur lors de l'envoi de l'email" };
   }
 }
 
@@ -404,7 +472,6 @@ export async function updateRestaurantTelephony(
 
     if (parsed.data.phoneNumber !== undefined) updateData.phoneNumber = parsed.data.phoneNumber;
     if (parsed.data.twilioPhoneNumber !== undefined) updateData.twilioPhoneNumber = parsed.data.twilioPhoneNumber;
-    if (parsed.data.forwardingPhoneNumber !== undefined) updateData.forwardingPhoneNumber = parsed.data.forwardingPhoneNumber;
     if (parsed.data.businessHours !== undefined) updateData.businessHours = parsed.data.businessHours;
 
     await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
@@ -437,9 +504,13 @@ export async function updateRestaurantBilling(
       updatedAt: new Date(),
     };
 
-    if (parsed.data.plan !== undefined) updateData.plan = parsed.data.plan as RestaurantPlan;
-    if (parsed.data.commissionRate !== undefined) updateData.commissionRate = parsed.data.commissionRate;
     if (parsed.data.stripeCustomerId !== undefined) updateData.stripeCustomerId = parsed.data.stripeCustomerId;
+    if (parsed.data.billingStartDate !== undefined) {
+      // Stocke la date au format ISO string dans un champ texte
+      // Note: Si vous avez un champ billingStartDate dans le schéma, utilisez-le directement
+      // Sinon, on peut utiliser un champ existant ou créer une migration
+      updateData.billingStartDate = parsed.data.billingStartDate;
+    }
 
     await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
     revalidatePath("/admin");

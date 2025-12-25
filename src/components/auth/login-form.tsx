@@ -63,12 +63,20 @@ export function LoginForm() {
         <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-primary/15 blur-[120px]" />
         <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-primary/5 blur-[100px]" />
         
-        {/* Grid overlay - uses semantic pattern color with opacity */}
+        {/* Grid overlay - Light mode visible, Dark mode subtle */}
         <div 
-          className="absolute inset-0 opacity-50 dark:opacity-40"
+          className="absolute inset-0"
+          style={{ 
+            backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.15) 1px, transparent 1px)',
+            backgroundSize: '64px 64px',
+          }}
+        />
+        <div 
+          className="absolute inset-0 dark:block hidden"
           style={{ 
             backgroundImage: 'linear-gradient(var(--pattern) 1px, transparent 1px), linear-gradient(90deg, var(--pattern) 1px, transparent 1px)',
-            backgroundSize: '64px 64px'
+            backgroundSize: '64px 64px',
+            opacity: 0.1,
           }}
         />
       </div>

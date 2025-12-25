@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Save, Bot, Brain, FileText, AlertCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Loader2, Save, Bot, Brain, FileText, AlertCircle, Sparkles, Code } from "lucide-react";
 import { toast } from "sonner";
 import { updateRestaurantAI } from "@/app/(admin)/admin/restaurants/actions";
 
@@ -34,6 +35,10 @@ interface AITabProps {
 
 export function AITab({ restaurant }: AITabProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+  const [isGeneratingMenuJson, setIsGeneratingMenuJson] = useState(false);
+  const [generatedPrompt, setGeneratedPrompt] = useState<string | null>(null);
+  const [generatedMenuJson, setGeneratedMenuJson] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -120,13 +125,68 @@ export function AITab({ restaurant }: AITabProps) {
         {/* Prompt Système */}
         <Card className="border-border bg-card/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="w-5 h-5 text-purple-400" />
-              Prompt Système
-            </CardTitle>
-            <CardDescription>
-              Instructions personnalisées pour l&apos;IA de ce restaurant (surcharge le prompt par défaut)
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-purple-400" />
+                  Prompt Système
+                </CardTitle>
+                <CardDescription>
+                  Instructions personnalisées pour l&apos;IA de ce restaurant (surcharge le prompt par défaut)
+                </CardDescription>
+              </div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isGeneratingPrompt}
+                    onClick={async () => {
+                      setIsGeneratingPrompt(true);
+                      try {
+                        const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-system-prompt`);
+                        if (!response.ok) throw new Error("Erreur lors de la génération");
+                        const data = await response.json();
+                        setGeneratedPrompt(data.systemPrompt);
+                      } catch (error) {
+                        toast.error("Erreur lors de la génération du prompt");
+                      } finally {
+                        setIsGeneratingPrompt(false);
+                      }
+                    }}
+                  >
+                    {isGeneratingPrompt ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Génération...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Générer le Prompt System
+                      </>
+                    )}
+                  </Button>
+                </DialogTrigger>
+                {generatedPrompt && (
+                  <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Prompt Système Généré</DialogTitle>
+                      <DialogDescription>
+                        Ce prompt sera utilisé par Vapi lors des appels clients (mode lecture seule pour debug)
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Textarea
+                      readOnly
+                      value={generatedPrompt}
+                      rows={20}
+                      className="font-mono text-sm bg-background/50"
+                    />
+                  </DialogContent>
+                )}
+              </Dialog>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -163,13 +223,68 @@ Règles importantes :
         {/* Menu Context */}
         <Card className="border-border bg-card/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-cyan-400" />
-              Contexte Menu
-            </CardTitle>
-            <CardDescription>
-              Le menu du restaurant au format texte ou JSON. L&apos;IA utilisera ces informations pour comprendre les produits.
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-cyan-400" />
+                  Contexte Menu
+                </CardTitle>
+                <CardDescription>
+                  Le menu du restaurant au format texte ou JSON. L&apos;IA utilisera ces informations pour comprendre les produits.
+                </CardDescription>
+              </div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isGeneratingMenuJson}
+                    onClick={async () => {
+                      setIsGeneratingMenuJson(true);
+                      try {
+                        const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-menu-json`);
+                        if (!response.ok) throw new Error("Erreur lors de la génération");
+                        const data = await response.json();
+                        setGeneratedMenuJson(data.menuJson);
+                      } catch (error) {
+                        toast.error("Erreur lors de la génération du JSON");
+                      } finally {
+                        setIsGeneratingMenuJson(false);
+                      }
+                    }}
+                  >
+                    {isGeneratingMenuJson ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Génération...
+                      </>
+                    ) : (
+                      <>
+                        <Code className="w-4 h-4 mr-2" />
+                        Générer JSON Menu
+                      </>
+                    )}
+                  </Button>
+                </DialogTrigger>
+                {generatedMenuJson && (
+                  <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>JSON Menu Généré</DialogTitle>
+                      <DialogDescription>
+                        Format JSON du menu actuel pour vérification technique
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Textarea
+                      readOnly
+                      value={generatedMenuJson}
+                      rows={20}
+                      className="font-mono text-sm bg-background/50"
+                    />
+                  </DialogContent>
+                )}
+              </Dialog>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

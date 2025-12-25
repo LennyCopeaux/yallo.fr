@@ -9,14 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Save, Phone, PhoneForwarded, Clock, AlertCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Loader2, Save, Phone, Clock, Code } from "lucide-react";
 import { toast } from "sonner";
 import { updateRestaurantTelephony } from "@/app/(admin)/admin/restaurants/actions";
 
 const formSchema = z.object({
   phoneNumber: z.string().min(10, "Numéro invalide"),
   twilioPhoneNumber: z.string().max(20).optional(),
-  forwardingPhoneNumber: z.string().max(20).optional(),
   businessHours: z.string().max(5000).optional(),
 });
 
@@ -26,7 +26,6 @@ type Restaurant = {
   id: string;
   phoneNumber: string;
   twilioPhoneNumber: string | null;
-  forwardingPhoneNumber: string | null;
   businessHours: string | null;
 };
 
@@ -49,13 +48,14 @@ const defaultBusinessHours = `{
 
 export function TelephonyTab({ restaurant }: TelephonyTabProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingHoursJson, setIsGeneratingHoursJson] = useState(false);
+  const [generatedHoursJson, setGeneratedHoursJson] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       phoneNumber: restaurant.phoneNumber,
       twilioPhoneNumber: restaurant.twilioPhoneNumber || "",
-      forwardingPhoneNumber: restaurant.forwardingPhoneNumber || "",
       businessHours: restaurant.businessHours || "",
     },
   });
@@ -66,7 +66,6 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
     const result = await updateRestaurantTelephony(restaurant.id, {
       phoneNumber: data.phoneNumber,
       twilioPhoneNumber: data.twilioPhoneNumber || null,
-      forwardingPhoneNumber: data.forwardingPhoneNumber || null,
       businessHours: data.businessHours || null,
     });
 
@@ -153,58 +152,76 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
           </CardContent>
         </Card>
 
-        {/* Transfert d'appel */}
-        <Card className="border-border bg-card/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PhoneForwarded className="w-5 h-5 text-purple-400" />
-              Transfert d&apos;appel
-            </CardTitle>
-            <CardDescription>
-              Numéro de secours pour transférer les appels si l&apos;IA échoue
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Alert */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-purple-400/5 border border-purple-400/10">
-                <AlertCircle className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="text-purple-400 font-medium">Transfert automatique</p>
-                  <p className="text-muted-foreground mt-1">
-                    Si l&apos;IA ne parvient pas à gérer l&apos;appel ou si le client le demande, 
-                    l&apos;appel sera transféré automatiquement vers ce numéro.
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="forwardingPhoneNumber">Numéro de transfert (mobile du gérant)</Label>
-                <Input
-                  id="forwardingPhoneNumber"
-                  {...form.register("forwardingPhoneNumber")}
-                  disabled={isLoading}
-                  placeholder="+33612345678"
-                  className="bg-background/50 border-border focus:border-primary/50 font-mono"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Généralement le mobile du propriétaire ou du gérant
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Horaires */}
         <Card className="border-border bg-card/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-cyan-400" />
-              Horaires d&apos;ouverture
-            </CardTitle>
-            <CardDescription>
-              Configuration des horaires au format JSON (utilisés par l&apos;IA pour informer les clients)
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-cyan-400" />
+                  Horaires d&apos;ouverture
+                </CardTitle>
+                <CardDescription>
+                  Configuration des horaires au format JSON (utilisés par l&apos;IA pour informer les clients)
+                </CardDescription>
+              </div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isGeneratingHoursJson}
+                    onClick={async () => {
+                      setIsGeneratingHoursJson(true);
+                      try {
+                        // Génère le JSON des horaires actuels
+                        const currentHours = form.watch("businessHours") || defaultBusinessHours;
+                        let parsedHours;
+                        try {
+                          parsedHours = JSON.parse(currentHours);
+                        } catch {
+                          parsedHours = JSON.parse(defaultBusinessHours);
+                        }
+                        setGeneratedHoursJson(JSON.stringify(parsedHours, null, 2));
+                      } catch (error) {
+                        toast.error("Erreur lors de la génération du JSON");
+                      } finally {
+                        setIsGeneratingHoursJson(false);
+                      }
+                    }}
+                  >
+                    {isGeneratingHoursJson ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Génération...
+                      </>
+                    ) : (
+                      <>
+                        <Code className="w-4 h-4 mr-2" />
+                        Générer JSON Horaires
+                      </>
+                    )}
+                  </Button>
+                </DialogTrigger>
+                {generatedHoursJson && (
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>JSON Horaires Généré</DialogTitle>
+                      <DialogDescription>
+                        Format JSON des horaires pour vérification technique
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Textarea
+                      readOnly
+                      value={generatedHoursJson}
+                      rows={15}
+                      className="font-mono text-sm bg-background/50"
+                    />
+                  </DialogContent>
+                )}
+              </Dialog>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">

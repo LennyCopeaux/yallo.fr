@@ -31,9 +31,8 @@ async function getRestaurant(id: string) {
       ownerId: restaurants.ownerId,
       status: restaurants.status,
       isActive: restaurants.isActive,
-      plan: restaurants.plan,
-      commissionRate: restaurants.commissionRate,
       stripeCustomerId: restaurants.stripeCustomerId,
+      billingStartDate: restaurants.billingStartDate,
       vapiAssistantId: restaurants.vapiAssistantId,
       systemPrompt: restaurants.systemPrompt,
       menuContext: restaurants.menuContext,
@@ -78,7 +77,7 @@ export default async function RestaurantDetailPage({
             asChild
             className="mt-1 shrink-0"
           >
-            <Link href="/admin/restaurants">
+            <Link href="/admin?tab=restaurants">
               <ArrowLeft className="w-5 h-5" />
             </Link>
           </Button>

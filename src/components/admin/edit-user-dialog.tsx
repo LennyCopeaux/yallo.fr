@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,7 +12,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,68 +22,85 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createUser } from "@/app/(admin)/admin/actions";
-import { Plus, Loader2, Shield, User } from "lucide-react";
+import { updateUser } from "@/app/(admin)/admin/actions";
+import { Loader2, Shield, User } from "lucide-react";
 import { toast } from "sonner";
 
-export function AddUserDialog() {
-  const [open, setOpen] = useState(false);
+const formSchema = z.object({
+  email: z.string().email("Email invalide"),
+  firstName: z.string().max(100).optional(),
+  lastName: z.string().max(100).optional(),
+  role: z.enum(["ADMIN", "OWNER"]),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+type User = {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  role: "ADMIN" | "OWNER";
+};
+
+interface EditUserDialogProps {
+  user: User;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<string>("");
 
-  async function handleSubmit(formData: FormData) {
-    if (!selectedRole) {
-      toast.error("Veuillez sélectionner un rôle");
-      return;
-    }
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: user.email,
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      role: user.role,
+    },
+  });
 
+  async function onSubmit(data: FormValues) {
     setIsLoading(true);
-    formData.set("role", selectedRole);
 
-    const result = await createUser(formData);
+    const result = await updateUser(user.id, {
+      email: data.email,
+      firstName: data.firstName || null,
+      lastName: data.lastName || null,
+      role: data.role,
+    });
 
     if (result.success) {
-      toast.success("Utilisateur créé - Un email a été envoyé avec les identifiants");
-      setOpen(false);
-      setSelectedRole("");
+      toast.success("Utilisateur mis à jour");
+      onOpenChange(false);
     } else {
-      toast.error(result.error || "Une erreur est survenue");
+      toast.error(result.error || "Erreur lors de la mise à jour");
     }
 
     setIsLoading(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      setOpen(isOpen);
-      if (!isOpen) {
-        setSelectedRole("");
-      }
-    }}>
-      <DialogTrigger asChild>
-        <Button className="bg-primary text-black hover:bg-primary/90 font-semibold">
-          <Plus className="w-4 h-4 mr-2" />
-          Nouvel utilisateur
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card/95 backdrop-blur-xl border-border sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Créer un utilisateur</DialogTitle>
+          <DialogTitle>Modifier l&apos;utilisateur</DialogTitle>
           <DialogDescription>
-            Un email sera envoyé avec un mot de passe temporaire.
+            Modifiez les informations de l&apos;utilisateur
           </DialogDescription>
         </DialogHeader>
-        <form action={handleSubmit}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">Prénom</Label>
                 <Input
                   id="firstName"
-                  name="firstName"
-                  type="text"
-                  placeholder="Jean"
+                  {...form.register("firstName")}
                   disabled={isLoading}
+                  placeholder="Jean"
                   className="bg-background/50 border-border focus:border-primary/50"
                 />
               </div>
@@ -89,10 +108,9 @@ export function AddUserDialog() {
                 <Label htmlFor="lastName">Nom</Label>
                 <Input
                   id="lastName"
-                  name="lastName"
-                  type="text"
-                  placeholder="Dupont"
+                  {...form.register("lastName")}
                   disabled={isLoading}
+                  placeholder="Dupont"
                   className="bg-background/50 border-border focus:border-primary/50"
                 />
               </div>
@@ -102,22 +120,23 @@ export function AddUserDialog() {
               <Label htmlFor="email">Email *</Label>
               <Input
                 id="email"
-                name="email"
+                {...form.register("email")}
+                disabled={isLoading}
                 type="email"
                 placeholder="utilisateur@exemple.com"
-                required
-                disabled={isLoading}
                 className="bg-background/50 border-border focus:border-primary/50"
               />
+              {form.formState.errors.email && (
+                <p className="text-sm text-red-400">{form.formState.errors.email.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="role">Rôle *</Label>
               <Select
-                value={selectedRole}
-                onValueChange={setSelectedRole}
+                value={form.watch("role")}
+                onValueChange={(value: "ADMIN" | "OWNER") => form.setValue("role", value)}
                 disabled={isLoading}
-                required
               >
                 <SelectTrigger className="bg-background/50 border-border focus:border-primary/50">
                   <SelectValue placeholder="Sélectionner un rôle" />
@@ -143,9 +162,6 @@ export function AddUserDialog() {
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Les Owners ne peuvent gérer que leur restaurant
-              </p>
             </div>
           </div>
 
@@ -153,24 +169,24 @@ export function AddUserDialog() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() => onOpenChange(false)}
               disabled={isLoading}
               className="border-border hover:bg-muted/50"
             >
               Annuler
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isLoading || !selectedRole}
+            <Button
+              type="submit"
+              disabled={isLoading}
               className="bg-primary text-black hover:bg-primary/90"
             >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Création...
+                  Enregistrement...
                 </>
               ) : (
-                "Créer et envoyer l'email"
+                "Enregistrer"
               )}
             </Button>
           </DialogFooter>

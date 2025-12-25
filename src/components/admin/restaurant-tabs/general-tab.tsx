@@ -211,56 +211,54 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
             )}
           </div>
 
-          {/* Métadonnées */}
+          {/* Métadonnées et Actions alignés */}
           <div className="pt-4 border-t border-border">
-            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-              <span>
-                Créé le{" "}
-                {restaurant.createdAt
-                  ? new Date(restaurant.createdAt).toLocaleDateString("fr-FR", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })
-                  : "-"}
-              </span>
-              {restaurant.updatedAt && (
-                <>
-                  <span>•</span>
-                  <span>
-                    Modifié le{" "}
-                    {new Date(restaurant.updatedAt).toLocaleDateString("fr-FR", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </>
-              )}
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                <span>
+                  Créé le{" "}
+                  {restaurant.createdAt
+                    ? new Date(restaurant.createdAt).toLocaleDateString("fr-FR", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : "-"}
+                </span>
+                {restaurant.updatedAt && (
+                  <>
+                    <span>•</span>
+                    <span>
+                      Modifié le{" "}
+                      {new Date(restaurant.updatedAt).toLocaleDateString("fr-FR", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </>
+                )}
+              </div>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="bg-primary text-black hover:bg-primary/90"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Enregistrement...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Enregistrer
+                  </>
+                )}
+              </Button>
             </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end pt-4">
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="bg-primary text-black hover:bg-primary/90"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Enregistrement...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Enregistrer
-                </>
-              )}
-            </Button>
           </div>
         </form>
       </CardContent>

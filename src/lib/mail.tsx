@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import { WelcomeEmail } from "./emails/welcome-email";
+import { ResetPasswordEmail } from "./emails/reset-password-email";
 
 if (!process.env.RESEND_API_KEY) {
   throw new Error("RESEND_API_KEY is not set in environment variables");
@@ -49,5 +50,49 @@ L'équipe Yallo`;
   } catch (error) {
     console.error("Erreur lors de l'envoi de l'email:", error);
     throw new Error("Impossible d'envoyer l'email de bienvenue");
+  }
+}
+
+export async function sendResetPasswordEmail(
+  email: string,
+  resetToken: string
+): Promise<void> {
+  try {
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://app.localhost:3000"}/reset-password?token=${resetToken}`;
+    
+    const html = await render(
+      <ResetPasswordEmail
+        email={email}
+        resetToken={resetToken}
+        resetUrl={resetUrl}
+      />
+    );
+
+    // Version texte pour les clients email qui ne supportent pas HTML
+    const text = `Bonjour,
+
+Vous avez demandé la réinitialisation de votre mot de passe pour votre compte Yallo.
+
+Email concerné : ${email}
+
+Pour réinitialiser votre mot de passe, cliquez sur ce lien :
+${resetUrl}
+
+⚠️ IMPORTANT : Ce lien est valide pendant 1 heure.
+Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.
+
+À bientôt,
+L'équipe Yallo`;
+
+    await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || "Yallo <onboarding@yallo.fr>",
+      to: email,
+      subject: "Réinitialisation de votre mot de passe Yallo",
+      html,
+      text,
+    });
+  } catch (error) {
+    console.error("Erreur lors de l'envoi de l'email:", error);
+    throw new Error("Impossible d'envoyer l'email de réinitialisation");
   }
 }

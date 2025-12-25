@@ -4,16 +4,15 @@ import { motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { Bot, Phone, Receipt } from "lucide-react";
 import { ConversationStream } from "@/components/conversation-stream";
-import { fadeInLeft, fadeInRight } from "./animations";
 
 export function HowItWorksSection() {
   return (
     <section id="how-it-works" className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-32">
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
         className="text-center mb-20"
       >
         <Badge className="mb-4 px-4 py-1.5 bg-muted/50 dark:bg-muted/50 text-foreground border-border">
@@ -28,11 +27,10 @@ export function HowItWorksSection() {
         {/* Step 1 */}
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={fadeInLeft}
-            transition={{ duration: 0.6 }}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
             className="order-2 lg:order-1"
           >
             <div className="flex items-center gap-3 mb-4">
@@ -57,11 +55,10 @@ export function HowItWorksSection() {
           </motion.div>
           
           <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={fadeInRight}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
             className="order-1 lg:order-2"
           >
             <div className="relative">
@@ -86,24 +83,15 @@ export function HowItWorksSection() {
                   ].map((call, i) => (
                     <motion.div
                       key={i}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.1 }}
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: i * 0.1, ease: "easeOut" }}
                       className="flex items-center gap-4 p-3 rounded-xl bg-card/30 border border-border"
                     >
-                      <motion.div 
-                        className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0"
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{
-                          duration: 0.5,
-                          repeat: 9999,
-                          repeatType: "loop",
-                          repeatDelay: 2,
-                          ease: "easeInOut",
-                        }}
-                      >
+                      <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                         <Phone className="w-5 h-5 text-primary" />
-                      </motion.div>
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-base font-bold text-foreground truncate">
                           <span>{call.number.slice(0, 9)}</span>
@@ -127,11 +115,10 @@ export function HowItWorksSection() {
         {/* Step 2 */}
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={fadeInLeft}
-            transition={{ duration: 0.6 }}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
           >
             <div className="relative">
               <div className="absolute inset-0 bg-primary/10 blur-[60px] scale-90" />
@@ -153,11 +140,10 @@ export function HowItWorksSection() {
           </motion.div>
           
           <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={fadeInRight}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-primary text-black flex items-center justify-center font-bold">
@@ -185,11 +171,10 @@ export function HowItWorksSection() {
         {/* Step 3 */}
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={fadeInLeft}
-            transition={{ duration: 0.6 }}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
             className="order-2 lg:order-1"
           >
             <div className="flex items-center gap-3 mb-4">
@@ -214,21 +199,20 @@ export function HowItWorksSection() {
           </motion.div>
 
           <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={fadeInRight}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
             className="order-1 lg:order-2"
           >
             <div className="relative">
               <div className="absolute inset-0 bg-primary/10 blur-[60px] scale-90" />
               <div className="relative flex justify-center">
                 <motion.div
-                  initial={{ y: -20 }}
-                  whileInView={{ y: 0 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: 0.3 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
                   className="ticket-paper rounded-3xl p-6 border border-border w-72 relative"
                 >
                   <div className="border-b border-dashed border-border pb-4 mb-4">

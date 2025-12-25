@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,6 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
-import { fadeInUp, staggerContainer } from "./animations";
 
 // Conversation téléphonique prédéfinie
 const phoneConversation = [
@@ -31,89 +30,11 @@ const phoneConversation = [
 ];
 
 function LivePhoneConversation() {
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [displayedMessages, setDisplayedMessages] = useState<Array<{ text: string; sender: 'ai' | 'user'; timestamp: number; id: number }>>([]);
-  const [typingText, setTypingText] = useState("");
-  const [typingSender, setTypingSender] = useState<'ai' | 'user' | null>(null);
-  const [typingMessageId, setTypingMessageId] = useState<number | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const processedMessagesRef = useRef<Set<number>>(new Set());
-
-  useEffect(() => {
-    setElapsedSeconds(0);
-    setDisplayedMessages([]);
-    setTypingText("");
-    setTypingSender(null);
-    setTypingMessageId(null);
-    processedMessagesRef.current.clear();
-
-    intervalRef.current = setInterval(() => {
-      setElapsedSeconds((prev) => {
-        const newSeconds = prev + 1;
-        
-        let cumulativeDelay = 0;
-        for (let i = 0; i < phoneConversation.length; i++) {
-          cumulativeDelay += phoneConversation[i].delay;
-          
-          if (newSeconds >= cumulativeDelay && !processedMessagesRef.current.has(i)) {
-            processedMessagesRef.current.add(i);
-            const message = phoneConversation[i];
-            
-            setTypingSender(message.sender);
-            setTypingMessageId(i);
-            let charIndex = 0;
-            setTypingText("");
-            
-            const typeChar = () => {
-              if (charIndex < message.text.length) {
-                setTypingText(message.text.slice(0, charIndex + 1));
-                charIndex++;
-                typingTimeoutRef.current = setTimeout(typeChar, 30);
-              } else {
-                setDisplayedMessages((prev) => {
-                  if (prev.some(m => m.id === i)) {
-                    return prev;
-                  }
-                  return [
-                    ...prev,
-                    { text: message.text, sender: message.sender, timestamp: newSeconds, id: i }
-                  ];
-                });
-                setTypingText("");
-                setTypingSender(null);
-                setTypingMessageId(null);
-              }
-            };
-            typeChar();
-            break;
-          }
-        }
-
-        const totalDuration = phoneConversation.reduce((acc, msg) => acc + msg.delay, 0);
-        if (newSeconds >= totalDuration + 3) {
-          setDisplayedMessages([]);
-          setTypingText("");
-          setTypingSender(null);
-          setTypingMessageId(null);
-          processedMessagesRef.current.clear();
-          return 0;
-        }
-        
-        return newSeconds;
-      });
-    }, 1000);
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    };
-  }, []);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  // Messages statiques sans animation de typing pour meilleure performance
+  const displayedMessages = phoneConversation.slice(0, 5);
+  
+  const formatTime = () => {
+    return "01:23";
   };
 
   return (
@@ -128,7 +49,7 @@ function LivePhoneConversation() {
               <div className="text-sm font-semibold text-foreground">Yallo IA</div>
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-xs text-emerald-500">En appel • {formatTime(elapsedSeconds)}</span>
+                <span className="text-xs text-emerald-500">En appel • {formatTime()}</span>
               </div>
             </div>
           </div>
@@ -140,12 +61,12 @@ function LivePhoneConversation() {
         </div>
 
         <div className="p-4 space-y-3 min-h-[320px] max-h-[400px] overflow-y-auto">
-          {displayedMessages.map((msg) => (
+          {displayedMessages.map((msg, index) => (
             <motion.div
-              key={`msg-${msg.id}-${msg.timestamp}`}
-              initial={{ opacity: 0, x: msg.sender === 'ai' ? -20 : 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3 }}
+              key={`msg-${index}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
               className={`flex gap-2 ${msg.sender === 'user' ? 'justify-end' : ''}`}
             >
               {msg.sender === 'ai' && (
@@ -172,38 +93,6 @@ function LivePhoneConversation() {
               </div>
             </motion.div>
           ))}
-          
-          {typingText && typingSender && typingMessageId !== null && !displayedMessages.some(m => m.id === typingMessageId) && (
-            <motion.div
-              initial={{ opacity: 0, x: typingSender === 'ai' ? -20 : 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className={`flex gap-2 ${typingSender === 'user' ? 'justify-end' : ''}`}
-            >
-              {typingSender === 'ai' && (
-                <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-1">
-                  <Bot className="w-3.5 h-3.5 text-primary" />
-                </div>
-              )}
-              <div className={`rounded-2xl px-4 py-2.5 border max-w-[85%] ${
-                typingSender === 'ai' 
-                  ? 'bg-card/50 rounded-tl-sm border-border' 
-                  : 'bg-primary/10 rounded-tr-sm border-primary/20'
-              }`}>
-                <p className="text-sm text-foreground">
-                  {typingSender === 'user' && '"'}
-                  {typingText}
-                  {typingSender === 'user' && '"'}
-                  <motion.span
-                    animate={{ opacity: [1, 0] }}
-                    transition={{ duration: 0.8, repeat: 9999, repeatType: "loop" }}
-                    className="ml-1"
-                  >
-                    |
-                  </motion.span>
-                </p>
-              </div>
-            </motion.div>
-          )}
         </div>
 
         <div className="px-4 pb-4">
@@ -242,16 +131,19 @@ export function HeroSection() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/10 blur-[150px] opacity-50 pointer-events-none" />
 
       <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center relative">
-        <motion.div
-          initial="initial"
-          animate="animate"
-          variants={staggerContainer}
-          className="text-center lg:text-left"
-        >
-          <motion.div 
-            variants={fadeInUp}
-            transition={{ duration: 0.6 }}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="text-center lg:text-left"
           >
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
             <Badge className="mb-6 px-4 py-1.5 text-sm bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
               <Sparkles className="w-3.5 h-3.5 mr-1.5" />
               IA vocale pour la restauration rapide
@@ -259,8 +151,10 @@ export function HeroSection() {
           </motion.div>
 
           <motion.h1
-            variants={fadeInUp}
-            transition={{ duration: 0.6, delay: 0.1 }}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-[1.1] tracking-tight"
           >
             <span className="text-foreground">Votre prise de</span>{" "}
@@ -269,8 +163,10 @@ export function HeroSection() {
           </motion.h1>
 
           <motion.p
-            variants={fadeInUp}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
             className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed"
           >
             L&apos;IA vocale qui prend les commandes de votre{" "}
@@ -281,8 +177,10 @@ export function HeroSection() {
           </motion.p>
 
           <motion.div
-            variants={fadeInUp}
-            transition={{ duration: 0.6, delay: 0.3 }}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
             className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
           >
             <Link href="/contact?subject=installation">
@@ -306,8 +204,10 @@ export function HeroSection() {
           </motion.div>
 
           <motion.div
-            variants={fadeInUp}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
             className="mt-10 flex flex-wrap gap-8 justify-center lg:justify-start"
           >
             {[
@@ -328,20 +228,17 @@ export function HeroSection() {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, x: 50, scale: 0.95 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
           className="relative"
         >
           <div className="relative mx-auto max-w-md lg:max-w-none">
             <div className="absolute inset-0 bg-primary/30 blur-[100px] scale-90 opacity-40" />
             <LivePhoneConversation />
 
-            <motion.div
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 4, repeat: 9999, repeatType: "loop", ease: "easeInOut" }}
-              className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 glass rounded-xl p-3 border-border"
-            >
+            <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 glass rounded-xl p-3 border-border">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                   <Clock className="w-4 h-4 text-primary" />
@@ -351,13 +248,9 @@ export function HeroSection() {
                   <div className="text-xs text-primary font-bold">&lt; 2 secondes</div>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div
-              animate={{ y: [0, 8, 0] }}
-              transition={{ duration: 5, repeat: 9999, repeatType: "loop", ease: "easeInOut", delay: 1 }}
-              className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 glass rounded-xl p-3 border-border"
-            >
+            <div className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 glass rounded-xl p-3 border-border">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
                   <Check className="w-4 h-4 text-emerald-500" />
@@ -367,7 +260,7 @@ export function HeroSection() {
                   <div className="text-xs text-emerald-500">Envoyée en cuisine</div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </motion.div>
       </div>

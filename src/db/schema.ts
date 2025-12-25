@@ -24,8 +24,12 @@ export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").unique().notNull(),
   passwordHash: text("password_hash").notNull(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
   role: text("role", { enum: userRoleEnum }).default("OWNER").notNull(),
   mustChangePassword: boolean("must_change_password").default(false).notNull(),
+  resetToken: text("reset_token"),
+  resetTokenExpires: timestamp("reset_token_expires"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -48,6 +52,7 @@ export const restaurants = pgTable("restaurants", {
   plan: restaurantPlanPgEnum("plan").default("commission"),
   commissionRate: integer("commission_rate").default(5), // Pourcentage (ex: 5 = 5%)
   stripeCustomerId: text("stripe_customer_id"),
+  billingStartDate: text("billing_start_date"), // Date de début de facturation (format ISO: YYYY-MM-DD)
   
   // Intégration Voice AI (Vapi)
   vapiAssistantId: text("vapi_assistant_id"),
@@ -161,6 +166,19 @@ export const modifiers = pgTable("modifiers", {
     .references(() => ingredients.id, { onDelete: "cascade" }),
   priceExtra: integer("price_extra").default(0).notNull(), // Supplément en centimes
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ============================================
+// PRICING CONFIG - Configuration globale des prix
+// ============================================
+
+export const pricingConfig = pgTable("pricing_config", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  monthlyPrice: integer("monthly_price").default(14900).notNull(), // Prix mensuel en centimes (149€)
+  setupFee: integer("setup_fee").default(19900).notNull(), // Frais de mise en service en centimes (199€)
+  includedMinutes: integer("included_minutes").default(600).notNull(), // Minutes incluses (600)
+  overflowPricePerMinute: integer("overflow_price_per_minute").default(20).notNull(), // Prix par minute supplémentaire en centimes (0,20€)
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // ============================================

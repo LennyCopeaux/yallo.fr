@@ -16,8 +16,6 @@ type Restaurant = {
   ownerId: string;
   status: "active" | "suspended" | "onboarding";
   isActive: boolean | null;
-  plan: "fixed" | "commission" | null;
-  commissionRate: number | null;
   vapiAssistantId: string | null;
   twilioPhoneNumber: string | null;
   createdAt: Date | null;
@@ -27,6 +25,8 @@ type Restaurant = {
 type User = {
   id: string;
   email: string;
+  firstName: string | null;
+  lastName: string | null;
   role: "ADMIN" | "OWNER";
   mustChangePassword: boolean;
   createdAt: Date | null;

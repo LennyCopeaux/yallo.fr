@@ -52,8 +52,6 @@ async function getRestaurants(searchParams: {
       ownerId: restaurants.ownerId,
       status: restaurants.status,
       isActive: restaurants.isActive,
-      plan: restaurants.plan,
-      commissionRate: restaurants.commissionRate,
       vapiAssistantId: restaurants.vapiAssistantId,
       twilioPhoneNumber: restaurants.twilioPhoneNumber,
       createdAt: restaurants.createdAt,

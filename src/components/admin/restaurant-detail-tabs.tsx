@@ -16,9 +16,8 @@ type Restaurant = {
   ownerId: string;
   status: "active" | "suspended" | "onboarding";
   isActive: boolean | null;
-  plan: "fixed" | "commission" | null;
-  commissionRate: number | null;
   stripeCustomerId: string | null;
+  billingStartDate: string | null;
   vapiAssistantId: string | null;
   systemPrompt: string | null;
   menuContext: string | null;

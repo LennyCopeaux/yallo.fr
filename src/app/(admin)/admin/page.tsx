@@ -51,8 +51,6 @@ async function getRestaurants(searchParams: {
       ownerId: restaurants.ownerId,
       status: restaurants.status,
       isActive: restaurants.isActive,
-      plan: restaurants.plan,
-      commissionRate: restaurants.commissionRate,
       vapiAssistantId: restaurants.vapiAssistantId,
       twilioPhoneNumber: restaurants.twilioPhoneNumber,
       createdAt: restaurants.createdAt,
@@ -72,6 +70,8 @@ async function getUsers() {
     .select({
       id: users.id,
       email: users.email,
+      firstName: users.firstName,
+      lastName: users.lastName,
       role: users.role,
       mustChangePassword: users.mustChangePassword,
       createdAt: users.createdAt,

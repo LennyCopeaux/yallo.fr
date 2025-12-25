@@ -8,8 +8,11 @@ import {
   CtaSection,
   FooterSection,
 } from "@/components/landing";
+import { getPricingConfig } from "@/app/(admin)/admin/settings/actions";
 
-export default function Home() {
+export default async function Home() {
+  const pricingConfig = await getPricingConfig();
+
   return (
     <div className="relative">
       {/* Hero avec conversation téléphonique live */}
@@ -25,7 +28,7 @@ export default function Home() {
       <FeaturesSection />
 
       {/* Tarification - 2 plans */}
-      <PricingSection />
+      <PricingSection pricingConfig={pricingConfig} />
 
       {/* FAQ - Accordion */}
       <FaqSection />

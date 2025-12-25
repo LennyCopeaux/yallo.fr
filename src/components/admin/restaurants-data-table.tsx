@@ -59,8 +59,6 @@ type Restaurant = {
   ownerId: string;
   status: "active" | "suspended" | "onboarding";
   isActive: boolean | null;
-  plan: "fixed" | "commission" | null;
-  commissionRate: number | null;
   vapiAssistantId: string | null;
   twilioPhoneNumber: string | null;
   createdAt: Date | null;
@@ -100,18 +98,24 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
     });
   };
 
-  // Recherche avec debounce
-  const handleSearch = (value: string) => {
-    setSearchValue(value);
+  // Recherche au clic sur Entrée ou bouton
+  const handleSearchSubmit = () => {
     const params = new URLSearchParams(searchParams.toString());
-    if (value) {
-      params.set("search", value);
+    if (searchValue.trim()) {
+      params.set("search", searchValue.trim());
     } else {
       params.delete("search");
     }
     startTransition(() => {
       router.push(`/admin?tab=restaurants&${params.toString()}`);
     });
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSearchSubmit();
+    }
   };
 
   // Suppression
@@ -171,39 +175,30 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
     }
   };
 
-  const getPlanBadge = (plan: string | null) => {
-    if (!plan) return <span className="text-muted-foreground">-</span>;
-    
-    switch (plan) {
-      case "fixed":
-        return (
-          <Badge variant="outline" className="border-blue-400/20 text-blue-400">
-            Fixe
-          </Badge>
-        );
-      case "commission":
-        return (
-          <Badge variant="outline" className="border-purple-400/20 text-purple-400">
-            Commission
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{plan}</Badge>;
-    }
-  };
 
   return (
     <div className="space-y-4">
       {/* Filtres - Toujours visibles */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher par nom ou email..."
-            value={searchValue}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-10 bg-background/50 border-border"
-          />
+        <div className="relative flex-1 flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher par nom ou email..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              className="pl-10 bg-background/50 border-border"
+            />
+          </div>
+          <Button
+            type="button"
+            onClick={handleSearchSubmit}
+            disabled={isPending}
+            className="bg-primary text-black hover:bg-primary/90"
+          >
+            <Search className="w-4 h-4" />
+          </Button>
         </div>
         <Select
           value={searchParams.get("status") || "all"}
@@ -249,7 +244,6 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
                 <TableHead className="text-muted-foreground font-medium">Restaurant</TableHead>
                 <TableHead className="text-muted-foreground font-medium hidden md:table-cell">Propriétaire</TableHead>
                 <TableHead className="text-muted-foreground font-medium">Statut</TableHead>
-                <TableHead className="text-muted-foreground font-medium hidden lg:table-cell">Plan</TableHead>
                 <TableHead className="text-muted-foreground font-medium text-center">IA</TableHead>
                 <TableHead className="w-[70px]"></TableHead>
               </TableRow>
@@ -274,9 +268,6 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
                 </TableCell>
                 <TableCell>
                   {getStatusBadge(restaurant.status)}
-                </TableCell>
-                <TableCell className="hidden lg:table-cell">
-                  {getPlanBadge(restaurant.plan)}
                 </TableCell>
                 <TableCell className="text-center">
                   <div 
@@ -306,15 +297,12 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem 
-                        onClick={() => handleImpersonate(restaurant)}
-                        disabled={impersonatingId === restaurant.id}
+                        disabled
+                        className="opacity-50 cursor-not-allowed"
                       >
-                        {impersonatingId === restaurant.id ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <UserCheck className="w-4 h-4 mr-2" />
-                        )}
-                        Se connecter en tant que
+                        <UserCheck className="w-4 h-4 mr-2" />
+                        <span className="line-through">Se connecter en tant que</span>
+                        <span className="ml-2 text-xs text-muted-foreground">(À venir)</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator className="bg-muted/50" />
                       <DropdownMenuItem

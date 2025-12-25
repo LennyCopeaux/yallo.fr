@@ -27,13 +27,14 @@ import {
 
 function StockToggleCard() {
   const [isAvailable, setIsAvailable] = useState(true);
+  const [isFritesXLAvailable, setIsFritesXLAvailable] = useState(false); // Épuisé par défaut
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.5, delay: 0.3 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
       className="group"
     >
       <Card className="h-full bg-card/30 border-border hover:border-primary/30 transition-all duration-300 noise p-6 flex flex-col">
@@ -61,12 +62,18 @@ function StockToggleCard() {
                 className="cursor-pointer scale-90"
               />
             </div>
-            <div className="flex items-center justify-between opacity-50">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                <span className="text-sm font-medium text-foreground">Frites XL</span>
+                <div className={`w-2 h-2 rounded-full ${isFritesXLAvailable ? 'bg-green-500' : 'bg-red-500'}`} />
+                <span className={`text-sm font-medium transition-all ${isFritesXLAvailable ? "text-foreground" : "text-muted-foreground line-through"}`}>
+                  Frites XL
+                </span>
               </div>
-              <Switch checked={true} disabled className="scale-90" />
+              <Switch
+                checked={isFritesXLAvailable}
+                onCheckedChange={setIsFritesXLAvailable}
+                className="cursor-pointer scale-90"
+              />
             </div>
           </div>
         </CardContent>
@@ -78,10 +85,10 @@ function StockToggleCard() {
 function UpsellIntelligentCard() {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.5, delay: 0.1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
       className="lg:col-span-2 group"
     >
       <Card className="h-full bg-card/30 border-border hover:border-primary/30 transition-all duration-300 noise p-6 flex flex-col">
@@ -123,10 +130,10 @@ export function FeaturesSection() {
   return (
     <section id="features" className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 border-t border-border">
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
         className="text-center mb-16"
       >
         <Badge className="mb-4 px-4 py-1.5 bg-muted/50 dark:bg-muted/50 text-foreground border-border">
@@ -141,10 +148,10 @@ export function FeaturesSection() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         {/* Carte 1 - Grande (Largeur x2) : Compréhension Vocale Avancée */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
           className="lg:col-span-2 group"
         >
           <Card className="h-full bg-card/30 border-border hover:border-primary/30 transition-all duration-300 noise overflow-hidden p-6">
@@ -200,10 +207,10 @@ export function FeaturesSection() {
 
         {/* Carte 3 - Moyenne : Ligne Infinie (Scalabilité) */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
           className="group"
         >
           <Card className="h-full bg-card/30 border-border hover:border-primary/30 transition-all duration-300 noise p-6 flex flex-col">
@@ -305,10 +312,10 @@ export function FeaturesSection() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Carte 5 - Petite : Relais Humain */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: 0.4 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
               className="group"
             >
               <Card className="h-full bg-card/30 border-border hover:border-primary/30 transition-all duration-300 noise p-6 flex flex-col">
@@ -367,10 +374,10 @@ export function FeaturesSection() {
 
             {/* Carte 6 - Petite : Carte 100% Flexible */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: 0.5 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
               className="group"
             >
               <Card className="h-full bg-card/30 border-border hover:border-primary/30 transition-all duration-300 noise p-6 flex flex-col">
@@ -410,10 +417,10 @@ export function FeaturesSection() {
 
           {/* Carte 7 - Full Width : Intégration Caisse */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.5, delay: 0.6 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
             className="group"
           >
             <Card className="h-full bg-card/30 border-border hover:border-primary/30 transition-all duration-300 noise p-6 flex flex-col">
