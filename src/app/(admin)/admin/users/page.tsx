@@ -11,6 +11,8 @@ async function getUsers() {
     .select({
       id: users.id,
       email: users.email,
+      firstName: users.firstName,
+      lastName: users.lastName,
       role: users.role,
       mustChangePassword: users.mustChangePassword,
       createdAt: users.createdAt,
