@@ -23,7 +23,10 @@ import {
   User,
   Plug,
   Bot,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 function StockToggleCard() {
   const [isAvailable, setIsAvailable] = useState(true);
@@ -127,6 +130,8 @@ function UpsellIntelligentCard() {
 }
 
 export function FeaturesSection() {
+  const [showAllCards, setShowAllCards] = useState(false);
+
   return (
     <section id="features" className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 border-t border-border">
       <motion.div
@@ -305,7 +310,7 @@ export function FeaturesSection() {
       </div>
 
       {/* Bento Grid - Ligne 2 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${showAllCards ? '' : 'hidden md:grid'}`}>
         <UpsellIntelligentCard />
 
         <div className="lg:col-span-2 grid grid-rows-[auto_auto] gap-4">
@@ -473,6 +478,27 @@ export function FeaturesSection() {
             </Card>
           </motion.div>
         </div>
+      </div>
+
+      {/* Bouton Voir plus / Voir moins - Mobile uniquement */}
+      <div className="md:hidden flex justify-center mt-6">
+        <Button
+          variant="outline"
+          onClick={() => setShowAllCards(!showAllCards)}
+          className="border-border hover:border-primary hover:bg-primary/10"
+        >
+          {showAllCards ? (
+            <>
+              Voir moins
+              <ChevronUp className="w-4 h-4 ml-2" />
+            </>
+          ) : (
+            <>
+              Voir plus
+              <ChevronDown className="w-4 h-4 ml-2" />
+            </>
+          )}
+        </Button>
       </div>
     </section>
   );

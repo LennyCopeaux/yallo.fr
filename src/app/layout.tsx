@@ -25,6 +25,14 @@ export const metadata: Metadata = {
   },
   description:
     "Standard téléphonique automatique pour restaurant. Notre IA Kebab gère la prise de commande 24/7 pour votre Kebab, Tacos, Pizzeria ou Sushi. Zéro attente, zéro commande perdue.",
+  icons: {
+    icon: [
+      { url: "/logo.png", sizes: "any" },
+      { url: "/icon.png", sizes: "any" },
+    ],
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
   keywords: [
     "IA Kebab",
     "IA restaurant",

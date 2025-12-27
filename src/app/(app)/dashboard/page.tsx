@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { LogOut, Utensils, AlertTriangle } from "lucide-react";
+import { LogOut, Utensils, AlertTriangle, Clock } from "lucide-react";
 import Link from "next/link";
 import { buildAppUrlServer } from "@/lib/utils";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -146,6 +146,23 @@ export default async function DashboardPage() {
                     </div>
                     <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                       <Utensils className="w-6 h-6 text-primary" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link href="/dashboard/hours">
+              <Card className="bg-card border-border hover:border-primary/30 transition-all cursor-pointer h-full">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Horaires d&apos;ouverture</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Configurez vos horaires d&apos;ouverture
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-primary" />
                     </div>
                   </div>
                 </CardContent>

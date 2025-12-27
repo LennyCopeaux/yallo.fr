@@ -615,10 +615,11 @@ export async function createIngredient(formData: FormData): Promise<ActionResult
     ? true 
     : isAvailableValue === "true";
 
+  const priceValue = formData.get("price");
   const validation = createIngredientSchema.safeParse({
     name: formData.get("name"),
     ingredientCategoryId: formData.get("ingredientCategoryId"),
-    price: Math.round(parseFloat(formData.get("price") as string) * 100),
+    price: priceValue ? Math.round(parseFloat(priceValue as string) * 100) : 0,
     isAvailable: isAvailable,
   });
 
@@ -687,11 +688,15 @@ export async function updateIngredient(
 
   const priceValue = formData.get("price");
   const categoryIdValue = formData.get("ingredientCategoryId");
+  const isAvailableValue = formData.get("isAvailable");
+  const isAvailable = isAvailableValue === null || isAvailableValue === undefined 
+    ? undefined 
+    : isAvailableValue === "true";
   const validation = createIngredientSchema.partial().safeParse({
     name: formData.get("name"),
     ingredientCategoryId: categoryIdValue || undefined,
     price: priceValue ? Math.round(parseFloat(priceValue as string) * 100) : undefined,
-    isAvailable: formData.get("isAvailable") === "true",
+    isAvailable: isAvailable,
   });
 
   if (!validation.success) {
