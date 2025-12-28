@@ -20,6 +20,7 @@ type Restaurant = {
   twilioPhoneNumber: string | null;
   createdAt: Date | null;
   ownerEmail: string;
+  ordersCount: number;
 };
 
 type User = {
@@ -66,11 +67,11 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, default
       </TabsList>
 
       {/* Onglet Restaurants */}
-      <TabsContent value="restaurants" className="space-y-6">
+      <TabsContent value="restaurants" className="space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold">Restaurants</h2>
-            <p className="text-muted-foreground text-sm mt-1">
+            <h2 className="text-lg sm:text-xl font-semibold">Restaurants</h2>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">
               Gérez tous vos restaurants et leur configuration
             </p>
           </div>
@@ -78,34 +79,40 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, default
         </div>
 
         {/* Stats rapides */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="p-4 rounded-xl border border-border bg-card/30">
-            <p className="text-2xl font-bold">{restaurants.length}</p>
-            <p className="text-sm text-muted-foreground">Total</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+          <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+            <p className="text-xl sm:text-2xl font-bold">{restaurants.length}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Total</p>
           </div>
-          <div className="p-4 rounded-xl border border-border bg-card/30">
-            <p className="text-2xl font-bold text-emerald-400">
+          <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+            <p className="text-xl sm:text-2xl font-bold text-emerald-400">
               {restaurants.filter(r => r.status === "active").length}
             </p>
-            <p className="text-sm text-muted-foreground">Actifs</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Actifs</p>
           </div>
-          <div className="p-4 rounded-xl border border-border bg-card/30">
-            <p className="text-2xl font-bold text-amber-400">
+          <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+            <p className="text-xl sm:text-2xl font-bold text-amber-400">
               {restaurants.filter(r => r.status === "onboarding").length}
             </p>
-            <p className="text-sm text-muted-foreground">Onboarding</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Onboarding</p>
           </div>
-          <div className="p-4 rounded-xl border border-border bg-card/30">
-            <p className="text-2xl font-bold text-cyan-400">
+          <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+            <p className="text-xl sm:text-2xl font-bold text-red-400">
+              {restaurants.filter(r => r.status === "suspended").length}
+            </p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Suspendu</p>
+          </div>
+          <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+            <p className="text-xl sm:text-2xl font-bold text-cyan-400">
               {restaurants.filter(r => r.vapiAssistantId).length}
             </p>
-            <p className="text-sm text-muted-foreground">IA Active</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">IA Active</p>
           </div>
-          <div className="p-4 rounded-xl border border-border bg-card/30">
-            <p className="text-2xl font-bold text-purple-400">
+          <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+            <p className="text-xl sm:text-2xl font-bold text-purple-400">
               {totalOrders}
             </p>
-            <p className="text-sm text-muted-foreground">Commandes</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Commandes</p>
           </div>
         </div>
 
@@ -114,11 +121,11 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, default
       </TabsContent>
 
       {/* Onglet Utilisateurs */}
-      <TabsContent value="users" className="space-y-6">
+      <TabsContent value="users" className="space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold">Utilisateurs</h2>
-            <p className="text-muted-foreground text-sm mt-1">
+            <h2 className="text-lg sm:text-xl font-semibold">Utilisateurs</h2>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">
               Gérez les comptes administrateurs et propriétaires
             </p>
           </div>
@@ -126,28 +133,28 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, default
         </div>
 
         {/* Stats rapides */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl border border-border bg-card/30">
-            <p className="text-2xl font-bold">{users.length}</p>
-            <p className="text-sm text-muted-foreground">Total</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+            <p className="text-xl sm:text-2xl font-bold">{users.length}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Total</p>
           </div>
-          <div className="p-4 rounded-xl border border-border bg-card/30">
-            <p className="text-2xl font-bold text-red-400">
+          <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+            <p className="text-xl sm:text-2xl font-bold text-red-400">
               {users.filter(u => u.role === "ADMIN").length}
             </p>
-            <p className="text-sm text-muted-foreground">Admins</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Admins</p>
           </div>
-          <div className="p-4 rounded-xl border border-border bg-card/30">
-            <p className="text-2xl font-bold text-primary">
+          <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+            <p className="text-xl sm:text-2xl font-bold text-primary">
               {users.filter(u => u.role === "OWNER").length}
             </p>
-            <p className="text-sm text-muted-foreground">Owners</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Owners</p>
           </div>
-          <div className="p-4 rounded-xl border border-border bg-card/30">
-            <p className="text-2xl font-bold text-amber-400">
+          <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+            <p className="text-xl sm:text-2xl font-bold text-amber-400">
               {users.filter(u => u.mustChangePassword).length}
             </p>
-            <p className="text-sm text-muted-foreground">En attente</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">En attente</p>
           </div>
         </div>
 

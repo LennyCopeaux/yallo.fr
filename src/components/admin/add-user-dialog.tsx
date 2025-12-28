@@ -59,7 +59,7 @@ export function AddUserDialog() {
       }
     }}>
       <DialogTrigger asChild>
-        <Button className="bg-primary text-black hover:bg-primary/90 font-semibold">
+        <Button className="bg-primary text-black hover:bg-primary/90 font-semibold min-h-[44px]">
           <Plus className="w-4 h-4 mr-2" />
           Nouvel utilisateur
         </Button>

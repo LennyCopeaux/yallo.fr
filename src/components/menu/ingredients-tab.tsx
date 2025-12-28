@@ -55,7 +55,6 @@ interface Ingredient {
   ingredientCategoryId: string;
   price: number;
   isAvailable: boolean;
-  imageUrl: string | null;
 }
 
 interface IngredientsTabProps {

@@ -63,6 +63,7 @@ type Restaurant = {
   twilioPhoneNumber: string | null;
   createdAt: Date | null;
   ownerEmail: string;
+  ordersCount: number;
 };
 
 type Owner = {
@@ -195,7 +196,7 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
             type="button"
             onClick={handleSearchSubmit}
             disabled={isPending}
-            className="bg-primary text-black hover:bg-primary/90"
+            className="bg-primary text-black hover:bg-primary/90 min-h-[44px] min-w-[44px]"
           >
             <Search className="w-4 h-4" />
           </Button>
@@ -231,19 +232,21 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
       {/* Table */}
       <div className="border border-border rounded-xl bg-card/20 overflow-hidden">
         {data.length === 0 ? (
-          <div className="p-16 text-center">
-            <p className="text-muted-foreground">Aucun restaurant trouvé</p>
-            <p className="text-sm text-muted-foreground mt-2">
+          <div className="p-8 sm:p-16 text-center">
+            <p className="text-muted-foreground text-sm sm:text-base">Aucun restaurant trouvé</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2">
               Essayez de modifier vos filtres ou votre recherche
             </p>
           </div>
         ) : (
-          <Table>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead className="text-muted-foreground font-medium">Restaurant</TableHead>
                 <TableHead className="text-muted-foreground font-medium hidden md:table-cell">Propriétaire</TableHead>
                 <TableHead className="text-muted-foreground font-medium">Statut</TableHead>
+                <TableHead className="text-muted-foreground font-medium text-center">Commandes</TableHead>
                 <TableHead className="text-muted-foreground font-medium text-center">IA</TableHead>
                 <TableHead className="w-[70px]"></TableHead>
               </TableRow>
@@ -255,21 +258,27 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
                 className="border-border hover:bg-primary/[0.02] cursor-pointer"
                 onClick={() => router.push(`/admin/restaurants/${restaurant.id}`)}
               >
-                <TableCell>
+                <TableCell className="min-w-[150px]">
                   <div>
-                    <div className="font-medium">{restaurant.name}</div>
+                    <div className="font-medium text-sm sm:text-base">{restaurant.name}</div>
                     <div className="text-xs text-muted-foreground">
                       /{restaurant.slug}
                     </div>
+                    <div className="text-xs text-muted-foreground md:hidden mt-1">
+                      {restaurant.ownerEmail}
+                    </div>
                   </div>
                 </TableCell>
-                <TableCell className="hidden md:table-cell text-muted-foreground">
+                <TableCell className="hidden md:table-cell text-muted-foreground min-w-[180px]">
                   {restaurant.ownerEmail}
                 </TableCell>
-                <TableCell>
+                <TableCell className="min-w-[100px]">
                   {getStatusBadge(restaurant.status)}
                 </TableCell>
-                <TableCell className="text-center">
+                <TableCell className="text-center text-muted-foreground min-w-[80px]">
+                  {restaurant.ordersCount}
+                </TableCell>
+                <TableCell className="text-center min-w-[60px]">
                   <div 
                     className={`w-3 h-3 rounded-full mx-auto ${
                       restaurant.vapiAssistantId 
@@ -279,10 +288,10 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
                     title={restaurant.vapiAssistantId ? "IA configurée" : "IA non configurée"}
                   />
                 </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
+                <TableCell onClick={(e) => e.stopPropagation()} className="min-w-[44px]">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
                         <MoreHorizontal className="w-4 h-4" />
                         <span className="sr-only">Actions</span>
                       </Button>
@@ -322,6 +331,7 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
       </div>
 

@@ -1015,6 +1015,49 @@ export async function updateVariation(
   }
 }
 
+export async function toggleVariationAvailability(
+  variationId: string,
+  isAvailable: boolean
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) {
+    return { success: false, error: "Non autorisé" };
+  }
+
+  const [variation] = await db
+    .select({
+      variationId: productVariations.id,
+      restaurantId: restaurants.id,
+    })
+    .from(productVariations)
+    .innerJoin(categories, eq(productVariations.categoryId, categories.id))
+    .innerJoin(restaurants, eq(categories.restaurantId, restaurants.id))
+    .where(eq(productVariations.id, variationId))
+    .limit(1);
+
+  if (!variation) {
+    return { success: false, error: "Variation non trouvée" };
+  }
+
+  const ownershipCheck = await verifyRestaurantOwnership(variation.restaurantId);
+  if (!ownershipCheck.success) {
+    return { success: false, error: ownershipCheck.error };
+  }
+
+  try {
+    await db
+      .update(productVariations)
+      .set({ isAvailable })
+      .where(eq(productVariations.id, variationId));
+
+    revalidatePath("/dashboard/menu");
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur mise à jour disponibilité variation:", error);
+    return { success: false, error: "Erreur lors de la mise à jour" };
+  }
+}
+
 export async function deleteVariation(variationId: string): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) {

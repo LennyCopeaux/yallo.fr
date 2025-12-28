@@ -100,7 +100,8 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
     <div className="space-y-4">
       {/* Table */}
       <div className="border border-border rounded-xl bg-card/20 overflow-hidden">
-        <Table>
+        <div className="overflow-x-auto">
+          <Table>
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
               <TableHead className="text-muted-foreground font-medium">Utilisateur</TableHead>
@@ -113,17 +114,23 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
           <TableBody>
             {data.map((user) => (
               <TableRow key={user.id} className="border-border hover:bg-primary/[0.02]">
-                <TableCell>
+                <TableCell className="min-w-[180px]">
                   <div>
-                    <div className="font-medium">
+                    <div className="font-medium text-sm sm:text-base">
                       {user.firstName || user.lastName
                         ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
                         : user.email}
                     </div>
                     <div className="text-xs text-muted-foreground">{user.email}</div>
+                    {user.mustChangePassword && (
+                      <span className="flex items-center gap-1.5 text-amber-400 text-xs md:hidden mt-1">
+                        <AlertCircle className="w-3 h-3" />
+                        Changement MDP requis
+                      </span>
+                    )}
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="min-w-[100px]">
                   <Badge
                     className={
                       user.role === "ADMIN"
@@ -134,7 +141,7 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
                     {user.role}
                   </Badge>
                 </TableCell>
-                <TableCell className="hidden md:table-cell">
+                <TableCell className="hidden md:table-cell min-w-[160px]">
                   {user.mustChangePassword ? (
                     <span className="flex items-center gap-1.5 text-amber-400 text-sm">
                       <AlertCircle className="w-3.5 h-3.5" />
@@ -144,7 +151,7 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
                     <span className="text-emerald-400 text-sm">Actif</span>
                   )}
                 </TableCell>
-                <TableCell className="text-muted-foreground hidden lg:table-cell">
+                <TableCell className="text-muted-foreground hidden lg:table-cell min-w-[120px]">
                   {user.createdAt
                     ? new Date(user.createdAt).toLocaleDateString("fr-FR", {
                         day: "numeric",
@@ -153,10 +160,10 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
                       })
                     : "-"}
                 </TableCell>
-                <TableCell>
+                <TableCell className="min-w-[44px]">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
                         <MoreHorizontal className="w-4 h-4" />
                         <span className="sr-only">Actions</span>
                       </Button>
@@ -214,6 +221,7 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Edit user dialog */}

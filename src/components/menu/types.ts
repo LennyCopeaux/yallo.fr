@@ -19,7 +19,7 @@ export interface Item {
   name: string;
   price: number;
   description?: string;
-  imageUrl?: string | null;
+  isAvailable?: boolean;
   optionGroups: OptionGroup[];
 }
 
@@ -39,7 +39,6 @@ export interface MenuData {
     ingredientCategoryId: string;
     price: number;
     isAvailable: boolean;
-    imageUrl: string | null;
   }>;
   ingredientCategories: Array<{
     id: string;

@@ -24,6 +24,7 @@ interface BackendVariation {
   id: string;
   name: string;
   price: number;
+  isAvailable: boolean | null;
   modifierGroups: BackendModifierGroup[];
 }
 
@@ -52,14 +53,13 @@ interface BackendModifier {
 interface BackendMenuData {
   restaurantId: string;
   categories: BackendCategory[];
-  ingredients: Array<{
-    id: string;
-    name: string;
-    ingredientCategoryId: string;
-    price: number;
-    isAvailable: boolean;
-    imageUrl: string | null;
-  }>;
+    ingredients: Array<{
+      id: string;
+      name: string;
+      ingredientCategoryId: string;
+      price: number;
+      isAvailable: boolean;
+    }>;
   ingredientCategories: Array<{
     id: string;
     name: string;
@@ -83,7 +83,7 @@ function transformMenuData(backendData: BackendMenuData): MenuData {
         name: variation.name,
         price: variation.price,
         description: undefined,
-        imageUrl: null,
+        isAvailable: variation.isAvailable ?? true,
         optionGroups: (variation.modifierGroups || []).map((group: BackendModifierGroup) => ({
           id: group.id,
           title: group.ingredientCategory?.name || "",
@@ -194,6 +194,7 @@ export function MenuEditor({ initialMenuData }: MenuEditorProps) {
               {selectedCategory ? (
                 <ItemsPanel
                   category={selectedCategory}
+                  menuData={menuData}
                   onEditItem={handleEditItem}
                   onCreateItem={handleCreateItem}
                   onRefresh={refreshMenuData}

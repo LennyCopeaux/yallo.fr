@@ -9,18 +9,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { updateBusinessHours } from "@/features/hours/actions";
 
 const days = [
-  { key: "monday", label: "Lundi" },
-  { key: "tuesday", label: "Mardi" },
-  { key: "wednesday", label: "Mercredi" },
-  { key: "thursday", label: "Jeudi" },
-  { key: "friday", label: "Vendredi" },
-  { key: "saturday", label: "Samedi" },
-  { key: "sunday", label: "Dimanche" },
+  { key: "monday", label: "Lundi", short: "Lun" },
+  { key: "tuesday", label: "Mardi", short: "Mar" },
+  { key: "wednesday", label: "Mercredi", short: "Mer" },
+  { key: "thursday", label: "Jeudi", short: "Jeu" },
+  { key: "friday", label: "Vendredi", short: "Ven" },
+  { key: "saturday", label: "Samedi", short: "Sam" },
+  { key: "sunday", label: "Dimanche", short: "Dim" },
 ] as const;
 
 const timeSlotSchema = z.object({
@@ -169,122 +169,149 @@ export function HoursEditor({ initialHours }: HoursEditorProps) {
     <form onSubmit={form.handleSubmit(onSubmit)}>
       <Card className="bg-card/30 border-border">
         <CardHeader>
-          <CardTitle>Configuration des horaires</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-primary" />
+            Configuration des horaires
+          </CardTitle>
           <CardDescription>
-            Définissez les horaires d&apos;ouverture pour chaque jour de la semaine. Vous pouvez choisir un seul créneau ou deux créneaux (midi et soir).
+            Définissez les horaires d&apos;ouverture pour chaque jour de la semaine
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            {days.map((day) => {
-              const daySchedule = form.watch(`schedule.${day.key}`);
-              const enabled = daySchedule?.enabled ?? false;
-              const hasTwoSlots = daySchedule?.hasTwoSlots ?? false;
+        <CardContent className="space-y-3">
+          {days.map((day) => {
+            const daySchedule = form.watch(`schedule.${day.key}`);
+            const enabled = daySchedule?.enabled ?? false;
+            const hasTwoSlots = daySchedule?.hasTwoSlots ?? false;
 
-              return (
-                <div
-                  key={day.key}
-                  className="p-4 rounded-lg border border-border bg-background/30 space-y-4"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-24 flex-shrink-0">
-                      <Label className="text-sm font-medium">{day.label}</Label>
+            return (
+              <div
+                key={day.key}
+                className={`p-4 rounded-xl border transition-all ${
+                  enabled
+                    ? "border-primary/30 bg-primary/5"
+                    : "border-border bg-background/30"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-semibold text-sm ${
+                      enabled
+                        ? "bg-primary/20 text-primary"
+                        : "bg-muted text-muted-foreground"
+                    }`}>
+                      {day.short}
                     </div>
-                    <Switch
-                      checked={enabled}
-                      onCheckedChange={(checked) => {
-                        form.setValue(`schedule.${day.key}.enabled`, checked, { shouldValidate: true });
-                      }}
-                      disabled={isSaving}
-                    />
-                    {!enabled && (
-                      <span className="text-sm text-muted-foreground">Fermé</span>
+                    <Label className="text-base font-medium cursor-pointer" htmlFor={`switch-${day.key}`}>
+                      {day.label}
+                    </Label>
+                  </div>
+                  <Switch
+                    id={`switch-${day.key}`}
+                    checked={enabled}
+                    onCheckedChange={(checked) => {
+                      form.setValue(`schedule.${day.key}.enabled`, checked, { shouldValidate: true });
+                    }}
+                    disabled={isSaving}
+                    className="data-[state=checked]:bg-primary"
+                  />
+                </div>
+
+                {enabled && (
+                    <div className="space-y-4 pl-[52px]">
+                    <div className="flex items-center gap-3">
+                      <Button
+                        type="button"
+                        variant={hasTwoSlots ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          form.setValue(`schedule.${day.key}.hasTwoSlots`, false, { shouldValidate: true });
+                        }}
+                        disabled={isSaving}
+                        className={hasTwoSlots ? "" : "bg-primary text-black hover:bg-primary/90"}
+                      >
+                        Un seul créneau
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={hasTwoSlots ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          form.setValue(`schedule.${day.key}.hasTwoSlots`, true, { shouldValidate: true });
+                        }}
+                        disabled={isSaving}
+                        className={hasTwoSlots ? "bg-primary text-black hover:bg-primary/90" : ""}
+                      >
+                        Midi et soir
+                      </Button>
+                    </div>
+
+                    {hasTwoSlots ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-muted-foreground">Midi</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="time"
+                              {...form.register(`schedule.${day.key}.lunch.open`)}
+                              disabled={isSaving}
+                              className="flex-1 bg-background border-border focus:border-primary/50"
+                            />
+                            <span className="text-muted-foreground">-</span>
+                            <Input
+                              type="time"
+                              {...form.register(`schedule.${day.key}.lunch.close`)}
+                              disabled={isSaving}
+                              className="flex-1 bg-background border-border focus:border-primary/50"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-muted-foreground">Soir</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="time"
+                              {...form.register(`schedule.${day.key}.dinner.open`)}
+                              disabled={isSaving}
+                              className="flex-1 bg-background border-border focus:border-primary/50"
+                            />
+                            <span className="text-muted-foreground">-</span>
+                            <Input
+                              type="time"
+                              {...form.register(`schedule.${day.key}.dinner.close`)}
+                              disabled={isSaving}
+                              className="flex-1 bg-background border-border focus:border-primary/50"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          {...form.register(`schedule.${day.key}.singleSlot.open`)}
+                          disabled={isSaving}
+                          className="flex-1 bg-background border-border focus:border-primary/50"
+                        />
+                        <span className="text-muted-foreground">-</span>
+                        <Input
+                          type="time"
+                          {...form.register(`schedule.${day.key}.singleSlot.close`)}
+                          disabled={isSaving}
+                          className="flex-1 bg-background border-border focus:border-primary/50"
+                        />
+                      </div>
                     )}
                   </div>
+                )}
+              </div>
+            );
+          })}
 
-                  {enabled && (
-                    <div className="space-y-4 pl-28">
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={hasTwoSlots}
-                          onCheckedChange={(checked) => {
-                            form.setValue(`schedule.${day.key}.hasTwoSlots`, checked, { shouldValidate: true });
-                          }}
-                          disabled={isSaving}
-                        />
-                        <Label className="text-sm text-muted-foreground">
-                          Deux créneaux (midi et soir)
-                        </Label>
-                      </div>
-
-                      {hasTwoSlots ? (
-                        <div className="space-y-3">
-                          <div className="space-y-2">
-                            <Label className="text-xs font-medium text-foreground">Midi</Label>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="time"
-                                {...form.register(`schedule.${day.key}.lunch.open`)}
-                                disabled={isSaving}
-                                className="w-32 bg-background/50 border-border"
-                              />
-                              <span className="text-muted-foreground">-</span>
-                              <Input
-                                type="time"
-                                {...form.register(`schedule.${day.key}.lunch.close`)}
-                                disabled={isSaving}
-                                className="w-32 bg-background/50 border-border"
-                              />
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs font-medium text-foreground">Soir</Label>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="time"
-                                {...form.register(`schedule.${day.key}.dinner.open`)}
-                                disabled={isSaving}
-                                className="w-32 bg-background/50 border-border"
-                              />
-                              <span className="text-muted-foreground">-</span>
-                              <Input
-                                type="time"
-                                {...form.register(`schedule.${day.key}.dinner.close`)}
-                                disabled={isSaving}
-                                className="w-32 bg-background/50 border-border"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="time"
-                            {...form.register(`schedule.${day.key}.singleSlot.open`)}
-                            disabled={isSaving}
-                            className="w-32 bg-background/50 border-border"
-                          />
-                          <span className="text-muted-foreground">-</span>
-                          <Input
-                            type="time"
-                            {...form.register(`schedule.${day.key}.singleSlot.close`)}
-                            disabled={isSaving}
-                            className="w-32 bg-background/50 border-border"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="flex justify-end pt-4 border-t border-border">
+          <div className="flex justify-end pt-6 border-t border-border mt-6">
             <Button
               type="submit"
               disabled={isSaving}
-              className="bg-primary text-black hover:bg-primary/90"
+              className="bg-primary text-black hover:bg-primary/90 min-h-[44px] px-8"
             >
               {isSaving ? (
                 <>
@@ -294,7 +321,7 @@ export function HoursEditor({ initialHours }: HoursEditorProps) {
               ) : (
                 <>
                   <Save className="w-4 h-4 mr-2" />
-                  Enregistrer
+                  Enregistrer les horaires
                 </>
               )}
             </Button>

@@ -73,7 +73,7 @@ export function AddRestaurantDialog({ owners }: AddRestaurantDialogProps) {
       <DialogTrigger asChild>
         <Button 
           disabled={!hasOwners}
-          className="bg-primary text-black hover:bg-primary/90 font-semibold disabled:opacity-50"
+          className="bg-primary text-black hover:bg-primary/90 font-semibold disabled:opacity-50 min-h-[44px]"
         >
           <Plus className="w-4 h-4 mr-2" />
           Nouveau restaurant

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Plus, Trash2, X } from "lucide-react";
+import { Loader2, Save, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -14,14 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   createVariation,
@@ -32,7 +25,7 @@ import {
   deleteModifier,
 } from "@/features/menu/actions-v2";
 
-import type { Option, OptionGroup, Item } from "./types";
+import type { Item } from "./types";
 
 interface IngredientCategory {
   id: string;
@@ -48,7 +41,7 @@ interface Ingredient {
   isAvailable: boolean;
 }
 
-interface ItemEditorSheetProps {
+interface ItemEditorDialogProps {
   item: Item;
   categoryId: string;
   isOpen: boolean;
@@ -64,56 +57,148 @@ export function ItemEditorDialog({
   onClose,
   ingredientCategories,
   ingredients,
-}: ItemEditorSheetProps) {
+}: ItemEditorDialogProps) {
   const isNew = item.id === "new";
   const [isSaving, setIsSaving] = useState(false);
-  const [deletingGroupIds, setDeletingGroupIds] = useState<Record<string, boolean>>({});
-  const [deletingOptionIds, setDeletingOptionIds] = useState<Record<string, boolean>>({});
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
   const [name, setName] = useState(item.name);
-  const [price, setPrice] = useState((item.price / 100).toFixed(2));
+  const [price, setPrice] = useState("");
   const [description, setDescription] = useState(item.description || "");
-  const [optionGroups, setOptionGroups] = useState<OptionGroup[]>(item.optionGroups || []);
+  const [selectedOptionCategoryIds, setSelectedOptionCategoryIds] = useState<string[]>([]);
+  const [selectedIngredientsByCategory, setSelectedIngredientsByCategory] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     if (isOpen) {
       setName(item.name);
-      setPrice((item.price / 100).toFixed(2));
+      const priceInEuros = (item.price / 100).toFixed(2);
+      setPrice(priceInEuros);
       setDescription(item.description || "");
-      setOptionGroups(item.optionGroups || []);
+      
+      const categoryIds = item.optionGroups.map(group => group.ingredientCategoryId);
+      setSelectedOptionCategoryIds(categoryIds);
+      
+      const ingredientsByCategory: Record<string, string[]> = {};
+      item.optionGroups.forEach(group => {
+        const ingredientIds = group.options.map(opt => {
+          const ingredient = ingredients.find(ing => ing.name === opt.name && ing.ingredientCategoryId === group.ingredientCategoryId);
+          return ingredient?.id || "";
+        }).filter(Boolean);
+        if (ingredientIds.length > 0) {
+          ingredientsByCategory[group.ingredientCategoryId] = ingredientIds;
+        }
+      });
+      setSelectedIngredientsByCategory(ingredientsByCategory);
+      
+      const expanded: Record<string, boolean> = {};
+      categoryIds.forEach(id => {
+        expanded[id] = true;
+      });
+      setExpandedCategories(expanded);
     }
-  }, [item, isOpen]);
+  }, [item, isOpen, ingredients]);
+
+  function handlePriceChange(value: string) {
+    const numericValue = value.replace(/[^0-9.,]/g, "");
+    const normalizedValue = numericValue.replace(",", ".");
+    setPrice(normalizedValue);
+  }
+
+  function toggleOptionCategory(categoryId: string) {
+    setSelectedOptionCategoryIds(prev => {
+      if (prev.includes(categoryId)) {
+        const newSelected = prev.filter(id => id !== categoryId);
+        const newIngredients = { ...selectedIngredientsByCategory };
+        delete newIngredients[categoryId];
+        setSelectedIngredientsByCategory(newIngredients);
+        setExpandedCategories(prev => ({ ...prev, [categoryId]: false }));
+        return newSelected;
+      } else {
+        setExpandedCategories(prev => ({ ...prev, [categoryId]: true }));
+        return [...prev, categoryId];
+      }
+    });
+  }
+
+  function toggleIngredient(categoryId: string, ingredientId: string) {
+    setSelectedIngredientsByCategory(prev => {
+      const current = prev[categoryId] || [];
+      if (current.includes(ingredientId)) {
+        return {
+          ...prev,
+          [categoryId]: current.filter(id => id !== ingredientId),
+        };
+      } else {
+        return {
+          ...prev,
+          [categoryId]: [...current, ingredientId],
+        };
+      }
+    });
+  }
+
+  function selectAllIngredients(categoryId: string) {
+    const categoryIngredients = ingredients.filter(
+      ing => ing.ingredientCategoryId === categoryId && ing.isAvailable
+    );
+    const allIds = categoryIngredients.map(ing => ing.id);
+    setSelectedIngredientsByCategory(prev => ({
+      ...prev,
+      [categoryId]: allIds,
+    }));
+  }
+
+  function deselectAllIngredients(categoryId: string) {
+    setSelectedIngredientsByCategory(prev => {
+      const newSelected = { ...prev };
+      delete newSelected[categoryId];
+      return newSelected;
+    });
+  }
 
   async function handleSave() {
     if (!name.trim()) {
-      toast.error("Le nom de l'article est requis");
+      toast.error("Le nom du produit est requis");
       return;
     }
 
-    const priceInCents = Math.round(parseFloat(price.replace(",", ".")) * 100);
-    if (isNaN(priceInCents) || priceInCents <= 0) {
+    const priceValue = price.trim();
+    if (!priceValue) {
+      toast.error("Le prix est requis");
+      return;
+    }
+
+    const priceInEuros = parseFloat(priceValue);
+    if (isNaN(priceInEuros) || priceInEuros < 0) {
       toast.error("Le prix doit être un nombre positif");
       return;
     }
 
     setIsSaving(true);
     try {
-      const formData = new FormData();
-      formData.append("categoryId", categoryId);
-      formData.append("name", name.trim());
-      formData.append("price", priceInCents.toString());
+      let variationId = item.id;
 
       if (isNew) {
+        const formData = new FormData();
+        formData.append("categoryId", categoryId);
+        formData.append("name", name.trim());
+        formData.append("price", priceValue);
+
         const result = await createVariation(formData);
         if (!result.success) {
           toast.error(result.error || "Erreur lors de la création");
           setIsSaving(false);
           return;
         }
+        variationId = result.data?.id || item.id;
       } else {
         const updateFormData = new FormData();
         updateFormData.append("name", name.trim());
-        updateFormData.append("price", priceInCents.toString());
+        updateFormData.append("price", priceValue);
+        if (description.trim()) {
+          updateFormData.append("description", description.trim());
+        }
+
         const result = await updateVariation(item.id, updateFormData);
         if (!result.success) {
           toast.error(result.error || "Erreur lors de la mise à jour");
@@ -122,292 +207,276 @@ export function ItemEditorDialog({
         }
       }
 
-      toast.success(isNew ? "Article créé" : "Article mis à jour");
+      const existingGroupIds = item.optionGroups.map(g => g.ingredientCategoryId);
+      const toAdd = selectedOptionCategoryIds.filter(id => !existingGroupIds.includes(id));
+      const toRemove = existingGroupIds.filter(id => !selectedOptionCategoryIds.includes(id));
+
+      for (const categoryIdToAdd of toAdd) {
+        const formData = new FormData();
+        formData.append("variationId", variationId);
+        formData.append("ingredientCategoryId", categoryIdToAdd);
+        formData.append("minSelect", "0");
+        formData.append("maxSelect", "1");
+
+        const result = await createModifierGroup(formData);
+        if (result.success && result.data?.id) {
+          const selectedIngredientIds = selectedIngredientsByCategory[categoryIdToAdd] || [];
+          const categoryIngredients = ingredients.filter(
+            ing => ing.ingredientCategoryId === categoryIdToAdd && ing.isAvailable
+          );
+          
+          if (selectedIngredientIds.length === 0 || selectedIngredientIds.length === categoryIngredients.length) {
+            for (const ingredientId of categoryIngredients.map(ing => ing.id)) {
+              const ingredient = ingredients.find(ing => ing.id === ingredientId);
+              if (ingredient) {
+                const modifierFormData = new FormData();
+                modifierFormData.append("groupId", result.data.id);
+                modifierFormData.append("ingredientId", ingredientId);
+                modifierFormData.append("priceExtra", "0");
+                await createModifier(modifierFormData);
+              }
+            }
+          } else {
+            for (const ingredientId of selectedIngredientIds) {
+              const ingredient = ingredients.find(ing => ing.id === ingredientId);
+              if (ingredient) {
+                const modifierFormData = new FormData();
+                modifierFormData.append("groupId", result.data.id);
+                modifierFormData.append("ingredientId", ingredientId);
+                modifierFormData.append("priceExtra", "0");
+                await createModifier(modifierFormData);
+              }
+            }
+          }
+        }
+      }
+
+      for (const groupToRemove of item.optionGroups) {
+        if (toRemove.includes(groupToRemove.ingredientCategoryId)) {
+          await deleteModifierGroup(groupToRemove.id);
+        } else {
+          const selectedIngredientIds = selectedIngredientsByCategory[groupToRemove.ingredientCategoryId] || [];
+          const categoryIngredients = ingredients.filter(
+            ing => ing.ingredientCategoryId === groupToRemove.ingredientCategoryId && ing.isAvailable
+          );
+          
+          const existingIngredientIds = groupToRemove.options.map(opt => {
+            const ingredient = ingredients.find(ing => ing.name === opt.name && ing.ingredientCategoryId === groupToRemove.ingredientCategoryId);
+            return ingredient?.id || "";
+          }).filter(Boolean);
+
+          const toAddIngredients = selectedIngredientIds.filter(id => !existingIngredientIds.includes(id));
+          const toRemoveIngredients = existingIngredientIds.filter(id => !selectedIngredientIds.includes(id));
+
+          if (selectedIngredientIds.length === 0 || selectedIngredientIds.length === categoryIngredients.length) {
+            for (const ingredientId of toRemoveIngredients) {
+              const modifier = groupToRemove.options.find(opt => {
+                const ing = ingredients.find(i => i.id === ingredientId && i.name === opt.name);
+                return ing;
+              });
+              if (modifier) {
+                await deleteModifier(modifier.id);
+              }
+            }
+            for (const ingredientId of toAddIngredients) {
+              const modifierFormData = new FormData();
+              modifierFormData.append("groupId", groupToRemove.id);
+              modifierFormData.append("ingredientId", ingredientId);
+              modifierFormData.append("priceExtra", "0");
+              await createModifier(modifierFormData);
+            }
+          } else {
+            for (const ingredientId of toRemoveIngredients) {
+              const modifier = groupToRemove.options.find(opt => {
+                const ing = ingredients.find(i => i.id === ingredientId && i.name === opt.name);
+                return ing;
+              });
+              if (modifier) {
+                await deleteModifier(modifier.id);
+              }
+            }
+            for (const ingredientId of toAddIngredients) {
+              const modifierFormData = new FormData();
+              modifierFormData.append("groupId", groupToRemove.id);
+              modifierFormData.append("ingredientId", ingredientId);
+              modifierFormData.append("priceExtra", "0");
+              await createModifier(modifierFormData);
+            }
+          }
+        }
+      }
+
+      toast.success(isNew ? "Produit créé" : "Produit mis à jour");
       onClose();
-    } catch {
+    } catch (error) {
+      console.error(error);
       toast.error("Une erreur est survenue");
     } finally {
       setIsSaving(false);
     }
   }
 
-  async function handleAddOptionGroup() {
-    if (ingredientCategories.length === 0) {
-      toast.error("Aucune catégorie d'ingrédients disponible. Créez-en d'abord dans l'onglet Ingrédients.");
-      return;
-    }
-
-    const newGroup: OptionGroup = {
-      id: `temp-${Date.now()}`,
-      title: "",
-      ingredientCategoryId: ingredientCategories[0].id,
-      minSelect: 1,
-      maxSelect: 1,
-      options: [],
-    };
-    setOptionGroups([...optionGroups, newGroup]);
-  }
-
-  async function handleDeleteOptionGroup(groupId: string) {
-    if (!confirm("Supprimer ce groupe d'options ?")) return;
-
-    if (groupId.startsWith("temp-")) {
-      setOptionGroups(optionGroups.filter(g => g.id !== groupId));
-      return;
-    }
-
-    setDeletingGroupIds(prev => ({ ...prev, [groupId]: true }));
-    try {
-      const result = await deleteModifierGroup(groupId);
-      if (result.success) {
-        toast.success("Groupe d'options supprimé");
-        setOptionGroups(optionGroups.filter(g => g.id !== groupId));
-      } else {
-        toast.error(result.error || "Erreur lors de la suppression");
-      }
-    } catch (error) {
-      toast.error("Une erreur est survenue");
-    } finally {
-      setDeletingGroupIds(prev => ({ ...prev, [groupId]: false }));
-    }
-  }
-
-  async function handleAddOption(groupId: string) {
-    const group = optionGroups.find(g => g.id === groupId);
-    if (!group) return;
-
-    const availableIngredients = ingredients.filter(
-      ing => ing.ingredientCategoryId === group.ingredientCategoryId && ing.isAvailable
-    );
-
-    if (availableIngredients.length === 0) {
-      toast.error("Aucun ingrédient disponible dans cette catégorie");
-      return;
-    }
-
-    const newOption: Option = {
-      id: `temp-option-${Date.now()}`,
-      name: availableIngredients[0].name,
-      priceExtra: 0,
-      isAvailable: true,
-    };
-
-    setOptionGroups(
-      optionGroups.map(g =>
-        g.id === groupId
-          ? { ...g, options: [...g.options, newOption] }
-          : g
-      )
-    );
-  }
-
-  async function handleDeleteOption(groupId: string, optionId: string) {
-    if (optionId.startsWith("temp-option-")) {
-      setOptionGroups(
-        optionGroups.map(g =>
-          g.id === groupId
-            ? { ...g, options: g.options.filter(o => o.id !== optionId) }
-            : g
-        )
-      );
-      return;
-    }
-
-    setDeletingOptionIds(prev => ({ ...prev, [optionId]: true }));
-    try {
-      const result = await deleteModifier(optionId);
-      if (result.success) {
-        toast.success("Option supprimée");
-        setOptionGroups(
-          optionGroups.map(g =>
-            g.id === groupId
-              ? { ...g, options: g.options.filter(o => o.id !== optionId) }
-              : g
-          )
-        );
-      } else {
-        toast.error(result.error || "Erreur lors de la suppression");
-      }
-    } catch (error) {
-      toast.error("Une erreur est survenue");
-    } finally {
-      setDeletingOptionIds(prev => ({ ...prev, [optionId]: false }));
-    }
-  }
-
-  function formatPrice(priceInCents: number): string {
-    return (priceInCents / 100).toFixed(2).replace(".", ",") + "€";
-  }
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-xl border-border">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="bg-card/95 backdrop-blur-xl border-border sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isNew ? "Nouvel article" : "Modifier l'article"}</DialogTitle>
+          <DialogTitle>{isNew ? "Nouveau produit" : "Modifier le produit"}</DialogTitle>
           <DialogDescription>
             {isNew
-              ? "Créez un nouvel article avec ses options"
-              : "Modifiez les détails de l'article et ses groupes d'options"}
+              ? "Créez un nouveau produit pour cette catégorie"
+              : "Modifiez les informations du produit"}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="item-name">Nom de l'article *</Label>
-              <Input
-                id="item-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Wok Poulet"
-                className="bg-background/50 border-border"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="item-price">Prix de base *</Label>
-                <Input
-                  id="item-price"
-                  type="number"
-                  step="0.01"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="7.50"
-                  className="bg-background/50 border-border"
-                />
-                <p className="text-xs text-muted-foreground">En euros</p>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="item-description">Description</Label>
-              <Textarea
-                id="item-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Description de l'article..."
-                rows={3}
-                className="bg-background/50 border-border"
-              />
-            </div>
+        <div className="space-y-6 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nom du produit *</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Wok Poulet"
+              disabled={isSaving}
+              className="bg-background/50 border-border focus:border-primary/50"
+            />
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold">Groupes d'options</h3>
-                <p className="text-sm text-muted-foreground">
-                  Ajoutez des choix obligatoires ou optionnels pour cet article
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleAddOptionGroup}
-                className="border-border"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Ajouter un groupe
-              </Button>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="price">Prix (€) *</Label>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              min="0"
+              value={price}
+              onChange={(e) => handlePriceChange(e.target.value)}
+              placeholder="12.50"
+              disabled={isSaving}
+              className="bg-background/50 border-border focus:border-primary/50"
+            />
+            <p className="text-xs text-muted-foreground">
+              Exemple : tapez 12 pour 12.00€ ou 12.5 pour 12.50€
+            </p>
+          </div>
 
-            {optionGroups.length === 0 ? (
-              <div className="border border-dashed border-border rounded-lg p-8 text-center">
-                <p className="text-sm text-muted-foreground">
-                  Aucun groupe d'options. Ajoutez-en un pour permettre aux clients de personnaliser cet article.
-                </p>
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description (optionnel)</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Description courte du produit..."
+              rows={3}
+              disabled={isSaving}
+              className="bg-background/50 border-border focus:border-primary/50 resize-none"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <Label>Options & Suppléments</Label>
+            <p className="text-xs text-muted-foreground mb-3">
+              Sélectionnez les catégories d&apos;options, puis les ingrédients spécifiques pour chaque catégorie
+            </p>
+            {ingredientCategories.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center border border-border rounded-lg bg-muted/20">
+                Aucune catégorie d&apos;options disponible. Créez-en d&apos;abord dans l&apos;onglet &quot;Ingrédients & Options&quot;.
+              </p>
             ) : (
-              <div className="space-y-4">
-                {optionGroups.map((group) => {
-                  const category = ingredientCategories.find(c => c.id === group.ingredientCategoryId);
-                  const availableIngredients = ingredients.filter(
-                    ing => ing.ingredientCategoryId === group.ingredientCategoryId && ing.isAvailable
+              <div className="space-y-2 max-h-[400px] overflow-y-auto border border-border rounded-lg p-3 bg-background/30">
+                {ingredientCategories.map((category) => {
+                  const isSelected = selectedOptionCategoryIds.includes(category.id);
+                  const isExpanded = expandedCategories[category.id] || false;
+                  const categoryIngredients = ingredients.filter(
+                    ing => ing.ingredientCategoryId === category.id && ing.isAvailable
                   );
+                  const selectedIngredientIds = selectedIngredientsByCategory[category.id] || [];
+                  const allSelected = categoryIngredients.length > 0 && selectedIngredientIds.length === categoryIngredients.length;
 
                   return (
-                    <div
-                      key={group.id}
-                      className="border border-border rounded-lg p-4 bg-background/30"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="secondary" className="bg-primary/10 text-primary">
-                              {category?.name || "Catégorie"}
-                            </Badge>
-                            {group.minSelect > 0 && (
-                              <span className="text-xs text-muted-foreground">
-                                {group.minSelect === group.maxSelect
-                                  ? `${group.minSelect} choix`
-                                  : `${group.minSelect}-${group.maxSelect} choix`}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm font-medium">
-                            {group.title || "Sans titre"}
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteOptionGroup(group.id)}
-                          disabled={deletingGroupIds[group.id]}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    <div key={category.id} className="border border-border rounded-lg bg-background/50">
+                      <div className="flex items-center space-x-2 p-3 hover:bg-muted/30 rounded-t-lg transition-colors">
+                        <Checkbox
+                          id={`option-${category.id}`}
+                          checked={isSelected}
+                          onCheckedChange={() => toggleOptionCategory(category.id)}
+                          disabled={isSaving}
+                        />
+                        <label
+                          htmlFor={`option-${category.id}`}
+                          className="text-sm font-medium leading-none cursor-pointer flex-1"
                         >
-                          {deletingGroupIds[group.id] ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
-
-                      <div className="space-y-2">
-                        {group.options.map((option) => (
-                          <div
-                            key={option.id}
-                            className="flex items-center justify-between p-2 bg-background/50 rounded border border-border"
+                          {category.name}
+                        </label>
+                        {isSelected && categoryIngredients.length > 0 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setExpandedCategories(prev => ({ ...prev, [category.id]: !isExpanded }))}
+                            className="h-8 w-8 p-0"
                           >
-                            <div className="flex-1">
-                              <span className="text-sm">{option.name}</span>
-                              {option.priceExtra > 0 && (
-                                <span className="text-xs text-muted-foreground ml-2">
-                                  +{formatPrice(option.priceExtra)}
-                                </span>
+                            {isExpanded ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                      {isSelected && isExpanded && categoryIngredients.length > 0 && (
+                        <div className="px-3 pb-3 space-y-2 border-t border-border pt-2">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-muted-foreground">
+                              {selectedIngredientIds.length} / {categoryIngredients.length} sélectionnés
+                            </span>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => selectAllIngredients(category.id)}
+                                disabled={allSelected || isSaving}
+                                className="h-7 text-xs"
+                              >
+                                Tout sélectionner
+                              </Button>
+                              {selectedIngredientIds.length > 0 && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => deselectAllIngredients(category.id)}
+                                  disabled={isSaving}
+                                  className="h-7 text-xs"
+                                >
+                                  Tout désélectionner
+                                </Button>
                               )}
                             </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteOption(group.id, option.id)}
-                              disabled={deletingOptionIds[option.id]}
-                              className="h-6 w-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            >
-                              {deletingOptionIds[option.id] ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <X className="w-3 h-3" />
-                              )}
-                            </Button>
                           </div>
-                        ))}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAddOption(group.id)}
-                          className="w-full border-border text-xs"
-                          disabled={availableIngredients.length === 0}
-                        >
-                          <Plus className="w-3 h-3 mr-1" />
-                          Ajouter une option
-                        </Button>
-                      </div>
+                          <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                            {categoryIngredients.map((ingredient) => (
+                              <div
+                                key={ingredient.id}
+                                className="flex items-center space-x-2 py-1.5 px-2 hover:bg-muted/30 rounded transition-colors"
+                              >
+                                <Checkbox
+                                  id={`ingredient-${ingredient.id}`}
+                                  checked={selectedIngredientIds.includes(ingredient.id)}
+                                  onCheckedChange={() => toggleIngredient(category.id, ingredient.id)}
+                                  disabled={isSaving}
+                                />
+                                <label
+                                  htmlFor={`ingredient-${ingredient.id}`}
+                                  className="text-xs leading-none cursor-pointer flex-1"
+                                >
+                                  {ingredient.name}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -416,28 +485,32 @@ export function ItemEditorDialog({
           </div>
         </div>
 
-        <DialogFooter className="border-t border-border pt-4">
+        <DialogFooter>
           <Button
             type="button"
             variant="outline"
             onClick={onClose}
             disabled={isSaving}
-            className="border-border"
+            className="border-border hover:bg-muted/50 min-h-[44px]"
           >
             Annuler
           </Button>
           <Button
+            type="button"
             onClick={handleSave}
-            disabled={isSaving || !name.trim()}
-            className="bg-primary text-black hover:bg-primary/90"
+            disabled={isSaving}
+            className="bg-primary text-black hover:bg-primary/90 min-h-[44px]"
           >
             {isSaving ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {isNew ? "Création..." : "Enregistrement..."}
+                Enregistrement...
               </>
             ) : (
-              isNew ? "Créer" : "Enregistrer"
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                {isNew ? "Créer" : "Enregistrer"}
+              </>
             )}
           </Button>
         </DialogFooter>
@@ -445,4 +518,3 @@ export function ItemEditorDialog({
     </Dialog>
   );
 }
-

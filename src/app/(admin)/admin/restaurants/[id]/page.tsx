@@ -67,53 +67,57 @@ export default async function RestaurantDetailPage({
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex items-start gap-3 sm:gap-4">
           <Button
             variant="ghost"
             size="icon"
             asChild
-            className="mt-1 shrink-0"
+            className="mt-1 shrink-0 h-10 w-10 sm:h-9 sm:w-9"
           >
             <Link href="/admin?tab=restaurants">
               <ArrowLeft className="w-5 h-5" />
             </Link>
           </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl lg:text-3xl font-bold">{restaurant.name}</h1>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                restaurant.status === 'active' 
-                  ? 'bg-emerald-400/10 text-emerald-400'
-                  : restaurant.status === 'onboarding'
-                  ? 'bg-amber-400/10 text-amber-400'
-                  : 'bg-red-400/10 text-red-400'
-              }`}>
-                {restaurant.status}
-              </span>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">{restaurant.name}</h1>
+              {restaurant.status === 'active' ? (
+                <span className="text-xs px-2 py-1 rounded-full bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 shrink-0">
+                  Actif
+                </span>
+              ) : restaurant.status === 'onboarding' ? (
+                <span className="text-xs px-2 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/20 shrink-0">
+                  Onboarding
+                </span>
+              ) : (
+                <span className="text-xs px-2 py-1 rounded-full bg-red-400/10 text-red-400 border border-red-400/20 shrink-0">
+                  Suspendu
+                </span>
+              )}
             </div>
-            <div className="flex items-center gap-2 mt-1 text-muted-foreground">
-              <span className="text-sm">/{restaurant.slug}</span>
-              <span>•</span>
-              <span className="text-sm">{restaurant.ownerEmail}</span>
+            <div className="flex flex-wrap items-center gap-2 mt-1 text-muted-foreground">
+              <span className="text-xs sm:text-sm">/{restaurant.slug}</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="text-xs sm:text-sm break-all">{restaurant.ownerEmail}</span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* AI Status indicator */}
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
+          <div className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg ${
             restaurant.vapiAssistantId 
               ? 'bg-emerald-400/10 border border-emerald-400/20' 
               : 'bg-zinc-800/50 border border-border'
           }`}>
-            <div className={`w-2 h-2 rounded-full ${
+            <div className={`w-2 h-2 rounded-full shrink-0 ${
               restaurant.vapiAssistantId 
                 ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' 
                 : 'bg-zinc-600'
             }`} />
-            <span className={`text-xs font-medium ${
+            <span className={`text-xs font-medium whitespace-nowrap ${
               restaurant.vapiAssistantId ? 'text-emerald-400' : 'text-muted-foreground'
             }`}>
               {restaurant.vapiAssistantId ? 'IA Active' : 'IA Non configurée'}

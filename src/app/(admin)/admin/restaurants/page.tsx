@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { restaurants, users } from "@/db/schema";
+import { restaurants, users, orders } from "@/db/schema";
 import { eq, sql, ilike, and } from "drizzle-orm";
 import { RestaurantsDataTable, AddRestaurantDialog } from "@/components/admin";
 import { Suspense } from "react";
@@ -56,13 +56,32 @@ async function getRestaurants(searchParams: {
       twilioPhoneNumber: restaurants.twilioPhoneNumber,
       createdAt: restaurants.createdAt,
       ownerEmail: users.email,
+      ordersCount: sql<number>`COALESCE(COUNT(${orders.id}), 0)`.as('orders_count'),
     })
     .from(restaurants)
     .innerJoin(users, eq(restaurants.ownerId, users.id))
+    .leftJoin(orders, eq(orders.restaurantId, restaurants.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .groupBy(
+      restaurants.id,
+      restaurants.name,
+      restaurants.slug,
+      restaurants.address,
+      restaurants.phoneNumber,
+      restaurants.ownerId,
+      restaurants.status,
+      restaurants.isActive,
+      restaurants.vapiAssistantId,
+      restaurants.twilioPhoneNumber,
+      restaurants.createdAt,
+      users.email
+    )
     .orderBy(sql`${restaurants.createdAt} DESC`);
 
-  return result;
+  return result.map(r => ({
+    ...r,
+    ordersCount: Number(r.ordersCount),
+  }));
 }
 
 export default async function RestaurantsPage({
@@ -77,12 +96,12 @@ export default async function RestaurantsPage({
   ]);
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold">Restaurants</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Restaurants</h1>
+          <p className="text-muted-foreground text-sm sm:text-base mt-1">
             Gérez tous vos restaurants et leur configuration
           </p>
         </div>
@@ -90,28 +109,34 @@ export default async function RestaurantsPage({
       </div>
 
       {/* Stats rapides */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border border-border bg-card/30">
-          <p className="text-2xl font-bold">{restaurantsList.length}</p>
-          <p className="text-sm text-muted-foreground">Total</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+          <p className="text-xl sm:text-2xl font-bold">{restaurantsList.length}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Total</p>
         </div>
-        <div className="p-4 rounded-xl border border-border bg-card/30">
-          <p className="text-2xl font-bold text-emerald-400">
+        <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+          <p className="text-xl sm:text-2xl font-bold text-emerald-400">
             {restaurantsList.filter(r => r.status === "active").length}
           </p>
-          <p className="text-sm text-muted-foreground">Actifs</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Actifs</p>
         </div>
-        <div className="p-4 rounded-xl border border-border bg-card/30">
-          <p className="text-2xl font-bold text-amber-400">
+        <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+          <p className="text-xl sm:text-2xl font-bold text-amber-400">
             {restaurantsList.filter(r => r.status === "onboarding").length}
           </p>
-          <p className="text-sm text-muted-foreground">Onboarding</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Onboarding</p>
         </div>
-        <div className="p-4 rounded-xl border border-border bg-card/30">
-          <p className="text-2xl font-bold text-cyan-400">
+        <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+          <p className="text-xl sm:text-2xl font-bold text-red-400">
+            {restaurantsList.filter(r => r.status === "suspended").length}
+          </p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Suspendu</p>
+        </div>
+        <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
+          <p className="text-xl sm:text-2xl font-bold text-cyan-400">
             {restaurantsList.filter(r => r.vapiAssistantId).length}
           </p>
-          <p className="text-sm text-muted-foreground">IA Active</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">IA Active</p>
         </div>
       </div>
 

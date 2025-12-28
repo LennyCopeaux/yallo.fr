@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, ArrowLeft } from "lucide-react";
 import { getMenuDataV2 } from "@/features/menu/actions-v2";
 import { MenuEditor } from "@/components/menu";
+import { ModeToggle } from "@/components/mode-toggle";
 import Link from "next/link";
 
 export default async function MenuPage() {
@@ -46,13 +47,14 @@ export default async function MenuPage() {
               <span className="text-xl font-black gradient-text">Yallo</span>
               <span className="text-muted-foreground text-sm hidden sm:block">/ Menu</span>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse-dot" />
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-sm text-muted-foreground hidden sm:block">
                   {session.user.email}
                 </span>
               </div>
+              <ModeToggle />
               <form
                 action={async () => {
                   "use server";

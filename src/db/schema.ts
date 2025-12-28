@@ -114,7 +114,6 @@ export const ingredients = pgTable("ingredients", {
   name: text("name").notNull(),
   price: integer("price").default(0).notNull(), // Prix par défaut en centimes
   isAvailable: boolean("is_available").default(true).notNull(),
-  imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -137,6 +136,7 @@ export const productVariations = pgTable("product_variations", {
     .references(() => categories.id, { onDelete: "cascade" }),
   name: text("name").notNull(), // Ex: "1 Viande", "2 Viandes", "Taille M", "Taille L"
   price: integer("price").notNull(), // Prix de base en centimes
+  isAvailable: boolean("is_available").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

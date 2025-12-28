@@ -55,13 +55,32 @@ async function getRestaurants(searchParams: {
       twilioPhoneNumber: restaurants.twilioPhoneNumber,
       createdAt: restaurants.createdAt,
       ownerEmail: users.email,
+      ordersCount: sql<number>`COALESCE(COUNT(${orders.id}), 0)`.as('orders_count'),
     })
     .from(restaurants)
     .innerJoin(users, eq(restaurants.ownerId, users.id))
+    .leftJoin(orders, eq(orders.restaurantId, restaurants.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .groupBy(
+      restaurants.id,
+      restaurants.name,
+      restaurants.slug,
+      restaurants.address,
+      restaurants.phoneNumber,
+      restaurants.ownerId,
+      restaurants.status,
+      restaurants.isActive,
+      restaurants.vapiAssistantId,
+      restaurants.twilioPhoneNumber,
+      restaurants.createdAt,
+      users.email
+    )
     .orderBy(sql`${restaurants.createdAt} DESC`);
 
-  return result;
+  return result.map(r => ({
+    ...r,
+    ordersCount: Number(r.ordersCount),
+  }));
 }
 
 // Récupère tous les utilisateurs
@@ -99,11 +118,11 @@ export default async function AdminDashboardPage({
   ]);
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold">Dashboard Admin</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Dashboard Admin</h1>
+        <p className="text-muted-foreground text-sm sm:text-base mt-1">
           Gérez vos restaurants et utilisateurs
         </p>
       </div>
