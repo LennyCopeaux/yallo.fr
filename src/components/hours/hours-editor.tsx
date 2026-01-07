@@ -218,28 +218,36 @@ export function HoursEditor({ initialHours }: HoursEditorProps) {
 
                 {enabled && (
                     <div className="space-y-4 pl-[52px]">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        variant={hasTwoSlots ? "default" : "outline"}
+                        variant="outline"
                         size="sm"
                         onClick={() => {
                           form.setValue(`schedule.${day.key}.hasTwoSlots`, false, { shouldValidate: true });
                         }}
                         disabled={isSaving}
-                        className={hasTwoSlots ? "" : "bg-primary text-black hover:bg-primary/90"}
+                        className={`
+                          ${!hasTwoSlots 
+                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90" 
+                            : "bg-background border-border hover:bg-accent"}
+                        `}
                       >
                         Un seul créneau
                       </Button>
                       <Button
                         type="button"
-                        variant={hasTwoSlots ? "default" : "outline"}
+                        variant="outline"
                         size="sm"
                         onClick={() => {
                           form.setValue(`schedule.${day.key}.hasTwoSlots`, true, { shouldValidate: true });
                         }}
                         disabled={isSaving}
-                        className={hasTwoSlots ? "bg-primary text-black hover:bg-primary/90" : ""}
+                        className={`
+                          ${hasTwoSlots 
+                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90" 
+                            : "bg-background border-border hover:bg-accent"}
+                        `}
                       >
                         Midi et soir
                       </Button>

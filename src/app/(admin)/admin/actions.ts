@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import { sendWelcomeEmail, sendResetPasswordEmail } from "@/lib/mail";
 import { z } from "zod";
 import { cookies } from "next/headers";
+import { DEFAULT_STATUS_SETTINGS } from "@/features/kitchen-status/constants";
 
 // ============================================
 // SCHEMAS ZOD
@@ -354,6 +355,7 @@ export async function createRestaurant(formData: FormData): Promise<ActionResult
       ownerId,
       address: address || null,
       status: "onboarding",
+      statusSettings: DEFAULT_STATUS_SETTINGS,
     });
 
     revalidatePath("/admin");

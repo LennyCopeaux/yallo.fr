@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, integer, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, boolean, integer, pgEnum, jsonb } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // Enum pour les rôles utilisateur
@@ -18,6 +18,11 @@ export const restaurantStatusPgEnum = pgEnum("restaurant_status", restaurantStat
 export const restaurantPlanEnum = ["fixed", "commission"] as const;
 export type RestaurantPlan = (typeof restaurantPlanEnum)[number];
 export const restaurantPlanPgEnum = pgEnum("restaurant_plan", restaurantPlanEnum);
+
+// Enum pour le statut de charge de la cuisine
+export const kitchenStatusEnum = ["CALM", "NORMAL", "RUSH", "STOP"] as const;
+export type KitchenStatus = (typeof kitchenStatusEnum)[number];
+export const kitchenStatusPgEnum = pgEnum("kitchen_status", kitchenStatusEnum);
 
 // Table Users
 export const users = pgTable("users", {
@@ -63,6 +68,15 @@ export const restaurants = pgTable("restaurants", {
   twilioPhoneNumber: text("twilio_phone_number"), // Numéro +33 acheté
   forwardingPhoneNumber: text("forwarding_phone_number"), // Numéro de secours du patron
   businessHours: text("business_hours"), // Horaires en JSON
+  
+  // Statut de charge de la cuisine
+  currentStatus: kitchenStatusPgEnum("current_status").default("CALM").notNull(),
+  statusSettings: jsonb("status_settings").$type<{
+    CALM?: { fixed: number } | { min: number; max: number };
+    NORMAL?: { fixed: number } | { min: number; max: number };
+    RUSH?: { fixed: number } | { min: number; max: number };
+    STOP?: { message?: string };
+  }>(),
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
