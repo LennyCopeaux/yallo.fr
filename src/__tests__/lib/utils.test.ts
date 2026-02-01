@@ -86,40 +86,47 @@ describe("getAppUrl", () => {
 });
 
 describe("buildAppUrlServer", () => {
+  const originalEnv = process.env.NEXT_PUBLIC_APP_URL;
+
   afterEach(() => {
-    vi.unstubAllEnvs();
+    // Restaurer la valeur originale
+    if (originalEnv === undefined) {
+      delete process.env.NEXT_PUBLIC_APP_URL;
+    } else {
+      process.env.NEXT_PUBLIC_APP_URL = originalEnv;
+    }
   });
 
   it("devrait utiliser NEXT_PUBLIC_APP_URL si défini", () => {
-    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.staging.yallo.fr");
+    process.env.NEXT_PUBLIC_APP_URL = "https://app.staging.yallo.fr";
     
     const result = buildAppUrlServer("/dashboard", "localhost:3000");
     expect(result).toBe("https://app.staging.yallo.fr/dashboard");
   });
 
   it("devrait utiliser localhost en dev si pas de NEXT_PUBLIC_APP_URL", () => {
-    vi.stubEnv("NEXT_PUBLIC_APP_URL", "");
+    delete process.env.NEXT_PUBLIC_APP_URL;
     
     const result = buildAppUrlServer("/dashboard", "localhost:3000");
     expect(result).toBe("http://app.localhost:3000/dashboard");
   });
 
   it("devrait utiliser le port fourni dans le host", () => {
-    vi.stubEnv("NEXT_PUBLIC_APP_URL", "");
+    delete process.env.NEXT_PUBLIC_APP_URL;
     
     const result = buildAppUrlServer("/dashboard", "localhost:4000");
     expect(result).toBe("http://app.localhost:4000/dashboard");
   });
 
   it("devrait utiliser la production pour un host non-localhost", () => {
-    vi.stubEnv("NEXT_PUBLIC_APP_URL", "");
+    delete process.env.NEXT_PUBLIC_APP_URL;
     
     const result = buildAppUrlServer("/dashboard", "yallo.fr");
     expect(result).toBe("https://app.yallo.fr/dashboard");
   });
 
   it("devrait normaliser le path sans slash", () => {
-    vi.stubEnv("NEXT_PUBLIC_APP_URL", "");
+    delete process.env.NEXT_PUBLIC_APP_URL;
     
     const result = buildAppUrlServer("dashboard", "yallo.fr");
     expect(result).toBe("https://app.yallo.fr/dashboard");
