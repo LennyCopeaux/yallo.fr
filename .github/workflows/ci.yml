@@ -90,6 +90,16 @@ jobs:
         run: npm run test:coverage
         continue-on-error: true
 
+      - name: Verify coverage file exists
+        run: |
+          if [ ! -f "coverage/lcov.info" ]; then
+            echo "Warning: coverage/lcov.info not found. Coverage may be incomplete."
+            ls -la coverage/ || echo "Coverage directory does not exist"
+          else
+            echo "Coverage file found:"
+            ls -lh coverage/lcov.info
+          fi
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
