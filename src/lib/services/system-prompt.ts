@@ -85,11 +85,14 @@ async function getMenuStructure(restaurantId: string, hubriseAccessToken: string
       const menuJson = await fetchHubriseCatalog(hubriseAccessToken, hubriseLocationId);
       return JSON.parse(menuJson);
     } catch (error) {
-      const errorMessage = error instanceof HubriseError 
-        ? error.message 
-        : error instanceof Error 
-        ? error.message 
-        : "Erreur inconnue";
+      let errorMessage: string;
+      if (error instanceof HubriseError) {
+        errorMessage = error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = "Erreur inconnue";
+      }
       logger.warn("HubRise indisponible, fallback sur menu Yallo", {
         restaurantId,
         error: errorMessage,

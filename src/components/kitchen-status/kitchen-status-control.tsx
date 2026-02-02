@@ -49,14 +49,15 @@ const STATUS_CONFIG = {
 } as const;
 
 type StatusConfigType = typeof STATUS_CONFIG[KitchenStatus];
+type StatusType = "CALM" | "NORMAL" | "RUSH";
 
 interface StatusDelayConfigProps {
-  status: "CALM" | "NORMAL" | "RUSH";
+  status: StatusType;
   label: string;
   config: StatusSettings;
   useFixed: boolean;
   onUseFixedChange: (checked: boolean) => void;
-  onConfigUpdate: (status: "CALM" | "NORMAL" | "RUSH", useFixed: boolean, value: number | { min: number; max: number }) => void;
+  onConfigUpdate: (status: StatusType, useFixed: boolean, value: number | { min: number; max: number }) => void;
   defaultFixed: number;
   defaultMin: number;
   defaultMax: number;
@@ -217,7 +218,7 @@ export function KitchenStatusControl({ currentStatus, statusSettings }: Readonly
   };
 
   const updateStatusConfig = (
-    status: "CALM" | "NORMAL" | "RUSH",
+    status: StatusType,
     useFixed: boolean,
     value: number | { min: number; max: number }
   ) => {

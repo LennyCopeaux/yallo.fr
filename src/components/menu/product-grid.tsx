@@ -84,6 +84,57 @@ function getUnusedIngredientCategories(
   });
 }
 
+function formatPrice(price: number): string {
+  if (price === 0) return "";
+  return `+${(price / 100).toFixed(2)} €`;
+}
+
+function getModifierItemClassName(isAvailable: boolean): string {
+  return isAvailable
+    ? "bg-background/30"
+    : "opacity-50 bg-destructive/10";
+}
+
+function ModifierItem({
+  modifier,
+  ingredient,
+  onDelete,
+  isLoading,
+}: {
+  modifier: { id: string; priceExtra: number };
+  ingredient: Ingredient;
+  onDelete: (id: string) => void;
+  isLoading: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-between p-2 rounded text-sm ${getModifierItemClassName(ingredient.isAvailable)}`}
+    >
+      <span>{ingredient.name}</span>
+      <div className="flex items-center gap-2">
+        {modifier.priceExtra > 0 && (
+          <span className="text-primary font-medium">
+            {formatPrice(modifier.priceExtra)}
+          </span>
+        )}
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => onDelete(modifier.id)}
+          disabled={isLoading}
+          className="h-4 w-4 p-0 text-destructive"
+        >
+          {isLoading ? (
+            <Loader2 className="w-2 h-2 animate-spin" />
+          ) : (
+            <X className="w-2 h-2" />
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 interface ModifierIngredient {
   id: string;
   name: string;
@@ -147,10 +198,6 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
   const [variationEditDialogOpen, setVariationEditDialogOpen] = useState(false);
   const [editingVariationFull, setEditingVariationFull] = useState<ProductVariation | null>(null);
 
-  function formatPrice(price: number): string {
-    if (price === 0) return "";
-    return `+${(price / 100).toFixed(2)} €`;
-  }
 
   // Fonction helper pour rafraîchir les données
   function refreshData() {
@@ -738,37 +785,14 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                               </div>
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                                 {getModifiersWithIngredients(group.modifiers, ingredients).map(({ modifier, ingredient }) => (
-                                    <div
-                                      key={modifier.id}
-                                      className={`flex items-center justify-between p-2 rounded text-sm ${
-                                        !ingredient.isAvailable
-                                          ? "opacity-50 bg-destructive/10"
-                                          : "bg-background/30"
-                                      }`}
-                                    >
-                                      <span>{ingredient.name}</span>
-                                      <div className="flex items-center gap-2">
-                                        {modifier.priceExtra > 0 && (
-                                          <span className="text-primary font-medium">
-                                            {formatPrice(modifier.priceExtra)}
-                                          </span>
-                                        )}
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          onClick={() => handleDeleteModifier(modifier.id)}
-                                          disabled={isLoading(`delete-modifier-${modifier.id}`)}
-                                          className="h-4 w-4 p-0 text-destructive"
-                                        >
-                                          {isLoading(`delete-modifier-${modifier.id}`) ? (
-                                            <Loader2 className="w-2 h-2 animate-spin" />
-                                          ) : (
-                                            <X className="w-2 h-2" />
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  ))}
+                                  <ModifierItem
+                                    key={modifier.id}
+                                    modifier={modifier}
+                                    ingredient={ingredient}
+                                    onDelete={handleDeleteModifier}
+                                    isLoading={isLoading(`delete-modifier-${modifier.id}`)}
+                                  />
+                                ))}
                               </div>
                             </div>
                           ))}

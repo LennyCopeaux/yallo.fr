@@ -84,14 +84,6 @@ function buildIngredientsByCategory(
   return ingredientsByCategory;
 }
 
-function getExistingIngredientIds(
-  ingredients: Ingredient[],
-  group: { options: Array<{ name: string }>; ingredientCategoryId: string }
-): string[] {
-  return group.options
-    .map(opt => findIngredientId(ingredients, opt.name, group.ingredientCategoryId))
-    .filter(Boolean);
-}
 
 function findModifierForIngredient(
   group: { options: Array<{ id: string; name: string }> },
@@ -284,22 +276,13 @@ export function ItemEditorDialog({
 
   async function updateGroupIngredients(group: { id: string; ingredientCategoryId: string; options: Array<{ id: string; name: string }> }) {
     const selectedIngredientIds = selectedIngredientsByCategory[group.ingredientCategoryId] || [];
-    const existingIngredientIds = getExistingIngredientIds(ingredients, group);
+    const existingIngredientIds = extractIngredientIds(ingredients, group);
     const toAddIngredients = selectedIngredientIds.filter(id => !existingIngredientIds.includes(id));
     const toRemoveIngredients = existingIngredientIds.filter(id => !selectedIngredientIds.includes(id));
 
     await removeModifiersForIngredients(group, ingredients, toRemoveIngredients, deleteModifier);
     await addModifiersForIngredients(group.id, toAddIngredients, createModifier);
   }
-
-function getExistingIngredientIds(
-  ingredients: Ingredient[],
-  group: { options: Array<{ name: string }>; ingredientCategoryId: string }
-): string[] {
-  return group.options
-    .map(opt => findIngredientId(ingredients, opt.name, group.ingredientCategoryId))
-    .filter(Boolean);
-}
 
 function findModifierForIngredient(
   group: { options: Array<{ id: string; name: string }> },
