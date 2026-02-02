@@ -10,6 +10,8 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { DashboardContent } from "./dashboard-content";
 import { getOrders, getUserRestaurant } from "@/features/orders/actions";
 import { UpdateAssistantButton } from "@/components/dashboard/update-assistant-button";
+import { getKitchenStatus, type StatusSettings } from "@/features/kitchen-status/actions";
+import { KitchenStatusControl } from "@/components/kitchen-status";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -32,6 +34,9 @@ export default async function DashboardPage() {
   
   // Récupérer les commandes (sera vide si pas de restaurant)
   const ordersData = restaurant ? await getOrders() : [];
+  
+  // Récupérer le statut de la cuisine
+  const kitchenStatus = restaurant ? await getKitchenStatus() : null;
   
   // Transformer les données pour le composant
   const orders = ordersData.map((order) => ({
@@ -96,7 +101,7 @@ export default async function DashboardPage() {
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
-            Bienvenue 👋
+            Bienvenue
           </h1>
           {restaurant ? (
             <p className="text-muted-foreground">
@@ -130,6 +135,16 @@ export default async function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Sélecteur de Charge Cuisine - seulement si restaurant */}
+        {restaurant && kitchenStatus && (
+          <div className="mb-6">
+            <KitchenStatusControl
+              currentStatus={kitchenStatus.currentStatus}
+              statusSettings={kitchenStatus.statusSettings as StatusSettings | null}
+            />
+          </div>
         )}
 
         {/* Quick Actions - seulement si restaurant */}

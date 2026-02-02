@@ -143,9 +143,9 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
   }
 
   async function handleUpdateVariationPrice(variationId: string) {
-    const newPrice = Math.round(parseFloat(variationPrice) * 100);
+    const newPrice = Math.round(Number.parseFloat(variationPrice) * 100);
     
-    if (isNaN(newPrice) || newPrice <= 0) {
+    if (Number.isNaN(newPrice) || newPrice <= 0) {
       toast.error("Prix invalide");
       return;
     }
@@ -338,7 +338,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
 
   async function handleUpdateVariationFull(formData: FormData) {
     if (!editingVariationFull) return;
-    const price = Math.round(parseFloat(formData.get("price") as string) * 100);
+    const price = Math.round(Number.parseFloat(formData.get("price") as string) * 100);
     const updateFormData = new FormData();
     updateFormData.append("name", editingVariationFull.name);
     updateFormData.append("price", price.toString());

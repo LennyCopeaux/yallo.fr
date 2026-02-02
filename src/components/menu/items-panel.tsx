@@ -68,7 +68,7 @@ export function ItemsPanel({
   }
 
   function formatPrice(priceInCents: number): string {
-    return (priceInCents / 100).toFixed(2).replace(".", ",") + "€";
+    return (priceInCents / 100).toFixed(2).replaceAll(".", ",") + "€";
   }
 
   return (

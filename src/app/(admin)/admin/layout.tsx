@@ -39,6 +39,10 @@ function getLoginUrl(): string {
     return `http://app.localhost:${port}/login`;
   }
   
+  if (hostname.includes("staging")) {
+    return "https://app.staging.yallo.fr/login";
+  }
+  
   return "https://app.yallo.fr/login";
 }
 

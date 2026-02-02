@@ -74,13 +74,13 @@ export function FooterSection() {
             <h4 className="font-semibold text-foreground mb-4">Ressources</h4>
             <ul className="space-y-3">
               <li>
-                <a 
-                  href="#" 
+                <button 
+                  type="button"
                   onClick={handleLoginClick}
                   className="text-muted-foreground hover:text-primary transition-colors text-sm"
                 >
                   Connexion
-                </a>
+                </button>
               </li>
               <li>
                 <Link href="/guide" className="text-muted-foreground hover:text-primary transition-colors text-sm">

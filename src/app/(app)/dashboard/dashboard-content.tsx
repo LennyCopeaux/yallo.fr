@@ -76,7 +76,7 @@ export function DashboardContent({ orders }: DashboardContentProps) {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(todayRevenue / 100).toFixed(2).replace(".", ",")}€</div>
+            <div className="text-2xl font-bold">{(todayRevenue / 100).toFixed(2).replaceAll(".", ",")}€</div>
             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
               <ArrowUpRight className="h-3 w-3 text-emerald-500" />
               <span className="text-emerald-500">+12.5%</span> vs hier
@@ -109,7 +109,7 @@ export function DashboardContent({ orders }: DashboardContentProps) {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(averageBasket / 100).toFixed(2).replace(".", ",")}€</div>
+            <div className="text-2xl font-bold">{(averageBasket / 100).toFixed(2).replaceAll(".", ",")}€</div>
             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
               <ArrowUpRight className="h-3 w-3 text-emerald-500" />
               <span className="text-emerald-500">+3.2%</span> vs hier
@@ -171,7 +171,7 @@ export function DashboardContent({ orders }: DashboardContentProps) {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-xl flex items-center gap-2">
-                <span className="text-2xl">📋</span>
+                <span className="text-2xl">📋</span>{" "}
                 Suivi des Commandes
               </CardTitle>
               <CardDescription className="mt-1">

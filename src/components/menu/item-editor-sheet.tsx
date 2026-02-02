@@ -100,7 +100,7 @@ export function ItemEditorDialog({
 
   function handlePriceChange(value: string) {
     const numericValue = value.replace(/[^0-9.,]/g, "");
-    const normalizedValue = numericValue.replace(",", ".");
+    const normalizedValue = numericValue.replaceAll(",", ".");
     setPrice(normalizedValue);
   }
 
@@ -168,8 +168,8 @@ export function ItemEditorDialog({
       return;
     }
 
-    const priceInEuros = parseFloat(priceValue);
-    if (isNaN(priceInEuros) || priceInEuros < 0) {
+    const priceInEuros = Number.parseFloat(priceValue);
+    if (Number.isNaN(priceInEuros) || priceInEuros < 0) {
       toast.error("Le prix doit être un nombre positif");
       return;
     }
@@ -271,40 +271,21 @@ export function ItemEditorDialog({
           const toAddIngredients = selectedIngredientIds.filter(id => !existingIngredientIds.includes(id));
           const toRemoveIngredients = existingIngredientIds.filter(id => !selectedIngredientIds.includes(id));
 
-          if (selectedIngredientIds.length === 0 || selectedIngredientIds.length === categoryIngredients.length) {
-            for (const ingredientId of toRemoveIngredients) {
-              const modifier = groupToRemove.options.find(opt => {
-                const ing = ingredients.find(i => i.id === ingredientId && i.name === opt.name);
-                return ing;
-              });
-              if (modifier) {
-                await deleteModifier(modifier.id);
-              }
+          for (const ingredientId of toRemoveIngredients) {
+            const modifier = groupToRemove.options.find(opt => {
+              const ing = ingredients.find(i => i.id === ingredientId && i.name === opt.name);
+              return ing;
+            });
+            if (modifier) {
+              await deleteModifier(modifier.id);
             }
-            for (const ingredientId of toAddIngredients) {
-              const modifierFormData = new FormData();
-              modifierFormData.append("groupId", groupToRemove.id);
-              modifierFormData.append("ingredientId", ingredientId);
-              modifierFormData.append("priceExtra", "0");
-              await createModifier(modifierFormData);
-            }
-          } else {
-            for (const ingredientId of toRemoveIngredients) {
-              const modifier = groupToRemove.options.find(opt => {
-                const ing = ingredients.find(i => i.id === ingredientId && i.name === opt.name);
-                return ing;
-              });
-              if (modifier) {
-                await deleteModifier(modifier.id);
-              }
-            }
-            for (const ingredientId of toAddIngredients) {
-              const modifierFormData = new FormData();
-              modifierFormData.append("groupId", groupToRemove.id);
-              modifierFormData.append("ingredientId", ingredientId);
-              modifierFormData.append("priceExtra", "0");
-              await createModifier(modifierFormData);
-            }
+          }
+          for (const ingredientId of toAddIngredients) {
+            const modifierFormData = new FormData();
+            modifierFormData.append("groupId", groupToRemove.id);
+            modifierFormData.append("ingredientId", ingredientId);
+            modifierFormData.append("priceExtra", "0");
+            await createModifier(modifierFormData);
           }
         }
       }

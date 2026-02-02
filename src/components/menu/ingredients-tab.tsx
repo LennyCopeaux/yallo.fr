@@ -189,7 +189,7 @@ export function IngredientsTab({
       return;
     }
 
-    const priceValue = parseFloat(ingredientPrice.replace(",", ".")) || 0;
+    const priceValue = Number.parseFloat(ingredientPrice.replaceAll(",", ".")) || 0;
 
     setIsCreatingIngredient(true);
     try {
@@ -224,7 +224,7 @@ export function IngredientsTab({
       return;
     }
 
-    const priceValue = parseFloat(ingredientPrice.replace(",", ".")) || 0;
+    const priceValue = Number.parseFloat(ingredientPrice.replaceAll(",", ".")) || 0;
     const currentIngredient = ingredients.find(ing => ing.id === editingIngredientId);
 
     setIsCreatingIngredient(true);
@@ -320,7 +320,7 @@ export function IngredientsTab({
 
   function formatPrice(priceInCents: number): string {
     if (priceInCents === 0) return "";
-    return (priceInCents / 100).toFixed(2).replace(".", ",") + "€";
+    return (priceInCents / 100).toFixed(2).replaceAll(".", ",") + "€";
   }
 
   const ingredientsByCategory = categories.reduce((acc, category) => {

@@ -619,7 +619,7 @@ export async function createIngredient(formData: FormData): Promise<ActionResult
   const validation = createIngredientSchema.safeParse({
     name: formData.get("name"),
     ingredientCategoryId: formData.get("ingredientCategoryId"),
-    price: priceValue ? Math.round(parseFloat(priceValue as string) * 100) : 0,
+    price: priceValue ? Math.round(Number.parseFloat(priceValue as string) * 100) : 0,
     isAvailable: isAvailable,
   });
 
@@ -695,7 +695,7 @@ export async function updateIngredient(
   const validation = createIngredientSchema.partial().safeParse({
     name: formData.get("name"),
     ingredientCategoryId: categoryIdValue || undefined,
-    price: priceValue ? Math.round(parseFloat(priceValue as string) * 100) : undefined,
+    price: priceValue ? Math.round(Number.parseFloat(priceValue as string) * 100) : undefined,
     isAvailable: isAvailable,
   });
 
@@ -921,7 +921,7 @@ export async function createVariation(formData: FormData): Promise<ActionResult>
   const validation = createVariationSchema.safeParse({
     categoryId: formData.get("categoryId"),
     name: formData.get("name"),
-    price: Math.round(parseFloat(formData.get("price") as string) * 100),
+    price: Math.round(Number.parseFloat(formData.get("price") as string) * 100),
   });
 
   if (!validation.success) {
@@ -994,7 +994,7 @@ export async function updateVariation(
   const priceValue = formData.get("price");
   const validation = createVariationSchema.partial().safeParse({
     name: formData.get("name"),
-    price: priceValue ? Math.round(parseFloat(priceValue as string) * 100) : undefined,
+    price: priceValue ? Math.round(Number.parseFloat(priceValue as string) * 100) : undefined,
   });
 
   if (!validation.success) {
@@ -1268,7 +1268,7 @@ export async function createModifier(formData: FormData): Promise<ActionResult> 
   const validation = createModifierSchema.safeParse({
     groupId: formData.get("groupId"),
     ingredientId: formData.get("ingredientId"),
-    priceExtra: Math.round(parseFloat(formData.get("priceExtra") as string) * 100),
+    priceExtra: Math.round(Number.parseFloat(formData.get("priceExtra") as string) * 100),
   });
 
   if (!validation.success) {

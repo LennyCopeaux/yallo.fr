@@ -221,25 +221,33 @@ export function HoursEditor({ initialHours }: HoursEditorProps) {
                     <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        variant={hasTwoSlots ? "outline" : "default"}
+                        variant="outline"
                         size="sm"
                         onClick={() => {
                           form.setValue(`schedule.${day.key}.hasTwoSlots`, false, { shouldValidate: true });
                         }}
                         disabled={isSaving}
-                        className={hasTwoSlots ? "border-border" : "bg-primary text-black hover:bg-primary/90"}
+                        className={`
+                          ${!hasTwoSlots 
+                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90" 
+                            : "bg-background border-border hover:bg-accent"}
+                        `}
                       >
                         Un seul créneau
                       </Button>
                       <Button
                         type="button"
-                        variant={hasTwoSlots ? "default" : "outline"}
+                        variant="outline"
                         size="sm"
                         onClick={() => {
                           form.setValue(`schedule.${day.key}.hasTwoSlots`, true, { shouldValidate: true });
                         }}
                         disabled={isSaving}
-                        className={hasTwoSlots ? "bg-primary text-black hover:bg-primary/90" : "border-border"}
+                        className={`
+                          ${hasTwoSlots 
+                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90" 
+                            : "bg-background border-border hover:bg-accent"}
+                        `}
                       >
                         Midi et soir
                       </Button>
