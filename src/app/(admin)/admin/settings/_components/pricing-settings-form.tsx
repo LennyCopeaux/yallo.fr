@@ -29,7 +29,7 @@ type PricingConfig = {
 };
 
 interface PricingSettingsFormProps {
-  initialConfig: PricingConfig;
+  readonly initialConfig: PricingConfig;
 }
 
 export function PricingSettingsForm({ initialConfig }: PricingSettingsFormProps) {

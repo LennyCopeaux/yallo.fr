@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -24,16 +24,19 @@ export function UpdatePasswordForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const isMountedRef = useRef(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
-    if (!isMounted || status === "loading") return;
+    if (!isMountedRef.current || status === "loading") return;
     
     if (!session) {
       router.replace("/login");
@@ -44,7 +47,7 @@ export function UpdatePasswordForm() {
       const redirectPath = session.user.role === "ADMIN" ? "/admin" : "/dashboard";
       router.replace(redirectPath);
     }
-  }, [session, status, router, isMounted]);
+  }, [session, status, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -94,7 +97,7 @@ export function UpdatePasswordForm() {
     }
   }
 
-  if (!isMounted || status === "loading") {
+  if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />

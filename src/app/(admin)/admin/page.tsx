@@ -36,8 +36,9 @@ async function getRestaurants(searchParams: {
 
   // Recherche par nom ou email
   if (searchParams.search) {
+    const searchPattern = `%${searchParams.search}%`;
     conditions.push(
-      sql`(${restaurants.name} ILIKE ${`%${searchParams.search}%`} OR ${users.email} ILIKE ${`%${searchParams.search}%`})`
+      sql`(${restaurants.name} ILIKE ${searchPattern} OR ${users.email} ILIKE ${searchPattern})`
     );
   }
 
@@ -101,14 +102,14 @@ async function getUsers() {
 
 export default async function AdminDashboardPage({
   searchParams,
-}: {
+}: Readonly<{
   searchParams: Promise<{ 
     tab?: string;
     status?: string; 
     search?: string;
     hasAI?: string;
   }>;
-}) {
+}>) {
   const params = await searchParams;
   const [totalOrders, owners, restaurantsList, usersList] = await Promise.all([
     db.select({ count: sql<number>`count(*)` }).from(orders).then(r => Number(r[0]?.count ?? 0)),
