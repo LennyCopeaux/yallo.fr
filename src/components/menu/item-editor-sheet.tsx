@@ -190,7 +190,9 @@ export function ItemEditorDialog({
           setIsSaving(false);
           return;
         }
-        variationId = result.data?.id || item.id;
+        variationId = (result.data && typeof result.data === 'object' && 'id' in result.data) 
+          ? (result.data as { id: string }).id 
+          : item.id;
       } else {
         const updateFormData = new FormData();
         updateFormData.append("name", name.trim());
@@ -219,7 +221,8 @@ export function ItemEditorDialog({
         formData.append("maxSelect", "1");
 
         const result = await createModifierGroup(formData);
-        if (result.success && result.data?.id) {
+        if (result.success && result.data && typeof result.data === 'object' && 'id' in result.data) {
+          const groupId = (result.data as { id: string }).id;
           const selectedIngredientIds = selectedIngredientsByCategory[categoryIdToAdd] || [];
           const categoryIngredients = ingredients.filter(
             ing => ing.ingredientCategoryId === categoryIdToAdd && ing.isAvailable
@@ -230,7 +233,7 @@ export function ItemEditorDialog({
               const ingredient = ingredients.find(ing => ing.id === ingredientId);
               if (ingredient) {
                 const modifierFormData = new FormData();
-                modifierFormData.append("groupId", result.data.id);
+                modifierFormData.append("groupId", groupId);
                 modifierFormData.append("ingredientId", ingredientId);
                 modifierFormData.append("priceExtra", "0");
                 await createModifier(modifierFormData);
@@ -241,7 +244,7 @@ export function ItemEditorDialog({
               const ingredient = ingredients.find(ing => ing.id === ingredientId);
               if (ingredient) {
                 const modifierFormData = new FormData();
-                modifierFormData.append("groupId", result.data.id);
+                modifierFormData.append("groupId", groupId);
                 modifierFormData.append("ingredientId", ingredientId);
                 modifierFormData.append("priceExtra", "0");
                 await createModifier(modifierFormData);
