@@ -15,10 +15,6 @@ import { eq, and, asc, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-// ============================================
-// HELPERS
-// ============================================
-
 async function verifyRestaurantOwnership(restaurantId: string): Promise<{
   success: boolean;
   error?: string;
@@ -75,10 +71,6 @@ async function getUserRestaurant(): Promise<{
   return { success: true, restaurantId: restaurant.id };
 }
 
-// ============================================
-// TYPES & SCHEMAS
-// ============================================
-
 export type ActionResult<T = unknown> = {
   success: boolean;
   error?: string;
@@ -95,8 +87,6 @@ const updateIngredientPriceSchema = z.object({
   price: z.number().int().min(0),
 });
 
-// Plus nécessaire, on utilise updateIngredient avec ingredientCategoryId
-
 const updateModifierPriceSchema = z.object({
   modifierId: z.string().uuid(),
   priceExtra: z.number().int().min(0),
@@ -106,10 +96,6 @@ const updateVariationPriceSchema = z.object({
   variationId: z.string().uuid(),
   price: z.number().int().positive(),
 });
-
-// ============================================
-// INGREDIENTS
-// ============================================
 
 export async function toggleIngredientAvailability(
   ingredientId: string,
@@ -129,31 +115,22 @@ export async function toggleIngredientAvailability(
   }
 
   try {
-    // Récupère l'ingrédient pour vérifier la propriété
-    const [ingredient] = await db
+    const [targetIngredient] = await db
       .select({ restaurantId: ingredients.restaurantId })
       .from(ingredients)
       .where(eq(ingredients.id, ingredientId))
       .limit(1);
 
-    if (!ingredient) {
-      return { success: false, error: "Ingrédient non trouvé" };
-    }
+    if (!targetIngredient) return { success: false, error: "Ingrédient non trouvé" };
 
-    const ownershipCheck = await verifyRestaurantOwnership(ingredient.restaurantId);
-    if (!ownershipCheck.success) {
-      return { success: false, error: ownershipCheck.error };
-    }
+    const ownershipCheck = await verifyRestaurantOwnership(targetIngredient.restaurantId);
+    if (!ownershipCheck.success) return { success: false, error: ownershipCheck.error };
 
-    await db
-      .update(ingredients)
-      .set({ isAvailable })
-      .where(eq(ingredients.id, ingredientId));
+    await db.update(ingredients).set({ isAvailable }).where(eq(ingredients.id, ingredientId));
 
     revalidatePath("/dashboard/menu");
     return { success: true };
-  } catch (error) {
-    console.error("Erreur toggle disponibilité ingrédient:", error);
+  } catch {
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
@@ -173,40 +150,25 @@ export async function updateIngredientPrice(
   }
 
   try {
-    // Récupère l'ingrédient pour vérifier la propriété
-    const [ingredient] = await db
+    const [targetIngredient] = await db
       .select({ restaurantId: ingredients.restaurantId })
       .from(ingredients)
       .where(eq(ingredients.id, ingredientId))
       .limit(1);
 
-    if (!ingredient) {
-      return { success: false, error: "Ingrédient non trouvé" };
-    }
+    if (!targetIngredient) return { success: false, error: "Ingrédient non trouvé" };
 
-    const ownershipCheck = await verifyRestaurantOwnership(ingredient.restaurantId);
-    if (!ownershipCheck.success) {
-      return { success: false, error: ownershipCheck.error };
-    }
+    const ownershipCheck = await verifyRestaurantOwnership(targetIngredient.restaurantId);
+    if (!ownershipCheck.success) return { success: false, error: ownershipCheck.error };
 
-    await db
-      .update(ingredients)
-      .set({ price })
-      .where(eq(ingredients.id, ingredientId));
+    await db.update(ingredients).set({ price }).where(eq(ingredients.id, ingredientId));
 
     revalidatePath("/dashboard/menu");
     return { success: true };
-  } catch (error) {
-    console.error("Erreur mise à jour prix ingrédient:", error);
+  } catch {
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
-
-// Cette fonction n'est plus nécessaire car on utilise updateIngredient avec ingredientCategoryId
-
-// ============================================
-// PRODUCT VARIATIONS
-// ============================================
 
 export async function updateVariationPrice(
   variationId: string,
@@ -223,43 +185,27 @@ export async function updateVariationPrice(
   }
 
   try {
-    // Récupère la variation pour vérifier la propriété via la catégorie
-    const [variation] = await db
-      .select({
-        variationId: productVariations.id,
-        restaurantId: restaurants.id,
-      })
+    const [targetVariation] = await db
+      .select({ variationId: productVariations.id, restaurantId: restaurants.id })
       .from(productVariations)
       .innerJoin(categories, eq(productVariations.categoryId, categories.id))
       .innerJoin(restaurants, eq(categories.restaurantId, restaurants.id))
       .where(eq(productVariations.id, variationId))
       .limit(1);
 
-    if (!variation) {
-      return { success: false, error: "Variation non trouvée" };
-    }
+    if (!targetVariation) return { success: false, error: "Variation non trouvée" };
 
-    const ownershipCheck = await verifyRestaurantOwnership(variation.restaurantId);
-    if (!ownershipCheck.success) {
-      return { success: false, error: ownershipCheck.error };
-    }
+    const ownershipCheck = await verifyRestaurantOwnership(targetVariation.restaurantId);
+    if (!ownershipCheck.success) return { success: false, error: ownershipCheck.error };
 
-    await db
-      .update(productVariations)
-      .set({ price })
-      .where(eq(productVariations.id, variationId));
+    await db.update(productVariations).set({ price }).where(eq(productVariations.id, variationId));
 
     revalidatePath("/dashboard/menu");
     return { success: true };
-  } catch (error) {
-    console.error("Erreur mise à jour prix variation:", error);
+  } catch {
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
-
-// ============================================
-// MODIFIERS (Prix supplémentaires)
-// ============================================
 
 export async function updateModifierPrice(
   modifierId: string,
@@ -276,12 +222,8 @@ export async function updateModifierPrice(
   }
 
   try {
-    // Récupère le modificateur pour vérifier la propriété via le groupe, la variation, la catégorie
-    const [modifier] = await db
-      .select({
-        modifierId: modifiers.id,
-        restaurantId: restaurants.id,
-      })
+    const [targetModifier] = await db
+      .select({ modifierId: modifiers.id, restaurantId: restaurants.id })
       .from(modifiers)
       .innerJoin(modifierGroups, eq(modifiers.groupId, modifierGroups.id))
       .innerJoin(productVariations, eq(modifierGroups.variationId, productVariations.id))
@@ -290,56 +232,53 @@ export async function updateModifierPrice(
       .where(eq(modifiers.id, modifierId))
       .limit(1);
 
-    if (!modifier) {
-      return { success: false, error: "Modificateur non trouvé" };
-    }
+    if (!targetModifier) return { success: false, error: "Modificateur non trouvé" };
 
-    const ownershipCheck = await verifyRestaurantOwnership(modifier.restaurantId);
-    if (!ownershipCheck.success) {
-      return { success: false, error: ownershipCheck.error };
-    }
+    const ownershipCheck = await verifyRestaurantOwnership(targetModifier.restaurantId);
+    if (!ownershipCheck.success) return { success: false, error: ownershipCheck.error };
 
-    await db
-      .update(modifiers)
-      .set({ priceExtra })
-      .where(eq(modifiers.id, modifierId));
+    await db.update(modifiers).set({ priceExtra }).where(eq(modifiers.id, modifierId));
 
     revalidatePath("/dashboard/menu");
     return { success: true };
-  } catch (error) {
-    console.error("Erreur mise à jour prix modificateur:", error);
+  } catch {
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
 
-// ============================================
-// GET MENU DATA (Nouvelle structure)
-// ============================================
+type ModifierWithIngredient = {
+  modifier: typeof modifiers.$inferSelect;
+  ingredient: typeof ingredients.$inferSelect;
+  groupId: string;
+};
 
-function transformModifiersForGroup(groupId: string, allModifiers: Array<{ modifier: typeof modifiers.$inferSelect; ingredient: typeof ingredients.$inferSelect; groupId: string }>) {
-  return allModifiers
-    .filter((m) => m.groupId === groupId)
-    .map((m) => ({
-      ...m.modifier,
-      ingredient: m.ingredient,
-    }));
+type ModifierGroupWithCategory = {
+  group: typeof modifierGroups.$inferSelect;
+  variationId: string;
+  ingredientCategory: typeof ingredientCategories.$inferSelect;
+};
+
+function buildModifiersForGroup(targetGroupId: string, modifiersList: ModifierWithIngredient[]) {
+  return modifiersList
+    .filter((mod) => mod.groupId === targetGroupId)
+    .map((mod) => ({ ...mod.modifier, ingredient: mod.ingredient }));
 }
 
-function transformModifierGroupsForVariation(
-  variationId: string,
-  allModifierGroups: Array<{ group: typeof modifierGroups.$inferSelect; variationId: string; ingredientCategory: typeof ingredientCategories.$inferSelect }>,
-  allModifiers: Array<{ modifier: typeof modifiers.$inferSelect; ingredient: typeof ingredients.$inferSelect; groupId: string }>
+function buildModifierGroupsForVariation(
+  targetVariationId: string,
+  groupsList: ModifierGroupWithCategory[],
+  modifiersList: ModifierWithIngredient[]
 ) {
-  return allModifierGroups
-    .filter((mg) => mg.variationId === variationId)
-    .map((mg) => ({
-      ...mg.group,
-      ingredientCategory: mg.ingredientCategory,
-      modifiers: transformModifiersForGroup(mg.group.id, allModifiers),
+  return groupsList
+    .filter((grp) => grp.variationId === targetVariationId)
+    .map((grp) => ({
+      ...grp.group,
+      ingredientCategory: grp.ingredientCategory,
+      modifiers: buildModifiersForGroup(grp.group.id, modifiersList),
     }));
 }
 
-export async function getMenuDataV2() {
+export async function getMenuData() {
   const session = await auth();
   if (!session?.user) {
     return null;
@@ -353,25 +292,19 @@ export async function getMenuDataV2() {
   const restaurantId = restaurantCheck.restaurantId;
 
   try {
-    // Récupère toutes les catégories
-    const allCategories = await db
+    const menuCategories = await db
       .select()
       .from(categories)
       .where(eq(categories.restaurantId, restaurantId))
       .orderBy(asc(categories.rank));
 
-    // Récupère toutes les variations directement depuis les catégories
-    const allVariations = await db
-      .select({
-        variation: productVariations,
-        categoryId: categories.id,
-      })
+    const productsByCategory = await db
+      .select({ variation: productVariations, categoryId: categories.id })
       .from(productVariations)
       .innerJoin(categories, eq(productVariations.categoryId, categories.id))
       .where(eq(categories.restaurantId, restaurantId));
 
-    // Récupère tous les groupes de modificateurs avec leurs catégories d'ingrédients
-    const allModifierGroups = await db
+    const optionGroups = await db
       .select({
         group: modifierGroups,
         variationId: productVariations.id,
@@ -383,8 +316,7 @@ export async function getMenuDataV2() {
       .innerJoin(ingredientCategories, eq(modifierGroups.ingredientCategoryId, ingredientCategories.id))
       .where(eq(categories.restaurantId, restaurantId));
 
-    // Récupère tous les modificateurs avec leurs ingrédients et groupes
-    const allModifiers = await db
+    const ingredientModifiers = await db
       .select({
         modifier: modifiers,
         ingredient: ingredients,
@@ -396,43 +328,29 @@ export async function getMenuDataV2() {
       .innerJoin(modifierGroups, eq(modifiers.groupId, modifierGroups.id))
       .where(eq(ingredients.restaurantId, restaurantId));
 
-    // Récupère tous les ingrédients groupés par catégorie
-    const allIngredients = await db
-      .select({
-        ingredient: ingredients,
-        ingredientCategory: ingredientCategories,
-      })
+    const ingredientsList = await db
+      .select({ ingredient: ingredients, ingredientCategory: ingredientCategories })
       .from(ingredients)
       .innerJoin(ingredientCategories, eq(ingredients.ingredientCategoryId, ingredientCategories.id))
       .where(eq(ingredients.restaurantId, restaurantId))
       .orderBy(asc(ingredientCategories.rank), asc(ingredients.name));
 
-    // Organise les données par catégorie (variations directement dans les catégories)
-    const categoriesWithVariations = allCategories.map((category) => {
-      const categoryVariations = allVariations
-        .filter((v) => v.categoryId === category.id)
-        .map((v) => {
-          const variationGroups = transformModifierGroupsForVariation(v.variation.id, allModifierGroups, allModifiers);
-          return {
-            ...v.variation,
-            modifierGroups: variationGroups,
-          };
-        });
-
-      return {
-        ...category,
-        variations: categoryVariations,
-      };
-    });
-
-    // Transformer les ingrédients pour inclure la catégorie
-    const ingredientsWithCategory = allIngredients.map((item) => ({
-      ...item.ingredient,
-      ingredientCategory: item.ingredientCategory,
+    const categoriesWithProducts = menuCategories.map((category) => ({
+      ...category,
+      variations: productsByCategory
+        .filter((prod) => prod.categoryId === category.id)
+        .map((prod) => ({
+          ...prod.variation,
+          modifierGroups: buildModifierGroupsForVariation(prod.variation.id, optionGroups, ingredientModifiers),
+        })),
     }));
 
-    // Récupérer toutes les catégories d'ingrédients
-    const allIngredientCategories = await db
+    const ingredientsWithCategory = ingredientsList.map((row) => ({
+      ...row.ingredient,
+      ingredientCategory: row.ingredientCategory,
+    }));
+
+    const ingredientCategoriesList = await db
       .select()
       .from(ingredientCategories)
       .where(eq(ingredientCategories.restaurantId, restaurantId))
@@ -440,19 +358,14 @@ export async function getMenuDataV2() {
 
     return {
       restaurantId,
-      categories: categoriesWithVariations,
+      categories: categoriesWithProducts,
       ingredients: ingredientsWithCategory,
-      ingredientCategories: allIngredientCategories,
+      ingredientCategories: ingredientCategoriesList,
     };
-  } catch (error) {
-    console.error("Erreur récupération menu:", error);
+  } catch {
     return null;
   }
 }
-
-// ============================================
-// CRUD INGREDIENT CATEGORIES
-// ============================================
 
 const createIngredientCategorySchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
@@ -478,27 +391,25 @@ export async function createIngredientCategory(formData: FormData): Promise<Acti
   }
 
   try {
-    // Trouver le rank maximum
-    const maxRankResult = await db
+    const highestRank = await db
       .select({ rank: ingredientCategories.rank })
       .from(ingredientCategories)
       .where(eq(ingredientCategories.restaurantId, restaurantCheck.restaurantId))
       .orderBy(desc(ingredientCategories.rank))
       .limit(1);
 
-    const [category] = await db
+    const [createdCategory] = await db
       .insert(ingredientCategories)
       .values({
         restaurantId: restaurantCheck.restaurantId,
         name: validation.data.name,
-        rank: (maxRankResult[0]?.rank ?? -1) + 1,
+        rank: (highestRank[0]?.rank ?? -1) + 1,
       })
       .returning();
 
     revalidatePath("/dashboard/menu");
-    return { success: true, data: category };
-  } catch (error) {
-    console.error("Erreur création catégorie d'ingrédient:", error);
+    return { success: true, data: createdCategory };
+  } catch {
     return { success: false, error: "Erreur lors de la création" };
   }
 }
@@ -508,29 +419,20 @@ export async function updateIngredientCategory(
   formData: FormData
 ): Promise<ActionResult> {
   const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Non autorisé" };
-  }
+  if (!session?.user) return { success: false, error: "Non autorisé" };
 
-  const [category] = await db
+  const [targetCategory] = await db
     .select({ restaurantId: ingredientCategories.restaurantId })
     .from(ingredientCategories)
     .where(eq(ingredientCategories.id, categoryId))
     .limit(1);
 
-  if (!category) {
-    return { success: false, error: "Catégorie non trouvée" };
-  }
+  if (!targetCategory) return { success: false, error: "Catégorie non trouvée" };
 
-  const ownershipCheck = await verifyRestaurantOwnership(category.restaurantId);
-  if (!ownershipCheck.success) {
-    return { success: false, error: ownershipCheck.error };
-  }
+  const ownershipCheck = await verifyRestaurantOwnership(targetCategory.restaurantId);
+  if (!ownershipCheck.success) return { success: false, error: ownershipCheck.error };
 
-  const validation = createIngredientCategorySchema.safeParse({
-    name: formData.get("name"),
-  });
-
+  const validation = createIngredientCategorySchema.safeParse({ name: formData.get("name") });
   if (!validation.success) {
     return { success: false, error: validation.error.issues[0]?.message || "Erreur de validation" };
   }
@@ -538,49 +440,39 @@ export async function updateIngredientCategory(
   try {
     await db
       .update(ingredientCategories)
-      .set({
-        name: validation.data.name,
-      })
+      .set({ name: validation.data.name })
       .where(eq(ingredientCategories.id, categoryId));
 
     revalidatePath("/dashboard/menu");
     return { success: true };
-  } catch (error) {
-    console.error("Erreur mise à jour catégorie d'ingrédient:", error);
+  } catch {
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
 
 export async function deleteIngredientCategory(categoryId: string): Promise<ActionResult> {
   const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Non autorisé" };
-  }
+  if (!session?.user) return { success: false, error: "Non autorisé" };
 
-  const [category] = await db
+  const [targetCategory] = await db
     .select({ restaurantId: ingredientCategories.restaurantId })
     .from(ingredientCategories)
     .where(eq(ingredientCategories.id, categoryId))
     .limit(1);
 
-  if (!category) {
-    return { success: false, error: "Catégorie non trouvée" };
-  }
+  if (!targetCategory) return { success: false, error: "Catégorie non trouvée" };
 
-  const ownershipCheck = await verifyRestaurantOwnership(category.restaurantId);
-  if (!ownershipCheck.success) {
-    return { success: false, error: ownershipCheck.error };
-  }
+  const ownershipCheck = await verifyRestaurantOwnership(targetCategory.restaurantId);
+  if (!ownershipCheck.success) return { success: false, error: ownershipCheck.error };
 
   try {
-    // Vérifier si la catégorie contient des ingrédients
-    const ingredientCount = await db
+    const hasIngredients = await db
       .select()
       .from(ingredients)
       .where(eq(ingredients.ingredientCategoryId, categoryId))
       .limit(1);
 
-    if (ingredientCount.length > 0) {
+    if (hasIngredients.length > 0) {
       return { success: false, error: "Cette catégorie contient des ingrédients. Supprimez-les d'abord." };
     }
 
@@ -588,15 +480,10 @@ export async function deleteIngredientCategory(categoryId: string): Promise<Acti
 
     revalidatePath("/dashboard/menu");
     return { success: true };
-  } catch (error) {
-    console.error("Erreur suppression catégorie d'ingrédient:", error);
+  } catch {
     return { success: false, error: "Erreur lors de la suppression" };
   }
 }
-
-// ============================================
-// CRUD INGREDIENTS
-// ============================================
 
 const createIngredientSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
@@ -607,27 +494,22 @@ const createIngredientSchema = z.object({
 
 export async function createIngredient(formData: FormData): Promise<ActionResult> {
   const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Non autorisé" };
-  }
+  if (!session?.user) return { success: false, error: "Non autorisé" };
 
   const restaurantCheck = await getUserRestaurant();
   if (!restaurantCheck.success || !restaurantCheck.restaurantId) {
     return { success: false, error: restaurantCheck.error || "Restaurant non trouvé" };
   }
 
-  const isAvailableValue = formData.get("isAvailable");
-  // Par défaut, si le champ n'est pas présent ou est null, on met true
-  const isAvailable = isAvailableValue === null || isAvailableValue === undefined 
-    ? true 
-    : isAvailableValue === "true";
+  const availabilityInput = formData.get("isAvailable");
+  const isAvailable = availabilityInput === null || availabilityInput === undefined ? true : availabilityInput === "true";
 
-  const priceValue = formData.get("price");
+  const priceInput = formData.get("price");
   const validation = createIngredientSchema.safeParse({
     name: formData.get("name"),
     ingredientCategoryId: formData.get("ingredientCategoryId"),
-    price: priceValue ? Math.round(Number.parseFloat(priceValue as string) * 100) : 0,
-    isAvailable: isAvailable,
+    price: priceInput ? Math.round(Number.parseFloat(priceInput as string) * 100) : 0,
+    isAvailable,
   });
 
   if (!validation.success) {
@@ -635,22 +517,18 @@ export async function createIngredient(formData: FormData): Promise<ActionResult
   }
 
   try {
-    // Vérifier que la catégorie appartient au restaurant
-    const [category] = await db
+    const [targetCategory] = await db
       .select({ restaurantId: ingredientCategories.restaurantId })
       .from(ingredientCategories)
       .where(eq(ingredientCategories.id, validation.data.ingredientCategoryId))
       .limit(1);
 
-    if (!category) {
-      return { success: false, error: "Catégorie d'ingrédient non trouvée" };
-    }
-
-    if (category.restaurantId !== restaurantCheck.restaurantId) {
+    if (!targetCategory) return { success: false, error: "Catégorie d'ingrédient non trouvée" };
+    if (targetCategory.restaurantId !== restaurantCheck.restaurantId) {
       return { success: false, error: "La catégorie n'appartient pas à votre restaurant" };
     }
 
-    const [ingredient] = await db
+    const [createdIngredient] = await db
       .insert(ingredients)
       .values({
         restaurantId: restaurantCheck.restaurantId,
@@ -662,9 +540,8 @@ export async function createIngredient(formData: FormData): Promise<ActionResult
       .returning();
 
     revalidatePath("/dashboard/menu");
-    return { success: true, data: ingredient };
-  } catch (error) {
-    console.error("Erreur création ingrédient:", error);
+    return { success: true, data: createdIngredient };
+  } catch {
     return { success: false, error: "Erreur lors de la création" };
   }
 }
@@ -674,36 +551,29 @@ export async function updateIngredient(
   formData: FormData
 ): Promise<ActionResult> {
   const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Non autorisé" };
-  }
+  if (!session?.user) return { success: false, error: "Non autorisé" };
 
-  const [ingredient] = await db
+  const [targetIngredient] = await db
     .select({ restaurantId: ingredients.restaurantId })
     .from(ingredients)
     .where(eq(ingredients.id, ingredientId))
     .limit(1);
 
-  if (!ingredient) {
-    return { success: false, error: "Ingrédient non trouvé" };
-  }
+  if (!targetIngredient) return { success: false, error: "Ingrédient non trouvé" };
 
-  const ownershipCheck = await verifyRestaurantOwnership(ingredient.restaurantId);
-  if (!ownershipCheck.success) {
-    return { success: false, error: ownershipCheck.error };
-  }
+  const ownershipCheck = await verifyRestaurantOwnership(targetIngredient.restaurantId);
+  if (!ownershipCheck.success) return { success: false, error: ownershipCheck.error };
 
-  const priceValue = formData.get("price");
-  const categoryIdValue = formData.get("ingredientCategoryId");
-  const isAvailableValue = formData.get("isAvailable");
-  const isAvailable = isAvailableValue === null || isAvailableValue === undefined 
-    ? undefined 
-    : isAvailableValue === "true";
+  const priceInput = formData.get("price");
+  const categoryInput = formData.get("ingredientCategoryId");
+  const availabilityInput = formData.get("isAvailable");
+  const isAvailable = availabilityInput === null || availabilityInput === undefined ? undefined : availabilityInput === "true";
+
   const validation = createIngredientSchema.partial().safeParse({
     name: formData.get("name"),
-    ingredientCategoryId: categoryIdValue || undefined,
-    price: priceValue ? Math.round(Number.parseFloat(priceValue as string) * 100) : undefined,
-    isAvailable: isAvailable,
+    ingredientCategoryId: categoryInput || undefined,
+    price: priceInput ? Math.round(Number.parseFloat(priceInput as string) * 100) : undefined,
+    isAvailable,
   });
 
   if (!validation.success) {
@@ -711,71 +581,53 @@ export async function updateIngredient(
   }
 
   try {
-    await db
-      .update(ingredients)
-      .set(validation.data)
-      .where(eq(ingredients.id, ingredientId));
-
+    await db.update(ingredients).set(validation.data).where(eq(ingredients.id, ingredientId));
     revalidatePath("/dashboard/menu");
     return { success: true };
-  } catch (error) {
-    console.error("Erreur mise à jour ingrédient:", error);
+  } catch {
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
 
 export async function deleteIngredient(ingredientId: string): Promise<ActionResult> {
   const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Non autorisé" };
-  }
+  if (!session?.user) return { success: false, error: "Non autorisé" };
 
-  const [ingredient] = await db
+  const [targetIngredient] = await db
     .select({ restaurantId: ingredients.restaurantId })
     .from(ingredients)
     .where(eq(ingredients.id, ingredientId))
     .limit(1);
 
-  if (!ingredient) {
-    return { success: false, error: "Ingrédient non trouvé" };
-  }
+  if (!targetIngredient) return { success: false, error: "Ingrédient non trouvé" };
 
-  const ownershipCheck = await verifyRestaurantOwnership(ingredient.restaurantId);
-  if (!ownershipCheck.success) {
-    return { success: false, error: ownershipCheck.error };
-  }
+  const ownershipCheck = await verifyRestaurantOwnership(targetIngredient.restaurantId);
+  if (!ownershipCheck.success) return { success: false, error: ownershipCheck.error };
 
   try {
-    // Vérifier si l'ingrédient est utilisé dans des modificateurs
-    const modifierCount = await db
+    const isUsedInProducts = await db
       .select()
       .from(modifiers)
       .where(eq(modifiers.ingredientId, ingredientId))
       .limit(1);
 
-    if (modifierCount.length > 0) {
+    if (isUsedInProducts.length > 0) {
       return { success: false, error: "Cet ingrédient est utilisé dans des produits. Supprimez-le d'abord des produits." };
     }
 
     await db.delete(ingredients).where(eq(ingredients.id, ingredientId));
-
     revalidatePath("/dashboard/menu");
     return { success: true };
-  } catch (error) {
-    console.error("Erreur suppression ingrédient:", error);
+  } catch {
     return { success: false, error: "Erreur lors de la suppression" };
   }
 }
-
-// ============================================
-// CRUD CATEGORIES
-// ============================================
 
 const createCategorySchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
 });
 
-export async function createCategoryV2(formData: FormData): Promise<ActionResult> {
+export async function createCategory(formData: FormData): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) {
     return { success: false, error: "Non autorisé" };
