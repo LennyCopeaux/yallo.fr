@@ -97,10 +97,11 @@ describe("Middleware", () => {
     });
 
     it("should deny OWNER role from /admin routes", () => {
-      const userRole = "OWNER";
+      const userRole = "OWNER" as "OWNER" | "ADMIN";
       const path = "/admin";
       const isAdminRoute = path.startsWith("/admin");
-      const hasAccess = isAdminRoute && userRole === "ADMIN";
+      // TypeScript knows this will be false, but we test it explicitly
+      const hasAccess = isAdminRoute && (userRole === "ADMIN" as const);
 
       expect(hasAccess).toBe(false);
     });
@@ -129,7 +130,7 @@ describe("Middleware", () => {
     });
 
     it("should detect logged out state from null session", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      vi.mocked(auth).mockResolvedValue(null as unknown as Awaited<ReturnType<typeof auth>>);
 
       const session = await auth();
       const isLoggedIn = !!session?.user;

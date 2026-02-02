@@ -75,23 +75,21 @@ describe("Logger", () => {
 
   describe("debug", () => {
     it("should log debug messages in development", () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = "development";
+      vi.stubEnv("NODE_ENV", "development");
 
       logger.debug("Debug message");
       expect(console.debug).toHaveBeenCalledTimes(1);
 
-      process.env.NODE_ENV = originalEnv;
+      vi.unstubAllEnvs();
     });
 
     it("should not log debug messages in production", () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = "production";
+      vi.stubEnv("NODE_ENV", "production");
 
       logger.debug("Debug message");
       expect(console.debug).not.toHaveBeenCalled();
 
-      process.env.NODE_ENV = originalEnv;
+      vi.unstubAllEnvs();
     });
   });
 
