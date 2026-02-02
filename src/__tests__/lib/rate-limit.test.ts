@@ -2,14 +2,13 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   rateLimit,
   getRateLimitIdentifier,
-  cleanupRateLimits,
+  cleanupExpiredRecords,
 } from "@/lib/rate-limit";
 import { NextRequest } from "next/server";
 
 describe("Rate Limiting", () => {
   beforeEach(() => {
-    // Clean up between tests
-    cleanupRateLimits();
+    cleanupExpiredRecords();
   });
 
   describe("rateLimit", () => {
@@ -110,20 +109,17 @@ describe("Rate Limiting", () => {
     });
   });
 
-  describe("cleanupRateLimits", () => {
+  describe("cleanupExpiredRecords", () => {
     it("should remove expired records", async () => {
       const identifier = "cleanup-test";
       const shortWindow = 50;
 
       rateLimit(identifier, 5, shortWindow);
 
-      // Wait for expiration
       await new Promise((resolve) => setTimeout(resolve, 60));
 
-      // Cleanup should remove expired records
-      cleanupRateLimits();
+      cleanupExpiredRecords();
 
-      // New request should be treated as first request
       expect(rateLimit(identifier, 1, shortWindow)).toBe(true);
     });
   });
