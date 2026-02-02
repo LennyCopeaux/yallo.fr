@@ -111,7 +111,7 @@ jobs:
           projectBaseDir: .
           args: >
             -Dsonar.projectKey=LennyCopeaux_yallo.fr
-            -Dsonar.organization=LennyCopeaux
+            -Dsonar.organization=lennycopeaux
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.sources=src
             -Dsonar.tests=src/__tests__
