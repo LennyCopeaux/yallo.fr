@@ -4,7 +4,7 @@ import { buildAppUrlServer } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut, ArrowLeft, Clock } from "lucide-react";
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "@/components/navigation";
 import Link from "next/link";
 import { getBusinessHours } from "@/features/hours/actions";
 import { HoursEditor } from "@/components/hours/hours-editor";
