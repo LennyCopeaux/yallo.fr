@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Edit2, Trash2, Loader2, Package, ChevronRight } from "lucide-react";
+import { Plus, Edit2, Trash2, Loader2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -43,7 +43,7 @@ export function ItemsPanel({
       } else {
         toast.error(result.error || "Erreur lors de la suppression");
       }
-    } catch (error) {
+    } catch {
       toast.error("Une erreur est survenue");
     } finally {
       setDeletingIds(prev => ({ ...prev, [itemId]: false }));
@@ -60,7 +60,7 @@ export function ItemsPanel({
       } else {
         toast.error(result.error || "Erreur lors de la mise à jour");
       }
-    } catch (error) {
+    } catch {
       toast.error("Une erreur est survenue");
     } finally {
       setTogglingIds(prev => ({ ...prev, [itemId]: false }));

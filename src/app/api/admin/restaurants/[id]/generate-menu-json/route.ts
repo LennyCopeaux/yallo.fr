@@ -4,6 +4,7 @@ import { restaurants, categories, productVariations, modifierGroups, modifiers, 
 import { eq, asc } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { fetchHubriseCatalog, HubriseError } from "@/lib/services/hubrise";
+import { logger } from "@/lib/logger";
 
 async function requireAdmin() {
   const session = await auth();
@@ -43,9 +44,15 @@ export async function GET(
         );
         return NextResponse.json({ menuJson });
       } catch (error) {
-        console.warn(
-          `HubRise indisponible pour le restaurant ${id}, fallback sur menu Yallo. Erreur: ${error instanceof HubriseError ? error.message : error instanceof Error ? error.message : "Erreur inconnue"}`
-        );
+        const errorMessage = error instanceof HubriseError 
+          ? error.message 
+          : error instanceof Error 
+          ? error.message 
+          : "Erreur inconnue";
+        logger.warn("HubRise indisponible, fallback sur menu Yallo", {
+          restaurantId: id,
+          error: errorMessage,
+        });
       }
     }
     const allCategories = await db
@@ -124,7 +131,9 @@ export async function GET(
 
     return NextResponse.json({ menuJson: JSON.stringify(menuJson, null, 2) });
   } catch (error) {
-    console.error("Erreur génération JSON menu:", error);
+    logger.error("Erreur génération JSON menu", error instanceof Error ? error : new Error(String(error)), {
+      action: "generate-menu-json",
+    });
     return NextResponse.json(
       { error: "Erreur lors de la génération du JSON" },
       { status: 500 }

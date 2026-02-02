@@ -186,7 +186,7 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
                       form.setValue("businessHours", data.businessHoursJson);
                     }
                     toast.success("JSON horaires généré");
-                  } catch (error) {
+                  } catch {
                     toast.error("Erreur lors de la génération du JSON");
                   } finally {
                     setIsGeneratingHoursJson(false);

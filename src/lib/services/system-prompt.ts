@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { restaurants, categories, productVariations, modifierGroups, modifiers, ingredients, ingredientCategories } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { fetchHubriseCatalog, HubriseError } from "./hubrise";
+import { logger } from "@/lib/logger";
 
 type Restaurant = typeof restaurants.$inferSelect;
 
@@ -11,9 +12,15 @@ async function getMenuStructure(restaurantId: string, hubriseAccessToken: string
       const menuJson = await fetchHubriseCatalog(hubriseAccessToken, hubriseLocationId);
       return JSON.parse(menuJson);
     } catch (error) {
-      console.warn(
-        `HubRise indisponible pour le restaurant ${restaurantId}, fallback sur menu Yallo. Erreur: ${error instanceof HubriseError ? error.message : error instanceof Error ? error.message : "Erreur inconnue"}`
-      );
+      const errorMessage = error instanceof HubriseError 
+        ? error.message 
+        : error instanceof Error 
+        ? error.message 
+        : "Erreur inconnue";
+      logger.warn("HubRise indisponible, fallback sur menu Yallo", {
+        restaurantId,
+        error: errorMessage,
+      });
     }
   }
 
