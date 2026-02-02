@@ -48,7 +48,7 @@ import {
   Loader2
 } from "lucide-react";
 import { toast } from "sonner";
-import { deleteRestaurant, impersonateRestaurant } from "@/app/(admin)/admin/restaurants/actions";
+import { deleteRestaurant } from "@/app/(admin)/admin/restaurants/actions";
 
 type Restaurant = {
   id: string;
@@ -66,11 +66,6 @@ type Restaurant = {
   ordersCount: number;
 };
 
-type Owner = {
-  id: string;
-  email: string;
-};
-
 interface RestaurantsDataTableProps {
   data: Restaurant[];
 }
@@ -78,7 +73,7 @@ interface RestaurantsDataTableProps {
 export function RestaurantsDataTable({ data }: RestaurantsDataTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const [searchValue, setSearchValue] = useState(searchParams.get("search") || "");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [restaurantToDelete, setRestaurantToDelete] = useState<Restaurant | null>(null);
@@ -134,20 +129,6 @@ export function RestaurantsDataTable({ data }: RestaurantsDataTableProps) {
     }
   };
 
-  // Impersonation
-  const handleImpersonate = async (restaurant: Restaurant) => {
-    setImpersonatingId(restaurant.id);
-    const result = await impersonateRestaurant(restaurant.id);
-    
-    if (result.success && result.data) {
-      toast.success(`Connexion en tant que ${restaurant.name}...`);
-      // Ouvre dans un nouvel onglet
-      window.open(result.data, "_blank");
-    } else {
-      toast.error(result.error || "Erreur lors de l'impersonation");
-    }
-    setImpersonatingId(null);
-  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
