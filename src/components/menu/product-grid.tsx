@@ -55,6 +55,35 @@ interface Ingredient {
   ingredientCategory: IngredientCategory;
 }
 
+type ModifierWithIngredient = {
+  modifier: { id: string; ingredientId: string; priceExtra: number };
+  ingredient: Ingredient;
+};
+
+function getModifiersWithIngredients(
+  modifiers: Array<{ id: string; ingredientId: string; priceExtra: number }>,
+  ingredients: Ingredient[]
+): ModifierWithIngredient[] {
+  return modifiers
+    .map((modifier) => {
+      const ingredient = ingredients.find((ing) => ing.id === modifier.ingredientId);
+      return ingredient ? { modifier, ingredient } : null;
+    })
+    .filter((item): item is ModifierWithIngredient => item !== null);
+}
+
+function getUnusedIngredientCategories(
+  ingredientCategories: IngredientCategory[],
+  variationModifierGroups: Array<{ ingredientCategoryId: string }>
+): IngredientCategory[] {
+  return ingredientCategories.filter((cat) => {
+    const isUsed = variationModifierGroups.some(
+      (g) => g.ingredientCategoryId === cat.id
+    );
+    return !isUsed;
+  });
+}
+
 interface ModifierIngredient {
   id: string;
   name: string;
@@ -708,13 +737,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                                 </Button>
                               </div>
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                {group.modifiers
-                                  .map((modifier) => {
-                                    const ingredient = ingredients.find((ing) => ing.id === modifier.ingredientId);
-                                    return ingredient ? { modifier, ingredient } : null;
-                                  })
-                                  .filter((item): item is { modifier: typeof group.modifiers[0]; ingredient: typeof ingredients[0] } => item !== null)
-                                  .map(({ modifier, ingredient }) => (
+                                {getModifiersWithIngredients(group.modifiers, ingredients).map(({ modifier, ingredient }) => (
                                     <div
                                       key={modifier.id}
                                       className={`flex items-center justify-between p-2 rounded text-sm ${
@@ -793,18 +816,11 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                                     <SelectValue placeholder="Sélectionnez une catégorie" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {ingredientCategories
-                                      .filter((cat) => {
-                                        const isUsed = variation.modifierGroups.some(
-                                          (g) => g.ingredientCategoryId === cat.id
-                                        );
-                                        return !isUsed;
-                                      })
-                                      .map((cat) => (
-                                        <SelectItem key={cat.id} value={cat.id}>
-                                          {cat.name}
-                                        </SelectItem>
-                                      ))}
+                                    {getUnusedIngredientCategories(ingredientCategories, variation.modifierGroups).map((cat) => (
+                                      <SelectItem key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                      </SelectItem>
+                                    ))}
                                   </SelectContent>
                                 </Select>
                               </div>

@@ -38,7 +38,7 @@ const businessHoursSchema = z.object({
 });
 
 // Helper pour extraire le premier message d'erreur
-function getFirstErrorMessage<T>(result: { success: boolean; error?: { issues?: Array<{ message?: string }>; errors?: Array<{ message?: string }> } }): string | undefined {
+function getFirstErrorMessage(result: { success: boolean; error?: { issues?: Array<{ message?: string }>; errors?: Array<{ message?: string }> } }): string | undefined {
   if (result.success) return undefined;
   const issues = result.error?.issues || result.error?.errors || [];
   return issues[0]?.message;

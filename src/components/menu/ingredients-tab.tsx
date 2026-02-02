@@ -67,7 +67,7 @@ export function IngredientsTab({
   ingredientCategories: initialCategories,
   ingredients: initialIngredients,
   onRefresh,
-}: IngredientsTabProps) {
+}: Readonly<IngredientsTabProps>) {
   const [categories, setCategories] = useState(initialCategories);
   const [ingredients, setIngredients] = useState(initialIngredients);
 
@@ -183,6 +183,13 @@ export function IngredientsTab({
     setCategoryDialogOpen(true);
   }
 
+  function resetIngredientForm() {
+    setIngredientName("");
+    setIngredientPrice("");
+    setSelectedCategoryId("");
+    setIngredientIsAvailable(true);
+  }
+
   async function handleCreateIngredient() {
     if (!ingredientName.trim() || !selectedCategoryId) {
       toast.error("Le nom et la catégorie sont requis");
@@ -203,10 +210,7 @@ export function IngredientsTab({
       if (result.success) {
         toast.success("Ingrédient créé");
         setIngredientDialogOpen(false);
-        setIngredientName("");
-        setIngredientPrice("");
-        setSelectedCategoryId("");
-        setIngredientIsAvailable(true);
+        resetIngredientForm();
         onRefresh();
       } else {
         toast.error(result.error || "Erreur lors de la création");
@@ -242,10 +246,7 @@ export function IngredientsTab({
         toast.success("Ingrédient mis à jour");
         setIngredientDialogOpen(false);
         setEditingIngredientId(null);
-        setIngredientName("");
-        setIngredientPrice("");
-        setSelectedCategoryId("");
-        setIngredientIsAvailable(true);
+        resetIngredientForm();
         onRefresh();
       } else {
         toast.error(result.error || "Erreur lors de la mise à jour");
@@ -528,9 +529,7 @@ export function IngredientsTab({
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   {editingCategoryId ? "Enregistrement..." : "Création..."}
                 </>
-              ) : (
-                editingCategoryId ? "Enregistrer" : "Créer"
-              )}
+              ) : editingCategoryId ? "Enregistrer" : "Créer"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -596,10 +595,7 @@ export function IngredientsTab({
               onClick={() => {
                 setIngredientDialogOpen(false);
                 setEditingIngredientId(null);
-                setIngredientName("");
-                setIngredientPrice("");
-                setSelectedCategoryId("");
-                setIngredientIsAvailable(true);
+                resetIngredientForm();
               }}
               disabled={isCreatingIngredient}
               className="border-border"
@@ -616,9 +612,7 @@ export function IngredientsTab({
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   {editingIngredientId ? "Enregistrement..." : "Création..."}
                 </>
-              ) : (
-                editingIngredientId ? "Enregistrer" : "Créer"
-              )}
+              ) : editingIngredientId ? "Enregistrer" : "Créer"}
             </Button>
           </DialogFooter>
         </DialogContent>

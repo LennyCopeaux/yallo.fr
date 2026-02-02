@@ -50,6 +50,88 @@ interface ItemEditorDialogProps {
   ingredients: Ingredient[];
 }
 
+function findIngredientId(
+  ingredients: Ingredient[],
+  optName: string,
+  categoryId: string
+): string {
+  const ingredient = ingredients.find(
+    ing => ing.name === optName && ing.ingredientCategoryId === categoryId
+  );
+  return ingredient?.id || "";
+}
+
+function extractIngredientIds(
+  ingredients: Ingredient[],
+  group: { options: Array<{ name: string }>; ingredientCategoryId: string }
+): string[] {
+  return group.options
+    .map(opt => findIngredientId(ingredients, opt.name, group.ingredientCategoryId))
+    .filter(Boolean);
+}
+
+function buildIngredientsByCategory(
+  ingredients: Ingredient[],
+  item: Item
+): Record<string, string[]> {
+  const ingredientsByCategory: Record<string, string[]> = {};
+  item.optionGroups.forEach(group => {
+    const ingredientIds = extractIngredientIds(ingredients, group);
+    if (ingredientIds.length > 0) {
+      ingredientsByCategory[group.ingredientCategoryId] = ingredientIds;
+    }
+  });
+  return ingredientsByCategory;
+}
+
+function getExistingIngredientIds(
+  ingredients: Ingredient[],
+  group: { options: Array<{ name: string }>; ingredientCategoryId: string }
+): string[] {
+  return group.options
+    .map(opt => findIngredientId(ingredients, opt.name, group.ingredientCategoryId))
+    .filter(Boolean);
+}
+
+function findModifierForIngredient(
+  group: { options: Array<{ id: string; name: string }> },
+  ingredients: Ingredient[],
+  ingredientId: string
+): { id: string; name: string } | undefined {
+  return group.options.find(opt => {
+    const ing = ingredients.find(i => i.id === ingredientId && i.name === opt.name);
+    return ing;
+  });
+}
+
+async function removeModifiersForIngredients(
+  group: { options: Array<{ id: string; name: string }> },
+  ingredients: Ingredient[],
+  ingredientIdsToRemove: string[],
+  deleteModifier: (id: string) => Promise<unknown>
+): Promise<void> {
+  for (const ingredientId of ingredientIdsToRemove) {
+    const modifier = findModifierForIngredient(group, ingredients, ingredientId);
+    if (modifier) {
+      await deleteModifier(modifier.id);
+    }
+  }
+}
+
+async function addModifiersForIngredients(
+  groupId: string,
+  ingredientIdsToAdd: string[],
+  createModifier: (formData: FormData) => Promise<unknown>
+): Promise<void> {
+  for (const ingredientId of ingredientIdsToAdd) {
+    const modifierFormData = new FormData();
+    modifierFormData.append("groupId", groupId);
+    modifierFormData.append("ingredientId", ingredientId);
+    modifierFormData.append("priceExtra", "0");
+    await createModifier(modifierFormData);
+  }
+}
+
 export function ItemEditorDialog({
   item,
   categoryId,
@@ -57,7 +139,7 @@ export function ItemEditorDialog({
   onClose,
   ingredientCategories,
   ingredients,
-}: ItemEditorDialogProps) {
+}: Readonly<ItemEditorDialogProps>) {
   const isNew = item.id === "new";
   const [isSaving, setIsSaving] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
@@ -68,30 +150,6 @@ export function ItemEditorDialog({
   const [selectedOptionCategoryIds, setSelectedOptionCategoryIds] = useState<string[]>([]);
   const [selectedIngredientsByCategory, setSelectedIngredientsByCategory] = useState<Record<string, string[]>>({});
 
-  function findIngredientId(optName: string, categoryId: string): string {
-    const ingredient = ingredients.find(
-      ing => ing.name === optName && ing.ingredientCategoryId === categoryId
-    );
-    return ingredient?.id || "";
-  }
-
-  function extractIngredientIds(group: { options: Array<{ name: string }>; ingredientCategoryId: string }): string[] {
-    return group.options
-      .map(opt => findIngredientId(opt.name, group.ingredientCategoryId))
-      .filter(Boolean);
-  }
-
-  function buildIngredientsByCategory(): Record<string, string[]> {
-    const ingredientsByCategory: Record<string, string[]> = {};
-    item.optionGroups.forEach(group => {
-      const ingredientIds = extractIngredientIds(group);
-      if (ingredientIds.length > 0) {
-        ingredientsByCategory[group.ingredientCategoryId] = ingredientIds;
-      }
-    });
-    return ingredientsByCategory;
-  }
-
   useEffect(() => {
     if (isOpen) {
       setName(item.name);
@@ -101,7 +159,7 @@ export function ItemEditorDialog({
       
       const categoryIds = item.optionGroups.map(group => group.ingredientCategoryId);
       setSelectedOptionCategoryIds(categoryIds);
-      setSelectedIngredientsByCategory(buildIngredientsByCategory());
+      setSelectedIngredientsByCategory(buildIngredientsByCategory(ingredients, item));
       
       const expanded: Record<string, boolean> = {};
       categoryIds.forEach(id => {
@@ -221,43 +279,92 @@ export function ItemEditorDialog({
       ? categoryIngredients.map(ing => ing.id)
       : selectedIngredientIds;
     
-    for (const ingredientId of ingredientIdsToAdd) {
-      const modifierFormData = new FormData();
-      modifierFormData.append("groupId", groupId);
-      modifierFormData.append("ingredientId", ingredientId);
-      modifierFormData.append("priceExtra", "0");
-      await createModifier(modifierFormData);
-    }
-  }
-
-  function getExistingIngredientIds(group: { options: Array<{ name: string }>; ingredientCategoryId: string }): string[] {
-    return group.options
-      .map(opt => findIngredientId(opt.name, group.ingredientCategoryId))
-      .filter(Boolean);
+    await addModifiersForIngredients(groupId, ingredientIdsToAdd, createModifier);
   }
 
   async function updateGroupIngredients(group: { id: string; ingredientCategoryId: string; options: Array<{ id: string; name: string }> }) {
     const selectedIngredientIds = selectedIngredientsByCategory[group.ingredientCategoryId] || [];
-    const existingIngredientIds = getExistingIngredientIds(group);
+    const existingIngredientIds = getExistingIngredientIds(ingredients, group);
     const toAddIngredients = selectedIngredientIds.filter(id => !existingIngredientIds.includes(id));
     const toRemoveIngredients = existingIngredientIds.filter(id => !selectedIngredientIds.includes(id));
 
-    for (const ingredientId of toRemoveIngredients) {
-      const modifier = group.options.find(opt => {
-        const ing = ingredients.find(i => i.id === ingredientId && i.name === opt.name);
-        return ing;
-      });
-      if (modifier) {
-        await deleteModifier(modifier.id);
+    await removeModifiersForIngredients(group, ingredients, toRemoveIngredients, deleteModifier);
+    await addModifiersForIngredients(group.id, toAddIngredients, createModifier);
+  }
+
+function getExistingIngredientIds(
+  ingredients: Ingredient[],
+  group: { options: Array<{ name: string }>; ingredientCategoryId: string }
+): string[] {
+  return group.options
+    .map(opt => findIngredientId(ingredients, opt.name, group.ingredientCategoryId))
+    .filter(Boolean);
+}
+
+function findModifierForIngredient(
+  group: { options: Array<{ id: string; name: string }> },
+  ingredients: Ingredient[],
+  ingredientId: string
+): { id: string; name: string } | undefined {
+  return group.options.find(opt => {
+    const ing = ingredients.find(i => i.id === ingredientId && i.name === opt.name);
+    return ing;
+  });
+}
+
+async function removeModifiersForIngredients(
+  group: { options: Array<{ id: string; name: string }> },
+  ingredients: Ingredient[],
+  ingredientIdsToRemove: string[],
+  deleteModifier: (id: string) => Promise<unknown>
+): Promise<void> {
+  for (const ingredientId of ingredientIdsToRemove) {
+    const modifier = findModifierForIngredient(group, ingredients, ingredientId);
+    if (modifier) {
+      await deleteModifier(modifier.id);
+    }
+  }
+}
+
+async function addModifiersForIngredients(
+  groupId: string,
+  ingredientIdsToAdd: string[],
+  createModifier: (formData: FormData) => Promise<unknown>
+): Promise<void> {
+  for (const ingredientId of ingredientIdsToAdd) {
+    const modifierFormData = new FormData();
+    modifierFormData.append("groupId", groupId);
+    modifierFormData.append("ingredientId", ingredientId);
+    modifierFormData.append("priceExtra", "0");
+    await createModifier(modifierFormData);
+  }
+}
+
+  async function addNewModifierGroups(variationId: string, categoryIdsToAdd: string[]): Promise<void> {
+    for (const categoryIdToAdd of categoryIdsToAdd) {
+      const formData = new FormData();
+      formData.append("variationId", variationId);
+      formData.append("ingredientCategoryId", categoryIdToAdd);
+      formData.append("minSelect", "0");
+      formData.append("maxSelect", "1");
+      const result = await createModifierGroup(formData);
+      if (result.success && result.data && typeof result.data === 'object' && 'id' in result.data) {
+        const groupId = (result.data as { id: string }).id;
+        await createModifiersForGroup(groupId, categoryIdToAdd);
       }
     }
-    
-    for (const ingredientId of toAddIngredients) {
-      const modifierFormData = new FormData();
-      modifierFormData.append("groupId", group.id);
-      modifierFormData.append("ingredientId", ingredientId);
-      modifierFormData.append("priceExtra", "0");
-      await createModifier(modifierFormData);
+  }
+
+  async function processExistingGroups(
+    groups: Array<{ id: string; ingredientCategoryId: string; options: Array<{ id: string; name: string }> }>,
+    categoryIdsToRemove: string[]
+  ): Promise<void> {
+    for (const group of groups) {
+      if (categoryIdsToRemove.includes(group.ingredientCategoryId)) {
+        await deleteModifierGroup(group.id);
+      } else {
+        await updateGroupIngredients(group);
+      }
     }
   }
 
@@ -275,26 +382,8 @@ export function ItemEditorDialog({
       const toAdd = selectedOptionCategoryIds.filter(id => !existingGroupIds.includes(id));
       const toRemove = existingGroupIds.filter(id => !selectedOptionCategoryIds.includes(id));
 
-      for (const categoryIdToAdd of toAdd) {
-        const formData = new FormData();
-        formData.append("variationId", variationId);
-        formData.append("ingredientCategoryId", categoryIdToAdd);
-        formData.append("minSelect", "0");
-        formData.append("maxSelect", "1");
-        const result = await createModifierGroup(formData);
-        if (result.success && result.data && typeof result.data === 'object' && 'id' in result.data) {
-          const groupId = (result.data as { id: string }).id;
-          await createModifiersForGroup(groupId, categoryIdToAdd);
-        }
-      }
-
-      for (const groupToRemove of item.optionGroups) {
-        if (toRemove.includes(groupToRemove.ingredientCategoryId)) {
-          await deleteModifierGroup(groupToRemove.id);
-        } else {
-          await updateGroupIngredients(groupToRemove);
-        }
-      }
+      await addNewModifierGroups(variationId, toAdd);
+      await processExistingGroups(item.optionGroups, toRemove);
 
       toast.success(isNew ? "Produit créé" : "Produit mis à jour");
       onClose();

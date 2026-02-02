@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Loader2, Utensils, ShoppingCart } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Utensils, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategorySidebar } from "./category-sidebar";
@@ -11,7 +11,7 @@ import { IngredientsTab } from "./ingredients-tab";
 import { getMenuDataV2 } from "@/features/menu/actions-v2";
 import { toast } from "sonner";
 
-import type { Option, OptionGroup, Item, Category, MenuData } from "./types";
+import type { Item, MenuData } from "./types";
 
 interface BackendCategory {
   id: string;
@@ -116,7 +116,7 @@ function transformMenuData(backendData: BackendMenuData): MenuData {
   };
 }
 
-export function MenuEditor({ initialMenuData }: MenuEditorProps) {
+export function MenuEditor({ initialMenuData }: Readonly<MenuEditorProps>) {
   const [menuData, setMenuData] = useState<MenuData>(transformMenuData(initialMenuData));
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     menuData.categories[0]?.id || null

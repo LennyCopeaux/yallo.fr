@@ -49,7 +49,7 @@ interface EditUserDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps) {
+export function EditUserDialog({ user, open, onOpenChange }: Readonly<EditUserDialogProps>) {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<FormValues>({

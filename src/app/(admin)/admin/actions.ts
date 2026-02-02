@@ -427,7 +427,7 @@ export async function createVapiAssistant(id: string): Promise<ActionResult<{ as
   "use server";
 
   const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (session?.user?.role !== "ADMIN") {
     return { success: false, error: "Non autorisé" };
   }
 

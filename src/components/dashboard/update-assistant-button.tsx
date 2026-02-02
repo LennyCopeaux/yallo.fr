@@ -10,7 +10,7 @@ interface UpdateAssistantButtonProps {
   restaurantId: string;
 }
 
-export function UpdateAssistantButton({ restaurantId }: UpdateAssistantButtonProps) {
+export function UpdateAssistantButton({ restaurantId }: Readonly<UpdateAssistantButtonProps>) {
   const [isUpdating, setIsUpdating] = useState(false);
 
   return (
@@ -26,7 +26,7 @@ export function UpdateAssistantButton({ restaurantId }: UpdateAssistantButtonPro
           } else {
             toast.error(result.error || "Erreur lors de la mise à jour de l'assistant");
           }
-        } catch (error) {
+        } catch {
           toast.error("Erreur lors de la mise à jour de l'assistant");
         } finally {
           setIsUpdating(false);

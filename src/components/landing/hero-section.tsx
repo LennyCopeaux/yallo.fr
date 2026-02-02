@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,7 +62,7 @@ function LivePhoneConversation() {
         <div className="p-4 space-y-3 min-h-[320px] max-h-[400px] overflow-y-auto">
           {displayedMessages.map((msg, index) => (
             <motion.div
-              key={`msg-${index}`}
+              key={`msg-${msg.sender}-${index}-${msg.text.slice(0, 10)}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
@@ -103,7 +102,7 @@ function LivePhoneConversation() {
             <div className="flex-1 flex items-center gap-0.5 h-8">
               {[12, 20, 8, 24, 16, 28, 10, 22, 14, 26, 18, 12, 24, 16, 20, 8, 22, 14, 26, 18].map((h, i) => (
                 <motion.div
-                  key={i}
+                  key={`wave-${h}-${i}`}
                   className="flex-1 bg-primary/60 rounded-full"
                   animate={{
                     height: [`${h}px`, `${h + 10}px`, `${Math.max(h - 6, 6)}px`, `${h}px`],
@@ -214,8 +213,8 @@ export function HeroSection() {
               { value: "98%", label: "Précision" },
               { value: "<2s", label: "Temps de réponse" },
               { value: "24/7", label: "Disponibilité" },
-            ].map((stat, i) => (
-              <div key={i} className="text-center">
+            ].map((stat) => (
+              <div key={`stat-${stat.value}-${stat.label}`} className="text-center">
                 <div className="text-2xl sm:text-3xl font-bold text-primary">
                   {stat.value}
                 </div>

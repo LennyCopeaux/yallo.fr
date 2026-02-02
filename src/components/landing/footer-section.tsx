@@ -7,11 +7,16 @@ export function FooterSection() {
     e.preventDefault();
     const hostname = typeof window !== "undefined" ? window.location.hostname : "";
     const port = typeof window !== "undefined" && window.location.port ? window.location.port : "3000";
-    const appUrl = hostname.includes("localhost") 
-      ? `http://app.localhost:${port}/login`
-      : hostname.includes("staging")
-      ? "https://app.staging.yallo.fr/login"
-      : "https://app.yallo.fr/login";
+    
+    let appUrl: string;
+    if (hostname.includes("localhost")) {
+      appUrl = `http://app.localhost:${port}/login`;
+    } else if (hostname.includes("staging")) {
+      appUrl = "https://app.staging.yallo.fr/login";
+    } else {
+      appUrl = "https://app.yallo.fr/login";
+    }
+    
     window.location.href = appUrl;
   };
 

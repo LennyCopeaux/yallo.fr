@@ -106,8 +106,8 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
   const filteredData = data.filter((user) => {
     const matchesSearch = !searchTerm || 
       user.email.toLowerCase().includes(searchTerm) ||
-      (user.firstName && user.firstName.toLowerCase().includes(searchTerm)) ||
-      (user.lastName && user.lastName.toLowerCase().includes(searchTerm));
+      user.firstName?.toLowerCase().includes(searchTerm) ||
+      user.lastName?.toLowerCase().includes(searchTerm);
     
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
     
