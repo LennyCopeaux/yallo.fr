@@ -9,8 +9,14 @@ vi.mock("@/db", () => ({
     select: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
-    eq: vi.fn(),
+    limit: vi.fn().mockResolvedValue([]),
   },
+}));
+vi.mock("@/db/schema", () => ({
+  restaurants: {},
+}));
+vi.mock("drizzle-orm", () => ({
+  eq: vi.fn(),
 }));
 
 describe("GET /api/admin/restaurants/[id]/generate-business-hours-json", () => {
@@ -25,6 +31,8 @@ describe("GET /api/admin/restaurants/[id]/generate-business-hours-json", () => {
     const response = await GET(request, { params: Promise.resolve({ id: "test-id" }) });
 
     expect(response.status).toBe(401);
+    const data = await response.json();
+    expect(data).toHaveProperty("error");
   });
 
   it("should return 403 if user is not admin", async () => {
@@ -43,13 +51,18 @@ describe("GET /api/admin/restaurants/[id]/generate-business-hours-json", () => {
       user: { id: "user-1", role: "ADMIN" },
     } as unknown as Awaited<ReturnType<typeof auth>>);
 
-    const mockBusinessHours = [
-      { dayOfWeek: 1, openTime: "10:00", closeTime: "22:00", isClosed: false },
-    ];
+    const mockRestaurant = {
+      businessHours: JSON.stringify({
+        timezone: "Europe/Paris",
+        schedule: { monday: { open: "10:00", close: "22:00" } },
+      }),
+    };
 
     vi.mocked(db.select).mockReturnValue({
       from: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue(mockBusinessHours),
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([mockRestaurant]),
+        }),
       }),
     } as never);
 
