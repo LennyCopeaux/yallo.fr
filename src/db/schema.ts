@@ -1,30 +1,24 @@
 import { pgTable, text, timestamp, uuid, boolean, integer, pgEnum, jsonb } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-// Enum pour les rôles utilisateur
 export const userRoleEnum = ["ADMIN", "OWNER"] as const;
 export type UserRole = (typeof userRoleEnum)[number];
 
-// Enum pour les statuts de commande
 export const orderStatusEnum = ["NEW", "PREPARING", "READY", "DELIVERED", "CANCELLED"] as const;
 export type OrderStatus = (typeof orderStatusEnum)[number];
 
-// Enum pour le statut du restaurant
 export const restaurantStatusEnum = ["active", "suspended", "onboarding"] as const;
 export type RestaurantStatus = (typeof restaurantStatusEnum)[number];
 export const restaurantStatusPgEnum = pgEnum("restaurant_status", restaurantStatusEnum);
 
-// Enum pour le plan de facturation
 export const restaurantPlanEnum = ["fixed", "commission"] as const;
 export type RestaurantPlan = (typeof restaurantPlanEnum)[number];
 export const restaurantPlanPgEnum = pgEnum("restaurant_plan", restaurantPlanEnum);
 
-// Enum pour le statut de charge de la cuisine
 export const kitchenStatusEnum = ["CALM", "NORMAL", "RUSH", "STOP"] as const;
 export type KitchenStatus = (typeof kitchenStatusEnum)[number];
 export const kitchenStatusPgEnum = pgEnum("kitchen_status", kitchenStatusEnum);
 
-// Table Users
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").unique().notNull(),
@@ -38,43 +32,36 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Table Restaurants - CRM complet
 export const restaurants = pgTable("restaurants", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   slug: text("slug").unique().notNull(),
-  address: text("address"), // Adresse physique du restaurant
-  phoneNumber: text("phone_number").notNull(), // Numéro de contact principal
+  address: text("address"),
+  phoneNumber: text("phone_number").notNull(),
   ownerId: uuid("owner_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   
-  // Statut du compte
   status: restaurantStatusPgEnum("status").default("onboarding").notNull(),
-  isActive: boolean("is_active").default(true).notNull(), // Legacy - kept for compatibility
+  isActive: boolean("is_active").default(true).notNull(),
   
-  // Facturation
   plan: restaurantPlanPgEnum("plan").default("commission"),
-  commissionRate: integer("commission_rate").default(5), // Pourcentage (ex: 5 = 5%)
+  commissionRate: integer("commission_rate").default(5),
   stripeCustomerId: text("stripe_customer_id"),
-  billingStartDate: text("billing_start_date"), // Date de début de facturation (format ISO: YYYY-MM-DD)
+  billingStartDate: text("billing_start_date"),
   
-  // Intégration Voice AI (Vapi)
   vapiAssistantId: text("vapi_assistant_id"),
-  systemPrompt: text("system_prompt"), // Surcharge du prompt système spécifique
-  menuContext: text("menu_context"), // Menu brut/JSON pour l'IA
+  systemPrompt: text("system_prompt"),
+  menuContext: text("menu_context"),
   
-  // Téléphonie (Twilio)
-  twilioPhoneNumber: text("twilio_phone_number"), // Numéro +33 acheté
-  forwardingPhoneNumber: text("forwarding_phone_number"), // Numéro de secours du patron
-  businessHours: text("business_hours"), // Horaires en JSON
+  twilioPhoneNumber: text("twilio_phone_number"),
+  forwardingPhoneNumber: text("forwarding_phone_number"),
+  businessHours: text("business_hours"),
   
-  // Intégration HubRise (Mode Hybride)
-  hubriseLocationId: text("hubrise_location_id"), // ID du point de vente HubRise (ex: "19mjb-0")
-  hubriseAccessToken: text("hubrise_access_token"), // Clé d'accès API HubRise
-  hubriseCatalogCache: jsonb("hubrise_catalog_cache"), // Cache du menu HubRise (évite re-téléchargement)
+  hubriseLocationId: text("hubrise_location_id"),
+  hubriseAccessToken: text("hubrise_access_token"),
+  hubriseCatalogCache: jsonb("hubrise_catalog_cache"),
   
-  // Statut de charge de la cuisine
   currentStatus: kitchenStatusPgEnum("current_status").default("CALM").notNull(),
   statusSettings: jsonb("status_settings").$type<{
     CALM?: { fixed: number } | { min: number; max: number };
@@ -87,7 +74,6 @@ export const restaurants = pgTable("restaurants", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Relations
 export const usersRelations = relations(users, ({ one }) => ({
   restaurant: one(restaurants, {
     fields: [users.id],
@@ -106,22 +92,16 @@ export const restaurantsRelations = relations(restaurants, ({ one, many }) => ({
   orders: many(orders),
 }));
 
-// ============================================
-// MENU TABLES - APPROCHE INGRÉDIENT-FIRST
-// ============================================
-
-// Table Ingredient Categories - Catégories d'ingrédients personnalisées par restaurant
 export const ingredientCategories = pgTable("ingredient_categories", {
   id: uuid("id").primaryKey().defaultRandom(),
   restaurantId: uuid("restaurant_id")
     .notNull()
     .references(() => restaurants.id, { onDelete: "cascade" }),
-  name: text("name").notNull(), // Ex: "Viandes", "Sauces", "Suppléments", "Boissons", "Pains"
+  name: text("name").notNull(),
   rank: integer("rank").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Table Ingredients - Table centrale pour tous les composants
 export const ingredients = pgTable("ingredients", {
   id: uuid("id").primaryKey().defaultRandom(),
   restaurantId: uuid("restaurant_id")
@@ -131,12 +111,11 @@ export const ingredients = pgTable("ingredients", {
     .notNull()
     .references(() => ingredientCategories.id, { onDelete: "restrict" }),
   name: text("name").notNull(),
-  price: integer("price").default(0).notNull(), // Prix par défaut en centimes
+  price: integer("price").default(0).notNull(),
   isAvailable: boolean("is_available").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Table Categories
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
   restaurantId: uuid("restaurant_id")
@@ -147,20 +126,17 @@ export const categories = pgTable("categories", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Table Product Variations - Variations directement dans les catégories (plus de niveau produit)
 export const productVariations = pgTable("product_variations", {
   id: uuid("id").primaryKey().defaultRandom(),
   categoryId: uuid("category_id")
     .notNull()
     .references(() => categories.id, { onDelete: "cascade" }),
-  name: text("name").notNull(), // Ex: "1 Viande", "2 Viandes", "Taille M", "Taille L"
-  price: integer("price").notNull(), // Prix de base en centimes
+  name: text("name").notNull(),
+  price: integer("price").notNull(),
   isAvailable: boolean("is_available").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Table Modifier Groups - Groupes d'options liés à une variation
-// Maintenant référence une catégorie d'ingrédients au lieu d'un nom libre
 export const modifierGroups = pgTable("modifier_groups", {
   id: uuid("id").primaryKey().defaultRandom(),
   variationId: uuid("variation_id")
@@ -174,7 +150,6 @@ export const modifierGroups = pgTable("modifier_groups", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Table Modifiers - Lien entre groupe d'options et ingrédient avec prix supplémentaire
 export const modifiers = pgTable("modifiers", {
   id: uuid("id").primaryKey().defaultRandom(),
   groupId: uuid("group_id")
@@ -183,59 +158,48 @@ export const modifiers = pgTable("modifiers", {
   ingredientId: uuid("ingredient_id")
     .notNull()
     .references(() => ingredients.id, { onDelete: "cascade" }),
-  priceExtra: integer("price_extra").default(0).notNull(), // Supplément en centimes
+  priceExtra: integer("price_extra").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// ============================================
-// PRICING CONFIG - Configuration globale des prix
-// ============================================
-
 export const pricingConfig = pgTable("pricing_config", {
   id: uuid("id").primaryKey().defaultRandom(),
-  monthlyPrice: integer("monthly_price").default(14900).notNull(), // Prix mensuel en centimes (149€)
-  setupFee: integer("setup_fee").default(19900).notNull(), // Frais de mise en service en centimes (199€)
-  includedMinutes: integer("included_minutes").default(600).notNull(), // Minutes incluses (600)
-  overflowPricePerMinute: integer("overflow_price_per_minute").default(20).notNull(), // Prix par minute supplémentaire en centimes (0,20€)
+  monthlyPrice: integer("monthly_price").default(14900).notNull(),
+  setupFee: integer("setup_fee").default(19900).notNull(),
+  includedMinutes: integer("included_minutes").default(600).notNull(),
+  overflowPricePerMinute: integer("overflow_price_per_minute").default(20).notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// ============================================
-// ORDERS TABLES - COMMANDES
-// ============================================
-
-// Table Orders - Commandes
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
   restaurantId: uuid("restaurant_id")
     .notNull()
     .references(() => restaurants.id, { onDelete: "cascade" }),
-  orderNumber: text("order_number").notNull(), // Ex: "#2847"
-  customerName: text("customer_name"), // Nom du client (optionnel)
-  customerPhone: text("customer_phone"), // Téléphone du client
+  orderNumber: text("order_number").notNull(),
+  customerName: text("customer_name"),
+  customerPhone: text("customer_phone"),
   status: text("status", { enum: orderStatusEnum }).default("NEW").notNull(),
-  totalAmount: integer("total_amount").default(0).notNull(), // Total en centimes
-  pickupTime: timestamp("pickup_time"), // Heure de retrait prévue
-  notes: text("notes"), // Notes spéciales
+  totalAmount: integer("total_amount").default(0).notNull(),
+  pickupTime: timestamp("pickup_time"),
+  notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Table Order Items - Lignes de commande
 export const orderItems = pgTable("order_items", {
   id: uuid("id").primaryKey().defaultRandom(),
   orderId: uuid("order_id")
     .notNull()
     .references(() => orders.id, { onDelete: "cascade" }),
-  productName: text("product_name").notNull(), // Nom du produit (snapshot)
+  productName: text("product_name").notNull(),
   quantity: integer("quantity").default(1).notNull(),
-  unitPrice: integer("unit_price").notNull(), // Prix unitaire en centimes
-  totalPrice: integer("total_price").notNull(), // Prix total de la ligne en centimes
-  options: text("options"), // Options choisies (JSON ou texte) ex: "Sauce blanche, Sans oignon"
+  unitPrice: integer("unit_price").notNull(),
+  totalPrice: integer("total_price").notNull(),
+  options: text("options"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Relations
 export const ingredientCategoriesRelations = relations(ingredientCategories, ({ one, many }) => ({
   restaurant: one(restaurants, {
     fields: [ingredientCategories.restaurantId],
@@ -311,7 +275,6 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   }),
 }));
 
-// Types exportés
 export type SelectUser = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type SelectRestaurant = typeof restaurants.$inferSelect;
