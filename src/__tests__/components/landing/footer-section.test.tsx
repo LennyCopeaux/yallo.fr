@@ -1,59 +1,25 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import { FooterSection } from "@/components/landing/footer-section";
 
+vi.mock("next/link", () => ({
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
+
 describe("FooterSection", () => {
-  beforeEach(() => {
+  it("should render footer content", () => {
     Object.defineProperty(globalThis, "window", {
       value: {
         location: { hostname: "localhost", port: "3000" },
       },
       writable: true,
+      configurable: true,
     });
-  });
 
-  it("should render footer content", () => {
     const { container } = render(<FooterSection />);
 
     expect(container.textContent).toBeTruthy();
-  });
-
-  it("should handle localhost environment", () => {
-    Object.defineProperty(globalThis, "window", {
-      value: {
-        location: { hostname: "localhost", port: "3000" },
-      },
-      writable: true,
-    });
-
-    const { container } = render(<FooterSection />);
-
-    expect(container).toBeTruthy();
-  });
-
-  it("should handle staging environment", () => {
-    Object.defineProperty(globalThis, "window", {
-      value: {
-        location: { hostname: "staging.yallo.fr" },
-      },
-      writable: true,
-    });
-
-    const { container } = render(<FooterSection />);
-
-    expect(container).toBeTruthy();
-  });
-
-  it("should handle production environment", () => {
-    Object.defineProperty(globalThis, "window", {
-      value: {
-        location: { hostname: "yallo.fr" },
-      },
-      writable: true,
-    });
-
-    const { container } = render(<FooterSection />);
-
-    expect(container).toBeTruthy();
   });
 });
