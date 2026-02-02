@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
-import FooterSection from "@/components/landing/footer-section";
+import { FooterSection } from "@/components/landing/footer-section";
 
 describe("FooterSection", () => {
   beforeEach(() => {
