@@ -93,19 +93,23 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🚀 Deploy to Vercel Staging
+      - name: 🚀 Deploy to Vercel Staging (Preview)
         id: deploy
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          scope: ${{ secrets.VERCEL_ORG_ID }}
           alias-domains: |
             staging.yallo.fr
             app.staging.yallo.fr
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          vercel-args: '--yes'
+        continue-on-error: false
 
       - name: 📝 Deployment Summary
+        if: success()
         run: |
           echo "## 🎭 Staging Deployment Successful!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -113,5 +117,19 @@ jobs:
           echo "- **Marketing:** https://staging.yallo.fr" >> $GITHUB_STEP_SUMMARY
           echo "- **Dashboard:** https://app.staging.yallo.fr" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Preview:** ${{ steps.deploy.outputs.preview-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Preview URL:** ${{ steps.deploy.outputs.preview-url }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ⚠️ Note" >> $GITHUB_STEP_SUMMARY
+          echo "Si les domaines ne fonctionnent pas, vérifie qu'ils sont bien configurés dans Vercel → Settings → Domains" >> $GITHUB_STEP_SUMMARY
+      
+      - name: ❌ Deployment Failed
+        if: failure()
+        run: |
+          echo "## ❌ Staging Deployment Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Vérifications à faire :" >> $GITHUB_STEP_SUMMARY
+          echo "1. Les domaines `staging.yallo.fr` et `app.staging.yallo.fr` sont-ils ajoutés dans Vercel → Settings → Domains ?" >> $GITHUB_STEP_SUMMARY
+          echo "2. Les secrets GitHub (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`) sont-ils corrects ?" >> $GITHUB_STEP_SUMMARY
+          echo "3. Consulte les logs Vercel pour plus de détails : https://vercel.com/lenny-copeauxs-projects/yallo-fr" >> $GITHUB_STEP_SUMMARY
+          exit 1

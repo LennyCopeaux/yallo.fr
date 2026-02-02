@@ -149,3 +149,5 @@ Une fois tout configuré, tu peux vérifier en :
 
 ### Déploiement échoue sur staging
 → Vérifier les variables d'environnement sur Vercel pour l'environnement Preview
+→ **IMPORTANT** : Les domaines `staging.yallo.fr` et `app.staging.yallo.fr` doivent être ajoutés **manuellement** dans Vercel → Settings → Domains avant le premier déploiement
+→ Voir `SETUP_DOMAINS.md` pour la configuration complète des domaines
