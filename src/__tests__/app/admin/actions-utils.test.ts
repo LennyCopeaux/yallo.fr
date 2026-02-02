@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { randomBytes } from "crypto";
 
 function generateSlug(name: string): string {
   return name
@@ -11,22 +12,22 @@ function generateSlug(name: string): string {
     .trim();
 }
 
-function generateTempPassword(): string {
+function generateSecureString(length: number): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  let password = "";
-  for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  const bytes = randomBytes(length);
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(bytes[i] % chars.length);
   }
-  return password;
+  return result;
+}
+
+function generateTempPassword(): string {
+  return generateSecureString(12);
 }
 
 function generateResetToken(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  let token = "";
-  for (let i = 0; i < 32; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return token;
+  return generateSecureString(32);
 }
 
 describe("Admin Actions Utils", () => {
