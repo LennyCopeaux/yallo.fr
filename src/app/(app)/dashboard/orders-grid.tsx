@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import { OrderTicket, type Order } from "@/features/orders/components";
+import { OrderTicket, type Order } from "@/components/orders";
 import { updateOrderStatus, simulateOrder } from "@/features/orders/actions";
 import { type OrderStatus } from "@/db/schema";
 import { Button } from "@/components/ui/button";

@@ -162,7 +162,6 @@ export function KitchenStatusControl({ currentStatus, statusSettings }: Readonly
   const [isPending, startTransition] = useTransition();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   
-  // Initialiser la config avec les valeurs par défaut ou existantes
   const getInitialConfig = (): StatusSettings => {
     if (statusSettings) {
       return statusSettings;
@@ -175,7 +174,6 @@ export function KitchenStatusControl({ currentStatus, statusSettings }: Readonly
     statusSettings?.STOP?.message || "Nous ne prenons plus de commandes"
   );
 
-  // État pour chaque statut : délai fixe ou plage horaire
   const [useFixedForCalm, setUseFixedForCalm] = useState<boolean>(
     statusSettings?.CALM ? "fixed" in statusSettings.CALM : true
   );
@@ -232,7 +230,6 @@ export function KitchenStatusControl({ currentStatus, statusSettings }: Readonly
 
   return (
     <div className="w-full">
-      {/* Barre de contrôle principale */}
       <div className="bg-card border border-border rounded-lg p-3 sm:p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-foreground">Charge Cuisine</h3>
@@ -290,7 +287,6 @@ export function KitchenStatusControl({ currentStatus, statusSettings }: Readonly
                   defaultMax={60}
                 />
 
-                {/* STOP */}
                 <div className="space-y-2">
                   <Label className="text-base font-medium">Stop</Label>
                   <div className="space-y-1.5">
@@ -328,7 +324,6 @@ export function KitchenStatusControl({ currentStatus, statusSettings }: Readonly
           </Dialog>
         </div>
 
-        {/* Boutons d'état */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {(Object.keys(STATUS_CONFIG) as KitchenStatus[]).map((status) => {
             const config = STATUS_CONFIG[status];

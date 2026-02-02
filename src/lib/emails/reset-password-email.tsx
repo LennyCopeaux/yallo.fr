@@ -77,7 +77,6 @@ export const ResetPasswordEmail = ({
   );
 };
 
-// Styles
 const main = {
   backgroundColor: "#f6f9fc",
   fontFamily:

@@ -1,89 +1,7 @@
-import { db } from "@/db";
-import { restaurants, users, orders } from "@/db/schema";
-import { eq, sql, and } from "drizzle-orm";
 import { RestaurantsDataTable, AddRestaurantDialog } from "@/components/admin";
 import { Suspense } from "react";
 import { Loader2, UtensilsCrossed } from "lucide-react";
-
-// Récupère les OWNERS pour le dropdown
-async function getOwners() {
-  return await db
-    .select({
-      id: users.id,
-      email: users.email,
-    })
-    .from(users)
-    .where(eq(users.role, "OWNER"))
-    .orderBy(users.email);
-}
-
-// Récupère tous les restaurants avec leurs owners
-async function getRestaurants(searchParams: { 
-  status?: string; 
-  search?: string;
-  hasAI?: string;
-}) {
-  const conditions = [];
-
-  // Filtre par status
-  if (searchParams.status && ["active", "suspended", "onboarding"].includes(searchParams.status)) {
-    conditions.push(eq(restaurants.status, searchParams.status as "active" | "suspended" | "onboarding"));
-  }
-
-  // Filtre par AI configurée
-  if (searchParams.hasAI === "true") {
-    conditions.push(sql`${restaurants.vapiAssistantId} IS NOT NULL`);
-  }
-
-  // Recherche par nom ou email
-  if (searchParams.search) {
-    const searchPattern = `%${searchParams.search}%`;
-    conditions.push(
-      sql`(${restaurants.name} ILIKE ${searchPattern} OR ${users.email} ILIKE ${searchPattern})`
-    );
-  }
-
-  const result = await db
-    .select({
-      id: restaurants.id,
-      name: restaurants.name,
-      slug: restaurants.slug,
-      address: restaurants.address,
-      phoneNumber: restaurants.phoneNumber,
-      ownerId: restaurants.ownerId,
-      status: restaurants.status,
-      isActive: restaurants.isActive,
-      vapiAssistantId: restaurants.vapiAssistantId,
-      twilioPhoneNumber: restaurants.twilioPhoneNumber,
-      createdAt: restaurants.createdAt,
-      ownerEmail: users.email,
-      ordersCount: sql<number>`COALESCE(COUNT(${orders.id}), 0)`.as('orders_count'),
-    })
-    .from(restaurants)
-    .innerJoin(users, eq(restaurants.ownerId, users.id))
-    .leftJoin(orders, eq(orders.restaurantId, restaurants.id))
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .groupBy(
-      restaurants.id,
-      restaurants.name,
-      restaurants.slug,
-      restaurants.address,
-      restaurants.phoneNumber,
-      restaurants.ownerId,
-      restaurants.status,
-      restaurants.isActive,
-      restaurants.vapiAssistantId,
-      restaurants.twilioPhoneNumber,
-      restaurants.createdAt,
-      users.email
-    )
-    .orderBy(sql`${restaurants.createdAt} DESC`);
-
-  return result.map(r => ({
-    ...r,
-    ordersCount: Number(r.ordersCount),
-  }));
-}
+import { getOwners, getRestaurantsWithFilters } from "../queries";
 
 export default async function RestaurantsPage({
   searchParams,
@@ -93,12 +11,11 @@ export default async function RestaurantsPage({
   const params = await searchParams;
   const [owners, restaurantsList] = await Promise.all([
     getOwners(),
-    getRestaurants(params),
+    getRestaurantsWithFilters(params),
   ]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Restaurants</h1>
@@ -109,7 +26,6 @@ export default async function RestaurantsPage({
         <AddRestaurantDialog owners={owners} />
       </div>
 
-      {/* Stats rapides */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
           <p className="text-xl sm:text-2xl font-bold">{restaurantsList.length}</p>
@@ -141,7 +57,6 @@ export default async function RestaurantsPage({
         </div>
       </div>
 
-      {/* DataTable */}
       <Suspense fallback={
         <div className="flex items-center justify-center py-16">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -170,4 +85,3 @@ export default async function RestaurantsPage({
     </div>
   );
 }
-

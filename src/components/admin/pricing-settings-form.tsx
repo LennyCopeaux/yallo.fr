@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Save, Euro } from "lucide-react";
 import { toast } from "sonner";
-import { updatePricingConfig } from "../actions";
+import { updatePricingConfig } from "@/app/(admin)/admin/settings/actions";
 
 const formSchema = z.object({
   monthlyPrice: z.number().min(0, "Prix invalide"),
@@ -38,21 +38,21 @@ export function PricingSettingsForm({ initialConfig }: PricingSettingsFormProps)
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      monthlyPrice: initialConfig.monthlyPrice / 100, // Convertir centimes en euros
+      monthlyPrice: initialConfig.monthlyPrice / 100,
       setupFee: initialConfig.setupFee / 100,
       includedMinutes: initialConfig.includedMinutes,
       overflowPricePerMinute: initialConfig.overflowPricePerMinute / 100,
     },
   });
 
-  async function onSubmit(data: FormValues) {
+  async function onSubmit(formValues: FormValues) {
     setIsLoading(true);
 
     const result = await updatePricingConfig({
-      monthlyPrice: Math.round(data.monthlyPrice * 100), // Convertir euros en centimes
-      setupFee: Math.round(data.setupFee * 100),
-      includedMinutes: data.includedMinutes,
-      overflowPricePerMinute: Math.round(data.overflowPricePerMinute * 100),
+      monthlyPrice: Math.round(formValues.monthlyPrice * 100),
+      setupFee: Math.round(formValues.setupFee * 100),
+      includedMinutes: formValues.includedMinutes,
+      overflowPricePerMinute: Math.round(formValues.overflowPricePerMinute * 100),
     });
 
     if (result.success) {
@@ -67,7 +67,6 @@ export function PricingSettingsForm({ initialConfig }: PricingSettingsFormProps)
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Prix mensuel */}
         <div className="space-y-2">
           <Label htmlFor="monthlyPrice" className="flex items-center gap-2">
             <Euro className="w-4 h-4" />
@@ -90,7 +89,6 @@ export function PricingSettingsForm({ initialConfig }: PricingSettingsFormProps)
           </p>
         </div>
 
-        {/* Frais de mise en service */}
         <div className="space-y-2">
           <Label htmlFor="setupFee" className="flex items-center gap-2">
             <Euro className="w-4 h-4" />
@@ -113,7 +111,6 @@ export function PricingSettingsForm({ initialConfig }: PricingSettingsFormProps)
           </p>
         </div>
 
-        {/* Minutes incluses */}
         <div className="space-y-2">
           <Label htmlFor="includedMinutes">Minutes incluses</Label>
           <Input
@@ -132,7 +129,6 @@ export function PricingSettingsForm({ initialConfig }: PricingSettingsFormProps)
           </p>
         </div>
 
-        {/* Prix par minute supplémentaire */}
         <div className="space-y-2">
           <Label htmlFor="overflowPricePerMinute" className="flex items-center gap-2">
             <Euro className="w-4 h-4" />
@@ -156,7 +152,6 @@ export function PricingSettingsForm({ initialConfig }: PricingSettingsFormProps)
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex justify-end pt-4 border-t border-border">
         <Button
           type="submit"
@@ -179,4 +174,3 @@ export function PricingSettingsForm({ initialConfig }: PricingSettingsFormProps)
     </form>
   );
 }
-

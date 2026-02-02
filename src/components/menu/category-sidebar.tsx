@@ -32,7 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { createCategoryV2, deleteCategory, updateCategory } from "@/features/menu/actions-v2";
+import { createCategory, deleteCategory, updateCategory } from "@/features/menu/actions";
 
 interface Category {
   id: string;
@@ -82,7 +82,7 @@ export function CategorySidebar({
       formData.append("name", categoryName.trim());
       formData.append("rank", categories.length.toString());
 
-      const result = await createCategoryV2(formData);
+      const result = await createCategory(formData);
       if (result.success) {
         toast.success("Catégorie créée");
         setCategoryDialogOpen(false);
@@ -171,7 +171,6 @@ export function CategorySidebar({
 
   return (
     <div className="w-64 border-r border-border bg-card/30 flex flex-col">
-      {/* Header */}
       <div className="p-4 border-b border-border">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Catégories
@@ -241,7 +240,6 @@ export function CategorySidebar({
         </Dialog>
       </div>
 
-      {/* Liste des catégories */}
       <div className="flex-1 overflow-y-auto p-2">
         {categories.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
@@ -324,7 +322,6 @@ export function CategorySidebar({
         )}
       </div>
 
-      {/* Footer avec indicateur de refresh */}
       {isRefreshing && (
         <div className="p-2 border-t border-border">
           <div className="flex items-center justify-center text-xs text-muted-foreground">
@@ -334,7 +331,6 @@ export function CategorySidebar({
         </div>
       )}
 
-      {/* Dialog de modification */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="bg-card/95 backdrop-blur-xl border-border">
           <DialogHeader>
@@ -393,7 +389,6 @@ export function CategorySidebar({
         </DialogContent>
       </Dialog>
 
-      {/* AlertDialog de confirmation de suppression */}
       <AlertDialog open={deleteDialogOpen !== null} onOpenChange={(open) => !open && setDeleteDialogOpen(null)}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>

@@ -1,7 +1,6 @@
 import { defineConfig } from "drizzle-kit";
 import dotenv from "dotenv";
 
-// Charge .env.local pour drizzle-kit
 dotenv.config({ path: ".env.local" });
 
 export default defineConfig({

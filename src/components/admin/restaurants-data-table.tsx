@@ -79,7 +79,6 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
   const [restaurantToDelete, setRestaurantToDelete] = useState<Restaurant | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Met à jour les filtres dans l'URL
   const updateFilters = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value && value !== "all") {
@@ -92,7 +91,6 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
     });
   };
 
-  // Recherche au clic sur Entrée ou bouton
   const handleSearchSubmit = () => {
     const params = new URLSearchParams(searchParams.toString());
     if (searchValue.trim()) {
@@ -112,7 +110,6 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
     }
   };
 
-  // Suppression
   const handleDelete = async () => {
     if (!restaurantToDelete) return;
     
@@ -158,7 +155,6 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
 
   return (
     <div className="space-y-4">
-      {/* Filtres - Toujours visibles */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 flex gap-2">
           <div className="relative flex-1">
@@ -208,7 +204,6 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
         </Select>
       </div>
 
-      {/* Table */}
       <div className="border border-border rounded-xl bg-card/20 overflow-hidden">
         {data.length === 0 ? (
           <div className="p-8 sm:p-16 text-center">
@@ -314,14 +309,12 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
         )}
       </div>
 
-      {/* Loading overlay */}
       {isPending && (
         <div className="fixed inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-50">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       )}
 
-      {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>

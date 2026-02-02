@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { OrdersGrid } from "./orders-grid";
-import { type Order } from "@/features/orders/components";
+import { type Order } from "@/components/orders";
 import { 
   TrendingUp, 
   ShoppingCart, 

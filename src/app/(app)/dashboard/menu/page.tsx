@@ -4,9 +4,9 @@ import { buildAppUrlServer } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut, ArrowLeft } from "lucide-react";
-import { getMenuDataV2 } from "@/features/menu/actions-v2";
+import { getMenuData } from "@/features/menu/actions";
 import { MenuEditor } from "@/components/menu";
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "@/components/navigation";
 import Link from "next/link";
 
 export default async function MenuPage() {
@@ -24,7 +24,7 @@ export default async function MenuPage() {
     redirect("/admin");
   }
 
-  const menuData = await getMenuDataV2();
+  const menuData = await getMenuData();
 
   if (!menuData) {
     return (

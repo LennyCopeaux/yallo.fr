@@ -10,10 +10,7 @@ import { sendWelcomeEmail, sendResetPasswordEmail } from "@/lib/mail";
 import { z } from "zod";
 import { cookies } from "next/headers";
 import { DEFAULT_STATUS_SETTINGS } from "@/features/kitchen-status/constants";
-
-// ============================================
-// SCHEMAS ZOD
-// ============================================
+import { randomBytes } from "crypto";
 
 const createUserSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -66,16 +63,11 @@ const updateHubriseConfigSchema = z.object({
   hubriseAccessToken: z.string().max(500).optional().nullable(),
 });
 
-// Type de retour standardisé
 export type ActionResult<T = void> = {
   success: boolean;
   error?: string;
   data?: T;
 };
-
-// ============================================
-// UTILS
-// ============================================
 
 function generateSlug(name: string): string {
   return name
@@ -88,22 +80,22 @@ function generateSlug(name: string): string {
     .trim();
 }
 
-function generateTempPassword(): string {
+function generateSecureString(length: number): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  let password = "";
-  for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  const bytes = randomBytes(length);
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(bytes[i] % chars.length);
   }
-  return password;
+  return result;
+}
+
+function generateTempPassword(): string {
+  return generateSecureString(12);
 }
 
 function generateResetToken(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  let token = "";
-  for (let i = 0; i < 32; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return token;
+  return generateSecureString(32);
 }
 
 async function requireAdmin() {
@@ -113,10 +105,6 @@ async function requireAdmin() {
   }
   return session;
 }
-
-// ============================================
-// USERS - CRUD
-// ============================================
 
 export async function createUser(formData: FormData): Promise<ActionResult> {
   try {
@@ -135,7 +123,6 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
 
     const { email, firstName, lastName, role } = parsed.data;
 
-    // Vérifier si l'utilisateur existe AVANT d'envoyer l'email
     const existingUser = await db
       .select({ id: users.id })
       .from(users)
@@ -149,7 +136,6 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
     const tempPassword = generateTempPassword();
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
-    // Créer l'utilisateur d'abord
     await db.insert(users).values({
       email,
       passwordHash,
@@ -159,12 +145,10 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
       mustChangePassword: true,
     });
 
-    // Envoyer l'email APRÈS la création réussie
     try {
       await sendWelcomeEmail(email, tempPassword);
     } catch (emailError) {
       console.error("Erreur envoi email (utilisateur créé):", emailError);
-      // L'utilisateur est créé, on continue mais on log l'erreur
     }
 
     revalidatePath("/admin");
@@ -204,14 +188,10 @@ export async function resendWelcomeEmail(userId: string): Promise<ActionResult> 
       return { success: false, error: "Cet utilisateur a déjà changé son mot de passe" };
     }
 
-    // Générer un nouveau mot de passe temporaire
     const tempPassword = generateTempPassword();
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
-    // Mettre à jour le mot de passe
     await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
-
-    // Envoyer l'email
     await sendWelcomeEmail(user.email, tempPassword);
 
     return { success: true };
@@ -267,7 +247,6 @@ export async function sendPasswordResetEmail(userId: string): Promise<ActionResu
       return { success: false, error: "ID utilisateur requis" };
     }
 
-    // Récupérer l'utilisateur
     const [user] = await db
       .select({ 
         email: users.email, 
@@ -281,17 +260,14 @@ export async function sendPasswordResetEmail(userId: string): Promise<ActionResu
       return { success: false, error: "Utilisateur non trouvé" };
     }
 
-    // Ne peut envoyer que si l'utilisateur a déjà changé son mot de passe initial
     if (user.mustChangePassword) {
       return { success: false, error: "Cet utilisateur doit d'abord changer son mot de passe initial" };
     }
 
-    // Générer un token de réinitialisation (valide 1 heure)
     const resetToken = generateResetToken();
     const resetTokenExpires = new Date();
     resetTokenExpires.setHours(resetTokenExpires.getHours() + 1);
 
-    // Stocker le token dans la base de données
     await db
       .update(users)
       .set({
@@ -300,7 +276,6 @@ export async function sendPasswordResetEmail(userId: string): Promise<ActionResu
       })
       .where(eq(users.id, userId));
 
-    // Envoyer l'email
     await sendResetPasswordEmail(user.email, resetToken);
 
     return { success: true };
@@ -330,10 +305,6 @@ export async function deleteUser(id: string): Promise<ActionResult> {
     return { success: false, error: "Erreur lors de la suppression" };
   }
 }
-
-// ============================================
-// RESTAURANTS - CRUD
-// ============================================
 
 export async function createRestaurant(formData: FormData): Promise<ActionResult> {
   try {
@@ -396,7 +367,6 @@ export async function updateRestaurantGeneral(
 
     if (parsed.data.name !== undefined) {
       updateData.name = parsed.data.name;
-      // Génère un nouveau slug si pas de slug personnalisé fourni
       if (!parsed.data.slug) {
         updateData.slug = generateSlug(parsed.data.name);
       }
@@ -406,7 +376,6 @@ export async function updateRestaurantGeneral(
     if (parsed.data.ownerId !== undefined) updateData.ownerId = parsed.data.ownerId;
     if (parsed.data.status !== undefined) {
       updateData.status = parsed.data.status as RestaurantStatus;
-      // Sync isActive avec status
       updateData.isActive = parsed.data.status === "active";
     }
 
@@ -599,9 +568,6 @@ export async function updateRestaurantBilling(
 
     if (parsed.data.stripeCustomerId !== undefined) updateData.stripeCustomerId = parsed.data.stripeCustomerId;
     if (parsed.data.billingStartDate !== undefined) {
-      // Stocke la date au format ISO string dans un champ texte
-      // Note: Si vous avez un champ billingStartDate dans le schéma, utilisez-le directement
-      // Sinon, on peut utiliser un champ existant ou créer une migration
       updateData.billingStartDate = parsed.data.billingStartDate;
     }
 
@@ -669,10 +635,6 @@ export async function deleteRestaurant(id: string): Promise<ActionResult> {
   }
 }
 
-// ============================================
-// IMPERSONATION - Se connecter en tant que
-// ============================================
-
 export async function impersonateRestaurant(restaurantId: string): Promise<ActionResult<string>> {
   try {
     await requireAdmin();
@@ -697,17 +659,15 @@ export async function impersonateRestaurant(restaurantId: string): Promise<Actio
       return { success: false, error: "Restaurant non trouvé" };
     }
 
-    // Stocke l'ID admin dans un cookie pour permettre le retour
     const cookieStore = await cookies();
     const session = await auth();
     cookieStore.set("admin_impersonator_id", session!.user.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60, // 1 heure
+      maxAge: 60 * 60,
     });
 
-    // Retourne l'URL de redirection vers le dashboard
     return { 
       success: true, 
       data: `/dashboard?impersonate=${restaurant.ownerId}` 
@@ -727,7 +687,6 @@ export async function stopImpersonation(): Promise<ActionResult<string>> {
       return { success: false, error: "Pas d'impersonation active" };
     }
 
-    // Supprime le cookie
     cookieStore.delete("admin_impersonator_id");
 
     return { success: true, data: "/admin" };
@@ -736,10 +695,6 @@ export async function stopImpersonation(): Promise<ActionResult<string>> {
     return { success: false, error: "Erreur lors de l'arrêt de l'impersonation" };
   }
 }
-
-// ============================================
-// LEGACY - Toggle status (pour compatibilité)
-// ============================================
 
 export async function toggleRestaurantStatus(
   id: string,

@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { Bot, Phone, Receipt } from "lucide-react";
-import { ConversationStream } from "@/components/conversation-stream";
+import { ConversationStream } from "@/components/landing/conversation-stream";
 
 export function HowItWorksSection() {
   return (

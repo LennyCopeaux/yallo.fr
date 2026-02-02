@@ -3,8 +3,8 @@
 import Link from "next/link";
 
 export function MarketingLogoLink() {
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
+  const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
     window.scrollTo({ top: 0, behavior: "instant" });
     window.location.href = "/";
   };

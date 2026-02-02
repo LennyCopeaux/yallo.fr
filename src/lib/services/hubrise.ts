@@ -92,8 +92,8 @@ export async function fetchHubriseCatalog(
       );
     }
 
-    const rawCatalogResponse = await catalogResponse.json();
-    return JSON.stringify(rawCatalogResponse, null, 2);
+    const catalogData = await catalogResponse.json();
+    return JSON.stringify(catalogData, null, 2);
   } catch (error) {
     if (error instanceof HubriseError) {
       throw error;

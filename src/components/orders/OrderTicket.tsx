@@ -89,7 +89,6 @@ export function OrderTicket({ order, onStatusChange, className }: OrderTicketPro
         className
       )}
     >
-      {/* Header with Order Number and Status */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -115,7 +114,6 @@ export function OrderTicket({ order, onStatusChange, className }: OrderTicketPro
         </Badge>
       </div>
 
-      {/* Customer Info */}
       {(order.customerName || order.customerPhone) && (
         <div className="flex items-center gap-4 mb-4 pb-4 border-b border-dashed border-border">
           {order.customerName && (
@@ -132,7 +130,6 @@ export function OrderTicket({ order, onStatusChange, className }: OrderTicketPro
         </div>
       )}
 
-      {/* Pickup Time */}
       {order.pickupTime && (
         <div className="flex items-center gap-2 mb-4 p-2 rounded-lg bg-primary/5 border border-primary/10">
           <Clock className="w-4 h-4 text-primary" />
@@ -142,7 +139,6 @@ export function OrderTicket({ order, onStatusChange, className }: OrderTicketPro
         </div>
       )}
 
-      {/* Order Items */}
       <div className="space-y-3 mb-4">
         {order.items.map((item) => (
           <div key={item.id} className="group">
@@ -172,7 +168,6 @@ export function OrderTicket({ order, onStatusChange, className }: OrderTicketPro
         ))}
       </div>
 
-      {/* Notes */}
       {order.notes && (
         <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
           <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
@@ -181,7 +176,6 @@ export function OrderTicket({ order, onStatusChange, className }: OrderTicketPro
         </div>
       )}
 
-      {/* Total */}
       <div className="flex justify-between items-center pt-4 border-t border-dashed border-border">
         <span className="font-bold text-foreground">TOTAL</span>
         <span className="font-bold text-xl text-primary">
@@ -189,7 +183,6 @@ export function OrderTicket({ order, onStatusChange, className }: OrderTicketPro
         </span>
       </div>
 
-      {/* Action Buttons */}
       {onStatusChange && order.status !== "DELIVERED" && order.status !== "CANCELLED" && (
         <div className="mt-4 flex gap-2">
           {order.status === "NEW" && (
@@ -228,7 +221,6 @@ export function OrderTicket({ order, onStatusChange, className }: OrderTicketPro
   );
 }
 
-// Version compacte pour les listes
 export function OrderTicketCompact({ order, onClick }: { order: Order; onClick?: () => void }) {
   const status = statusConfig[order.status];
 
@@ -261,4 +253,3 @@ export function OrderTicketCompact({ order, onClick }: { order: Order; onClick?:
     </button>
   );
 }
-

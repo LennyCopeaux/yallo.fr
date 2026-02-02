@@ -176,4 +176,19 @@ describe("generateSystemPrompt", () => {
     expect(prompt).toContain("Horaires d'ouverture");
     expect(prompt).toContain("Non configuré");
   });
+
+  it("should handle unknown error type from HubRise", async () => {
+    vi.mocked(fetchHubriseCatalog).mockRejectedValue("Unknown error");
+    vi.mocked(logger.warn).mockImplementation(() => {});
+
+    const prompt = await generateSystemPrompt(mockRestaurant);
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "HubRise indisponible, fallback sur menu Yallo",
+      expect.objectContaining({
+        error: "Erreur inconnue",
+      })
+    );
+    expect(prompt).toContain("Test Restaurant");
+  });
 });

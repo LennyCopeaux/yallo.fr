@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { deleteVariation, toggleVariationAvailability } from "@/features/menu/actions-v2";
+import { deleteVariation, toggleVariationAvailability } from "@/features/menu/actions";
 
 import type { Item, Category, MenuData } from "./types";
 

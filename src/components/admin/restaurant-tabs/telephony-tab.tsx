@@ -80,7 +80,6 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Status Card */}
       <Card className={`border ${hasTwilioNumber ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-amber-400/20 bg-amber-400/5'}`}>
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
@@ -103,7 +102,6 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
       </Card>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Numéros de téléphone */}
         <Card className="border-border bg-card/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -115,7 +113,6 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Numéro principal */}
             <div className="space-y-2">
               <Label htmlFor="phoneNumber">Numéro principal du restaurant *</Label>
               <Input
@@ -133,7 +130,6 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
               </p>
             </div>
 
-            {/* Numéro Twilio */}
             <div className="space-y-2">
               <Label htmlFor="twilioPhoneNumber">Numéro Twilio (IA)</Label>
               <Input
@@ -150,7 +146,6 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
           </CardContent>
         </Card>
 
-        {/* Horaires */}
         <Card className="border-border bg-card/30">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -228,7 +223,6 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
           </CardContent>
         </Card>
 
-        {/* Actions */}
         <div className="flex justify-end">
           <Button
             type="submit"

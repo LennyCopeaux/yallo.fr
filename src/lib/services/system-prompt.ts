@@ -23,21 +23,21 @@ type VariationData = {
   categoryId: string;
 };
 
-function transformModifiers(
-  allModifiers: ModifierData[],
+function buildModifierOptions(
+  ingredientModifiers: ModifierData[],
   groupId: string
 ): Array<{ name: string; priceExtra: number }> {
-  return allModifiers
-    .filter((m) => m.groupId === groupId)
-    .map((m) => ({
-      name: m.ingredient.name,
-      priceExtra: m.modifier.priceExtra / 100,
+  return ingredientModifiers
+    .filter((mod) => mod.groupId === groupId)
+    .map((mod) => ({
+      name: mod.ingredient.name,
+      priceExtra: mod.modifier.priceExtra / 100,
     }));
 }
 
-function transformModifierGroups(
-  allModifierGroups: ModifierGroupData[],
-  allModifiers: ModifierData[],
+function buildOptionGroups(
+  optionGroups: ModifierGroupData[],
+  ingredientModifiers: ModifierData[],
   variationId: string
 ): Array<{
   category: string;
@@ -45,20 +45,20 @@ function transformModifierGroups(
   maxSelect: number;
   options: Array<{ name: string; priceExtra: number }>;
 }> {
-  return allModifierGroups
-    .filter((mg) => mg.variationId === variationId)
-    .map((mg) => ({
-      category: mg.ingredientCategory.name,
-      minSelect: mg.group.minSelect,
-      maxSelect: mg.group.maxSelect,
-      options: transformModifiers(allModifiers, mg.group.id),
+  return optionGroups
+    .filter((og) => og.variationId === variationId)
+    .map((og) => ({
+      category: og.ingredientCategory.name,
+      minSelect: og.group.minSelect,
+      maxSelect: og.group.maxSelect,
+      options: buildModifierOptions(ingredientModifiers, og.group.id),
     }));
 }
 
-function transformVariations(
-  allVariations: VariationData[],
-  allModifierGroups: ModifierGroupData[],
-  allModifiers: ModifierData[],
+function buildProductList(
+  productsByCategory: VariationData[],
+  optionGroups: ModifierGroupData[],
+  ingredientModifiers: ModifierData[],
   categoryId: string
 ): Array<{
   name: string;
@@ -70,12 +70,12 @@ function transformVariations(
     options: Array<{ name: string; priceExtra: number }>;
   }>;
 }> {
-  return allVariations
-    .filter((v) => v.categoryId === categoryId)
-    .map((v) => ({
-      name: v.variation.name,
-      price: v.variation.price / 100,
-      modifierGroups: transformModifierGroups(allModifierGroups, allModifiers, v.variation.id),
+  return productsByCategory
+    .filter((prod) => prod.categoryId === categoryId)
+    .map((prod) => ({
+      name: prod.variation.name,
+      price: prod.variation.price / 100,
+      modifierGroups: buildOptionGroups(optionGroups, ingredientModifiers, prod.variation.id),
     }));
 }
 
@@ -100,13 +100,13 @@ async function getMenuStructure(restaurantId: string, hubriseAccessToken: string
     }
   }
 
-  const allCategories = await db
+  const menuCategories = await db
     .select()
     .from(categories)
     .where(eq(categories.restaurantId, restaurantId))
     .orderBy(asc(categories.rank));
 
-  const allVariations = await db
+  const productsByCategory = await db
     .select({
       variation: productVariations,
       categoryId: categories.id,
@@ -115,7 +115,7 @@ async function getMenuStructure(restaurantId: string, hubriseAccessToken: string
     .innerJoin(categories, eq(productVariations.categoryId, categories.id))
     .where(eq(categories.restaurantId, restaurantId));
 
-  const allModifierGroups = await db
+  const optionGroups = await db
     .select({
       group: modifierGroups,
       variationId: productVariations.id,
@@ -127,7 +127,7 @@ async function getMenuStructure(restaurantId: string, hubriseAccessToken: string
     .innerJoin(ingredientCategories, eq(modifierGroups.ingredientCategoryId, ingredientCategories.id))
     .where(eq(categories.restaurantId, restaurantId));
 
-  const allModifiers = await db
+  const ingredientModifiers = await db
     .select({
       modifier: modifiers,
       ingredient: ingredients,
@@ -138,9 +138,9 @@ async function getMenuStructure(restaurantId: string, hubriseAccessToken: string
     .innerJoin(modifierGroups, eq(modifiers.groupId, modifierGroups.id))
     .where(eq(ingredients.restaurantId, restaurantId));
 
-  return allCategories.map((category) => ({
+  return menuCategories.map((category) => ({
     category: category.name,
-    items: transformVariations(allVariations, allModifierGroups, allModifiers, category.id),
+    items: buildProductList(productsByCategory, optionGroups, ingredientModifiers, category.id),
   }));
 }
 

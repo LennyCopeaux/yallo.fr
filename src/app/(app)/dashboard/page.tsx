@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LogOut, Utensils, AlertTriangle, Clock } from "lucide-react";
 import Link from "next/link";
 import { buildAppUrlServer } from "@/lib/utils";
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "@/components/navigation";
 import { DashboardContent } from "./dashboard-content";
 import { getOrders, getUserRestaurant } from "@/features/orders/actions";
 import { UpdateAssistantButton } from "@/components/dashboard/update-assistant-button";

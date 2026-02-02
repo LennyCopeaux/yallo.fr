@@ -32,7 +32,6 @@ interface BillingTabProps {
 export function BillingTab({ restaurant }: BillingTabProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  // Formate la date pour l'input date (YYYY-MM-DD)
   const formatDateForInput = (dateString: string | null | undefined): string => {
     if (!dateString) return "";
     try {
@@ -70,7 +69,6 @@ export function BillingTab({ restaurant }: BillingTabProps) {
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Date de début de facturation */}
         <Card className="border-border bg-card/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -98,7 +96,6 @@ export function BillingTab({ restaurant }: BillingTabProps) {
           </CardContent>
         </Card>
 
-        {/* Stripe */}
         <Card className="border-border bg-card/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -113,7 +110,6 @@ export function BillingTab({ restaurant }: BillingTabProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {/* Alert */}
               <div className="flex items-start gap-3 p-3 rounded-lg bg-[#635BFF]/5 border border-[#635BFF]/10">
                 <AlertCircle className="w-5 h-5 text-[#635BFF] shrink-0 mt-0.5" />
                 <div className="text-sm">
@@ -141,7 +137,6 @@ export function BillingTab({ restaurant }: BillingTabProps) {
           </CardContent>
         </Card>
 
-        {/* Actions */}
         <div className="flex justify-end">
           <Button
             type="submit"

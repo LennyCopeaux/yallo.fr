@@ -60,7 +60,6 @@ export function TestimonialsCarousel() {
     });
   }, [api]);
 
-  // Calculate card state based on distance from center
   const getCardState = (index: number) => {
     const wrappedDistance = Math.min(
       Math.abs(current - index),
@@ -119,9 +118,9 @@ export function TestimonialsCarousel() {
                         )}
                       />
                       <div className="flex gap-1 mb-4">
-                        {[...new Array(5)].map((_, j) => (
+                        {Array.from({ length: 5 }).map((_, starIndex) => (
                           <Star
-                            key={j}
+                            key={`star-${starIndex}`}
                             className={cn(
                               "w-4 h-4 transition-colors duration-500",
                               isCenter
@@ -172,12 +171,10 @@ export function TestimonialsCarousel() {
           })}
         </CarouselContent>
         
-        {/* Navigation arrows - positioned better */}
         <CarouselPrevious className="-left-2 sm:-left-4 md:-left-12 bg-card/80 border-border hover:bg-muted hover:border-primary/30 text-white backdrop-blur-sm" />
         <CarouselNext className="-right-2 sm:-right-4 md:-right-12 bg-card/80 border-border hover:bg-muted hover:border-primary/30 text-white backdrop-blur-sm" />
       </Carousel>
       
-      {/* Dots indicator */}
       <div className="flex justify-center gap-2 mt-8">
         {testimonials.map((testimonial, index) => (
           <button

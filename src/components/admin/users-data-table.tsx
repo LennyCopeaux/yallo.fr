@@ -156,7 +156,6 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
 
   return (
     <div className="space-y-4">
-      {/* Filtres */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 flex gap-2">
           <div className="relative flex-1">
@@ -193,7 +192,6 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
         </Select>
       </div>
 
-      {/* Table */}
       <div className="border border-border rounded-xl bg-card/20 overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
@@ -327,7 +325,6 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
         </div>
       </div>
 
-      {/* Edit user dialog */}
       {editingUser && (
         <EditUserDialog
           user={editingUser}
@@ -336,7 +333,6 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
         />
       )}
 
-      {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>

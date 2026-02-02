@@ -17,7 +17,7 @@ vi.mock("drizzle-orm", () => ({
   and: vi.fn(),
 }));
 
-describe("Menu Actions V2 Helpers", () => {
+describe("Menu Actions Helpers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
