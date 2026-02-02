@@ -102,8 +102,7 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          yes: true
+          github-deployment: false
         continue-on-error: false
 
       - name: 📝 Deployment Summary
