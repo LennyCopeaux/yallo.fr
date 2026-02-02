@@ -316,6 +316,29 @@ export async function updateModifierPrice(
 // GET MENU DATA (Nouvelle structure)
 // ============================================
 
+function transformModifiersForGroup(groupId: string, allModifiers: Array<{ modifier: typeof modifiers.$inferSelect; ingredient: typeof ingredients.$inferSelect; groupId: string }>) {
+  return allModifiers
+    .filter((m) => m.groupId === groupId)
+    .map((m) => ({
+      ...m.modifier,
+      ingredient: m.ingredient,
+    }));
+}
+
+function transformModifierGroupsForVariation(
+  variationId: string,
+  allModifierGroups: Array<{ group: typeof modifierGroups.$inferSelect; variationId: string; ingredientCategory: typeof ingredientCategories.$inferSelect }>,
+  allModifiers: Array<{ modifier: typeof modifiers.$inferSelect; ingredient: typeof ingredients.$inferSelect; groupId: string }>
+) {
+  return allModifierGroups
+    .filter((mg) => mg.variationId === variationId)
+    .map((mg) => ({
+      ...mg.group,
+      ingredientCategory: mg.ingredientCategory,
+      modifiers: transformModifiersForGroup(mg.group.id, allModifiers),
+    }));
+}
+
 export async function getMenuDataV2() {
   const session = await auth();
   if (!session?.user) {
@@ -389,23 +412,7 @@ export async function getMenuDataV2() {
       const categoryVariations = allVariations
         .filter((v) => v.categoryId === category.id)
         .map((v) => {
-          const variationGroups = allModifierGroups
-            .filter((mg) => mg.variationId === v.variation.id)
-            .map((mg) => {
-              const groupModifiers = allModifiers
-                .filter((m) => m.groupId === mg.group.id)
-                .map((m) => ({
-                  ...m.modifier,
-                  ingredient: m.ingredient,
-                }));
-
-              return {
-                ...mg.group,
-                ingredientCategory: mg.ingredientCategory,
-                modifiers: groupModifiers,
-              };
-            });
-
+          const variationGroups = transformModifierGroupsForVariation(v.variation.id, allModifierGroups, allModifiers);
           return {
             ...v.variation,
             modifierGroups: variationGroups,

@@ -50,6 +50,113 @@ const STATUS_CONFIG = {
 
 type StatusConfigType = typeof STATUS_CONFIG[KitchenStatus];
 
+interface StatusDelayConfigProps {
+  status: "CALM" | "NORMAL" | "RUSH";
+  label: string;
+  config: StatusSettings;
+  useFixed: boolean;
+  onUseFixedChange: (checked: boolean) => void;
+  onConfigUpdate: (status: "CALM" | "NORMAL" | "RUSH", useFixed: boolean, value: number | { min: number; max: number }) => void;
+  defaultFixed: number;
+  defaultMin: number;
+  defaultMax: number;
+}
+
+function StatusDelayConfig({
+  status,
+  label,
+  config,
+  useFixed,
+  onUseFixedChange,
+  onConfigUpdate,
+  defaultFixed,
+  defaultMin,
+  defaultMax,
+}: StatusDelayConfigProps) {
+  const currentConfig = config[status];
+  const fixedValue = currentConfig && "fixed" in currentConfig ? currentConfig.fixed : defaultFixed;
+  const minValue = currentConfig && "min" in currentConfig ? currentConfig.min : defaultMin;
+  const maxValue = currentConfig && "max" in currentConfig ? currentConfig.max : defaultMax;
+
+  function handleSwitchChange(checked: boolean) {
+    onUseFixedChange(checked);
+    if (checked && currentConfig && "min" in currentConfig) {
+      onConfigUpdate(status, true, currentConfig.min);
+    } else if (!checked && currentConfig && "fixed" in currentConfig) {
+      onConfigUpdate(status, false, { min: currentConfig.fixed, max: currentConfig.fixed });
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-base font-medium">{label}</Label>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Plage horaire</span>
+          <Switch checked={useFixed} onCheckedChange={handleSwitchChange} />
+          <span className="text-xs text-muted-foreground">Délai fixe</span>
+        </div>
+      </div>
+      {useFixed ? (
+        <div className="space-y-1.5">
+          <Label htmlFor={`${status.toLowerCase()}-fixed`} className="text-xs text-muted-foreground">
+            Délai (minutes)
+          </Label>
+          <Input
+            id={`${status.toLowerCase()}-fixed`}
+            type="number"
+            min="0"
+            value={fixedValue}
+            onChange={(e) => {
+              const value = Number.parseInt(e.target.value) || 0;
+              onConfigUpdate(status, true, value);
+            }}
+          />
+          <p className="text-xs text-muted-foreground">
+            L&apos;IA dira &quot;{fixedValue} minutes&quot;
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor={`${status.toLowerCase()}-min`} className="text-xs text-muted-foreground">
+              Min (minutes)
+            </Label>
+            <Input
+              id={`${status.toLowerCase()}-min`}
+              type="number"
+              min="0"
+              value={minValue}
+              onChange={(e) => {
+                const min = Number.parseInt(e.target.value) || 0;
+                onConfigUpdate(status, false, { min, max: maxValue });
+              }}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor={`${status.toLowerCase()}-max`} className="text-xs text-muted-foreground">
+              Max (minutes)
+            </Label>
+            <Input
+              id={`${status.toLowerCase()}-max`}
+              type="number"
+              min="0"
+              value={maxValue}
+              onChange={(e) => {
+                const max = Number.parseInt(e.target.value) || 0;
+                onConfigUpdate(status, false, { min: minValue, max });
+              }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground col-span-2">
+            L&apos;IA dira &quot;entre {minValue} et {maxValue} minutes&quot;
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function KitchenStatusControl({ currentStatus, statusSettings }: KitchenStatusControlProps) {
   const [isPending, startTransition] = useTransition();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
@@ -148,248 +255,39 @@ export function KitchenStatusControl({ currentStatus, statusSettings }: KitchenS
               </DialogHeader>
               
               <div className="space-y-6 py-4">
-                {/* CALME */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-base font-medium">Calme</Label>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Plage horaire</span>
-                      <Switch
-                        checked={useFixedForCalm}
-                        onCheckedChange={(checked) => {
-                          setUseFixedForCalm(checked);
-                          const current = config.CALM;
-                          if (checked && current && "min" in current) {
-                            updateStatusConfig("CALM", true, current.min);
-                          } else if (!checked && current && "fixed" in current) {
-                            updateStatusConfig("CALM", false, { min: current.fixed, max: current.fixed });
-                          }
-                        }}
-                      />
-                      <span className="text-xs text-muted-foreground">Délai fixe</span>
-                    </div>
-                  </div>
-                  {useFixedForCalm ? (
-                    <div className="space-y-1.5">
-                      <Label htmlFor="calm-fixed" className="text-xs text-muted-foreground">
-                        Délai (minutes)
-                      </Label>
-                      <Input
-                        id="calm-fixed"
-                        type="number"
-                        min="0"
-                        value={config.CALM && "fixed" in config.CALM ? config.CALM.fixed : 15}
-                        onChange={(e) => {
-                          const value = Number.parseInt(e.target.value) || 0;
-                          updateStatusConfig("CALM", true, value);
-                        }}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        L&apos;IA dira &quot;{config.CALM && "fixed" in config.CALM ? config.CALM.fixed : 15} minutes&quot;
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="calm-min" className="text-xs text-muted-foreground">
-                          Min (minutes)
-                        </Label>
-                        <Input
-                          id="calm-min"
-                          type="number"
-                          min="0"
-                          value={config.CALM && "min" in config.CALM ? config.CALM.min : 15}
-                          onChange={(e) => {
-                            const min = parseInt(e.target.value) || 0;
-                            const max = config.CALM && "max" in config.CALM ? config.CALM.max : 15;
-                            updateStatusConfig("CALM", false, { min, max });
-                          }}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="calm-max" className="text-xs text-muted-foreground">
-                          Max (minutes)
-                        </Label>
-                        <Input
-                          id="calm-max"
-                          type="number"
-                          min="0"
-                          value={config.CALM && "max" in config.CALM ? config.CALM.max : 15}
-                          onChange={(e) => {
-                            const max = parseInt(e.target.value) || 0;
-                            const min = config.CALM && "min" in config.CALM ? config.CALM.min : 15;
-                            updateStatusConfig("CALM", false, { min, max });
-                          }}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground col-span-2">
-                        L&apos;IA dira &quot;entre {config.CALM && "min" in config.CALM ? config.CALM.min : 15} et {config.CALM && "max" in config.CALM ? config.CALM.max : 15} minutes&quot;
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* NORMAL */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-base font-medium">Normal</Label>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Plage horaire</span>
-                      <Switch
-                        checked={useFixedForNormal}
-                        onCheckedChange={(checked) => {
-                          setUseFixedForNormal(checked);
-                          const current = config.NORMAL;
-                          if (checked && current && "min" in current) {
-                            updateStatusConfig("NORMAL", true, current.min);
-                          } else if (!checked && current && "fixed" in current) {
-                            updateStatusConfig("NORMAL", false, { min: current.fixed, max: current.fixed });
-                          }
-                        }}
-                      />
-                      <span className="text-xs text-muted-foreground">Délai fixe</span>
-                    </div>
-                  </div>
-                  {useFixedForNormal ? (
-                    <div className="space-y-1.5">
-                      <Label htmlFor="normal-fixed" className="text-xs text-muted-foreground">
-                        Délai (minutes)
-                      </Label>
-                      <Input
-                        id="normal-fixed"
-                        type="number"
-                        min="0"
-                        value={config.NORMAL && "fixed" in config.NORMAL ? config.NORMAL.fixed : 30}
-                        onChange={(e) => {
-                          const value = Number.parseInt(e.target.value) || 0;
-                          updateStatusConfig("NORMAL", true, value);
-                        }}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        L&apos;IA dira &quot;{config.NORMAL && "fixed" in config.NORMAL ? config.NORMAL.fixed : 30} minutes&quot;
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="normal-min" className="text-xs text-muted-foreground">
-                          Min (minutes)
-                        </Label>
-                        <Input
-                          id="normal-min"
-                          type="number"
-                          min="0"
-                          value={config.NORMAL && "min" in config.NORMAL ? config.NORMAL.min : 25}
-                          onChange={(e) => {
-                            const min = parseInt(e.target.value) || 0;
-                            const max = config.NORMAL && "max" in config.NORMAL ? config.NORMAL.max : 35;
-                            updateStatusConfig("NORMAL", false, { min, max });
-                          }}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="normal-max" className="text-xs text-muted-foreground">
-                          Max (minutes)
-                        </Label>
-                        <Input
-                          id="normal-max"
-                          type="number"
-                          min="0"
-                          value={config.NORMAL && "max" in config.NORMAL ? config.NORMAL.max : 35}
-                          onChange={(e) => {
-                            const max = parseInt(e.target.value) || 0;
-                            const min = config.NORMAL && "min" in config.NORMAL ? config.NORMAL.min : 25;
-                            updateStatusConfig("NORMAL", false, { min, max });
-                          }}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground col-span-2">
-                        L&apos;IA dira &quot;entre {config.NORMAL && "min" in config.NORMAL ? config.NORMAL.min : 25} et {config.NORMAL && "max" in config.NORMAL ? config.NORMAL.max : 35} minutes&quot;
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* RUSH */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-base font-medium">Rush</Label>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Plage horaire</span>
-                      <Switch
-                        checked={useFixedForRush}
-                        onCheckedChange={(checked) => {
-                          setUseFixedForRush(checked);
-                          const current = config.RUSH;
-                          if (checked && current && "min" in current) {
-                            updateStatusConfig("RUSH", true, current.min);
-                          } else if (!checked && current && "fixed" in current) {
-                            updateStatusConfig("RUSH", false, { min: current.fixed, max: current.fixed });
-                          }
-                        }}
-                      />
-                      <span className="text-xs text-muted-foreground">Délai fixe</span>
-                    </div>
-                  </div>
-                  {useFixedForRush ? (
-                    <div className="space-y-1.5">
-                      <Label htmlFor="rush-fixed" className="text-xs text-muted-foreground">
-                        Délai (minutes)
-                      </Label>
-                      <Input
-                        id="rush-fixed"
-                        type="number"
-                        min="0"
-                        value={config.RUSH && "fixed" in config.RUSH ? config.RUSH.fixed : 50}
-                        onChange={(e) => {
-                          const value = Number.parseInt(e.target.value) || 0;
-                          updateStatusConfig("RUSH", true, value);
-                        }}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        L&apos;IA dira &quot;{config.RUSH && "fixed" in config.RUSH ? config.RUSH.fixed : 50} minutes&quot;
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="rush-min" className="text-xs text-muted-foreground">
-                          Min (minutes)
-                        </Label>
-                        <Input
-                          id="rush-min"
-                          type="number"
-                          min="0"
-                          value={config.RUSH && "min" in config.RUSH ? config.RUSH.min : 45}
-                          onChange={(e) => {
-                            const min = parseInt(e.target.value) || 0;
-                            const max = config.RUSH && "max" in config.RUSH ? config.RUSH.max : 60;
-                            updateStatusConfig("RUSH", false, { min, max });
-                          }}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="rush-max" className="text-xs text-muted-foreground">
-                          Max (minutes)
-                        </Label>
-                        <Input
-                          id="rush-max"
-                          type="number"
-                          min="0"
-                          value={config.RUSH && "max" in config.RUSH ? config.RUSH.max : 60}
-                          onChange={(e) => {
-                            const max = parseInt(e.target.value) || 0;
-                            const min = config.RUSH && "min" in config.RUSH ? config.RUSH.min : 45;
-                            updateStatusConfig("RUSH", false, { min, max });
-                          }}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground col-span-2">
-                        L&apos;IA dira &quot;entre {config.RUSH && "min" in config.RUSH ? config.RUSH.min : 45} et {config.RUSH && "max" in config.RUSH ? config.RUSH.max : 60} minutes&quot;
-                      </p>
-                    </div>
-                  )}
-                </div>
+                <StatusDelayConfig
+                  status="CALM"
+                  label="Calme"
+                  config={config}
+                  useFixed={useFixedForCalm}
+                  onUseFixedChange={setUseFixedForCalm}
+                  onConfigUpdate={updateStatusConfig}
+                  defaultFixed={15}
+                  defaultMin={15}
+                  defaultMax={15}
+                />
+                <StatusDelayConfig
+                  status="NORMAL"
+                  label="Normal"
+                  config={config}
+                  useFixed={useFixedForNormal}
+                  onUseFixedChange={setUseFixedForNormal}
+                  onConfigUpdate={updateStatusConfig}
+                  defaultFixed={30}
+                  defaultMin={25}
+                  defaultMax={35}
+                />
+                <StatusDelayConfig
+                  status="RUSH"
+                  label="Rush"
+                  config={config}
+                  useFixed={useFixedForRush}
+                  onUseFixedChange={setUseFixedForRush}
+                  onConfigUpdate={updateStatusConfig}
+                  defaultFixed={50}
+                  defaultMin={45}
+                  defaultMax={60}
+                />
 
                 {/* STOP */}
                 <div className="space-y-2">

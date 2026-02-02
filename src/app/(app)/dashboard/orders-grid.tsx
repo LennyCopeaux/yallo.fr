@@ -24,16 +24,17 @@ export function OrdersGrid({ initialOrders }: OrdersGridProps) {
     setOrders(initialOrders);
   }, [initialOrders]);
 
+  const updateOrderInList = (orderId: string, newStatus: OrderStatus) => {
+    setOrders((prev) =>
+      prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order))
+    );
+  };
+
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     startTransition(async () => {
       try {
         await updateOrderStatus(orderId, newStatus);
-        // Mise à jour optimiste
-        setOrders((prev) =>
-          prev.map((order) =>
-            order.id === orderId ? { ...order, status: newStatus } : order
-          )
-        );
+        updateOrderInList(orderId, newStatus);
         toast.success("Statut mis à jour");
       } catch {
         toast.error("Erreur lors de la mise à jour");

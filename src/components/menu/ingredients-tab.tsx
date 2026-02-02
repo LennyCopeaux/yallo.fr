@@ -272,26 +272,31 @@ export function IngredientsTab({
     }
   }
 
+  function updateIngredientAvailability(ingredientId: string, isAvailable: boolean) {
+    setIngredients(prev => prev.map(ing => 
+      ing.id === ingredientId ? { ...ing, isAvailable } : ing
+    ));
+  }
+
+  function rollbackIngredientAvailability(ingredientId: string, originalValue: boolean) {
+    updateIngredientAvailability(ingredientId, originalValue);
+  }
+
   async function handleToggleAvailability(ingredientId: string, currentValue: boolean) {
     const newValue = !currentValue;
     setTogglingIds(prev => ({ ...prev, [ingredientId]: true }));
-    setIngredients(prev => prev.map(ing => 
-      ing.id === ingredientId ? { ...ing, isAvailable: newValue } : ing
-    ));
+    updateIngredientAvailability(ingredientId, newValue);
+    
     try {
       const result = await toggleIngredientAvailability(ingredientId, newValue);
       if (result.success) {
         toast.success(newValue ? "Ingrédient activé" : "Ingrédient désactivé");
       } else {
-        setIngredients(prev => prev.map(ing => 
-          ing.id === ingredientId ? { ...ing, isAvailable: currentValue } : ing
-        ));
+        rollbackIngredientAvailability(ingredientId, currentValue);
         toast.error(result.error || "Erreur lors de la mise à jour");
       }
     } catch {
-      setIngredients(prev => prev.map(ing => 
-        ing.id === ingredientId ? { ...ing, isAvailable: currentValue } : ing
-      ));
+      rollbackIngredientAvailability(ingredientId, currentValue);
       toast.error("Une erreur est survenue");
     } finally {
       setTogglingIds(prev => ({ ...prev, [ingredientId]: false }));

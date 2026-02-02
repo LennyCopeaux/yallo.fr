@@ -71,6 +71,37 @@ interface MenuEditorProps {
   initialMenuData: BackendMenuData;
 }
 
+function transformModifierOptions(modifiers: BackendModifier[]) {
+  return modifiers.map((modifier: BackendModifier) => ({
+    id: modifier.id,
+    name: modifier.ingredient?.name || "",
+    priceExtra: modifier.priceExtra,
+    isAvailable: modifier.ingredient?.isAvailable ?? true,
+  }));
+}
+
+function transformModifierGroups(groups: BackendModifierGroup[]) {
+  return groups.map((group: BackendModifierGroup) => ({
+    id: group.id,
+    title: group.ingredientCategory?.name || "",
+    ingredientCategoryId: group.ingredientCategoryId,
+    minSelect: group.minSelect,
+    maxSelect: group.maxSelect,
+    options: transformModifierOptions(group.modifiers || []),
+  }));
+}
+
+function transformVariations(variations: BackendVariation[]) {
+  return variations.map((variation: BackendVariation) => ({
+    id: variation.id,
+    name: variation.name,
+    price: variation.price,
+    description: undefined,
+    isAvailable: variation.isAvailable ?? true,
+    optionGroups: transformModifierGroups(variation.modifierGroups || []),
+  }));
+}
+
 function transformMenuData(backendData: BackendMenuData): MenuData {
   return {
     restaurantId: backendData.restaurantId,
@@ -78,26 +109,7 @@ function transformMenuData(backendData: BackendMenuData): MenuData {
       id: category.id,
       name: category.name,
       rank: category.rank,
-      items: (category.variations || []).map((variation: BackendVariation) => ({
-        id: variation.id,
-        name: variation.name,
-        price: variation.price,
-        description: undefined,
-        isAvailable: variation.isAvailable ?? true,
-        optionGroups: (variation.modifierGroups || []).map((group: BackendModifierGroup) => ({
-          id: group.id,
-          title: group.ingredientCategory?.name || "",
-          ingredientCategoryId: group.ingredientCategoryId,
-          minSelect: group.minSelect,
-          maxSelect: group.maxSelect,
-          options: (group.modifiers || []).map((modifier: BackendModifier) => ({
-            id: modifier.id,
-            name: modifier.ingredient?.name || "",
-            priceExtra: modifier.priceExtra,
-            isAvailable: modifier.ingredient?.isAvailable ?? true,
-          })),
-        })),
-      })),
+      items: transformVariations(category.variations || []),
     })),
     ingredients: backendData.ingredients || [],
     ingredientCategories: backendData.ingredientCategories || [],

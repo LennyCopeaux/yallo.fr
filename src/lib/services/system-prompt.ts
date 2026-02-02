@@ -55,40 +55,40 @@ async function getMenuStructure(restaurantId: string, hubriseAccessToken: string
     .innerJoin(modifierGroups, eq(modifiers.groupId, modifierGroups.id))
     .where(eq(ingredients.restaurantId, restaurantId));
 
-  return allCategories.map((category) => {
-    const categoryVariations = allVariations
-      .filter((v) => v.categoryId === category.id)
-      .map((v) => {
-        const variationGroups = allModifierGroups
-          .filter((mg) => mg.variationId === v.variation.id)
-          .map((mg) => {
-            const groupModifiers = allModifiers
-              .filter((m) => m.groupId === mg.group.id)
-              .map((m) => ({
-                name: m.ingredient.name,
-                priceExtra: m.modifier.priceExtra / 100,
-              }));
+  function transformModifiers(groupId: string) {
+    return allModifiers
+      .filter((m) => m.groupId === groupId)
+      .map((m) => ({
+        name: m.ingredient.name,
+        priceExtra: m.modifier.priceExtra / 100,
+      }));
+  }
 
-            return {
-              category: mg.ingredientCategory.name,
-              minSelect: mg.group.minSelect,
-              maxSelect: mg.group.maxSelect,
-              options: groupModifiers,
-            };
-          });
+  function transformModifierGroups(variationId: string) {
+    return allModifierGroups
+      .filter((mg) => mg.variationId === variationId)
+      .map((mg) => ({
+        category: mg.ingredientCategory.name,
+        minSelect: mg.group.minSelect,
+        maxSelect: mg.group.maxSelect,
+        options: transformModifiers(mg.group.id),
+      }));
+  }
 
-        return {
-          name: v.variation.name,
-          price: v.variation.price / 100,
-          modifierGroups: variationGroups,
-        };
-      });
+  function transformVariations(categoryId: string) {
+    return allVariations
+      .filter((v) => v.categoryId === categoryId)
+      .map((v) => ({
+        name: v.variation.name,
+        price: v.variation.price / 100,
+        modifierGroups: transformModifierGroups(v.variation.id),
+      }));
+  }
 
-    return {
-      category: category.name,
-      items: categoryVariations,
-    };
-  });
+  return allCategories.map((category) => ({
+    category: category.name,
+    items: transformVariations(category.id),
+  }));
 }
 
 export async function generateSystemPrompt(restaurant: Restaurant): Promise<string> {

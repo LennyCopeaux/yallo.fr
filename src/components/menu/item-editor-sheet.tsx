@@ -68,6 +68,30 @@ export function ItemEditorDialog({
   const [selectedOptionCategoryIds, setSelectedOptionCategoryIds] = useState<string[]>([]);
   const [selectedIngredientsByCategory, setSelectedIngredientsByCategory] = useState<Record<string, string[]>>({});
 
+  function findIngredientId(optName: string, categoryId: string): string {
+    const ingredient = ingredients.find(
+      ing => ing.name === optName && ing.ingredientCategoryId === categoryId
+    );
+    return ingredient?.id || "";
+  }
+
+  function extractIngredientIds(group: { options: Array<{ name: string }>; ingredientCategoryId: string }): string[] {
+    return group.options
+      .map(opt => findIngredientId(opt.name, group.ingredientCategoryId))
+      .filter(Boolean);
+  }
+
+  function buildIngredientsByCategory(): Record<string, string[]> {
+    const ingredientsByCategory: Record<string, string[]> = {};
+    item.optionGroups.forEach(group => {
+      const ingredientIds = extractIngredientIds(group);
+      if (ingredientIds.length > 0) {
+        ingredientsByCategory[group.ingredientCategoryId] = ingredientIds;
+      }
+    });
+    return ingredientsByCategory;
+  }
+
   useEffect(() => {
     if (isOpen) {
       setName(item.name);
@@ -77,18 +101,7 @@ export function ItemEditorDialog({
       
       const categoryIds = item.optionGroups.map(group => group.ingredientCategoryId);
       setSelectedOptionCategoryIds(categoryIds);
-      
-      const ingredientsByCategory: Record<string, string[]> = {};
-      item.optionGroups.forEach(group => {
-        const ingredientIds = group.options.map(opt => {
-          const ingredient = ingredients.find(ing => ing.name === opt.name && ing.ingredientCategoryId === group.ingredientCategoryId);
-          return ingredient?.id || "";
-        }).filter(Boolean);
-        if (ingredientIds.length > 0) {
-          ingredientsByCategory[group.ingredientCategoryId] = ingredientIds;
-        }
-      });
-      setSelectedIngredientsByCategory(ingredientsByCategory);
+      setSelectedIngredientsByCategory(buildIngredientsByCategory());
       
       const expanded: Record<string, boolean> = {};
       categoryIds.forEach(id => {
@@ -156,59 +169,108 @@ export function ItemEditorDialog({
     });
   }
 
-  async function handleSave() {
+  function validateForm(): string | null {
     if (!name.trim()) {
-      toast.error("Le nom du produit est requis");
-      return;
+      return "Le nom du produit est requis";
     }
-
     const priceValue = price.trim();
     if (!priceValue) {
-      toast.error("Le prix est requis");
-      return;
+      return "Le prix est requis";
     }
-
     const priceInEuros = Number.parseFloat(priceValue);
     if (Number.isNaN(priceInEuros) || priceInEuros < 0) {
-      toast.error("Le prix doit être un nombre positif");
+      return "Le prix doit être un nombre positif";
+    }
+    return null;
+  }
+
+  async function createOrUpdateVariation(): Promise<string> {
+    const priceValue = price.trim();
+    if (isNew) {
+      const formData = new FormData();
+      formData.append("categoryId", categoryId);
+      formData.append("name", name.trim());
+      formData.append("price", priceValue);
+      const result = await createVariation(formData);
+      if (!result.success) {
+        throw new Error(result.error || "Erreur lors de la création");
+      }
+      return (result.data && typeof result.data === 'object' && 'id' in result.data) 
+        ? (result.data as { id: string }).id 
+        : item.id;
+    }
+    const updateFormData = new FormData();
+    updateFormData.append("name", name.trim());
+    updateFormData.append("price", priceValue);
+    if (description.trim()) {
+      updateFormData.append("description", description.trim());
+    }
+    const result = await updateVariation(item.id, updateFormData);
+    if (!result.success) {
+      throw new Error(result.error || "Erreur lors de la mise à jour");
+    }
+    return item.id;
+  }
+
+  async function createModifiersForGroup(groupId: string, categoryIdToAdd: string) {
+    const selectedIngredientIds = selectedIngredientsByCategory[categoryIdToAdd] || [];
+    const categoryIngredients = ingredients.filter(
+      ing => ing.ingredientCategoryId === categoryIdToAdd && ing.isAvailable
+    );
+    const ingredientIdsToAdd = (selectedIngredientIds.length === 0 || selectedIngredientIds.length === categoryIngredients.length)
+      ? categoryIngredients.map(ing => ing.id)
+      : selectedIngredientIds;
+    
+    for (const ingredientId of ingredientIdsToAdd) {
+      const modifierFormData = new FormData();
+      modifierFormData.append("groupId", groupId);
+      modifierFormData.append("ingredientId", ingredientId);
+      modifierFormData.append("priceExtra", "0");
+      await createModifier(modifierFormData);
+    }
+  }
+
+  function getExistingIngredientIds(group: { options: Array<{ name: string }>; ingredientCategoryId: string }): string[] {
+    return group.options
+      .map(opt => findIngredientId(opt.name, group.ingredientCategoryId))
+      .filter(Boolean);
+  }
+
+  async function updateGroupIngredients(group: { id: string; ingredientCategoryId: string; options: Array<{ id: string; name: string }> }) {
+    const selectedIngredientIds = selectedIngredientsByCategory[group.ingredientCategoryId] || [];
+    const existingIngredientIds = getExistingIngredientIds(group);
+    const toAddIngredients = selectedIngredientIds.filter(id => !existingIngredientIds.includes(id));
+    const toRemoveIngredients = existingIngredientIds.filter(id => !selectedIngredientIds.includes(id));
+
+    for (const ingredientId of toRemoveIngredients) {
+      const modifier = group.options.find(opt => {
+        const ing = ingredients.find(i => i.id === ingredientId && i.name === opt.name);
+        return ing;
+      });
+      if (modifier) {
+        await deleteModifier(modifier.id);
+      }
+    }
+    
+    for (const ingredientId of toAddIngredients) {
+      const modifierFormData = new FormData();
+      modifierFormData.append("groupId", group.id);
+      modifierFormData.append("ingredientId", ingredientId);
+      modifierFormData.append("priceExtra", "0");
+      await createModifier(modifierFormData);
+    }
+  }
+
+  async function handleSave() {
+    const validationError = validateForm();
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
 
     setIsSaving(true);
     try {
-      let variationId = item.id;
-
-      if (isNew) {
-        const formData = new FormData();
-        formData.append("categoryId", categoryId);
-        formData.append("name", name.trim());
-        formData.append("price", priceValue);
-
-        const result = await createVariation(formData);
-        if (!result.success) {
-          toast.error(result.error || "Erreur lors de la création");
-          setIsSaving(false);
-          return;
-        }
-        variationId = (result.data && typeof result.data === 'object' && 'id' in result.data) 
-          ? (result.data as { id: string }).id 
-          : item.id;
-      } else {
-        const updateFormData = new FormData();
-        updateFormData.append("name", name.trim());
-        updateFormData.append("price", priceValue);
-        if (description.trim()) {
-          updateFormData.append("description", description.trim());
-        }
-
-        const result = await updateVariation(item.id, updateFormData);
-        if (!result.success) {
-          toast.error(result.error || "Erreur lors de la mise à jour");
-          setIsSaving(false);
-          return;
-        }
-      }
-
+      const variationId = await createOrUpdateVariation();
       const existingGroupIds = item.optionGroups.map(g => g.ingredientCategoryId);
       const toAdd = selectedOptionCategoryIds.filter(id => !existingGroupIds.includes(id));
       const toRemove = existingGroupIds.filter(id => !selectedOptionCategoryIds.includes(id));
@@ -219,38 +281,10 @@ export function ItemEditorDialog({
         formData.append("ingredientCategoryId", categoryIdToAdd);
         formData.append("minSelect", "0");
         formData.append("maxSelect", "1");
-
         const result = await createModifierGroup(formData);
         if (result.success && result.data && typeof result.data === 'object' && 'id' in result.data) {
           const groupId = (result.data as { id: string }).id;
-          const selectedIngredientIds = selectedIngredientsByCategory[categoryIdToAdd] || [];
-          const categoryIngredients = ingredients.filter(
-            ing => ing.ingredientCategoryId === categoryIdToAdd && ing.isAvailable
-          );
-          
-          if (selectedIngredientIds.length === 0 || selectedIngredientIds.length === categoryIngredients.length) {
-            for (const ingredientId of categoryIngredients.map(ing => ing.id)) {
-              const ingredient = ingredients.find(ing => ing.id === ingredientId);
-              if (ingredient) {
-                const modifierFormData = new FormData();
-                modifierFormData.append("groupId", groupId);
-                modifierFormData.append("ingredientId", ingredientId);
-                modifierFormData.append("priceExtra", "0");
-                await createModifier(modifierFormData);
-              }
-            }
-          } else {
-            for (const ingredientId of selectedIngredientIds) {
-              const ingredient = ingredients.find(ing => ing.id === ingredientId);
-              if (ingredient) {
-                const modifierFormData = new FormData();
-                modifierFormData.append("groupId", groupId);
-                modifierFormData.append("ingredientId", ingredientId);
-                modifierFormData.append("priceExtra", "0");
-                await createModifier(modifierFormData);
-              }
-            }
-          }
+          await createModifiersForGroup(groupId, categoryIdToAdd);
         }
       }
 
@@ -258,35 +292,7 @@ export function ItemEditorDialog({
         if (toRemove.includes(groupToRemove.ingredientCategoryId)) {
           await deleteModifierGroup(groupToRemove.id);
         } else {
-          const selectedIngredientIds = selectedIngredientsByCategory[groupToRemove.ingredientCategoryId] || [];
-          const categoryIngredients = ingredients.filter(
-            ing => ing.ingredientCategoryId === groupToRemove.ingredientCategoryId && ing.isAvailable
-          );
-          
-          const existingIngredientIds = groupToRemove.options.map(opt => {
-            const ingredient = ingredients.find(ing => ing.name === opt.name && ing.ingredientCategoryId === groupToRemove.ingredientCategoryId);
-            return ingredient?.id || "";
-          }).filter(Boolean);
-
-          const toAddIngredients = selectedIngredientIds.filter(id => !existingIngredientIds.includes(id));
-          const toRemoveIngredients = existingIngredientIds.filter(id => !selectedIngredientIds.includes(id));
-
-          for (const ingredientId of toRemoveIngredients) {
-            const modifier = groupToRemove.options.find(opt => {
-              const ing = ingredients.find(i => i.id === ingredientId && i.name === opt.name);
-              return ing;
-            });
-            if (modifier) {
-              await deleteModifier(modifier.id);
-            }
-          }
-          for (const ingredientId of toAddIngredients) {
-            const modifierFormData = new FormData();
-            modifierFormData.append("groupId", groupToRemove.id);
-            modifierFormData.append("ingredientId", ingredientId);
-            modifierFormData.append("priceExtra", "0");
-            await createModifier(modifierFormData);
-          }
+          await updateGroupIngredients(groupToRemove);
         }
       }
 
@@ -294,7 +300,8 @@ export function ItemEditorDialog({
       onClose();
     } catch (error) {
       console.error(error);
-      toast.error("Une erreur est survenue");
+      const message = error instanceof Error ? error.message : "Une erreur est survenue";
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }
