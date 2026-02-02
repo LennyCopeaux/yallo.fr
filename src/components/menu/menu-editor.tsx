@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Loader2, Utensils, ShoppingCart } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Utensils, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategorySidebar } from "./category-sidebar";
@@ -11,7 +11,7 @@ import { IngredientsTab } from "./ingredients-tab";
 import { getMenuDataV2 } from "@/features/menu/actions-v2";
 import { toast } from "sonner";
 
-import type { Option, OptionGroup, Item, Category, MenuData } from "./types";
+import type { Item, MenuData } from "./types";
 
 interface BackendCategory {
   id: string;
@@ -71,6 +71,37 @@ interface MenuEditorProps {
   initialMenuData: BackendMenuData;
 }
 
+function transformModifierOptions(modifiers: BackendModifier[]) {
+  return modifiers.map((modifier: BackendModifier) => ({
+    id: modifier.id,
+    name: modifier.ingredient?.name || "",
+    priceExtra: modifier.priceExtra,
+    isAvailable: modifier.ingredient?.isAvailable ?? true,
+  }));
+}
+
+function transformModifierGroups(groups: BackendModifierGroup[]) {
+  return groups.map((group: BackendModifierGroup) => ({
+    id: group.id,
+    title: group.ingredientCategory?.name || "",
+    ingredientCategoryId: group.ingredientCategoryId,
+    minSelect: group.minSelect,
+    maxSelect: group.maxSelect,
+    options: transformModifierOptions(group.modifiers || []),
+  }));
+}
+
+function transformVariations(variations: BackendVariation[]) {
+  return variations.map((variation: BackendVariation) => ({
+    id: variation.id,
+    name: variation.name,
+    price: variation.price,
+    description: undefined,
+    isAvailable: variation.isAvailable ?? true,
+    optionGroups: transformModifierGroups(variation.modifierGroups || []),
+  }));
+}
+
 function transformMenuData(backendData: BackendMenuData): MenuData {
   return {
     restaurantId: backendData.restaurantId,
@@ -78,33 +109,14 @@ function transformMenuData(backendData: BackendMenuData): MenuData {
       id: category.id,
       name: category.name,
       rank: category.rank,
-      items: (category.variations || []).map((variation: BackendVariation) => ({
-        id: variation.id,
-        name: variation.name,
-        price: variation.price,
-        description: undefined,
-        isAvailable: variation.isAvailable ?? true,
-        optionGroups: (variation.modifierGroups || []).map((group: BackendModifierGroup) => ({
-          id: group.id,
-          title: group.ingredientCategory?.name || "",
-          ingredientCategoryId: group.ingredientCategoryId,
-          minSelect: group.minSelect,
-          maxSelect: group.maxSelect,
-          options: (group.modifiers || []).map((modifier: BackendModifier) => ({
-            id: modifier.id,
-            name: modifier.ingredient?.name || "",
-            priceExtra: modifier.priceExtra,
-            isAvailable: modifier.ingredient?.isAvailable ?? true,
-          })),
-        })),
-      })),
+      items: transformVariations(category.variations || []),
     })),
     ingredients: backendData.ingredients || [],
     ingredientCategories: backendData.ingredientCategories || [],
   };
 }
 
-export function MenuEditor({ initialMenuData }: MenuEditorProps) {
+export function MenuEditor({ initialMenuData }: Readonly<MenuEditorProps>) {
   const [menuData, setMenuData] = useState<MenuData>(transformMenuData(initialMenuData));
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     menuData.categories[0]?.id || null

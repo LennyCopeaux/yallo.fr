@@ -55,6 +55,155 @@ interface Ingredient {
   ingredientCategory: IngredientCategory;
 }
 
+type ModifierWithIngredient = {
+  modifier: { id: string; ingredientId: string; priceExtra: number };
+  ingredient: Ingredient;
+};
+
+function getModifiersWithIngredients(
+  modifiers: Array<{ id: string; ingredientId: string; priceExtra: number }>,
+  ingredients: Ingredient[]
+): ModifierWithIngredient[] {
+  return modifiers
+    .map((modifier) => {
+      const ingredient = ingredients.find((ing) => ing.id === modifier.ingredientId);
+      return ingredient ? { modifier, ingredient } : null;
+    })
+    .filter((item): item is ModifierWithIngredient => item !== null);
+}
+
+function getUnusedIngredientCategories(
+  ingredientCategories: IngredientCategory[],
+  variationModifierGroups: Array<{ ingredientCategoryId: string }>
+): IngredientCategory[] {
+  return ingredientCategories.filter((cat) => {
+    const isUsed = variationModifierGroups.some(
+      (g) => g.ingredientCategoryId === cat.id
+    );
+    return !isUsed;
+  });
+}
+
+function formatPrice(price: number): string {
+  if (price === 0) return "";
+  return `+${(price / 100).toFixed(2)} €`;
+}
+
+function getModifierItemClassName(isAvailable: boolean): string {
+  return isAvailable
+    ? "bg-background/30"
+    : "opacity-50 bg-destructive/10";
+}
+
+interface ModifierItemProps {
+  readonly modifier: { id: string; priceExtra: number };
+  readonly ingredient: Ingredient;
+  readonly onDelete: (id: string) => void;
+  readonly isLoading: boolean;
+}
+
+function ModifierItem({
+  modifier,
+  ingredient,
+  onDelete,
+  isLoading,
+}: ModifierItemProps) {
+  return (
+    <div
+      className={`flex items-center justify-between p-2 rounded text-sm ${getModifierItemClassName(ingredient.isAvailable)}`}
+    >
+      <span>{ingredient.name}</span>
+      <div className="flex items-center gap-2">
+        {modifier.priceExtra > 0 && (
+          <span className="text-primary font-medium">
+            {formatPrice(modifier.priceExtra)}
+          </span>
+        )}
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => onDelete(modifier.id)}
+          disabled={isLoading}
+          className="h-4 w-4 p-0 text-destructive"
+        >
+          {isLoading ? (
+            <Loader2 className="w-2 h-2 animate-spin" />
+          ) : (
+            <X className="w-2 h-2" />
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+interface ModifierGroupsSectionProps {
+  readonly groups: Array<{
+    id: string;
+    ingredientCategory: { name: string };
+    minSelect: number;
+    maxSelect: number;
+    modifiers: Array<{ id: string; ingredientId: string; priceExtra: number }>;
+  }>;
+  readonly ingredients: Ingredient[];
+  readonly onDeleteGroup: (id: string) => void;
+  readonly onDeleteModifier: (id: string) => void;
+  readonly isLoading: (id: string) => boolean;
+}
+
+function ModifierGroupsSection({
+  groups,
+  ingredients,
+  onDeleteGroup,
+  onDeleteModifier,
+  isLoading,
+}: ModifierGroupsSectionProps) {
+  return (
+    <div className="space-y-3 pt-2 border-t border-border">
+      {groups.map((group) => (
+        <div key={group.id} className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">
+                {group.ingredientCategory.name}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                ({group.minSelect === group.maxSelect
+                  ? `${group.minSelect} choix`
+                  : `${group.minSelect}-${group.maxSelect} choix`})
+              </span>
+            </div>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onDeleteGroup(group.id)}
+              disabled={isLoading(`delete-modifier-group-${group.id}`)}
+              className="text-destructive"
+            >
+              {isLoading(`delete-modifier-group-${group.id}`) ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Trash2 className="w-3 h-3" />
+              )}
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {getModifiersWithIngredients(group.modifiers, ingredients).map(({ modifier, ingredient }) => (
+              <ModifierItem
+                key={modifier.id}
+                modifier={modifier}
+                ingredient={ingredient}
+                onDelete={onDeleteModifier}
+                isLoading={isLoading(`delete-modifier-${modifier.id}`)}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 interface ModifierIngredient {
   id: string;
   name: string;
@@ -118,10 +267,6 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
   const [variationEditDialogOpen, setVariationEditDialogOpen] = useState(false);
   const [editingVariationFull, setEditingVariationFull] = useState<ProductVariation | null>(null);
 
-  function formatPrice(price: number): string {
-    if (price === 0) return "";
-    return `+${(price / 100).toFixed(2)} €`;
-  }
 
   // Fonction helper pour rafraîchir les données
   function refreshData() {
@@ -679,76 +824,13 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
 
                       {/* Groupes de modificateurs */}
                       {variation.modifierGroups.length > 0 && (
-                        <div className="space-y-3 pt-2 border-t border-border">
-                          {variation.modifierGroups.map((group) => (
-                            <div key={group.id} className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-muted-foreground">
-                                    {group.ingredientCategory.name}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">
-                                    ({group.minSelect === group.maxSelect
-                                      ? `${group.minSelect} choix`
-                                      : `${group.minSelect}-${group.maxSelect} choix`})
-                                  </span>
-                                </div>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleDeleteModifierGroup(group.id)}
-                                  disabled={isLoading(`delete-modifier-group-${group.id}`)}
-                                  className="text-destructive"
-                                >
-                                  {isLoading(`delete-modifier-group-${group.id}`) ? (
-                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="w-3 h-3" />
-                                  )}
-                                </Button>
-                              </div>
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                {group.modifiers.map((modifier) => {
-                                  const ingredient = ingredients.find((ing) => ing.id === modifier.ingredientId);
-                                  if (!ingredient) return null;
-
-                                  return (
-                                    <div
-                                      key={modifier.id}
-                                      className={`flex items-center justify-between p-2 rounded text-sm ${
-                                        !ingredient.isAvailable
-                                          ? "opacity-50 bg-destructive/10"
-                                          : "bg-background/30"
-                                      }`}
-                                    >
-                                      <span>{ingredient.name}</span>
-                                      <div className="flex items-center gap-2">
-                                        {modifier.priceExtra > 0 && (
-                                          <span className="text-primary font-medium">
-                                            {formatPrice(modifier.priceExtra)}
-                                          </span>
-                                        )}
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          onClick={() => handleDeleteModifier(modifier.id)}
-                                          disabled={isLoading(`delete-modifier-${modifier.id}`)}
-                                          className="h-4 w-4 p-0 text-destructive"
-                                        >
-                                          {isLoading(`delete-modifier-${modifier.id}`) ? (
-                                            <Loader2 className="w-2 h-2 animate-spin" />
-                                          ) : (
-                                            <X className="w-2 h-2" />
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                        <ModifierGroupsSection
+                          groups={variation.modifierGroups}
+                          ingredients={ingredients}
+                          onDeleteGroup={handleDeleteModifierGroup}
+                          onDeleteModifier={handleDeleteModifier}
+                          isLoading={isLoading}
+                        />
                       )}
 
                       {/* Bouton pour ajouter une catégorie d&apos;ingrédients */}
@@ -792,18 +874,11 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                                     <SelectValue placeholder="Sélectionnez une catégorie" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {ingredientCategories
-                                      .filter(
-                                        (cat) =>
-                                          !variation.modifierGroups.some(
-                                            (g) => g.ingredientCategoryId === cat.id
-                                          )
-                                      )
-                                      .map((cat) => (
-                                        <SelectItem key={cat.id} value={cat.id}>
-                                          {cat.name}
-                                        </SelectItem>
-                                      ))}
+                                    {getUnusedIngredientCategories(ingredientCategories, variation.modifierGroups).map((cat) => (
+                                      <SelectItem key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                      </SelectItem>
+                                    ))}
                                   </SelectContent>
                                 </Select>
                               </div>

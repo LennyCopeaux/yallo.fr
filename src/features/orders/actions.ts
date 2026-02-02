@@ -81,7 +81,13 @@ export async function updateOrderStatus(orderId: string, newStatus: OrderStatus)
   return { success: true };
 }
 
-// Simuler une commande pour les tests
+/**
+ * Simule une commande pour les tests et démonstrations.
+ * Génère une commande avec des produits aléatoires pour faciliter les tests de l'interface.
+ * 
+ * @returns Promise résolue après création de la commande simulée
+ * @throws Error si l'utilisateur n'est pas authentifié ou si le restaurant n'existe pas
+ */
 export async function simulateOrder() {
   const session = await auth();
   if (!session?.user?.id) {

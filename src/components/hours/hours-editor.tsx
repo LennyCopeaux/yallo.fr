@@ -100,7 +100,7 @@ function parseScheduleDay(daySchedule: { open: string; close: string } | { lunch
   };
 }
 
-export function HoursEditor({ initialHours }: HoursEditorProps) {
+export function HoursEditor({ initialHours }: Readonly<HoursEditorProps>) {
   const [isSaving, setIsSaving] = useState(false);
 
   const defaultSchedule = Object.fromEntries(

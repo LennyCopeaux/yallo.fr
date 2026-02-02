@@ -4,6 +4,81 @@ import { restaurants, categories, productVariations, modifierGroups, modifiers, 
 import { eq, asc } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { fetchHubriseCatalog, HubriseError } from "@/lib/services/hubrise";
+import { logger } from "@/lib/logger";
+
+type ModifierData = {
+  modifier: typeof modifiers.$inferSelect;
+  ingredient: typeof ingredients.$inferSelect;
+  groupId: string;
+};
+
+type ModifierGroupData = {
+  group: typeof modifierGroups.$inferSelect;
+  variationId: string;
+  ingredientCategory: typeof ingredientCategories.$inferSelect;
+};
+
+type VariationData = {
+  variation: typeof productVariations.$inferSelect;
+  categoryId: string;
+};
+
+function transformModifiersForJson(
+  allModifiers: ModifierData[],
+  groupId: string
+): Array<{ name: string; priceExtra: number; isAvailable: boolean }> {
+  return allModifiers
+    .filter((m) => m.groupId === groupId)
+    .map((m) => ({
+      name: m.ingredient.name,
+      priceExtra: m.modifier.priceExtra / 100,
+      isAvailable: m.ingredient.isAvailable,
+    }));
+}
+
+function transformModifierGroupsForJson(
+  allModifierGroups: ModifierGroupData[],
+  allModifiers: ModifierData[],
+  variationId: string
+): Array<{
+  category: string;
+  minSelect: number;
+  maxSelect: number;
+  options: Array<{ name: string; priceExtra: number; isAvailable: boolean }>;
+}> {
+  return allModifierGroups
+    .filter((mg) => mg.variationId === variationId)
+    .map((mg) => ({
+      category: mg.ingredientCategory.name,
+      minSelect: mg.group.minSelect,
+      maxSelect: mg.group.maxSelect,
+      options: transformModifiersForJson(allModifiers, mg.group.id),
+    }));
+}
+
+function transformVariationsForJson(
+  allVariations: VariationData[],
+  allModifierGroups: ModifierGroupData[],
+  allModifiers: ModifierData[],
+  categoryId: string
+): Array<{
+  name: string;
+  price: number;
+  modifierGroups: Array<{
+    category: string;
+    minSelect: number;
+    maxSelect: number;
+    options: Array<{ name: string; priceExtra: number; isAvailable: boolean }>;
+  }>;
+}> {
+  return allVariations
+    .filter((v) => v.categoryId === categoryId)
+    .map((v) => ({
+      name: v.variation.name,
+      price: v.variation.price / 100,
+      modifierGroups: transformModifierGroupsForJson(allModifierGroups, allModifiers, v.variation.id),
+    }));
+}
 
 async function requireAdmin() {
   const session = await auth();
@@ -43,9 +118,18 @@ export async function GET(
         );
         return NextResponse.json({ menuJson });
       } catch (error) {
-        console.warn(
-          `HubRise indisponible pour le restaurant ${id}, fallback sur menu Yallo. Erreur: ${error instanceof HubriseError ? error.message : error instanceof Error ? error.message : "Erreur inconnue"}`
-        );
+        let errorMessage: string;
+        if (error instanceof HubriseError) {
+          errorMessage = error.message;
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = "Erreur inconnue";
+        }
+        logger.warn("HubRise indisponible, fallback sur menu Yallo", {
+          restaurantId: id,
+          error: errorMessage,
+        });
       }
     }
     const allCategories = await db
@@ -86,45 +170,16 @@ export async function GET(
       .innerJoin(modifierGroups, eq(modifiers.groupId, modifierGroups.id))
       .where(eq(ingredients.restaurantId, id));
 
-    const menuJson = allCategories.map((category) => {
-      const categoryVariations = allVariations
-        .filter((v) => v.categoryId === category.id)
-        .map((v) => {
-          const variationGroups = allModifierGroups
-            .filter((mg) => mg.variationId === v.variation.id)
-            .map((mg) => {
-              const groupModifiers = allModifiers
-                .filter((m) => m.groupId === mg.group.id)
-                .map((m) => ({
-                  name: m.ingredient.name,
-                  priceExtra: m.modifier.priceExtra / 100,
-                  isAvailable: m.ingredient.isAvailable,
-                }));
-
-              return {
-                category: mg.ingredientCategory.name,
-                minSelect: mg.group.minSelect,
-                maxSelect: mg.group.maxSelect,
-                options: groupModifiers,
-              };
-            });
-
-          return {
-            name: v.variation.name,
-            price: v.variation.price / 100,
-            modifierGroups: variationGroups,
-          };
-        });
-
-      return {
-        category: category.name,
-        items: categoryVariations,
-      };
-    });
+    const menuJson = allCategories.map((category) => ({
+      category: category.name,
+      items: transformVariationsForJson(allVariations, allModifierGroups, allModifiers, category.id),
+    }));
 
     return NextResponse.json({ menuJson: JSON.stringify(menuJson, null, 2) });
   } catch (error) {
-    console.error("Erreur génération JSON menu:", error);
+    logger.error("Erreur génération JSON menu", error instanceof Error ? error : new Error(String(error)), {
+      action: "generate-menu-json",
+    });
     return NextResponse.json(
       { error: "Erreur lors de la génération du JSON" },
       { status: 500 }

@@ -8,7 +8,7 @@ interface DemoCallButtonProps {
   phoneNumber: string;
 }
 
-export function DemoCallButton({ phoneNumber }: DemoCallButtonProps) {
+export function DemoCallButton({ phoneNumber }: Readonly<DemoCallButtonProps>) {
   const [isCalling, setIsCalling] = useState(false);
 
   const handleCall = () => {

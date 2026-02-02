@@ -2,8 +2,82 @@ import { db } from "@/db";
 import { restaurants, categories, productVariations, modifierGroups, modifiers, ingredients, ingredientCategories } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { fetchHubriseCatalog, HubriseError } from "./hubrise";
+import { logger } from "@/lib/logger";
 
 type Restaurant = typeof restaurants.$inferSelect;
+
+type ModifierData = {
+  modifier: typeof modifiers.$inferSelect;
+  ingredient: typeof ingredients.$inferSelect;
+  groupId: string;
+};
+
+type ModifierGroupData = {
+  group: typeof modifierGroups.$inferSelect;
+  variationId: string;
+  ingredientCategory: typeof ingredientCategories.$inferSelect;
+};
+
+type VariationData = {
+  variation: typeof productVariations.$inferSelect;
+  categoryId: string;
+};
+
+function transformModifiers(
+  allModifiers: ModifierData[],
+  groupId: string
+): Array<{ name: string; priceExtra: number }> {
+  return allModifiers
+    .filter((m) => m.groupId === groupId)
+    .map((m) => ({
+      name: m.ingredient.name,
+      priceExtra: m.modifier.priceExtra / 100,
+    }));
+}
+
+function transformModifierGroups(
+  allModifierGroups: ModifierGroupData[],
+  allModifiers: ModifierData[],
+  variationId: string
+): Array<{
+  category: string;
+  minSelect: number;
+  maxSelect: number;
+  options: Array<{ name: string; priceExtra: number }>;
+}> {
+  return allModifierGroups
+    .filter((mg) => mg.variationId === variationId)
+    .map((mg) => ({
+      category: mg.ingredientCategory.name,
+      minSelect: mg.group.minSelect,
+      maxSelect: mg.group.maxSelect,
+      options: transformModifiers(allModifiers, mg.group.id),
+    }));
+}
+
+function transformVariations(
+  allVariations: VariationData[],
+  allModifierGroups: ModifierGroupData[],
+  allModifiers: ModifierData[],
+  categoryId: string
+): Array<{
+  name: string;
+  price: number;
+  modifierGroups: Array<{
+    category: string;
+    minSelect: number;
+    maxSelect: number;
+    options: Array<{ name: string; priceExtra: number }>;
+  }>;
+}> {
+  return allVariations
+    .filter((v) => v.categoryId === categoryId)
+    .map((v) => ({
+      name: v.variation.name,
+      price: v.variation.price / 100,
+      modifierGroups: transformModifierGroups(allModifierGroups, allModifiers, v.variation.id),
+    }));
+}
 
 async function getMenuStructure(restaurantId: string, hubriseAccessToken: string | null, hubriseLocationId: string | null): Promise<unknown> {
   if (hubriseAccessToken && hubriseLocationId) {
@@ -11,9 +85,18 @@ async function getMenuStructure(restaurantId: string, hubriseAccessToken: string
       const menuJson = await fetchHubriseCatalog(hubriseAccessToken, hubriseLocationId);
       return JSON.parse(menuJson);
     } catch (error) {
-      console.warn(
-        `HubRise indisponible pour le restaurant ${restaurantId}, fallback sur menu Yallo. Erreur: ${error instanceof HubriseError ? error.message : error instanceof Error ? error.message : "Erreur inconnue"}`
-      );
+      let errorMessage: string;
+      if (error instanceof HubriseError) {
+        errorMessage = error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = "Erreur inconnue";
+      }
+      logger.warn("HubRise indisponible, fallback sur menu Yallo", {
+        restaurantId,
+        error: errorMessage,
+      });
     }
   }
 
@@ -55,40 +138,10 @@ async function getMenuStructure(restaurantId: string, hubriseAccessToken: string
     .innerJoin(modifierGroups, eq(modifiers.groupId, modifierGroups.id))
     .where(eq(ingredients.restaurantId, restaurantId));
 
-  return allCategories.map((category) => {
-    const categoryVariations = allVariations
-      .filter((v) => v.categoryId === category.id)
-      .map((v) => {
-        const variationGroups = allModifierGroups
-          .filter((mg) => mg.variationId === v.variation.id)
-          .map((mg) => {
-            const groupModifiers = allModifiers
-              .filter((m) => m.groupId === mg.group.id)
-              .map((m) => ({
-                name: m.ingredient.name,
-                priceExtra: m.modifier.priceExtra / 100,
-              }));
-
-            return {
-              category: mg.ingredientCategory.name,
-              minSelect: mg.group.minSelect,
-              maxSelect: mg.group.maxSelect,
-              options: groupModifiers,
-            };
-          });
-
-        return {
-          name: v.variation.name,
-          price: v.variation.price / 100,
-          modifierGroups: variationGroups,
-        };
-      });
-
-    return {
-      category: category.name,
-      items: categoryVariations,
-    };
-  });
+  return allCategories.map((category) => ({
+    category: category.name,
+    items: transformVariations(allVariations, allModifierGroups, allModifiers, category.id),
+  }));
 }
 
 export async function generateSystemPrompt(restaurant: Restaurant): Promise<string> {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "motion/react";
-import { Plus, GripVertical, Loader2, Edit2, Trash2, MoreVertical } from "lucide-react";
+import { Plus, Loader2, Edit2, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -59,7 +59,7 @@ export function CategorySidebar({
   onSelectCategory,
   onRefresh,
   isRefreshing,
-}: CategorySidebarProps) {
+}: Readonly<CategorySidebarProps>) {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -91,7 +91,7 @@ export function CategorySidebar({
       } else {
         toast.error(result.error || "Erreur lors de la création");
       }
-    } catch (error) {
+    } catch {
       toast.error("Une erreur est survenue");
     } finally {
       setIsCreating(false);
@@ -127,7 +127,7 @@ export function CategorySidebar({
       } else {
         toast.error(result.error || "Erreur lors de la mise à jour");
       }
-    } catch (error) {
+    } catch {
       toast.error("Une erreur est survenue");
     } finally {
       setIsUpdating(false);
@@ -161,7 +161,7 @@ export function CategorySidebar({
       } else {
         toast.error(result.error || "Erreur lors de la suppression");
       }
-    } catch (error) {
+    } catch {
       toast.error("Une erreur est survenue");
     } finally {
       setDeletingIds(prev => ({ ...prev, [categoryId]: false }));

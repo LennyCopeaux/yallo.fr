@@ -43,7 +43,7 @@ export async function createVapiAssistant(restaurant: Restaurant): Promise<{ id:
         endpointing: 500,
       },
       firstMessage: "Bonjour, bienvenue chez " + restaurant.name + ". Comment puis-je vous aider aujourd'hui ?",
-      ...(process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL.startsWith("https://")
+      ...(process.env.NEXT_PUBLIC_APP_URL?.startsWith("https://")
         ? { serverUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/vapi/system-prompt` }
         : {}),
     }),

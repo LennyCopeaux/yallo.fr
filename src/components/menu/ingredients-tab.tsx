@@ -67,7 +67,7 @@ export function IngredientsTab({
   ingredientCategories: initialCategories,
   ingredients: initialIngredients,
   onRefresh,
-}: IngredientsTabProps) {
+}: Readonly<IngredientsTabProps>) {
   const [categories, setCategories] = useState(initialCategories);
   const [ingredients, setIngredients] = useState(initialIngredients);
 
@@ -183,6 +183,13 @@ export function IngredientsTab({
     setCategoryDialogOpen(true);
   }
 
+  function resetIngredientForm() {
+    setIngredientName("");
+    setIngredientPrice("");
+    setSelectedCategoryId("");
+    setIngredientIsAvailable(true);
+  }
+
   async function handleCreateIngredient() {
     if (!ingredientName.trim() || !selectedCategoryId) {
       toast.error("Le nom et la catégorie sont requis");
@@ -203,10 +210,7 @@ export function IngredientsTab({
       if (result.success) {
         toast.success("Ingrédient créé");
         setIngredientDialogOpen(false);
-        setIngredientName("");
-        setIngredientPrice("");
-        setSelectedCategoryId("");
-        setIngredientIsAvailable(true);
+        resetIngredientForm();
         onRefresh();
       } else {
         toast.error(result.error || "Erreur lors de la création");
@@ -242,10 +246,7 @@ export function IngredientsTab({
         toast.success("Ingrédient mis à jour");
         setIngredientDialogOpen(false);
         setEditingIngredientId(null);
-        setIngredientName("");
-        setIngredientPrice("");
-        setSelectedCategoryId("");
-        setIngredientIsAvailable(true);
+        resetIngredientForm();
         onRefresh();
       } else {
         toast.error(result.error || "Erreur lors de la mise à jour");
@@ -272,26 +273,31 @@ export function IngredientsTab({
     }
   }
 
+  function updateIngredientAvailability(ingredientId: string, isAvailable: boolean) {
+    setIngredients(prev => prev.map(ing => 
+      ing.id === ingredientId ? { ...ing, isAvailable } : ing
+    ));
+  }
+
+  function rollbackIngredientAvailability(ingredientId: string, originalValue: boolean) {
+    updateIngredientAvailability(ingredientId, originalValue);
+  }
+
   async function handleToggleAvailability(ingredientId: string, currentValue: boolean) {
     const newValue = !currentValue;
     setTogglingIds(prev => ({ ...prev, [ingredientId]: true }));
-    setIngredients(prev => prev.map(ing => 
-      ing.id === ingredientId ? { ...ing, isAvailable: newValue } : ing
-    ));
+    updateIngredientAvailability(ingredientId, newValue);
+    
     try {
       const result = await toggleIngredientAvailability(ingredientId, newValue);
       if (result.success) {
         toast.success(newValue ? "Ingrédient activé" : "Ingrédient désactivé");
       } else {
-        setIngredients(prev => prev.map(ing => 
-          ing.id === ingredientId ? { ...ing, isAvailable: currentValue } : ing
-        ));
+        rollbackIngredientAvailability(ingredientId, currentValue);
         toast.error(result.error || "Erreur lors de la mise à jour");
       }
     } catch {
-      setIngredients(prev => prev.map(ing => 
-        ing.id === ingredientId ? { ...ing, isAvailable: currentValue } : ing
-      ));
+      rollbackIngredientAvailability(ingredientId, currentValue);
       toast.error("Une erreur est survenue");
     } finally {
       setTogglingIds(prev => ({ ...prev, [ingredientId]: false }));
@@ -591,10 +597,7 @@ export function IngredientsTab({
               onClick={() => {
                 setIngredientDialogOpen(false);
                 setEditingIngredientId(null);
-                setIngredientName("");
-                setIngredientPrice("");
-                setSelectedCategoryId("");
-                setIngredientIsAvailable(true);
+                resetIngredientForm();
               }}
               disabled={isCreatingIngredient}
               className="border-border"
