@@ -24,6 +24,11 @@ export function getAppUrl(path: string = ""): string {
 
 export function buildAppUrlServer(pathname: string, host: string): string {
   const normalizedPath = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return `${process.env.NEXT_PUBLIC_APP_URL}${normalizedPath}`;
+  }
+  
   const isDev = host.includes("localhost");
   
   if (isDev) {

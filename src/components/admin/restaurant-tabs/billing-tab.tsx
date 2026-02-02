@@ -94,9 +94,6 @@ export function BillingTab({ restaurant }: BillingTabProps) {
               {form.formState.errors.billingStartDate && (
                 <p className="text-sm text-red-400">{form.formState.errors.billingStartDate.message}</p>
               )}
-              <p className="text-xs text-muted-foreground">
-                Exemple : Le client commencera à payer à compter du 1er janvier 2025
-              </p>
             </div>
           </CardContent>
         </Card>

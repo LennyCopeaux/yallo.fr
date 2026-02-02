@@ -16,7 +16,6 @@ export default async function MenuPage() {
     redirect("/login");
   }
 
-  // Si l'utilisateur doit changer son mot de passe, redirige vers /update-password
   if (session.user.mustChangePassword === true) {
     redirect("/update-password");
   }
@@ -25,7 +24,6 @@ export default async function MenuPage() {
     redirect("/admin");
   }
 
-  // Récupère les données du menu avec la nouvelle structure
   const menuData = await getMenuDataV2();
 
   if (!menuData) {

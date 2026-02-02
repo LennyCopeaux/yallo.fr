@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { restaurants, categories, productVariations, modifierGroups, modifiers, ingredients, ingredientCategories } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { fetchHubriseCatalog, HubriseError } from "@/lib/services/hubrise";
 
 async function requireAdmin() {
   const session = await auth();
@@ -20,7 +21,33 @@ export async function GET(
     await requireAdmin();
     const { id } = await params;
 
-    // Récupère le menu complet
+    const [restaurant] = await db
+      .select({
+        id: restaurants.id,
+        hubriseLocationId: restaurants.hubriseLocationId,
+        hubriseAccessToken: restaurants.hubriseAccessToken,
+      })
+      .from(restaurants)
+      .where(eq(restaurants.id, id))
+      .limit(1);
+
+    if (!restaurant) {
+      return NextResponse.json({ error: "Restaurant non trouvé" }, { status: 404 });
+    }
+
+    if (restaurant.hubriseAccessToken && restaurant.hubriseLocationId) {
+      try {
+        const menuJson = await fetchHubriseCatalog(
+          restaurant.hubriseAccessToken,
+          restaurant.hubriseLocationId
+        );
+        return NextResponse.json({ menuJson });
+      } catch (error) {
+        console.warn(
+          `HubRise indisponible pour le restaurant ${id}, fallback sur menu Yallo. Erreur: ${error instanceof HubriseError ? error.message : error instanceof Error ? error.message : "Erreur inconnue"}`
+        );
+      }
+    }
     const allCategories = await db
       .select()
       .from(categories)
@@ -59,7 +86,6 @@ export async function GET(
       .innerJoin(modifierGroups, eq(modifiers.groupId, modifierGroups.id))
       .where(eq(ingredients.restaurantId, id));
 
-    // Construit le JSON du menu
     const menuJson = allCategories.map((category) => {
       const categoryVariations = allVariations
         .filter((v) => v.categoryId === category.id)

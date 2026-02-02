@@ -167,7 +167,7 @@ export function HoursEditor({ initialHours }: HoursEditorProps) {
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
-      <Card className="bg-card/30 border-border">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5 text-primary" />
@@ -186,22 +186,22 @@ export function HoursEditor({ initialHours }: HoursEditorProps) {
             return (
               <div
                 key={day.key}
-                className={`p-4 rounded-xl border transition-all ${
+                className={`p-4 rounded-lg border transition-all ${
                   enabled
-                    ? "border-primary/30 bg-primary/5"
-                    : "border-border bg-background/30"
+                    ? "border-border bg-card"
+                    : "border-border/50 bg-muted/20"
                 }`}
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-semibold text-sm ${
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-semibold text-sm transition-colors ${
                       enabled
-                        ? "bg-primary/20 text-primary"
-                        : "bg-muted text-muted-foreground"
+                        ? "bg-muted text-foreground"
+                        : "bg-muted/50 text-muted-foreground"
                     }`}>
                       {day.short}
                     </div>
-                    <Label className="text-base font-medium cursor-pointer" htmlFor={`switch-${day.key}`}>
+                    <Label className="text-base font-medium cursor-pointer text-foreground" htmlFor={`switch-${day.key}`}>
                       {day.label}
                     </Label>
                   </div>
@@ -217,17 +217,17 @@ export function HoursEditor({ initialHours }: HoursEditorProps) {
                 </div>
 
                 {enabled && (
-                    <div className="space-y-4 pl-[52px]">
-                    <div className="flex items-center gap-3">
+                  <div className="space-y-4 pl-[52px]">
+                    <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        variant={hasTwoSlots ? "default" : "outline"}
+                        variant={hasTwoSlots ? "outline" : "default"}
                         size="sm"
                         onClick={() => {
                           form.setValue(`schedule.${day.key}.hasTwoSlots`, false, { shouldValidate: true });
                         }}
                         disabled={isSaving}
-                        className={hasTwoSlots ? "" : "bg-primary text-black hover:bg-primary/90"}
+                        className={hasTwoSlots ? "border-border" : "bg-primary text-black hover:bg-primary/90"}
                       >
                         Un seul créneau
                       </Button>
@@ -239,7 +239,7 @@ export function HoursEditor({ initialHours }: HoursEditorProps) {
                           form.setValue(`schedule.${day.key}.hasTwoSlots`, true, { shouldValidate: true });
                         }}
                         disabled={isSaving}
-                        className={hasTwoSlots ? "bg-primary text-black hover:bg-primary/90" : ""}
+                        className={hasTwoSlots ? "bg-primary text-black hover:bg-primary/90" : "border-border"}
                       >
                         Midi et soir
                       </Button>
@@ -248,38 +248,38 @@ export function HoursEditor({ initialHours }: HoursEditorProps) {
                     {hasTwoSlots ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-sm font-medium text-muted-foreground">Midi</Label>
+                          <Label className="text-sm font-medium text-foreground">Midi</Label>
                           <div className="flex items-center gap-2">
                             <Input
                               type="time"
                               {...form.register(`schedule.${day.key}.lunch.open`)}
                               disabled={isSaving}
-                              className="flex-1 bg-background border-border focus:border-primary/50"
+                              className="flex-1 bg-background border-border text-foreground focus:border-primary/50"
                             />
                             <span className="text-muted-foreground">-</span>
                             <Input
                               type="time"
                               {...form.register(`schedule.${day.key}.lunch.close`)}
                               disabled={isSaving}
-                              className="flex-1 bg-background border-border focus:border-primary/50"
+                              className="flex-1 bg-background border-border text-foreground focus:border-primary/50"
                             />
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-sm font-medium text-muted-foreground">Soir</Label>
+                          <Label className="text-sm font-medium text-foreground">Soir</Label>
                           <div className="flex items-center gap-2">
                             <Input
                               type="time"
                               {...form.register(`schedule.${day.key}.dinner.open`)}
                               disabled={isSaving}
-                              className="flex-1 bg-background border-border focus:border-primary/50"
+                              className="flex-1 bg-background border-border text-foreground focus:border-primary/50"
                             />
                             <span className="text-muted-foreground">-</span>
                             <Input
                               type="time"
                               {...form.register(`schedule.${day.key}.dinner.close`)}
                               disabled={isSaving}
-                              className="flex-1 bg-background border-border focus:border-primary/50"
+                              className="flex-1 bg-background border-border text-foreground focus:border-primary/50"
                             />
                           </div>
                         </div>
@@ -290,14 +290,14 @@ export function HoursEditor({ initialHours }: HoursEditorProps) {
                           type="time"
                           {...form.register(`schedule.${day.key}.singleSlot.open`)}
                           disabled={isSaving}
-                          className="flex-1 bg-background border-border focus:border-primary/50"
+                          className="flex-1 bg-background border-border text-foreground focus:border-primary/50"
                         />
                         <span className="text-muted-foreground">-</span>
                         <Input
                           type="time"
                           {...form.register(`schedule.${day.key}.singleSlot.close`)}
                           disabled={isSaving}
-                          className="flex-1 bg-background border-border focus:border-primary/50"
+                          className="flex-1 bg-background border-border text-foreground focus:border-primary/50"
                         />
                       </div>
                     )}

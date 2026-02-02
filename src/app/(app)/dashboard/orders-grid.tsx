@@ -15,7 +15,7 @@ interface OrdersGridProps {
 
 export function OrdersGrid({ initialOrders }: OrdersGridProps) {
   const [orders, setOrders] = useState(initialOrders);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [isSimulating, setIsSimulating] = useState(false);
   const router = useRouter();
 

@@ -3,7 +3,7 @@ import { restaurants, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, UtensilsCrossed } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RestaurantDetailTabs } from "@/components/admin";
 
@@ -39,6 +39,8 @@ async function getRestaurant(id: string) {
       twilioPhoneNumber: restaurants.twilioPhoneNumber,
       forwardingPhoneNumber: restaurants.forwardingPhoneNumber,
       businessHours: restaurants.businessHours,
+      hubriseLocationId: restaurants.hubriseLocationId,
+      hubriseAccessToken: restaurants.hubriseAccessToken,
       createdAt: restaurants.createdAt,
       updatedAt: restaurants.updatedAt,
       ownerEmail: users.email,

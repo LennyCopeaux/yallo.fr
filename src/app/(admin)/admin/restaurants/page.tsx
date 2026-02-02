@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { restaurants, users, orders } from "@/db/schema";
-import { eq, sql, ilike, and } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { RestaurantsDataTable, AddRestaurantDialog } from "@/components/admin";
 import { Suspense } from "react";
 import { Loader2, UtensilsCrossed } from "lucide-react";

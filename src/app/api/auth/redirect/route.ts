@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 
 function buildAppUrl(pathname: string, host: string): URL {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return new URL(`${process.env.NEXT_PUBLIC_APP_URL}${pathname}`);
+  }
+  
   const isDev = host.includes("localhost");
   
   if (isDev) {

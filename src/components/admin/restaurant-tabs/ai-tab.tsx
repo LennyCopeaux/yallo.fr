@@ -9,10 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Loader2, Save, Bot, Brain, FileText, AlertCircle, Sparkles, Code } from "lucide-react";
 import { toast } from "sonner";
-import { updateRestaurantAI } from "@/app/(admin)/admin/restaurants/actions";
+import { updateRestaurantAI, createVapiAssistant, updateVapiAssistant } from "@/app/(admin)/admin/restaurants/actions";
 
 const formSchema = z.object({
   vapiAssistantId: z.string().max(100).optional(),
@@ -37,8 +36,8 @@ export function AITab({ restaurant }: AITabProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [isGeneratingMenuJson, setIsGeneratingMenuJson] = useState(false);
-  const [generatedPrompt, setGeneratedPrompt] = useState<string | null>(null);
-  const [generatedMenuJson, setGeneratedMenuJson] = useState<string | null>(null);
+  const [isCreatingAssistant, setIsCreatingAssistant] = useState(false);
+  const [isUpdatingAssistant, setIsUpdatingAssistant] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -106,18 +105,93 @@ export function AITab({ restaurant }: AITabProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="vapiAssistantId">ID de l&apos;assistant Vapi</Label>
-              <Input
-                id="vapiAssistantId"
-                {...form.register("vapiAssistantId")}
-                disabled={isLoading}
-                placeholder="asst_xxxxxxxxxxxxxxxxxxxx"
-                className="bg-background/50 border-border focus:border-primary/50 font-mono"
-              />
-              <p className="text-xs text-muted-foreground">
-                Trouvez cet ID dans votre dashboard Vapi
-              </p>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="vapiAssistantId">ID de l&apos;assistant Vapi</Label>
+                <Input
+                  id="vapiAssistantId"
+                  {...form.register("vapiAssistantId")}
+                  disabled={isLoading || isCreatingAssistant}
+                  placeholder="a7f3b2c9-8d4e-4f1a-9b6c-3e5d7a8f2c1b"
+                  className="bg-background/50 border-border focus:border-primary/50 font-mono"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {hasVapiId 
+                    ? "L'assistant Vapi est configuré et prêt à recevoir des appels"
+                    : "Créez un assistant Vapi ou entrez manuellement l'ID existant"
+                  }
+                </p>
+              </div>
+              {!hasVapiId ? (
+                <Button
+                  type="button"
+                  variant="default"
+                  disabled={isCreatingAssistant || isLoading}
+                  onClick={async () => {
+                    setIsCreatingAssistant(true);
+                    try {
+                      const result = await createVapiAssistant(restaurant.id);
+                      if (result.success && result.data) {
+                        form.setValue("vapiAssistantId", result.data.assistantId);
+                        toast.success("Assistant Vapi créé avec succès");
+                      } else {
+                        toast.error(result.error || "Erreur lors de la création de l'assistant");
+                      }
+                    } catch (error) {
+                      toast.error("Erreur lors de la création de l'assistant");
+                    } finally {
+                      setIsCreatingAssistant(false);
+                    }
+                  }}
+                  className="w-full"
+                >
+                  {isCreatingAssistant ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Création en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Bot className="w-4 h-4 mr-2" />
+                      Créer l&apos;agent IA
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isUpdatingAssistant || isLoading}
+                  onClick={async () => {
+                    setIsUpdatingAssistant(true);
+                    try {
+                      const result = await updateVapiAssistant(restaurant.id);
+                      if (result.success) {
+                        toast.success("Assistant Vapi mis à jour avec succès");
+                      } else {
+                        toast.error(result.error || "Erreur lors de la mise à jour de l'assistant");
+                      }
+                    } catch (error) {
+                      toast.error("Erreur lors de la mise à jour de l'assistant");
+                    } finally {
+                      setIsUpdatingAssistant(false);
+                    }
+                  }}
+                  className="w-full"
+                >
+                  {isUpdatingAssistant ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Mise à jour en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Mettre à jour l&apos;agent IA
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -135,57 +209,38 @@ export function AITab({ restaurant }: AITabProps) {
                   Instructions personnalisées pour l&apos;IA de ce restaurant (surcharge le prompt par défaut)
                 </CardDescription>
               </div>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={isGeneratingPrompt}
-                    onClick={async () => {
-                      setIsGeneratingPrompt(true);
-                      try {
-                        const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-system-prompt`);
-                        if (!response.ok) throw new Error("Erreur lors de la génération");
-                        const data = await response.json();
-                        setGeneratedPrompt(data.systemPrompt);
-                      } catch (error) {
-                        toast.error("Erreur lors de la génération du prompt");
-                      } finally {
-                        setIsGeneratingPrompt(false);
-                      }
-                    }}
-                  >
-                    {isGeneratingPrompt ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Génération...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Générer le Prompt System
-                      </>
-                    )}
-                  </Button>
-                </DialogTrigger>
-                {generatedPrompt && (
-                  <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Prompt Système Généré</DialogTitle>
-                      <DialogDescription>
-                        Ce prompt sera utilisé par Vapi lors des appels clients (mode lecture seule pour debug)
-                      </DialogDescription>
-                    </DialogHeader>
-                    <Textarea
-                      readOnly
-                      value={generatedPrompt}
-                      rows={20}
-                      className="font-mono text-sm bg-background/50"
-                    />
-                  </DialogContent>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isGeneratingPrompt}
+                onClick={async () => {
+                  setIsGeneratingPrompt(true);
+                  try {
+                    const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-system-prompt`);
+                    if (!response.ok) throw new Error("Erreur lors de la génération");
+                    const data = await response.json();
+                    form.setValue("systemPrompt", data.systemPrompt);
+                    toast.success("Prompt système généré");
+                  } catch (error) {
+                    toast.error("Erreur lors de la génération du prompt");
+                  } finally {
+                    setIsGeneratingPrompt(false);
+                  }
+                }}
+              >
+                {isGeneratingPrompt ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Génération...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Générer le Prompt System
+                  </>
                 )}
-              </Dialog>
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -233,73 +288,42 @@ Règles importantes :
                   Le menu du restaurant au format texte ou JSON. L&apos;IA utilisera ces informations pour comprendre les produits.
                 </CardDescription>
               </div>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={isGeneratingMenuJson}
-                    onClick={async () => {
-                      setIsGeneratingMenuJson(true);
-                      try {
-                        const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-menu-json`);
-                        if (!response.ok) throw new Error("Erreur lors de la génération");
-                        const data = await response.json();
-                        setGeneratedMenuJson(data.menuJson);
-                      } catch (error) {
-                        toast.error("Erreur lors de la génération du JSON");
-                      } finally {
-                        setIsGeneratingMenuJson(false);
-                      }
-                    }}
-                  >
-                    {isGeneratingMenuJson ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Génération...
-                      </>
-                    ) : (
-                      <>
-                        <Code className="w-4 h-4 mr-2" />
-                        Générer JSON Menu
-                      </>
-                    )}
-                  </Button>
-                </DialogTrigger>
-                {generatedMenuJson && (
-                  <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>JSON Menu Généré</DialogTitle>
-                      <DialogDescription>
-                        Format JSON du menu actuel pour vérification technique
-                      </DialogDescription>
-                    </DialogHeader>
-                    <Textarea
-                      readOnly
-                      value={generatedMenuJson}
-                      rows={20}
-                      className="font-mono text-sm bg-background/50"
-                    />
-                  </DialogContent>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isGeneratingMenuJson}
+                onClick={async () => {
+                  setIsGeneratingMenuJson(true);
+                  try {
+                    const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-menu-json`);
+                    if (!response.ok) throw new Error("Erreur lors de la génération");
+                    const data = await response.json();
+                    form.setValue("menuContext", data.menuJson);
+                    toast.success("JSON menu généré");
+                  } catch (error) {
+                    toast.error("Erreur lors de la génération du JSON");
+                  } finally {
+                    setIsGeneratingMenuJson(false);
+                  }
+                }}
+              >
+                {isGeneratingMenuJson ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Génération...
+                  </>
+                ) : (
+                  <>
+                    <Code className="w-4 h-4 mr-2" />
+                    Générer JSON Menu
+                  </>
                 )}
-              </Dialog>
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {/* Alert */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-cyan-400/5 border border-cyan-400/10">
-                <AlertCircle className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="text-cyan-400 font-medium">Format recommandé</p>
-                  <p className="text-muted-foreground mt-1">
-                    Utilisez un format structuré (JSON ou liste) avec les noms de produits, prix, et variantes disponibles.
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
+            <div className="space-y-2">
                 <Label htmlFor="menuContext">Données du menu</Label>
                 <Textarea
                   id="menuContext"
@@ -332,7 +356,6 @@ Règles importantes :
                 <p className="text-xs text-muted-foreground">
                   {form.watch("menuContext")?.length || 0} / 50 000 caractères
                 </p>
-              </div>
             </div>
           </CardContent>
         </Card>

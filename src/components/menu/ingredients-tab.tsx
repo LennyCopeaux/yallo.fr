@@ -335,13 +335,13 @@ export function IngredientsTab({
           <div>
             <h2 className="text-2xl font-bold">Ingrédients & Options</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Gérez votre bibliothèque d'ingrédients et de catégories d'options
+              Gérez votre bibliothèque d&apos;ingrédients et de catégories d&apos;options
             </p>
           </div>
         </div>
 
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Catégories d'options</h3>
+          <h3 className="text-lg font-semibold">Catégories d&apos;options</h3>
           <Button
             size="sm"
             onClick={() => openCategoryDialog()}
@@ -359,7 +359,7 @@ export function IngredientsTab({
           <Card className="bg-card/30 border-border">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <ShoppingCart className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
-              <p className="text-muted-foreground mb-4">Aucune catégorie d'options</p>
+              <p className="text-muted-foreground mb-4">Aucune catégorie d&apos;options</p>
               <Button onClick={() => openCategoryDialog()} variant="outline" className="border-border">
                 <Plus className="w-4 h-4 mr-2" />
                 Créer une catégorie
@@ -479,7 +479,7 @@ export function IngredientsTab({
         <DialogContent className="bg-card/95 backdrop-blur-xl border-border">
           <DialogHeader>
             <DialogTitle>
-              {editingCategoryId ? "Modifier la catégorie" : "Nouvelle catégorie d'options"}
+              {editingCategoryId ? "Modifier la catégorie" : "Nouvelle catégorie d&apos;options"}
             </DialogTitle>
             <DialogDescription>
               {editingCategoryId
@@ -535,17 +535,17 @@ export function IngredientsTab({
         <DialogContent className="bg-card/95 backdrop-blur-xl border-border">
           <DialogHeader>
             <DialogTitle>
-              {editingIngredientId ? "Modifier l'ingrédient" : "Nouvel ingrédient"}
+              {editingIngredientId ? "Modifier l&apos;ingrédient" : "Nouvel ingrédient"}
             </DialogTitle>
             <DialogDescription>
               {editingIngredientId
-                ? "Modifiez les détails de l'ingrédient"
+                ? "Modifiez les détails de l&apos;ingrédient"
                 : "Ajoutez un nouvel ingrédient à votre bibliothèque"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="ingredient-name">Nom de l'ingrédient *</Label>
+              <Label htmlFor="ingredient-name">Nom de l&apos;ingrédient *</Label>
               <Input
                 id="ingredient-name"
                 value={ingredientName}
@@ -646,9 +646,9 @@ export function IngredientsTab({
       <AlertDialog open={deleteIngredientDialogOpen !== null} onOpenChange={(open) => !open && setDeleteIngredientDialogOpen(null)}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer l'ingrédient ?</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer l&apos;ingrédient ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. L'ingrédient sera définitivement supprimé.
+              Cette action est irréversible. L&apos;ingrédient sera définitivement supprimé.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

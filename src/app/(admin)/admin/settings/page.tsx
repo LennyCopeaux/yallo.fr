@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, CreditCard } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { PricingSettingsForm } from "./_components/pricing-settings-form";
 import { getPricingConfig } from "./actions";
 
