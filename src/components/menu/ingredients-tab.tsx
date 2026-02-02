@@ -183,6 +183,13 @@ export function IngredientsTab({
     setCategoryDialogOpen(true);
   }
 
+  function resetIngredientForm() {
+    setIngredientName("");
+    setIngredientPrice("");
+    setSelectedCategoryId("");
+    setIngredientIsAvailable(true);
+  }
+
   async function handleCreateIngredient() {
     if (!ingredientName.trim() || !selectedCategoryId) {
       toast.error("Le nom et la catégorie sont requis");
@@ -203,10 +210,7 @@ export function IngredientsTab({
       if (result.success) {
         toast.success("Ingrédient créé");
         setIngredientDialogOpen(false);
-        setIngredientName("");
-        setIngredientPrice("");
-        setSelectedCategoryId("");
-        setIngredientIsAvailable(true);
+        resetIngredientForm();
         onRefresh();
       } else {
         toast.error(result.error || "Erreur lors de la création");
@@ -242,10 +246,7 @@ export function IngredientsTab({
         toast.success("Ingrédient mis à jour");
         setIngredientDialogOpen(false);
         setEditingIngredientId(null);
-        setIngredientName("");
-        setIngredientPrice("");
-        setSelectedCategoryId("");
-        setIngredientIsAvailable(true);
+        resetIngredientForm();
         onRefresh();
       } else {
         toast.error(result.error || "Erreur lors de la mise à jour");
@@ -594,10 +595,7 @@ export function IngredientsTab({
               onClick={() => {
                 setIngredientDialogOpen(false);
                 setEditingIngredientId(null);
-                setIngredientName("");
-                setIngredientPrice("");
-                setSelectedCategoryId("");
-                setIngredientIsAvailable(true);
+                resetIngredientForm();
               }}
               disabled={isCreatingIngredient}
               className="border-border"

@@ -340,6 +340,34 @@ async function addModifiersForIngredients(
   }
 }
 
+  async function addNewModifierGroups(variationId: string, categoryIdsToAdd: string[]): Promise<void> {
+    for (const categoryIdToAdd of categoryIdsToAdd) {
+      const formData = new FormData();
+      formData.append("variationId", variationId);
+      formData.append("ingredientCategoryId", categoryIdToAdd);
+      formData.append("minSelect", "0");
+      formData.append("maxSelect", "1");
+      const result = await createModifierGroup(formData);
+      if (result.success && result.data && typeof result.data === 'object' && 'id' in result.data) {
+        const groupId = (result.data as { id: string }).id;
+        await createModifiersForGroup(groupId, categoryIdToAdd);
+      }
+    }
+  }
+
+  async function processExistingGroups(
+    groups: Array<{ id: string; ingredientCategoryId: string; options: Array<{ id: string; name: string }> }>,
+    categoryIdsToRemove: string[]
+  ): Promise<void> {
+    for (const group of groups) {
+      if (categoryIdsToRemove.includes(group.ingredientCategoryId)) {
+        await deleteModifierGroup(group.id);
+      } else {
+        await updateGroupIngredients(group);
+      }
+    }
+  }
+
   async function handleSave() {
     const validationError = validateForm();
     if (validationError) {
@@ -354,26 +382,8 @@ async function addModifiersForIngredients(
       const toAdd = selectedOptionCategoryIds.filter(id => !existingGroupIds.includes(id));
       const toRemove = existingGroupIds.filter(id => !selectedOptionCategoryIds.includes(id));
 
-      for (const categoryIdToAdd of toAdd) {
-        const formData = new FormData();
-        formData.append("variationId", variationId);
-        formData.append("ingredientCategoryId", categoryIdToAdd);
-        formData.append("minSelect", "0");
-        formData.append("maxSelect", "1");
-        const result = await createModifierGroup(formData);
-        if (result.success && result.data && typeof result.data === 'object' && 'id' in result.data) {
-          const groupId = (result.data as { id: string }).id;
-          await createModifiersForGroup(groupId, categoryIdToAdd);
-        }
-      }
-
-      for (const groupToRemove of item.optionGroups) {
-        if (toRemove.includes(groupToRemove.ingredientCategoryId)) {
-          await deleteModifierGroup(groupToRemove.id);
-        } else {
-          await updateGroupIngredients(groupToRemove);
-        }
-      }
+      await addNewModifierGroups(variationId, toAdd);
+      await processExistingGroups(item.optionGroups, toRemove);
 
       toast.success(isNew ? "Produit créé" : "Produit mis à jour");
       onClose();

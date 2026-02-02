@@ -22,6 +22,78 @@ function buildAppUrl(pathname: string, currentHost: string): URL {
   return new URL(`https://app.yallo.fr${pathname}`);
 }
 
+function isAppOnlyRoute(pathname: string): boolean {
+  const appOnlyRoutes = ["/login", "/dashboard", "/admin", "/update-password"];
+  return appOnlyRoutes.some(route => 
+    pathname === route || pathname.startsWith(`${route}/`)
+  );
+}
+
+function isAllowedRoute(pathname: string): boolean {
+  const allowedRoutes = ["/login", "/update-password", "/dashboard", "/admin", "/api"];
+  return allowedRoutes.some(route => 
+    pathname === route || pathname.startsWith(`${route}/`)
+  );
+}
+
+function getRedirectForLoggedInUser(userRole: string | undefined, mustChangePassword: boolean, host: string): NextResponse {
+  if (mustChangePassword) {
+    return NextResponse.redirect(buildAppUrl("/update-password", host), 307);
+  }
+  if (userRole === "ADMIN") {
+    return NextResponse.redirect(buildAppUrl("/admin", host), 307);
+  }
+  return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
+}
+
+function handleNonAppDomain(pathname: string, host: string): NextResponse | null {
+  if (isAppOnlyRoute(pathname)) {
+    return NextResponse.redirect(buildAppUrl(pathname, host), 307);
+  }
+  return NextResponse.next();
+}
+
+function handleRootRoute(isLoggedIn: boolean, userRole: string | undefined, mustChangePassword: boolean, host: string): NextResponse | null {
+  if (!isLoggedIn) {
+    return NextResponse.redirect(buildAppUrl("/login", host), 307);
+  }
+  return getRedirectForLoggedInUser(userRole, mustChangePassword, host);
+}
+
+function handleProtectedRoutes(
+  isProtectedRoute: boolean,
+  isLoggedIn: boolean,
+  isUpdatePasswordPage: boolean,
+  isAdminRoute: boolean,
+  isDashboardRoute: boolean,
+  isLoginPage: boolean,
+  userRole: string | undefined,
+  mustChangePassword: boolean,
+  host: string
+): NextResponse | null {
+  if (isLoggedIn && mustChangePassword && !isUpdatePasswordPage) {
+    return NextResponse.redirect(buildAppUrl("/update-password", host), 307);
+  }
+
+  if (isProtectedRoute && !isLoggedIn) {
+    return NextResponse.redirect(buildAppUrl("/login", host), 307);
+  }
+
+  if (isLoginPage && isLoggedIn) {
+    return getRedirectForLoggedInUser(userRole, mustChangePassword, host);
+  }
+
+  if (isAdminRoute && isLoggedIn && userRole !== "ADMIN") {
+    return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
+  }
+
+  if (isDashboardRoute && isLoggedIn && userRole === "ADMIN") {
+    return NextResponse.redirect(buildAppUrl("/admin", host), 307);
+  }
+
+  return null;
+}
+
 export async function middleware(req: NextRequest) {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
@@ -29,16 +101,7 @@ export async function middleware(req: NextRequest) {
   const isAppDomain = host.startsWith("app.") || (process.env.NEXT_PUBLIC_APP_URL && host.includes("ngrok"));
 
   if (!isAppDomain) {
-    const appOnlyRoutes = ["/login", "/dashboard", "/admin", "/update-password"];
-    const isAppOnlyRoute = appOnlyRoutes.some(route => 
-      pathname === route || pathname.startsWith(`${route}/`)
-    );
-    
-    if (isAppOnlyRoute) {
-      return NextResponse.redirect(buildAppUrl(pathname, host), 307);
-    }
-    
-    return NextResponse.next();
+    return handleNonAppDomain(pathname, host);
   }
 
   const session = await auth();
@@ -55,53 +118,27 @@ export async function middleware(req: NextRequest) {
   const isApiRoute = pathname.startsWith("/api");
   const isRootRoute = pathname === "/";
   
-  const allowedRoutes = ["/login", "/update-password", "/dashboard", "/admin", "/api"];
-  const isAllowedRoute = allowedRoutes.some(route => 
-    pathname === route || pathname.startsWith(`${route}/`)
-  );
-
   if (isRootRoute) {
-    if (isLoggedIn) {
-      if (mustChangePassword) {
-        return NextResponse.redirect(buildAppUrl("/update-password", host), 307);
-      }
-      if (userRole === "ADMIN") {
-        return NextResponse.redirect(buildAppUrl("/admin", host), 307);
-      }
-      return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
-    }
-    return NextResponse.redirect(buildAppUrl("/login", host), 307);
+    const rootRedirect = handleRootRoute(isLoggedIn, userRole, mustChangePassword, host);
+    if (rootRedirect) return rootRedirect;
   }
 
-  if (!isAllowedRoute && !isApiRoute) {
+  if (!isAllowedRoute(pathname) && !isApiRoute) {
     return new NextResponse("Not Found", { status: 404 });
   }
 
-  if (isLoggedIn && mustChangePassword && !isUpdatePasswordPage) {
-    return NextResponse.redirect(buildAppUrl("/update-password", host), 307);
-  }
-
-  if (isProtectedRoute && !isLoggedIn) {
-    return NextResponse.redirect(buildAppUrl("/login", host), 307);
-  }
-
-  if (isLoginPage && isLoggedIn) {
-    if (mustChangePassword) {
-      return NextResponse.redirect(buildAppUrl("/update-password", host), 307);
-    }
-    if (userRole === "ADMIN") {
-      return NextResponse.redirect(buildAppUrl("/admin", host), 307);
-    }
-    return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
-  }
-
-  if (isAdminRoute && isLoggedIn && userRole !== "ADMIN") {
-    return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
-  }
-
-  if (isDashboardRoute && isLoggedIn && userRole === "ADMIN") {
-    return NextResponse.redirect(buildAppUrl("/admin", host), 307);
-  }
+  const protectedRedirect = handleProtectedRoutes(
+    isProtectedRoute,
+    isLoggedIn,
+    isUpdatePasswordPage,
+    isAdminRoute,
+    isDashboardRoute,
+    isLoginPage,
+    userRole,
+    mustChangePassword,
+    host
+  );
+  if (protectedRedirect) return protectedRedirect;
 
   if (isUpdatePasswordPage && !isLoggedIn) {
     return NextResponse.redirect(buildAppUrl("/login", host), 307);
