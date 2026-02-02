@@ -8,7 +8,7 @@ interface DemoHeaderProps {
   children: React.ReactNode;
 }
 
-export function DemoHeader({ children }: DemoHeaderProps) {
+export function DemoHeader({ children }: Readonly<DemoHeaderProps>) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

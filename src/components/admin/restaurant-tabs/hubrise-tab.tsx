@@ -29,7 +29,7 @@ interface HubriseTabProps {
   restaurant: Restaurant;
 }
 
-export function HubriseTab({ restaurant }: HubriseTabProps) {
+export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
   const [isLoading, setIsLoading] = useState(false);
   const [showToken, setShowToken] = useState(false);
 

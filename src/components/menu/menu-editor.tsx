@@ -116,7 +116,7 @@ function transformMenuData(backendData: BackendMenuData): MenuData {
   };
 }
 
-export function MenuEditor({ initialMenuData }: MenuEditorProps) {
+export function MenuEditor({ initialMenuData }: Readonly<MenuEditorProps>) {
   const [menuData, setMenuData] = useState<MenuData>(transformMenuData(initialMenuData));
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     menuData.categories[0]?.id || null

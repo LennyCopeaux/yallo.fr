@@ -25,7 +25,7 @@ export function ItemsPanel({
   onEditItem,
   onCreateItem,
   onRefresh,
-}: ItemsPanelProps) {
+}: Readonly<ItemsPanelProps>) {
   const [deletingIds, setDeletingIds] = useState<Record<string, boolean>>({});
   const [togglingIds, setTogglingIds] = useState<Record<string, boolean>>({});
 

@@ -157,7 +157,7 @@ function StatusDelayConfig({
   );
 }
 
-export function KitchenStatusControl({ currentStatus, statusSettings }: KitchenStatusControlProps) {
+export function KitchenStatusControl({ currentStatus, statusSettings }: Readonly<KitchenStatusControlProps>) {
   const [isPending, startTransition] = useTransition();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   

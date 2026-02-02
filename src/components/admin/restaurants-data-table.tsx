@@ -70,7 +70,7 @@ interface RestaurantsDataTableProps {
   data: Restaurant[];
 }
 
-export function RestaurantsDataTable({ data }: RestaurantsDataTableProps) {
+export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProps>) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();

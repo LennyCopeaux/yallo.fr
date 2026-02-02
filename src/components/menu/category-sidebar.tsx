@@ -59,7 +59,7 @@ export function CategorySidebar({
   onSelectCategory,
   onRefresh,
   isRefreshing,
-}: CategorySidebarProps) {
+}: Readonly<CategorySidebarProps>) {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
   const [isCreating, setIsCreating] = useState(false);

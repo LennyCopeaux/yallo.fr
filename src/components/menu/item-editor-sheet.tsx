@@ -57,7 +57,7 @@ export function ItemEditorDialog({
   onClose,
   ingredientCategories,
   ingredients,
-}: ItemEditorDialogProps) {
+}: Readonly<ItemEditorDialogProps>) {
   const isNew = item.id === "new";
   const [isSaving, setIsSaving] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});

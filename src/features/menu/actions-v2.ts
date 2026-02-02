@@ -1122,8 +1122,8 @@ export async function createModifierGroup(formData: FormData): Promise<ActionRes
   const validation = createModifierGroupSchema.safeParse({
     variationId: formData.get("variationId"),
     ingredientCategoryId: formData.get("ingredientCategoryId"),
-    minSelect: parseInt(formData.get("minSelect") as string),
-    maxSelect: parseInt(formData.get("maxSelect") as string),
+    minSelect: Number.parseInt(formData.get("minSelect") as string),
+    maxSelect: Number.parseInt(formData.get("maxSelect") as string),
   });
 
   if (!validation.success) {

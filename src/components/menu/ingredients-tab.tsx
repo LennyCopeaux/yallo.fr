@@ -67,7 +67,7 @@ export function IngredientsTab({
   ingredientCategories: initialCategories,
   ingredients: initialIngredients,
   onRefresh,
-}: IngredientsTabProps) {
+}: Readonly<IngredientsTabProps>) {
   const [categories, setCategories] = useState(initialCategories);
   const [ingredients, setIngredients] = useState(initialIngredients);
 

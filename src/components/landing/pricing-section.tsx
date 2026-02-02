@@ -33,7 +33,7 @@ interface PricingSectionProps {
   pricingConfig: PricingConfig;
 }
 
-export function PricingSection({ pricingConfig }: PricingSectionProps) {
+export function PricingSection({ pricingConfig }: Readonly<PricingSectionProps>) {
   const monthlyPrice = pricingConfig.monthlyPrice / 100; // Convertir centimes en euros
   const setupFee = pricingConfig.setupFee / 100;
   const includedMinutes = pricingConfig.includedMinutes;

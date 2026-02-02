@@ -10,7 +10,7 @@ interface UpdateAssistantButtonProps {
   restaurantId: string;
 }
 
-export function UpdateAssistantButton({ restaurantId }: UpdateAssistantButtonProps) {
+export function UpdateAssistantButton({ restaurantId }: Readonly<UpdateAssistantButtonProps>) {
   const [isUpdating, setIsUpdating] = useState(false);
 
   return (
