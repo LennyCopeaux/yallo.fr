@@ -12,12 +12,10 @@ export default async function AdminLayout({
     redirect("/login");
   }
 
-  // Redirige si doit changer mot de passe
   if (session.user.mustChangePassword === true) {
     redirect("/update-password");
   }
 
-  // Seuls les ADMIN peuvent accéder
   if (session.user.role !== "ADMIN") {
     redirect("/dashboard");
   }

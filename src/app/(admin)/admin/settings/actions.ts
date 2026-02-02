@@ -36,7 +36,6 @@ export async function getPricingConfig() {
       .limit(1);
 
     if (!config) {
-      // Créer la config par défaut si elle n'existe pas
       const [newConfig] = await db
         .insert(pricingConfig)
         .values({
@@ -52,7 +51,6 @@ export async function getPricingConfig() {
     return config;
   } catch (error) {
     console.error("Erreur récupération config prix:", error);
-    // Retourner des valeurs par défaut en cas d'erreur
     return {
       id: "",
       monthlyPrice: 14900,
@@ -75,11 +73,9 @@ export async function updatePricingConfig(
       return { success: false, error: parsed.error.issues[0]?.message || "Données invalides" };
     }
 
-    // Récupérer ou créer la config
     const [existing] = await db.select().from(pricingConfig).limit(1);
 
     if (existing) {
-      // Mettre à jour
       await db
         .update(pricingConfig)
         .set({
@@ -91,7 +87,6 @@ export async function updatePricingConfig(
         })
         .where(eq(pricingConfig.id, existing.id));
     } else {
-      // Créer
       await db.insert(pricingConfig).values({
         monthlyPrice: parsed.data.monthlyPrice,
         setupFee: parsed.data.setupFee,
@@ -101,7 +96,7 @@ export async function updatePricingConfig(
     }
 
     revalidatePath("/admin/settings");
-    revalidatePath("/"); // Revalider la page marketing
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     console.error("Erreur mise à jour config prix:", error);

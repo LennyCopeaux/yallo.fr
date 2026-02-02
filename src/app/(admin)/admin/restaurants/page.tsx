@@ -5,7 +5,6 @@ import { RestaurantsDataTable, AddRestaurantDialog } from "@/components/admin";
 import { Suspense } from "react";
 import { Loader2, UtensilsCrossed } from "lucide-react";
 
-// Récupère les OWNERS pour le dropdown
 async function getOwners() {
   return await db
     .select({
@@ -17,7 +16,6 @@ async function getOwners() {
     .orderBy(users.email);
 }
 
-// Récupère tous les restaurants avec leurs owners
 async function getRestaurants(searchParams: { 
   status?: string; 
   search?: string;
@@ -25,17 +23,14 @@ async function getRestaurants(searchParams: {
 }) {
   const conditions = [];
 
-  // Filtre par status
   if (searchParams.status && ["active", "suspended", "onboarding"].includes(searchParams.status)) {
     conditions.push(eq(restaurants.status, searchParams.status as "active" | "suspended" | "onboarding"));
   }
 
-  // Filtre par AI configurée
   if (searchParams.hasAI === "true") {
     conditions.push(sql`${restaurants.vapiAssistantId} IS NOT NULL`);
   }
 
-  // Recherche par nom ou email
   if (searchParams.search) {
     const searchPattern = `%${searchParams.search}%`;
     conditions.push(
@@ -98,7 +93,6 @@ export default async function RestaurantsPage({
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Restaurants</h1>
@@ -109,7 +103,6 @@ export default async function RestaurantsPage({
         <AddRestaurantDialog owners={owners} />
       </div>
 
-      {/* Stats rapides */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
           <p className="text-xl sm:text-2xl font-bold">{restaurantsList.length}</p>
@@ -141,7 +134,6 @@ export default async function RestaurantsPage({
         </div>
       </div>
 
-      {/* DataTable */}
       <Suspense fallback={
         <div className="flex items-center justify-center py-16">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />

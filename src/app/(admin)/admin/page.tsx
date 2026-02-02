@@ -4,7 +4,6 @@ import { eq, sql, and } from "drizzle-orm";
 import { DashboardTabs } from "@/components/admin";
 import { Suspense } from "react";
 
-// Récupère les OWNERS pour le dropdown
 async function getOwners() {
   return await db
     .select({
@@ -16,7 +15,6 @@ async function getOwners() {
     .orderBy(users.email);
 }
 
-// Récupère tous les restaurants avec leurs owners
 async function getRestaurants(searchParams: { 
   status?: string; 
   search?: string;
@@ -24,17 +22,14 @@ async function getRestaurants(searchParams: {
 }) {
   const conditions = [];
 
-  // Filtre par status
   if (searchParams.status && ["active", "suspended", "onboarding"].includes(searchParams.status)) {
     conditions.push(eq(restaurants.status, searchParams.status as "active" | "suspended" | "onboarding"));
   }
 
-  // Filtre par AI configurée
   if (searchParams.hasAI === "true") {
     conditions.push(sql`${restaurants.vapiAssistantId} IS NOT NULL`);
   }
 
-  // Recherche par nom ou email
   if (searchParams.search) {
     const searchPattern = `%${searchParams.search}%`;
     conditions.push(
@@ -84,7 +79,6 @@ async function getRestaurants(searchParams: {
   }));
 }
 
-// Récupère tous les utilisateurs
 async function getUsers() {
   return await db
     .select({
@@ -120,7 +114,6 @@ export default async function AdminDashboardPage({
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Dashboard Admin</h1>
         <p className="text-muted-foreground text-sm sm:text-base mt-1">
@@ -128,7 +121,6 @@ export default async function AdminDashboardPage({
         </p>
       </div>
 
-      {/* Tabs avec DataTables */}
       <Suspense fallback={<div className="h-96" />}>
         <DashboardTabs
           restaurants={restaurantsList}

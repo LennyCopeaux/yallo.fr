@@ -30,7 +30,6 @@ function getStatusBadge(status: RestaurantStatus) {
   }
 }
 
-// Récupère les OWNERS pour le dropdown
 async function getOwners() {
   return await db
     .select({
@@ -42,7 +41,6 @@ async function getOwners() {
     .orderBy(users.email);
 }
 
-// Récupère le restaurant complet
 async function getRestaurant(id: string) {
   const [restaurant] = await db
     .select({
@@ -93,7 +91,6 @@ export default async function RestaurantDetailPage({
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex items-start gap-3 sm:gap-4">
           <Button
@@ -119,7 +116,6 @@ export default async function RestaurantDetailPage({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {/* AI Status indicator */}
           <div className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg ${
             restaurant.vapiAssistantId 
               ? 'bg-emerald-400/10 border border-emerald-400/20' 
@@ -139,7 +135,6 @@ export default async function RestaurantDetailPage({
         </div>
       </div>
 
-      {/* Tabs Content */}
       <RestaurantDetailTabs restaurant={restaurant} owners={owners} />
     </div>
   );
