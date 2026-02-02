@@ -1,8 +1,3 @@
-/**
- * Logger structuré pour l'application Yallo.
- * Fournit des logs formatés avec contexte pour le debugging et le monitoring.
- */
-
 type LogLevel = "info" | "warn" | "error" | "debug";
 
 interface LogContext {

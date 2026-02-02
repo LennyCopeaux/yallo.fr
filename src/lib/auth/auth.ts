@@ -22,7 +22,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
   session: { strategy: "jwt" },
   callbacks: {
-    // Hériter du redirect callback de authConfig
     ...authConfig.callbacks,
     async jwt({ token, user }) {
       if (user) {
@@ -33,21 +32,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token) {
-        // Validation stricte : le rôle doit être présent dans le token
-        if (!token.role || (token.role !== "ADMIN" && token.role !== "OWNER")) {
-          console.error(
-            "[AUTH ERROR] Session invalide : rôle manquant ou invalide",
-            { userId: token.id, email: session.user.email, tokenRole: token.role }
-          );
-          // Invalider la session en ne retournant pas les données utilisateur
-          return session;
-        }
+      if (!session.user || !token) return session;
 
-        session.user.id = token.id as string;
-        session.user.role = token.role as UserRole;
-        session.user.mustChangePassword = Boolean(token.mustChangePassword ?? false);
+      const hasValidRole = token.role === "ADMIN" || token.role === "OWNER";
+      if (!hasValidRole) {
+        console.error("[AUTH] Invalid session: missing or invalid role", {
+          userId: token.id,
+          email: session.user.email,
+          tokenRole: token.role,
+        });
+        return session;
       }
+
+      session.user.id = token.id as string;
+      session.user.role = token.role as UserRole;
+      session.user.mustChangePassword = Boolean(token.mustChangePassword ?? false);
       return session;
     },
   },
