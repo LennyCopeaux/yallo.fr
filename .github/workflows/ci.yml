@@ -44,14 +44,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Upload pnpm-lock.yaml
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: pnpm-lock-updated
-          path: pnpm-lock.yaml
-          retention-days: 1
-
       - name: Run ESLint
         run: pnpm run lint
         continue-on-error: true
@@ -93,14 +85,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
-
-      - name: Upload pnpm-lock.yaml
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: pnpm-lock-updated
-          path: pnpm-lock.yaml
-          retention-days: 1
 
       - name: Run tests
         run: pnpm run test:run
@@ -152,14 +136,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
-
-      - name: Upload pnpm-lock.yaml
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: pnpm-lock-updated
-          path: pnpm-lock.yaml
-          retention-days: 1
 
       - name: Generate coverage for SonarCloud
         run: pnpm run test:coverage
@@ -232,14 +208,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Upload pnpm-lock.yaml
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: pnpm-lock-updated
-          path: pnpm-lock.yaml
-          retention-days: 1
-
       - name: Build application
         run: pnpm run build
 
@@ -283,14 +251,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
-
-      - name: Upload pnpm-lock.yaml
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: pnpm-lock-updated
-          path: pnpm-lock.yaml
-          retention-days: 1
 
       - name: Run pnpm audit
         run: pnpm audit --audit-level=high
