@@ -96,16 +96,14 @@ jobs:
       - name: 🚀 Deploy to Vercel Staging (Preview)
         id: deploy
         uses: amondnet/vercel-action@v25
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          scope: ${{ secrets.VERCEL_ORG_ID }}
-          alias-domains: |
-            staging.yallo.fr
-            app.staging.yallo.fr
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          vercel-args: '--yes'
+          vercel-args: '--yes --debug'
         continue-on-error: false
 
       - name: 📝 Deployment Summary
@@ -129,7 +127,6 @@ jobs:
           echo "## ❌ Staging Deployment Failed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Vérifications à faire :" >> $GITHUB_STEP_SUMMARY
-          echo "1. Les domaines `staging.yallo.fr` et `app.staging.yallo.fr` sont-ils ajoutés dans Vercel → Settings → Domains ?" >> $GITHUB_STEP_SUMMARY
-          echo "2. Les secrets GitHub (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`) sont-ils corrects ?" >> $GITHUB_STEP_SUMMARY
+          echo "1. Les domaines staging.yallo.fr et app.staging.yallo.fr sont-ils ajoutés dans Vercel → Settings → Domains ?" >> $GITHUB_STEP_SUMMARY
+          echo "2. Les secrets GitHub (VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID) sont-ils corrects ?" >> $GITHUB_STEP_SUMMARY
           echo "3. Consulte les logs Vercel pour plus de détails : https://vercel.com/lenny-copeauxs-projects/yallo-fr" >> $GITHUB_STEP_SUMMARY
-          exit 1
