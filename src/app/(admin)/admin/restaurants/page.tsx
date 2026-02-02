@@ -163,7 +163,6 @@ export default async function RestaurantsPage({
         ) : (
           <RestaurantsDataTable 
             data={restaurantsList} 
-            owners={owners}
           />
         )}
       </Suspense>

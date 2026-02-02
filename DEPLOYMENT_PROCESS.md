@@ -156,6 +156,29 @@ Cette erreur signifie que l'organisation `LennyCopeaux` n'existe pas dans SonarC
    -Dsonar.organization=ton-nom-exact-d-organisation
    ```
 
+### Erreur "You are running CI analysis while Automatic Analysis is enabled"
+
+Cette erreur signifie que SonarCloud essaie d'analyser le code de deux façons en même temps :
+- **Automatic Analysis** : SonarCloud analyse automatiquement à chaque push GitHub
+- **CI Analysis** : GitHub Actions analyse via le workflow
+
+**Pourquoi désactiver Automatic Analysis ?**
+
+- ✅ **Évite les conflits** : Les deux analyses peuvent entrer en conflit
+- ✅ **Plus de contrôle** : Tu contrôles quand l'analyse se fait (via CI/CD)
+- ✅ **Cohérence** : Toutes les analyses passent par le même pipeline
+- ✅ **Meilleure intégration** : Les résultats apparaissent directement dans les PRs GitHub
+
+**Solution** :
+
+1. Va sur https://sonarcloud.io
+2. Sélectionne ton projet `LennyCopeaux_yallo.fr`
+3. Va dans **Project Settings** → **Analysis Method**
+4. Désactive **"Automatic Analysis"**
+5. Garde seulement **"CI/CD"** activé
+
+**Alternative** : Si tu veux garder Automatic Analysis, tu peux retirer l'étape SonarCloud des workflows GitHub Actions, mais tu perdras l'intégration dans les PRs.
+
 ---
 
 ## 🚨 Rollback en cas de problème
