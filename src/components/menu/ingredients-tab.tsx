@@ -41,7 +41,7 @@ import {
   updateIngredient,
   deleteIngredient,
   toggleIngredientAvailability,
-} from "@/features/menu/actions-v2";
+} from "@/features/menu/actions";
 
 interface IngredientCategory {
   id: string;

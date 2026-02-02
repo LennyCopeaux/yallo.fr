@@ -23,7 +23,7 @@ import {
   deleteModifierGroup,
   createModifier,
   deleteModifier,
-} from "@/features/menu/actions-v2";
+} from "@/features/menu/actions";
 
 import type { Item } from "./types";
 

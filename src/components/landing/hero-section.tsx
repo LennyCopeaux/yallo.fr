@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-// Conversation téléphonique prédéfinie
 const phoneConversation = [
   { text: "Bienvenue chez Kebab Istanbul ! Que puis-je prendre pour vous ?", sender: 'ai' as const, delay: 2 },
   { text: "Bonjour, je voudrais un grec viande avec supplément fromage s'il vous plaît", sender: 'user' as const, delay: 4 },
@@ -29,7 +28,6 @@ const phoneConversation = [
 ];
 
 function LivePhoneConversation() {
-  // Messages statiques sans animation de typing pour meilleure performance
   const displayedMessages = phoneConversation.slice(0, 5);
   
   const formatTime = () => {
