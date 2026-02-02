@@ -125,4 +125,36 @@ describe("generateSystemPrompt", () => {
     expect(prompt).toContain("Menu disponible");
     expect(prompt).toContain("Kebab");
   });
+
+  it("should include all required sections in prompt", async () => {
+    const mockMenuJson = JSON.stringify({
+      categories: [{ category: "Kebab", items: [] }],
+    });
+    vi.mocked(fetchHubriseCatalog).mockResolvedValue(mockMenuJson);
+
+    const prompt = await generateSystemPrompt(mockRestaurant);
+
+    expect(prompt).toContain("Tu es l'assistant téléphonique");
+    expect(prompt).toContain("Ton rôle est de");
+    expect(prompt).toContain("Règles importantes");
+    expect(prompt).toContain("Menu disponible");
+    expect(prompt).toContain("Horaires d'ouverture");
+  });
+
+  it("should handle restaurant without business hours", async () => {
+    const mockMenuJson = JSON.stringify({
+      categories: [{ category: "Kebab", items: [] }],
+    });
+    vi.mocked(fetchHubriseCatalog).mockResolvedValue(mockMenuJson);
+
+    const restaurantWithoutHours = {
+      ...mockRestaurant,
+      businessHours: null,
+    };
+
+    const prompt = await generateSystemPrompt(restaurantWithoutHours);
+
+    expect(prompt).toContain("Horaires d'ouverture");
+    expect(prompt).toContain("Non configuré");
+  });
 });

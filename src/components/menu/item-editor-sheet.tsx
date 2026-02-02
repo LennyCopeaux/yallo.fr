@@ -284,17 +284,6 @@ export function ItemEditorDialog({
     await addModifiersForIngredients(group.id, toAddIngredients, createModifier);
   }
 
-function findModifierForIngredient(
-  group: { options: Array<{ id: string; name: string }> },
-  ingredients: Ingredient[],
-  ingredientId: string
-): { id: string; name: string } | undefined {
-  return group.options.find(opt => {
-    const ing = ingredients.find(i => i.id === ingredientId && i.name === opt.name);
-    return ing;
-  });
-}
-
 async function removeModifiersForIngredients(
   group: { options: Array<{ id: string; name: string }> },
   ingredients: Ingredient[],
@@ -321,7 +310,7 @@ async function addModifiersForIngredients(
     modifierFormData.append("priceExtra", "0");
     await createModifier(modifierFormData);
   }
-}
+  }
 
   async function addNewModifierGroups(variationId: string, categoryIdsToAdd: string[]): Promise<void> {
     for (const categoryIdToAdd of categoryIdsToAdd) {
