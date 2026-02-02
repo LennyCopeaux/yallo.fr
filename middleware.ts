@@ -3,11 +3,20 @@ import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth/auth";
 
 function buildAppUrl(pathname: string, currentHost: string): URL {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return new URL(`${process.env.NEXT_PUBLIC_APP_URL}${pathname}`);
+  }
+  
   const isDev = currentHost.includes("localhost");
   
   if (isDev) {
     const port = currentHost.split(":")[1] || "3000";
     return new URL(`http://app.localhost:${port}${pathname}`);
+  }
+  
+  const isStaging = currentHost.includes("staging");
+  if (isStaging) {
+    return new URL(`https://app.staging.yallo.fr${pathname}`);
   }
   
   return new URL(`https://app.yallo.fr${pathname}`);
@@ -17,7 +26,7 @@ export async function middleware(req: NextRequest) {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
   const host = req.headers.get("host") || "";
-  const isAppDomain = host.startsWith("app.");
+  const isAppDomain = host.startsWith("app.") || (process.env.NEXT_PUBLIC_APP_URL && host.includes("ngrok"));
 
   if (!isAppDomain) {
     const appOnlyRoutes = ["/login", "/dashboard", "/admin", "/update-password"];

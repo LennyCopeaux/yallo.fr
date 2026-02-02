@@ -117,7 +117,7 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, default
         </div>
 
         {/* DataTable */}
-        <RestaurantsDataTable data={restaurants} owners={owners} />
+        <RestaurantsDataTable data={restaurants} />
       </TabsContent>
 
       {/* Onglet Utilisateurs */}

@@ -100,7 +100,7 @@ export function ItemEditorDialog({
 
   function handlePriceChange(value: string) {
     const numericValue = value.replace(/[^0-9.,]/g, "");
-    const normalizedValue = numericValue.replace(",", ".");
+    const normalizedValue = numericValue.replaceAll(",", ".");
     setPrice(normalizedValue);
   }
 
@@ -168,8 +168,8 @@ export function ItemEditorDialog({
       return;
     }
 
-    const priceInEuros = parseFloat(priceValue);
-    if (isNaN(priceInEuros) || priceInEuros < 0) {
+    const priceInEuros = Number.parseFloat(priceValue);
+    if (Number.isNaN(priceInEuros) || priceInEuros < 0) {
       toast.error("Le prix doit être un nombre positif");
       return;
     }
@@ -190,7 +190,9 @@ export function ItemEditorDialog({
           setIsSaving(false);
           return;
         }
-        variationId = result.data?.id || item.id;
+        variationId = (result.data && typeof result.data === 'object' && 'id' in result.data) 
+          ? (result.data as { id: string }).id 
+          : item.id;
       } else {
         const updateFormData = new FormData();
         updateFormData.append("name", name.trim());
@@ -219,7 +221,8 @@ export function ItemEditorDialog({
         formData.append("maxSelect", "1");
 
         const result = await createModifierGroup(formData);
-        if (result.success && result.data?.id) {
+        if (result.success && result.data && typeof result.data === 'object' && 'id' in result.data) {
+          const groupId = (result.data as { id: string }).id;
           const selectedIngredientIds = selectedIngredientsByCategory[categoryIdToAdd] || [];
           const categoryIngredients = ingredients.filter(
             ing => ing.ingredientCategoryId === categoryIdToAdd && ing.isAvailable
@@ -230,7 +233,7 @@ export function ItemEditorDialog({
               const ingredient = ingredients.find(ing => ing.id === ingredientId);
               if (ingredient) {
                 const modifierFormData = new FormData();
-                modifierFormData.append("groupId", result.data.id);
+                modifierFormData.append("groupId", groupId);
                 modifierFormData.append("ingredientId", ingredientId);
                 modifierFormData.append("priceExtra", "0");
                 await createModifier(modifierFormData);
@@ -241,7 +244,7 @@ export function ItemEditorDialog({
               const ingredient = ingredients.find(ing => ing.id === ingredientId);
               if (ingredient) {
                 const modifierFormData = new FormData();
-                modifierFormData.append("groupId", result.data.id);
+                modifierFormData.append("groupId", groupId);
                 modifierFormData.append("ingredientId", ingredientId);
                 modifierFormData.append("priceExtra", "0");
                 await createModifier(modifierFormData);
@@ -268,40 +271,21 @@ export function ItemEditorDialog({
           const toAddIngredients = selectedIngredientIds.filter(id => !existingIngredientIds.includes(id));
           const toRemoveIngredients = existingIngredientIds.filter(id => !selectedIngredientIds.includes(id));
 
-          if (selectedIngredientIds.length === 0 || selectedIngredientIds.length === categoryIngredients.length) {
-            for (const ingredientId of toRemoveIngredients) {
-              const modifier = groupToRemove.options.find(opt => {
-                const ing = ingredients.find(i => i.id === ingredientId && i.name === opt.name);
-                return ing;
-              });
-              if (modifier) {
-                await deleteModifier(modifier.id);
-              }
+          for (const ingredientId of toRemoveIngredients) {
+            const modifier = groupToRemove.options.find(opt => {
+              const ing = ingredients.find(i => i.id === ingredientId && i.name === opt.name);
+              return ing;
+            });
+            if (modifier) {
+              await deleteModifier(modifier.id);
             }
-            for (const ingredientId of toAddIngredients) {
-              const modifierFormData = new FormData();
-              modifierFormData.append("groupId", groupToRemove.id);
-              modifierFormData.append("ingredientId", ingredientId);
-              modifierFormData.append("priceExtra", "0");
-              await createModifier(modifierFormData);
-            }
-          } else {
-            for (const ingredientId of toRemoveIngredients) {
-              const modifier = groupToRemove.options.find(opt => {
-                const ing = ingredients.find(i => i.id === ingredientId && i.name === opt.name);
-                return ing;
-              });
-              if (modifier) {
-                await deleteModifier(modifier.id);
-              }
-            }
-            for (const ingredientId of toAddIngredients) {
-              const modifierFormData = new FormData();
-              modifierFormData.append("groupId", groupToRemove.id);
-              modifierFormData.append("ingredientId", ingredientId);
-              modifierFormData.append("priceExtra", "0");
-              await createModifier(modifierFormData);
-            }
+          }
+          for (const ingredientId of toAddIngredients) {
+            const modifierFormData = new FormData();
+            modifierFormData.append("groupId", groupToRemove.id);
+            modifierFormData.append("ingredientId", ingredientId);
+            modifierFormData.append("priceExtra", "0");
+            await createModifier(modifierFormData);
           }
         }
       }

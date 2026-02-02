@@ -69,6 +69,11 @@ export const restaurants = pgTable("restaurants", {
   forwardingPhoneNumber: text("forwarding_phone_number"), // Numéro de secours du patron
   businessHours: text("business_hours"), // Horaires en JSON
   
+  // Intégration HubRise (Mode Hybride)
+  hubriseLocationId: text("hubrise_location_id"), // ID du point de vente HubRise (ex: "19mjb-0")
+  hubriseAccessToken: text("hubrise_access_token"), // Clé d'accès API HubRise
+  hubriseCatalogCache: jsonb("hubrise_catalog_cache"), // Cache du menu HubRise (évite re-téléchargement)
+  
   // Statut de charge de la cuisine
   currentStatus: kitchenStatusPgEnum("current_status").default("CALM").notNull(),
   statusSettings: jsonb("status_settings").$type<{

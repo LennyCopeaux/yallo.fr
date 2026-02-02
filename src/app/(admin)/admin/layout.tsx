@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { buildAppUrlServer } from "@/lib/utils";
 import { 
   LayoutDashboard,
   Settings,
@@ -27,27 +26,34 @@ const navigation = [
   },
 ];
 
-// Fonction pour obtenir l'URL de login correcte
-function getLoginUrl(): string {
-  if (typeof window === "undefined") {
-    return "/login"; // Fallback côté serveur
+// Fonction pour gérer la déconnexion avec la bonne redirection
+async function handleLogout(): Promise<void> {
+  // Déconnecter sans redirection automatique
+  await signOut({ redirect: false });
+  
+  // Rediriger manuellement vers la bonne URL
+  if (typeof globalThis.window !== "undefined") {
+    const hostname = globalThis.window.location.hostname;
+    const port = globalThis.window.location.port || "3000";
+    
+    let loginUrl: string;
+    if (hostname.includes("localhost")) {
+      loginUrl = `http://app.localhost:${port}/login`;
+    } else if (hostname.includes("staging")) {
+      loginUrl = "https://app.staging.yallo.fr/login";
+    } else {
+      loginUrl = "https://app.yallo.fr/login";
+    }
+    
+    globalThis.window.location.href = loginUrl;
   }
-  
-  const hostname = window.location.hostname;
-  const port = window.location.port || "3000";
-  
-  if (hostname.includes("localhost")) {
-    return `http://app.localhost:${port}/login`;
-  }
-  
-  return "https://app.yallo.fr/login";
 }
 
 export default function AdminDashboardLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   const pathname = usePathname();
 
   return (
@@ -98,7 +104,7 @@ export default function AdminDashboardLayout({
             <Button
               variant="ghost"
               className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              onClick={() => signOut({ callbackUrl: getLoginUrl() })}
+              onClick={() => handleLogout()}
             >
               <LogOut className="w-4 h-4 mr-3" />
               Déconnexion
@@ -121,7 +127,7 @@ export default function AdminDashboardLayout({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => signOut({ callbackUrl: getLoginUrl() })}
+              onClick={() => handleLogout()}
             >
               <LogOut className="w-5 h-5" />
             </Button>

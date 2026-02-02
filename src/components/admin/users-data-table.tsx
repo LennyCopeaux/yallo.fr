@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -11,6 +12,14 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +38,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, Trash2, Loader2, AlertCircle, Mail, KeyRound, Edit } from "lucide-react";
+import { MoreHorizontal, Trash2, Loader2, AlertCircle, Mail, KeyRound, Edit, Search } from "lucide-react";
 import { toast } from "sonner";
 import { deleteUser, resendWelcomeEmail, sendPasswordResetEmail } from "@/app/(admin)/admin/actions";
 import { EditUserDialog } from "./edit-user-dialog";
@@ -49,12 +58,61 @@ interface UsersDataTableProps {
 }
 
 export function UsersDataTable({ data }: UsersDataTableProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const [searchValue, setSearchValue] = useState(searchParams.get("search") || "");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [resendingFor, setResendingFor] = useState<string | null>(null);
   const [resettingFor, setResettingFor] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  const updateFilters = (key: string, value: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value && value !== "all") {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    startTransition(() => {
+      router.push(`/admin?tab=users&${params.toString()}`);
+    });
+  };
+
+  const handleSearchSubmit = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (searchValue.trim()) {
+      params.set("search", searchValue.trim());
+    } else {
+      params.delete("search");
+    }
+    startTransition(() => {
+      router.push(`/admin?tab=users&${params.toString()}`);
+    });
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSearchSubmit();
+    }
+  };
+
+  const searchTerm = searchParams.get("search")?.toLowerCase() || "";
+  const roleFilter = searchParams.get("role") || "all";
+  
+  const filteredData = data.filter((user) => {
+    const matchesSearch = !searchTerm || 
+      user.email.toLowerCase().includes(searchTerm) ||
+      (user.firstName && user.firstName.toLowerCase().includes(searchTerm)) ||
+      (user.lastName && user.lastName.toLowerCase().includes(searchTerm));
+    
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+    
+    return matchesSearch && matchesRole;
+  });
 
   const handleDelete = async () => {
     if (!userToDelete) return;
@@ -98,6 +156,43 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
 
   return (
     <div className="space-y-4">
+      {/* Filtres */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher par nom ou email..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              className="pl-10 bg-background/50 border-border h-10"
+            />
+          </div>
+          <Button
+            type="button"
+            onClick={handleSearchSubmit}
+            disabled={isPending}
+            className="bg-primary text-black hover:bg-primary/90 h-10 min-h-[44px] min-w-[44px]"
+          >
+            <Search className="w-4 h-4" />
+          </Button>
+        </div>
+        <Select
+          value={roleFilter}
+          onValueChange={(value) => updateFilters("role", value)}
+        >
+          <SelectTrigger className="w-full sm:w-[180px] bg-background/50 border-border h-10">
+            <SelectValue placeholder="Rôle" />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border">
+            <SelectItem value="all">Tous les rôles</SelectItem>
+            <SelectItem value="ADMIN">Admin</SelectItem>
+            <SelectItem value="OWNER">Owner</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Table */}
       <div className="border border-border rounded-xl bg-card/20 overflow-hidden">
         <div className="overflow-x-auto">
@@ -112,7 +207,14 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((user) => (
+            {filteredData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  Aucun utilisateur trouvé
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredData.map((user) => (
               <TableRow key={user.id} className="border-border hover:bg-primary/[0.02]">
                 <TableCell className="min-w-[180px]">
                   <div>
@@ -218,7 +320,8 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
+              ))
+            )}
           </TableBody>
         </Table>
         </div>

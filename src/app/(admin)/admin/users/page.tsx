@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { UsersDataTable, AddUserDialog } from "@/components/admin";
 import { Suspense } from "react";
 import { Loader2, Users } from "lucide-react";

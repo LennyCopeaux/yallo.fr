@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Loader2, Save, Phone, Clock, Code } from "lucide-react";
 import { toast } from "sonner";
 import { updateRestaurantTelephony } from "@/app/(admin)/admin/restaurants/actions";
@@ -49,7 +48,6 @@ const defaultBusinessHours = `{
 export function TelephonyTab({ restaurant }: TelephonyTabProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingHoursJson, setIsGeneratingHoursJson] = useState(false);
-  const [generatedHoursJson, setGeneratedHoursJson] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -165,62 +163,48 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
                   Configuration des horaires au format JSON (utilisés par l&apos;IA pour informer les clients)
                 </CardDescription>
               </div>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={isGeneratingHoursJson}
-                    onClick={async () => {
-                      setIsGeneratingHoursJson(true);
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isGeneratingHoursJson}
+                onClick={async () => {
+                  setIsGeneratingHoursJson(true);
+                  try {
+                    const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-business-hours-json`);
+                    if (!response.ok) {
+                      const currentHours = form.watch("businessHours") || defaultBusinessHours;
+                      let parsedHours;
                       try {
-                        // Génère le JSON des horaires actuels
-                        const currentHours = form.watch("businessHours") || defaultBusinessHours;
-                        let parsedHours;
-                        try {
-                          parsedHours = JSON.parse(currentHours);
-                        } catch {
-                          parsedHours = JSON.parse(defaultBusinessHours);
-                        }
-                        setGeneratedHoursJson(JSON.stringify(parsedHours, null, 2));
-                      } catch (error) {
-                        toast.error("Erreur lors de la génération du JSON");
-                      } finally {
-                        setIsGeneratingHoursJson(false);
+                        parsedHours = JSON.parse(currentHours);
+                      } catch {
+                        parsedHours = JSON.parse(defaultBusinessHours);
                       }
-                    }}
-                  >
-                    {isGeneratingHoursJson ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Génération...
-                      </>
-                    ) : (
-                      <>
-                        <Code className="w-4 h-4 mr-2" />
-                        Générer JSON Horaires
-                      </>
-                    )}
-                  </Button>
-                </DialogTrigger>
-                {generatedHoursJson && (
-                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>JSON Horaires Généré</DialogTitle>
-                      <DialogDescription>
-                        Format JSON des horaires pour vérification technique
-                      </DialogDescription>
-                    </DialogHeader>
-                    <Textarea
-                      readOnly
-                      value={generatedHoursJson}
-                      rows={15}
-                      className="font-mono text-sm bg-background/50"
-                    />
-                  </DialogContent>
+                      form.setValue("businessHours", JSON.stringify(parsedHours, null, 2));
+                    } else {
+                      const data = await response.json();
+                      form.setValue("businessHours", data.businessHoursJson);
+                    }
+                    toast.success("JSON horaires généré");
+                  } catch (error) {
+                    toast.error("Erreur lors de la génération du JSON");
+                  } finally {
+                    setIsGeneratingHoursJson(false);
+                  }
+                }}
+              >
+                {isGeneratingHoursJson ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Génération...
+                  </>
+                ) : (
+                  <>
+                    <Code className="w-4 h-4 mr-2" />
+                    Générer JSON Horaires
+                  </>
                 )}
-              </Dialog>
+              </Button>
             </div>
           </CardHeader>
           <CardContent>

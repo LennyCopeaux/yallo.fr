@@ -1,11 +1,12 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Bot, Phone, CreditCard } from "lucide-react";
+import { Settings, Bot, Phone, CreditCard, Link2 } from "lucide-react";
 import { GeneralTab } from "@/components/admin/restaurant-tabs/general-tab";
 import { AITab } from "@/components/admin/restaurant-tabs/ai-tab";
 import { TelephonyTab } from "@/components/admin/restaurant-tabs/telephony-tab";
 import { BillingTab } from "@/components/admin/restaurant-tabs/billing-tab";
+import { HubriseTab } from "@/components/admin/restaurant-tabs/hubrise-tab";
 
 type Restaurant = {
   id: string;
@@ -24,6 +25,8 @@ type Restaurant = {
   twilioPhoneNumber: string | null;
   forwardingPhoneNumber: string | null;
   businessHours: string | null;
+  hubriseLocationId: string | null;
+  hubriseAccessToken: string | null;
   createdAt: Date | null;
   updatedAt: Date | null;
   ownerEmail: string;
@@ -71,6 +74,13 @@ export function RestaurantDetailTabs({ restaurant, owners }: RestaurantDetailTab
           <CreditCard className="w-4 h-4" />
           <span className="hidden sm:inline">Facturation</span>
         </TabsTrigger>
+        <TabsTrigger 
+          value="hubrise" 
+          className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
+        >
+          <Link2 className="w-4 h-4" />
+          <span className="hidden sm:inline">HubRise</span>
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="general">
@@ -87,6 +97,10 @@ export function RestaurantDetailTabs({ restaurant, owners }: RestaurantDetailTab
 
       <TabsContent value="billing">
         <BillingTab restaurant={restaurant} />
+      </TabsContent>
+
+      <TabsContent value="hubrise">
+        <HubriseTab restaurant={restaurant} />
       </TabsContent>
     </Tabs>
   );

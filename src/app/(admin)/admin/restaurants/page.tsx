@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { restaurants, users, orders } from "@/db/schema";
-import { eq, sql, ilike, and } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { RestaurantsDataTable, AddRestaurantDialog } from "@/components/admin";
 import { Suspense } from "react";
 import { Loader2, UtensilsCrossed } from "lucide-react";
@@ -37,8 +37,9 @@ async function getRestaurants(searchParams: {
 
   // Recherche par nom ou email
   if (searchParams.search) {
+    const searchPattern = `%${searchParams.search}%`;
     conditions.push(
-      sql`(${restaurants.name} ILIKE ${`%${searchParams.search}%`} OR ${users.email} ILIKE ${`%${searchParams.search}%`})`
+      sql`(${restaurants.name} ILIKE ${searchPattern} OR ${users.email} ILIKE ${searchPattern})`
     );
   }
 
@@ -86,9 +87,9 @@ async function getRestaurants(searchParams: {
 
 export default async function RestaurantsPage({
   searchParams,
-}: {
+}: Readonly<{
   searchParams: Promise<{ status?: string; search?: string; hasAI?: string }>;
-}) {
+}>) {
   const params = await searchParams;
   const [owners, restaurantsList] = await Promise.all([
     getOwners(),
@@ -163,7 +164,6 @@ export default async function RestaurantsPage({
         ) : (
           <RestaurantsDataTable 
             data={restaurantsList} 
-            owners={owners}
           />
         )}
       </Suspense>

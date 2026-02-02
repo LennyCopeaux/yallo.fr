@@ -48,7 +48,7 @@ import {
   Loader2
 } from "lucide-react";
 import { toast } from "sonner";
-import { deleteRestaurant, impersonateRestaurant } from "@/app/(admin)/admin/restaurants/actions";
+import { deleteRestaurant } from "@/app/(admin)/admin/restaurants/actions";
 
 type Restaurant = {
   id: string;
@@ -66,17 +66,11 @@ type Restaurant = {
   ordersCount: number;
 };
 
-type Owner = {
-  id: string;
-  email: string;
-};
-
 interface RestaurantsDataTableProps {
   data: Restaurant[];
-  owners: Owner[];
 }
 
-export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps) {
+export function RestaurantsDataTable({ data }: RestaurantsDataTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -84,7 +78,6 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [restaurantToDelete, setRestaurantToDelete] = useState<Restaurant | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [impersonatingId, setImpersonatingId] = useState<string | null>(null);
 
   // Met à jour les filtres dans l'URL
   const updateFilters = (key: string, value: string | null) => {
@@ -136,20 +129,6 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
     }
   };
 
-  // Impersonation
-  const handleImpersonate = async (restaurant: Restaurant) => {
-    setImpersonatingId(restaurant.id);
-    const result = await impersonateRestaurant(restaurant.id);
-    
-    if (result.success && result.data) {
-      toast.success(`Connexion en tant que ${restaurant.name}...`);
-      // Ouvre dans un nouvel onglet
-      window.open(result.data, "_blank");
-    } else {
-      toast.error(result.error || "Erreur lors de l'impersonation");
-    }
-    setImpersonatingId(null);
-  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -189,14 +168,14 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               onKeyDown={handleSearchKeyDown}
-              className="pl-10 bg-background/50 border-border"
+              className="pl-10 bg-background/50 border-border h-10"
             />
           </div>
           <Button
             type="button"
             onClick={handleSearchSubmit}
             disabled={isPending}
-            className="bg-primary text-black hover:bg-primary/90 min-h-[44px] min-w-[44px]"
+            className="bg-primary text-black hover:bg-primary/90 h-10 min-h-[44px] min-w-[44px]"
           >
             <Search className="w-4 h-4" />
           </Button>
@@ -205,7 +184,7 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
           value={searchParams.get("status") || "all"}
           onValueChange={(value) => updateFilters("status", value)}
         >
-          <SelectTrigger className="w-full sm:w-[180px] bg-background/50 border-border">
+          <SelectTrigger className="w-full sm:w-[180px] bg-background/50 border-border h-10">
             <SelectValue placeholder="Statut" />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
@@ -219,7 +198,7 @@ export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps
           value={searchParams.get("hasAI") || "all"}
           onValueChange={(value) => updateFilters("hasAI", value)}
         >
-          <SelectTrigger className="w-full sm:w-[180px] bg-background/50 border-border">
+          <SelectTrigger className="w-full sm:w-[180px] bg-background/50 border-border h-10">
             <SelectValue placeholder="État IA" />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">

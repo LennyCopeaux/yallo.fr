@@ -180,7 +180,7 @@ export function KitchenStatusControl({ currentStatus, statusSettings }: KitchenS
                         min="0"
                         value={config.CALM && "fixed" in config.CALM ? config.CALM.fixed : 15}
                         onChange={(e) => {
-                          const value = parseInt(e.target.value) || 0;
+                          const value = Number.parseInt(e.target.value) || 0;
                           updateStatusConfig("CALM", true, value);
                         }}
                       />
@@ -261,7 +261,7 @@ export function KitchenStatusControl({ currentStatus, statusSettings }: KitchenS
                         min="0"
                         value={config.NORMAL && "fixed" in config.NORMAL ? config.NORMAL.fixed : 30}
                         onChange={(e) => {
-                          const value = parseInt(e.target.value) || 0;
+                          const value = Number.parseInt(e.target.value) || 0;
                           updateStatusConfig("NORMAL", true, value);
                         }}
                       />
@@ -342,7 +342,7 @@ export function KitchenStatusControl({ currentStatus, statusSettings }: KitchenS
                         min="0"
                         value={config.RUSH && "fixed" in config.RUSH ? config.RUSH.fixed : 50}
                         onChange={(e) => {
-                          const value = parseInt(e.target.value) || 0;
+                          const value = Number.parseInt(e.target.value) || 0;
                           updateStatusConfig("RUSH", true, value);
                         }}
                       />

@@ -143,9 +143,9 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
   }
 
   async function handleUpdateVariationPrice(variationId: string) {
-    const newPrice = Math.round(parseFloat(variationPrice) * 100);
+    const newPrice = Math.round(Number.parseFloat(variationPrice) * 100);
     
-    if (isNaN(newPrice) || newPrice <= 0) {
+    if (Number.isNaN(newPrice) || newPrice <= 0) {
       toast.error("Prix invalide");
       return;
     }
@@ -288,7 +288,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
     try {
       const result = await createModifierGroup(formData);
       if (result.success) {
-        toast.success("Catégorie ajoutée", { description: "La catégorie d'ingrédients a été ajoutée au produit" });
+        toast.success("Catégorie ajoutée", { description: "La catégorie d&apos;ingrédients a été ajoutée au produit" });
         setModifierGroupDialogOpen(false);
         setSelectedVariationId(null);
         refreshData();
@@ -338,7 +338,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
 
   async function handleUpdateVariationFull(formData: FormData) {
     if (!editingVariationFull) return;
-    const price = Math.round(parseFloat(formData.get("price") as string) * 100);
+    const price = Math.round(Number.parseFloat(formData.get("price") as string) * 100);
     const updateFormData = new FormData();
     updateFormData.append("name", editingVariationFull.name);
     updateFormData.append("price", price.toString());
@@ -751,7 +751,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                         </div>
                       )}
 
-                      {/* Bouton pour ajouter une catégorie d'ingrédients */}
+                      {/* Bouton pour ajouter une catégorie d&apos;ingrédients */}
                       <div className="pt-2 border-t border-border">
                         <Dialog
                           open={modifierGroupDialogOpen && selectedVariationId === variation.id}
@@ -767,7 +767,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                               onClick={() => setSelectedVariationId(variation.id)}
                             >
                               <Plus className="w-4 h-4 mr-2" />
-                              Ajouter une catégorie d'ingrédients
+                              Ajouter une catégorie d&apos;ingrédients
                             </Button>
                           </DialogTrigger>
                           <DialogContent>
@@ -779,14 +779,14 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                               className="space-y-4"
                             >
                               <DialogHeader>
-                                <DialogTitle>Ajouter une catégorie d'ingrédients</DialogTitle>
+                                <DialogTitle>Ajouter une catégorie d&apos;ingrédients</DialogTitle>
                                 <DialogDescription>
-                                  Sélectionnez une catégorie d'ingrédients à ajouter à cette variation
+                                  Sélectionnez une catégorie d&apos;ingrédients à ajouter à cette variation
                                 </DialogDescription>
                               </DialogHeader>
                               <input type="hidden" name="variationId" value={selectedVariationId || ""} />
                               <div>
-                                <Label htmlFor="modifier-group-category">Catégorie d'ingrédients</Label>
+                                <Label htmlFor="modifier-group-category">Catégorie d&apos;ingrédients</Label>
                                 <Select name="ingredientCategoryId" required>
                                   <SelectTrigger className="mt-1">
                                     <SelectValue placeholder="Sélectionnez une catégorie" />
@@ -869,7 +869,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
               className="space-y-4"
             >
               <DialogHeader>
-                <DialogTitle>Modifier "{editingVariationFull.name}"</DialogTitle>
+                <DialogTitle>Modifier &quot;{editingVariationFull.name}&quot;</DialogTitle>
                 <DialogDescription>
                   Gérez le prix, les ingrédients et les catégories de cette variation
                 </DialogDescription>

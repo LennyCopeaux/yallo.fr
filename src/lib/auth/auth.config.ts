@@ -52,4 +52,30 @@ export default {
   pages: {
     signIn: "/login",
   },
+  callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Permet les redirections vers staging
+      if (url.startsWith("https://app.staging.yallo.fr") || url.startsWith("https://staging.yallo.fr")) {
+        return url;
+      }
+      
+      // Permet les redirections vers production
+      if (url.startsWith("https://app.yallo.fr") || url.startsWith("https://yallo.fr")) {
+        return url;
+      }
+      
+      // Permet les redirections locales
+      if (url.startsWith("http://app.localhost") || url.startsWith("http://localhost")) {
+        return url;
+      }
+      
+      // Permet les URLs relatives
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      
+      // Par défaut, retourne la base URL
+      return baseUrl;
+    },
+  },
 } satisfies NextAuthConfig;

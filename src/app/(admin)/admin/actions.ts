@@ -1,8 +1,8 @@
 "use server";
 
-import { auth, signIn } from "@/lib/auth/auth";
+import { auth } from "@/lib/auth/auth";
 import { db } from "@/db";
-import { users, restaurants, RestaurantStatus, RestaurantPlan } from "@/db/schema";
+import { users, restaurants, RestaurantStatus } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
@@ -61,6 +61,11 @@ const updateRestaurantBillingSchema = z.object({
   billingStartDate: z.string().optional().nullable(),
 });
 
+const updateHubriseConfigSchema = z.object({
+  hubriseLocationId: z.string().max(100).optional().nullable(),
+  hubriseAccessToken: z.string().max(500).optional().nullable(),
+});
+
 // Type de retour standardisé
 export type ActionResult<T = void> = {
   success: boolean;
@@ -76,10 +81,10 @@ function generateSlug(name: string): string {
   return name
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
+    .replaceAll(/[\u0300-\u036f]/g, "")
+    .replaceAll(/[^a-z0-9\s-]/g, "")
+    .replaceAll(/\s+/g, "-")
+    .replaceAll(/-+/g, "-")
     .trim();
 }
 
@@ -103,7 +108,7 @@ function generateResetToken(): string {
 
 async function requireAdmin() {
   const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (session?.user?.role !== "ADMIN") {
     throw new Error("Non autorisé");
   }
   return session;
@@ -418,6 +423,92 @@ export async function updateRestaurantGeneral(
   }
 }
 
+export async function createVapiAssistant(id: string): Promise<ActionResult<{ assistantId: string }>> {
+  "use server";
+
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" };
+  }
+
+  try {
+    const [restaurant] = await db
+      .select()
+      .from(restaurants)
+      .where(eq(restaurants.id, id))
+      .limit(1);
+
+    if (!restaurant) {
+      return { success: false, error: "Restaurant non trouvé" };
+    }
+
+    if (restaurant.vapiAssistantId) {
+      return { success: false, error: "Un assistant Vapi existe déjà pour ce restaurant" };
+    }
+
+    const { createVapiAssistant } = await import("@/lib/services/vapi");
+    const assistant = await createVapiAssistant(restaurant);
+
+    await db
+      .update(restaurants)
+      .set({ vapiAssistantId: assistant.id })
+      .where(eq(restaurants.id, id));
+
+    revalidatePath(`/admin/restaurants/${id}`);
+
+    return { success: true, data: { assistantId: assistant.id } };
+  } catch (error) {
+    console.error("Erreur création assistant Vapi:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur lors de la création de l'assistant",
+    };
+  }
+}
+
+export async function updateVapiAssistant(id: string): Promise<ActionResult> {
+  "use server";
+
+  const session = await auth();
+  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "OWNER")) {
+    return { success: false, error: "Non autorisé" };
+  }
+
+  try {
+    const [restaurant] = await db
+      .select()
+      .from(restaurants)
+      .where(eq(restaurants.id, id))
+      .limit(1);
+
+    if (!restaurant) {
+      return { success: false, error: "Restaurant non trouvé" };
+    }
+
+    if (session.user.role === "OWNER" && restaurant.ownerId !== session.user.id) {
+      return { success: false, error: "Non autorisé" };
+    }
+
+    if (!restaurant.vapiAssistantId) {
+      return { success: false, error: "Aucun assistant Vapi configuré pour ce restaurant" };
+    }
+
+    const { updateVapiAssistant } = await import("@/lib/services/vapi");
+    await updateVapiAssistant(restaurant.vapiAssistantId, restaurant);
+
+    revalidatePath(`/admin/restaurants/${id}`);
+    revalidatePath(`/dashboard`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur mise à jour assistant Vapi:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur lors de la mise à jour de l'assistant",
+    };
+  }
+}
+
 export async function updateRestaurantAI(
   id: string,
   data: z.infer<typeof updateRestaurantAISchema>
@@ -520,6 +611,43 @@ export async function updateRestaurantBilling(
     return { success: true };
   } catch (error) {
     console.error("Erreur mise à jour facturation restaurant:", error);
+    return { success: false, error: "Erreur lors de la mise à jour" };
+  }
+}
+
+export async function updateHubriseConfig(
+  id: string,
+  data: z.infer<typeof updateHubriseConfigSchema>
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    if (!id) {
+      return { success: false, error: "ID restaurant requis" };
+    }
+
+    const parsed = updateHubriseConfigSchema.safeParse(data);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || "Données invalides" };
+    }
+
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+
+    if (parsed.data.hubriseLocationId !== undefined) {
+      updateData.hubriseLocationId = parsed.data.hubriseLocationId;
+    }
+    if (parsed.data.hubriseAccessToken !== undefined) {
+      updateData.hubriseAccessToken = parsed.data.hubriseAccessToken;
+    }
+
+    await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
+    revalidatePath("/admin");
+    revalidatePath(`/admin/restaurants/${id}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur mise à jour configuration HubRise:", error);
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }

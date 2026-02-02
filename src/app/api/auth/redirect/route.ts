@@ -3,11 +3,20 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 
 function buildAppUrl(pathname: string, host: string): URL {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return new URL(`${process.env.NEXT_PUBLIC_APP_URL}${pathname}`);
+  }
+  
   const isDev = host.includes("localhost");
   
   if (isDev) {
     const port = host.split(":")[1] || "3000";
     return new URL(`http://app.localhost:${port}${pathname}`);
+  }
+  
+  const isStaging = host.includes("staging");
+  if (isStaging) {
+    return new URL(`https://app.staging.yallo.fr${pathname}`);
   }
   
   return new URL(`https://app.yallo.fr${pathname}`);

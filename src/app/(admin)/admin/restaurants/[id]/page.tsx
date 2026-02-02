@@ -1,11 +1,34 @@
 import { db } from "@/db";
-import { restaurants, users } from "@/db/schema";
+import { restaurants, users, type RestaurantStatus } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, UtensilsCrossed } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RestaurantDetailTabs } from "@/components/admin";
+
+function getStatusBadge(status: RestaurantStatus) {
+  switch (status) {
+    case "active":
+      return (
+        <span className="text-xs px-2 py-1 rounded-full bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 shrink-0">
+          Actif
+        </span>
+      );
+    case "onboarding":
+      return (
+        <span className="text-xs px-2 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/20 shrink-0">
+          Onboarding
+        </span>
+      );
+    default:
+      return (
+        <span className="text-xs px-2 py-1 rounded-full bg-red-400/10 text-red-400 border border-red-400/20 shrink-0">
+          Suspendu
+        </span>
+      );
+  }
+}
 
 // Récupère les OWNERS pour le dropdown
 async function getOwners() {
@@ -39,6 +62,8 @@ async function getRestaurant(id: string) {
       twilioPhoneNumber: restaurants.twilioPhoneNumber,
       forwardingPhoneNumber: restaurants.forwardingPhoneNumber,
       businessHours: restaurants.businessHours,
+      hubriseLocationId: restaurants.hubriseLocationId,
+      hubriseAccessToken: restaurants.hubriseAccessToken,
       createdAt: restaurants.createdAt,
       updatedAt: restaurants.updatedAt,
       ownerEmail: users.email,
@@ -53,9 +78,9 @@ async function getRestaurant(id: string) {
 
 export default async function RestaurantDetailPage({
   params,
-}: {
+}: Readonly<{
   params: Promise<{ id: string }>;
-}) {
+}>) {
   const { id } = await params;
   const [restaurant, owners] = await Promise.all([
     getRestaurant(id),
@@ -84,19 +109,7 @@ export default async function RestaurantDetailPage({
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">{restaurant.name}</h1>
-              {restaurant.status === 'active' ? (
-                <span className="text-xs px-2 py-1 rounded-full bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 shrink-0">
-                  Actif
-                </span>
-              ) : restaurant.status === 'onboarding' ? (
-                <span className="text-xs px-2 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/20 shrink-0">
-                  Onboarding
-                </span>
-              ) : (
-                <span className="text-xs px-2 py-1 rounded-full bg-red-400/10 text-red-400 border border-red-400/20 shrink-0">
-                  Suspendu
-                </span>
-              )}
+              {getStatusBadge(restaurant.status)}
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-1 text-muted-foreground">
               <span className="text-xs sm:text-sm">/{restaurant.slug}</span>

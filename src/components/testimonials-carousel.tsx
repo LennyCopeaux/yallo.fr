@@ -119,7 +119,7 @@ export function TestimonialsCarousel() {
                         )}
                       />
                       <div className="flex gap-1 mb-4">
-                        {[...Array(5)].map((_, j) => (
+                        {[...new Array(5)].map((_, j) => (
                           <Star
                             key={j}
                             className={cn(

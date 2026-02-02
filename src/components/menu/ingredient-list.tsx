@@ -181,7 +181,7 @@ export function IngredientList({ ingredients, ingredientCategories }: Ingredient
     try {
       const result = await createIngredientCategory(formData);
       if (result.success) {
-        toast.success("Catégorie créée", { description: "La catégorie d'ingrédients a été ajoutée" });
+        toast.success("Catégorie créée", { description: "La catégorie d&apos;ingrédients a été ajoutée" });
         setIngredientCategoryDialogOpen(false);
         setEditingIngredientCategory(null);
         refreshData();
@@ -270,7 +270,7 @@ export function IngredientList({ ingredients, ingredientCategories }: Ingredient
               >
                 <DialogHeader>
                   <DialogTitle>
-                    {editingIngredientCategory ? "Modifier la catégorie" : "Nouvelle catégorie d'ingrédients"}
+                    {editingIngredientCategory ? "Modifier la catégorie" : "Nouvelle catégorie d&apos;ingrédients"}
                   </DialogTitle>
                   <DialogDescription>
                     {editingIngredientCategory
@@ -354,11 +354,11 @@ export function IngredientList({ ingredients, ingredientCategories }: Ingredient
               >
                 <DialogHeader>
                   <DialogTitle>
-                    {editingIngredient ? "Modifier l'ingrédient" : "Nouvel ingrédient"}
+                    {editingIngredient ? "Modifier l&apos;ingrédient" : "Nouvel ingrédient"}
                   </DialogTitle>
                   <DialogDescription>
                     {editingIngredient
-                      ? "Modifiez les informations de l'ingrédient"
+                      ? "Modifiez les informations de l&apos;ingrédient"
                       : "Ajoutez un nouvel ingrédient à votre menu"}
                   </DialogDescription>
                 </DialogHeader>
@@ -456,7 +456,7 @@ export function IngredientList({ ingredients, ingredientCategories }: Ingredient
         {ingredientCategories.length === 0 ? (
           <div className="text-center py-12">
             <ShoppingCart className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <p className="text-muted-foreground">Aucune catégorie d'ingrédients</p>
+            <p className="text-muted-foreground">Aucune catégorie d&apos;ingrédients</p>
             <p className="text-sm text-muted-foreground mt-1">
               Créez une catégorie pour commencer à ajouter des ingrédients
             </p>

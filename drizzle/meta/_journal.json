@@ -78,6 +78,13 @@
       "when": 1766914700000,
       "tag": "0010_remove_image_url_from_ingredients",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1768551992944,
+      "tag": "0011_serious_sheva_callister",
+      "breakpoints": true
     }
   ]
 }

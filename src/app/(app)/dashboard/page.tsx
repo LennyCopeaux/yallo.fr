@@ -9,6 +9,7 @@ import { buildAppUrlServer } from "@/lib/utils";
 import { ModeToggle } from "@/components/mode-toggle";
 import { DashboardContent } from "./dashboard-content";
 import { getOrders, getUserRestaurant } from "@/features/orders/actions";
+import { UpdateAssistantButton } from "@/components/dashboard/update-assistant-button";
 import { getKitchenStatus, type StatusSettings } from "@/features/kitchen-status/actions";
 import { KitchenStatusControl } from "@/components/kitchen-status";
 
@@ -148,42 +149,59 @@ export default async function DashboardPage() {
 
         {/* Quick Actions - seulement si restaurant */}
         {restaurant && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <Link href="/dashboard/menu">
-              <Card className="bg-card border-border hover:border-primary/30 transition-all cursor-pointer h-full">
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              <Link href="/dashboard/menu">
+                <Card className="bg-card border-border hover:border-primary/30 transition-all cursor-pointer h-full">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">Gestion du Menu</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Gérez vos produits, catégories et disponibilité
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Utensils className="w-6 h-6 text-primary" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link href="/dashboard/hours">
+                <Card className="bg-card border-border hover:border-primary/30 transition-all cursor-pointer h-full">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">Horaires d&apos;ouverture</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Configurez vos horaires d&apos;ouverture
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-primary" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
+            {restaurant.vapiAssistantId && (
+              <Card className="bg-card border-border mb-8">
                 <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">Gestion du Menu</h3>
+                      <h3 className="text-lg font-semibold mb-1">Assistant IA Vocal</h3>
                       <p className="text-sm text-muted-foreground">
-                        Gérez vos produits, catégories et disponibilité
+                        Mettez à jour votre assistant IA après avoir modifié votre menu
                       </p>
                     </div>
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Utensils className="w-6 h-6 text-primary" />
-                    </div>
+                    <UpdateAssistantButton restaurantId={restaurant.id} />
                   </div>
                 </CardContent>
               </Card>
-            </Link>
-            <Link href="/dashboard/hours">
-              <Card className="bg-card border-border hover:border-primary/30 transition-all cursor-pointer h-full">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Horaires d&apos;ouverture</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Configurez vos horaires d&apos;ouverture
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Clock className="w-6 h-6 text-primary" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
+            )}
+          </>
         )}
 
         {/* Dashboard Content with KPIs, Graph, and Orders - seulement si restaurant */}

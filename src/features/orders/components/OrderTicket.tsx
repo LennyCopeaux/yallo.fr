@@ -68,7 +68,7 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; bgColor:
 };
 
 function formatPrice(cents: number): string {
-  return (cents / 100).toFixed(2).replace(".", ",") + "€";
+  return (cents / 100).toFixed(2).replaceAll(".", ",") + "€";
 }
 
 function formatTime(date: Date | null): string {
