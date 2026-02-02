@@ -31,10 +31,29 @@ describe("generateSystemPrompt", () => {
   const mockRestaurant = {
     id: "restaurant-1",
     name: "Test Restaurant",
-    hubriseAccessToken: "test-token",
-    hubriseLocationId: "test-location",
-    businessHours: "Lundi-Vendredi: 10h-22h",
+    slug: "test-restaurant",
+    address: null,
     phoneNumber: "+33123456789",
+    ownerId: "owner-1",
+    status: "active" as const,
+    isActive: true,
+    plan: "commission" as const,
+    commissionRate: 5,
+    stripeCustomerId: null,
+    billingStartDate: null,
+    vapiAssistantId: null,
+    systemPrompt: null,
+    menuContext: null,
+    twilioPhoneNumber: null,
+    forwardingPhoneNumber: null,
+    businessHours: "Lundi-Vendredi: 10h-22h",
+    hubriseLocationId: "test-location",
+    hubriseAccessToken: "test-token",
+    hubriseCatalogCache: null,
+    currentStatus: "CALM" as const,
+    statusSettings: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   beforeEach(() => {
@@ -79,8 +98,8 @@ describe("generateSystemPrompt", () => {
   it("should use Yallo menu when no HubRise credentials", async () => {
     const restaurantWithoutHubrise = {
       ...mockRestaurant,
-      hubriseAccessToken: null,
-      hubriseLocationId: null,
+      hubriseAccessToken: null as string | null,
+      hubriseLocationId: null as string | null,
     };
 
     const prompt = await generateSystemPrompt(restaurantWithoutHubrise);
@@ -149,7 +168,7 @@ describe("generateSystemPrompt", () => {
 
     const restaurantWithoutHours = {
       ...mockRestaurant,
-      businessHours: null,
+      businessHours: null as string | null,
     };
 
     const prompt = await generateSystemPrompt(restaurantWithoutHours);

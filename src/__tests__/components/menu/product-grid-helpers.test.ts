@@ -24,7 +24,7 @@ describe("Product Grid Helper Functions", () => {
 
     it("should return empty array when no ingredients match", () => {
       const modifiers = [{ id: "m1", ingredientId: "ing1", priceExtra: 0 }];
-      const ingredients: never[] = [];
+      const ingredients: Array<{ id: string; name: string; ingredientCategoryId: string; price: number; isAvailable: boolean; imageUrl: string | null; ingredientCategory: { id: string; name: string; rank: number } }> = [];
 
       const result = modifiers
         .map((modifier) => {
