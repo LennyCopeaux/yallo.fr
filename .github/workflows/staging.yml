@@ -77,6 +77,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=LennyCopeaux_yallo.fr
+            -Dsonar.organization=LennyCopeaux
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.sources=src
+            -Dsonar.tests=src/__tests__
+            -Dsonar.test.inclusions=src/__tests__/**/*.test.ts
+            -Dsonar.exclusions=**/node_modules/**,**/.next/**,**/drizzle/**
 
   # ==========================================
   # JOB 3: Déploiement Staging
