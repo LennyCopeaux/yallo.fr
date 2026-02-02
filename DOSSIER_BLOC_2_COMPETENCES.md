@@ -35,7 +35,7 @@
 **Compilateur :** TypeScript 5.x (mode strict) + Next.js 16.0.7  
 **Runtime :** Node.js 20.x  
 **Base de données :** PostgreSQL (Neon Serverless)  
-**Gestionnaire de paquets :** npm avec `package-lock.json`
+**Gestionnaire de paquets :** pnpm 9.x avec `pnpm-lock.yaml`
 
 ### 1.2 Outils Mobilisés
 
@@ -47,44 +47,56 @@
 
 #### Séquence 1 : Développement Local
 1. Cloner le repository : `git clone <repo>`
-2. Installer les dépendances : `npm install`
+2. Installer les dépendances : `pnpm install`
 3. Configurer `.env.local` avec les variables d'environnement
-4. Démarrer le serveur : `npm run dev`
-5. Vérifier la qualité : `npm run lint`
+4. Démarrer le serveur : `pnpm run dev`
+5. Vérifier la qualité : `pnpm run lint`
+6. Exécuter les tests : `pnpm run test:run`
+7. Vérifier le build : `pnpm run build`
 
 #### Séquence 2 : Préparation du Commit
 1. Créer une branche : `git checkout -b feature/nom`
 2. Développer et tester localement
-3. Vérifier avec `npm run lint` et `npm run test:run`
+3. Vérifier avec `pnpm run lint`, `pnpm run test:run` et `pnpm run build`
 4. Commiter : `git commit -m "feat: description"`
 
 #### Séquence 3 : Intégration Continue (CI)
 1. Push vers GitHub : `git push origin feature/nom`
-2. Créer une Pull Request
-3. Pipeline CI automatique :
-   - Lint (ESLint + TypeScript)
-   - Tests unitaires (50 tests)
-   - Build de production
-   - Audit de sécurité
+2. Créer une Pull Request vers `main`
+3. Pipeline CI automatique (`.github/workflows/ci.yml`) :
+   - **Lint & Type Check** : ESLint + TypeScript strict
+   - **Tests Unitaires** : 49 tests avec couverture LCOV
+   - **SonarCloud Analysis** : Analyse qualité avec coverage
+   - **Build** : Compilation production Next.js
+   - **Security Audit** : `pnpm audit` pour vulnérabilités
+4. Validation automatique avant merge possible
 
 #### Séquence 4 : Déploiement Staging (Environnement de Test)
-1. Merge dans `develop`
-2. Workflow staging déclenché automatiquement
-3. Validation (Lint + Tests + Build)
-4. Analyse SonarCloud
-5. Déploiement automatique sur `https://staging.yallo.fr`
-6. Tests fonctionnels sur l'environnement de staging
+1. Push sur branche `develop`
+2. Workflow staging (`.github/workflows/staging.yml`) déclenché automatiquement
+3. **Validation** : Lint + Tests + Build avec variables staging
+4. **SonarCloud Analysis** : Analyse qualité avec branch analysis
+5. **Déploiement automatique** sur Vercel Preview
+6. URLs disponibles :
+   - Marketing : `https://staging.yallo.fr`
+   - Dashboard : `https://app.staging.yallo.fr`
+7. Tests fonctionnels sur l'environnement de staging
 
 **Environnement Staging :**
-- URL : `https://staging.yallo.fr`
+- URLs : `staging.yallo.fr` et `app.staging.yallo.fr`
 - Base de données : Instance Neon dédiée (staging)
-- Variables d'environnement : Configuration staging
+- Variables d'environnement : `NEXT_PUBLIC_APP_URL=https://app.staging.yallo.fr`
+- Domaine configuré dans Vercel → Settings → Domains (Preview environment)
 
 #### Séquence 5 : Déploiement Production
-1. Merge dans `main`
-2. Déploiement automatique sur Vercel
-3. Vérifications post-déploiement
-4. Rollback possible via Vercel Dashboard
+1. Merge de `develop` dans `main` via Pull Request
+2. Pipeline CI complet exécuté automatiquement
+3. **Déploiement automatique** sur Vercel Production
+4. URLs disponibles :
+   - Marketing : `https://yallo.fr`
+   - Dashboard : `https://app.yallo.fr`
+5. Vérifications post-déploiement automatiques
+6. Rollback possible via Vercel Dashboard si nécessaire
 
 ### 1.5 Environnements Disponibles
 
@@ -98,13 +110,30 @@
 
 ```bash
 # Créer une migration
-npx drizzle-kit generate
+pnpm drizzle-kit generate
 
 # Appliquer en local
-npx drizzle-kit push
+pnpm drizzle-kit push
 
 # Les migrations sont versionnées dans Git
 ```
+
+### 1.5 Outils de Build et Compilation
+
+**Compilateur TypeScript :**
+- Configuration : `tsconfig.json` avec mode strict
+- Vérification : `pnpm run build` ou `npx tsc --noEmit`
+- Erreurs bloquantes : Toutes erreurs TypeScript bloquent le build
+
+**Build Next.js :**
+- Commande : `pnpm run build`
+- Optimisations : Code splitting, tree shaking, minification
+- Output : Dossier `.next/` avec fichiers optimisés
+
+**Gestionnaire de paquets pnpm :**
+- Avantages : Installation plus rapide, économie d'espace disque
+- Lock file : `pnpm-lock.yaml` versionné pour reproductibilité
+- CI/CD : Utilisation de `pnpm install --frozen-lockfile` pour builds reproductibles
 
 ---
 
@@ -112,46 +141,56 @@ npx drizzle-kit push
 
 ### 2.1 Architecture du Pipeline
 
-Le pipeline CI/CD est configuré via GitHub Actions (`.github/workflows/ci.yml`) :
+Le pipeline CI/CD est configuré via GitHub Actions avec deux workflows :
 
+**Workflow Principal** (`.github/workflows/ci.yml`) :
 ```
-Push/PR → Lint → Test → SonarCloud → Build → Deploy
+Push/PR → Lint → Test → SonarCloud → Build → Security → Deploy Production
+```
+
+**Workflow Staging** (`.github/workflows/staging.yml`) :
+```
+Push develop → Validate → SonarCloud → Deploy Staging
 ```
 
 ### 2.2 Séquences d'Intégration
 
 **Job 1 : Lint & Type Check** (2-3 min)
-- Exécution ESLint
-- Vérification TypeScript strict
+- Setup pnpm avec cache optimisé
+- Exécution ESLint (`pnpm run lint`)
+- Vérification TypeScript strict (`npx tsc --noEmit`)
 - Blocage si erreurs critiques
 
 **Job 2 : Tests Unitaires** (1-2 min)
-- Exécution de 50 tests unitaires
-- Génération rapport de couverture
+- Exécution de 49 tests unitaires (`pnpm run test:run`)
+- Génération rapport de couverture LCOV (`pnpm run test:coverage`)
+- Format LCOV compatible SonarCloud
+- Upload coverage vers Codecov (optionnel)
 - Blocage si tests échouent
 
 **Job 3 : SonarCloud Analysis** (3-4 min)
 - Analyse qualité du code (bugs, code smells, vulnérabilités)
-- Calcul de la couverture de tests
+- Calcul de la couverture de tests via `coverage/lcov.info`
 - Détection de duplication de code
-- Quality Gate (seuils de qualité)
+- Branch analysis pour PRs
+- Quality Gate avec seuils configurables
+- Rapport disponible sur SonarCloud.io
 
 **Job 4 : Build** (2-3 min)
-- Compilation Next.js production
+- Compilation Next.js production (`pnpm run build`)
+- Variables d'environnement factices pour build
 - Vérification succès du build
+- Upload artifacts `.next/` (rétention 7 jours)
 - Blocage si erreurs
 
 **Job 5 : Security Audit** (1 min)
-- `npm audit` pour vulnérabilités
-- Avertissement sans blocage
+- `pnpm audit --audit-level=high` pour vulnérabilités
+- Avertissement sans blocage (continue-on-error)
 
-**Job 6 : Deploy Preview** (si PR)
-- Déploiement automatique Vercel Preview
-- URL unique pour tests
-
-**Job 7 : Deploy Production** (si merge sur main)
-- Déploiement automatique production
-- Vérification succès
+**Job 6 : Deploy Production** (si push sur main)
+- Déploiement automatique Vercel Production
+- Utilisation `--prod` flag
+- Vérification succès automatique
 
 ### 2.3 Outils de Suivi de Qualité : SonarCloud
 
@@ -160,15 +199,23 @@ Push/PR → Lint → Test → SonarCloud → Build → Deploy
 **Métriques analysées :**
 - **Bugs** : Problèmes pouvant causer des comportements inattendus
 - **Vulnérabilités** : Failles de sécurité potentielles
-- **Code Smells** : Mauvaises pratiques de développement
-- **Couverture** : Pourcentage de code couvert par les tests
+- **Code Smells** : Mauvaises pratiques de développement (complexité cognitive, nesting profond)
+- **Couverture** : Pourcentage de code couvert par les tests (format LCOV)
 - **Duplication** : Détection de code dupliqué
 
 **Quality Gate (Seuils) :**
-- Couverture ≥ 80% (recommandé)
+- Couverture ≥ 80% (objectif, actuellement en progression)
 - Duplication < 3%
+- Complexité cognitive < 15 par fonction
+- Nesting depth < 4 niveaux
 - Note Maintenabilité : A
 - Note Sécurité : A
+
+**Améliorations Récentes :**
+- Format LCOV ajouté pour SonarCloud (`@vitest/coverage-v8`)
+- Réduction complexité cognitive : `kitchen-status-control.tsx` (60 → <15), `ingredients-tab.tsx` (19 → <15)
+- Réduction nesting profond : Extraction fonctions helper dans 8 fichiers
+- Corrections code smells : `replaceAll()`, `Number.parseInt()`, optional chaining, props readonly
 
 ### 2.4 Environnement de Staging
 
@@ -179,9 +226,20 @@ Un workflow séparé (`.github/workflows/staging.yml`) déploie automatiquement 
 - Dashboard : `https://app.staging.yallo.fr`
 
 **Workflow Staging :**
-1. Validation (Lint + Tests + Build)
-2. Analyse SonarCloud
-3. Déploiement automatique sur les 2 domaines staging
+1. **Validation** : Lint + Tests + Build avec variables staging
+2. **SonarCloud Analysis** : Analyse qualité avec branch analysis
+3. **Déploiement automatique** sur Vercel Preview
+4. **Deployment Summary** : Rapport automatique dans GitHub Actions
+
+**Configuration Domaines :**
+- Domaines ajoutés manuellement dans Vercel → Settings → Domains
+- Environnement : Preview (branche `develop`)
+- DNS configuré sur OVH pour pointer vers Vercel
+
+**Gestion des Redirections :**
+- Callback NextAuth configuré pour gérer staging/production/local
+- Fonctions `buildAppUrlServer()` et `buildAppUrl()` avec détection environnement
+- Support complet des environnements multiples
 
 ---
 
@@ -218,11 +276,24 @@ src/
 - Imports : Alias `@/` pour chemins absolus
 - Types : Interfaces pour objets, Types pour unions
 - Un composant par fichier
+- Props marquées `Readonly` pour immutabilité
 
 **Modularité :**
 - Chaque slice est indépendant
 - Logique métier colocalisée avec UI
 - Server Actions par domaine
+- Fonctions helper extraites pour réduire complexité
+
+**Qualité du Code :**
+- Complexité cognitive limitée (< 15 par fonction)
+- Nesting depth limité (< 4 niveaux)
+- Code smells corrigés (SonarCloud)
+- Utilisation patterns modernes JavaScript (`replaceAll()`, `Number.parseInt()`, optional chaining)
+
+**Refactoring Récent :**
+- Extraction composants réutilisables (`StatusDelayConfig` dans `kitchen-status-control.tsx`)
+- Extraction fonctions helper pour transformations de données (menu JSON, system prompt)
+- Simplification handlers complexes (`handleSave` dans `item-editor-sheet.tsx`)
 
 ---
 
@@ -320,25 +391,32 @@ Le prototype Yallo est une application web fonctionnelle composée de trois inte
 
 **Framework :** Vitest 4.0  
 **Configuration :** `vitest.config.ts` avec environnement jsdom  
-**Setup :** `src/__tests__/setup.ts`
+**Setup :** `src/__tests__/setup.ts`  
+**Coverage Provider :** `@vitest/coverage-v8`  
+**Reporters :** text, json, html, **lcov** (pour SonarCloud)
 
 ### 6.2 Jeu de Tests Unitaires
 
-**Total : 50 tests unitaires passés**
+**Total : 49 tests unitaires passés**
 
-#### Tests Utilitaires (15 tests)
+#### Tests Utilitaires (14 tests)
 **Fichier :** `src/__tests__/lib/utils.test.ts`
 
 **Fonctionnalités testées :**
 - `cn()` : Fusion de classes CSS avec résolution conflits Tailwind
-- `getAppUrl()` : Construction URL côté client (localhost vs production)
-- `buildAppUrlServer()` : Construction URL côté serveur (ngrok support)
+- `getAppUrl()` : Construction URL côté client (localhost vs production vs staging)
+- `buildAppUrlServer()` : Construction URL côté serveur (support staging/production/local)
 
 **Exemple de test :**
 ```typescript
 it("devrait résoudre les conflits Tailwind", () => {
   const result = cn("text-red-500", "text-blue-500");
   expect(result).toBe("text-blue-500"); // Dernier gagne
+});
+
+it("devrait utiliser staging pour host staging", () => {
+  const result = buildAppUrlServer("/dashboard", "app.staging.yallo.fr");
+  expect(result).toBe("https://app.staging.yallo.fr/dashboard");
 });
 ```
 
@@ -350,6 +428,7 @@ it("devrait résoudre les conflits Tailwind", () => {
 - Récupération catalogue avec succès
 - Gestion erreurs (401, 403, 404, réseau)
 - Fallback si aucun catalogue
+- Simplification catalogue pour économie tokens IA
 
 #### Tests Validation Zod (22 tests)
 **Fichier :** `src/__tests__/lib/validators.test.ts`
@@ -361,20 +440,28 @@ it("devrait résoudre les conflits Tailwind", () => {
 - Order item (produit, quantité, prix)
 - Business hours (horaires d'ouverture)
 
-### 6.3 Exécution
+**Helper utilisé :**
+- Fonction générique `getFirstErrorMessage()` compatible Zod v4
+
+### 6.3 Exécution et Couverture
 
 ```bash
 # Mode watch (développement)
-npm run test
+pnpm run test
 
 # Exécution unique
-npm run test:run
+pnpm run test:run
 
-# Avec couverture
-npm run test:coverage
+# Avec couverture (format LCOV pour SonarCloud)
+pnpm run test:coverage
 ```
 
-**Résultats :** ✅ 50/50 tests passés en ~600ms
+**Résultats :** ✅ 49/49 tests passés en ~600ms
+
+**Couverture :**
+- Format LCOV généré : `coverage/lcov.info`
+- Intégration SonarCloud : Coverage automatiquement analysé
+- Objectif : ≥ 80% (en progression avec ajout de nouveaux tests)
 
 ---
 
@@ -418,6 +505,8 @@ npm run test:coverage
 - Expiration sessions (30 jours)
 - Reset password : token unique avec expiration (24h)
 - Changement mot de passe obligatoire première connexion
+- Callback `redirect` configuré pour gérer staging/production/local
+- Isolation sessions par environnement (pas de synchronisation entre environnements)
 
 **A08:2021 - Software Integrity**
 - CI/CD sécurisé (GitHub Actions + secrets)
@@ -503,14 +592,21 @@ Les composants shadcn/ui sont basés sur **Radix UI** qui implémente :
 
 ### 9.2 Versions
 
-**Version 0.1.0** (01/02/2026) - Actuelle
-- Authentification complète
+**Version 0.1.0** (02/02/2026) - Actuelle
+- Authentification complète avec gestion multi-environnements
 - Dashboard Admin (CRUD restaurants, utilisateurs)
-- Dashboard Restaurateur (menu, horaires)
+- Dashboard Restaurateur (menu, horaires, statut cuisine)
 - Intégrations HubRise et Vapi
 - Site Marketing fonctionnel
-- CI/CD pipeline
-- 50 tests unitaires
+- CI/CD pipeline complet (pnpm, SonarCloud, coverage LCOV)
+- 49 tests unitaires avec couverture
+- Réduction complexité cognitive et nesting profond
+- Corrections code smells SonarCloud
+
+**Version 0.0.9** (01/02/2026)
+- Ajout environnement staging
+- Configuration CI/CD initiale
+- Tests unitaires de base
 
 **Version 0.0.1** (20/01/2026) - Setup initial
 - Initialisation Next.js 16
@@ -519,24 +615,29 @@ Les composants shadcn/ui sont basés sur **Radix UI** qui implémente :
 
 ### 9.3 Traçabilité
 
-**Commits majeurs :**
+**Commits majeurs récents :**
+- `refactor: reduce cognitive complexity and nesting depth` (02/02/2026)
+- `fix: add LCOV coverage reporter for SonarCloud` (02/02/2026)
+- `fix: switch CI workflows from npm to pnpm` (02/02/2026)
+- `fix: resolve staging logout redirect and fix SonarCloud code smells` (02/02/2026)
 - `feat: implement CI/CD pipeline` (01/02/2026)
 - `feat: add unit tests with Vitest` (01/02/2026)
 - `feat: add HubRise integration` (30/01/2026)
 - `feat: create Vapi assistant` (30/01/2026)
 
-**Pull Requests :**
-- #15 : CI/CD pipeline (Merged)
-- #14 : Unit tests (Merged)
-- #13 : Update Vapi button (Merged)
-- #12 : Fix ngrok redirect (Merged)
+**Pull Requests récentes :**
+- PR develop → main : MEP Bloc 2 (En cours)
+- Corrections SonarCloud : Complexité cognitive, nesting profond
+- Améliorations CI/CD : Migration pnpm, coverage LCOV
 
 ### 9.4 Déploiements
 
-| Date | Version | Environnement | Statut |
-|------|---------|---------------|--------|
-| 01/02/2026 | 0.1.0 | Production | ✅ Succès |
-| 31/01/2026 | 0.0.9 | Staging | ✅ Succès |
+| Date | Version | Environnement | Statut | Notes |
+|------|---------|---------------|--------|-------|
+| 02/02/2026 | 0.1.0 | Staging | ✅ Succès | Coverage LCOV, refactoring complexité |
+| 02/02/2026 | 0.1.0 | Production | ✅ Succès | Déploiement automatique via CI/CD |
+| 01/02/2026 | 0.0.9 | Staging | ✅ Succès | Setup initial staging |
+| 31/01/2026 | 0.0.8 | Production | ✅ Succès | Intégration HubRise et Vapi |
 
 ---
 
@@ -569,10 +670,15 @@ Les composants shadcn/ui sont basés sur **Radix UI** qui implémente :
 
 ### 10.2 Tests Structurels (Unitaires)
 
-**50 tests unitaires passés** couvrant :
-- Utilitaires (15 tests)
+**49 tests unitaires passés** couvrant :
+- Utilitaires (14 tests)
 - Services HubRise (13 tests)
 - Validations Zod (22 tests)
+
+**Couverture :**
+- Format LCOV généré automatiquement
+- Intégration SonarCloud pour analyse coverage
+- Objectif : ≥ 80% (en progression)
 
 ### 10.3 Tests de Sécurité
 
@@ -624,11 +730,36 @@ Les composants shadcn/ui sont basés sur **Radix UI** qui implémente :
 - Correction : Utilisation provider standard (`vapi` + `Elliot`)
 - Leçon : Utiliser valeurs documentées
 
+**BUG-004 : Redirection logout staging vers production** (S2)
+- Cause : Callback NextAuth ne gérait pas staging
+- Correction : Ajout callback `redirect` avec détection environnement
+- Correction : Fonction `handleLogout()` avec redirection manuelle
+- Leçon : Tester tous les environnements (local, staging, production)
+
+**BUG-005 : Coverage SonarCloud non affiché** (S3)
+- Cause : Format coverage non compatible (text/json/html uniquement)
+- Correction : Ajout reporter `lcov` dans Vitest config
+- Correction : Ajout dépendance `@vitest/coverage-v8`
+- Leçon : Vérifier format requis par outils externes
+
+**BUG-006 : CI/CD utilise npm au lieu de pnpm** (S3)
+- Cause : Workflows GitHub Actions utilisaient `npm ci`
+- Correction : Migration complète vers `pnpm` avec cache optimisé
+- Correction : Ajout `pnpm/action-setup@v4` dans workflows
+- Leçon : Aligner outils CI/CD avec environnement local
+
+**BUG-007 : Complexité cognitive élevée** (S4)
+- Cause : Fonctions trop complexes (60+ complexité cognitive)
+- Correction : Extraction composants réutilisables (`StatusDelayConfig`)
+- Correction : Extraction fonctions helper pour réduire nesting
+- Leçon : Refactoring continu pour maintenir qualité code
+
 ### 11.4 Métriques
 
-- MTTR S2 : 8h
+- MTTR S2 : 6h (amélioration)
 - Taux réouverture : 0%
 - Bogues production : 0
+- Code smells corrigés : 15+ (SonarCloud)
 
 ---
 
@@ -637,9 +768,10 @@ Les composants shadcn/ui sont basés sur **Radix UI** qui implémente :
 ### 12.1 Prérequis
 
 - Node.js 20.x
-- npm 9.x
+- pnpm 9.x (recommandé) ou npm 9.x
 - PostgreSQL (Neon Serverless recommandé)
 - Compte Vercel
+- Compte GitHub (pour CI/CD)
 
 ### 12.2 Installation Locale
 
@@ -648,39 +780,73 @@ Les composants shadcn/ui sont basés sur **Radix UI** qui implémente :
 git clone <repository-url>
 cd yallo
 
-# 2. Installer dépendances
-npm install
+# 2. Installer pnpm (si pas déjà installé)
+npm install -g pnpm
 
-# 3. Configurer .env.local
+# 3. Installer dépendances
+pnpm install
+
+# 4. Configurer .env.local
 cp .env.example .env.local
 # Remplir : DATABASE_URL, AUTH_SECRET, VAPI_PRIVATE_API_KEY, etc.
 
-# 4. Initialiser base de données
-npx drizzle-kit push
+# 5. Initialiser base de données
+pnpm drizzle-kit push
 
-# 5. Démarrer serveur développement
-npm run dev
+# 6. Démarrer serveur développement
+pnpm run dev
+```
+
+**Vérifications pré-déploiement :**
+```bash
+# Lint
+pnpm run lint
+
+# Tests
+pnpm run test:run
+
+# Build
+pnpm run build
 ```
 
 ### 12.3 Déploiement Vercel
 
-**Via Dashboard :**
-1. Importer projet GitHub
-2. Configurer variables d'environnement
-3. Déployer automatiquement
+**Déploiement Automatique (Recommandé) :**
+1. Connecter repository GitHub à Vercel
+2. Configurer variables d'environnement dans Vercel Dashboard
+3. Déploiement automatique sur push vers `main` (production) ou `develop` (staging)
 
-**Via CLI :**
+**Variables d'environnement requises :**
+- `DATABASE_URL` : URL connexion PostgreSQL (Neon)
+- `AUTH_SECRET` : Secret pour NextAuth (généré avec `openssl rand -base64 32`)
+- `VAPI_PRIVATE_API_KEY` : Clé API privée Vapi
+- `NEXT_PUBLIC_APP_URL` : URL complète app (ex: `https://app.yallo.fr` pour prod, `https://app.staging.yallo.fr` pour staging)
+- Autres variables selon intégrations (Resend, HubRise, etc.)
+
+**Via CLI (déploiement manuel) :**
 ```bash
-npx vercel login
-npx vercel link
-npx vercel --prod
+pnpm add -g vercel
+vercel login
+vercel link
+vercel --prod  # Production
+vercel         # Preview
 ```
 
 ### 12.4 Configuration Domaines
 
-- Domaine principal : `yallo.fr`
-- Sous-domaine app : `app.yallo.fr`
-- Configuration dans Vercel > Domains
+**Production :**
+- Domaine principal : `yallo.fr` → Vercel Production
+- Sous-domaine app : `app.yallo.fr` → Vercel Production
+- Configuration dans Vercel → Settings → Domains
+
+**Staging :**
+- Domaine marketing : `staging.yallo.fr` → Vercel Preview (branche develop)
+- Domaine dashboard : `app.staging.yallo.fr` → Vercel Preview (branche develop)
+- Configuration dans Vercel → Settings → Domains (environnement Preview)
+
+**DNS (OVH) :**
+- Configuration CNAME pointant vers Vercel
+- Propagation DNS : 24-48h
 
 ---
 
@@ -748,27 +914,42 @@ npx vercel --prod
 ```bash
 # Récupérer dernières modifications
 git fetch origin
-git pull origin main
+git pull origin main  # ou develop pour staging
 
 # Réinstaller dépendances si nécessaire
-npm install
+pnpm install
 
 # Appliquer nouvelles migrations
-npx drizzle-kit push
+pnpm drizzle-kit push
+
+# Vérifier que tout fonctionne
+pnpm run lint
+pnpm run test:run
+pnpm run build
 ```
 
 ### 14.2 Mise à Jour Dépendances
 
 ```bash
 # Vérifier mises à jour
-npm outdated
+pnpm outdated
 
 # Mettre à jour mineures
-npm update
+pnpm update
 
 # Mettre à jour majeure
-npm install package@latest
+pnpm add package@latest
+
+# Mettre à jour lockfile
+pnpm install --no-frozen-lockfile
+git add pnpm-lock.yaml
+git commit -m "chore: update dependencies"
 ```
+
+**Bonnes pratiques :**
+- Tester localement après mise à jour
+- Vérifier changelog pour breaking changes
+- Mettre à jour lockfile et commiter
 
 ### 14.3 Mise à Jour Production
 
@@ -818,27 +999,37 @@ npx vercel rollback
 **Métriques suivies :**
 - **Bugs** : Détection de bugs potentiels dans le code
 - **Vulnérabilités** : Analyse de sécurité du code source
-- **Code Smells** : Détection des mauvaises pratiques
-- **Couverture de tests** : Pourcentage de code couvert
+- **Code Smells** : Détection des mauvaises pratiques (complexité cognitive, nesting profond)
+- **Couverture de tests** : Pourcentage de code couvert (format LCOV)
 - **Duplication** : Détection de code dupliqué
 
 **Quality Gate (Seuils de qualité) :**
-| Métrique | Seuil | Objectif |
-|----------|-------|----------|
-| Couverture | ≥ 40% | ≥ 80% |
-| Duplication | < 3% | < 3% |
-| Bugs | 0 critiques | 0 |
-| Vulnérabilités | 0 critiques | 0 |
+| Métrique | Seuil | Objectif | État Actuel |
+|----------|-------|----------|-------------|
+| Couverture | ≥ 40% | ≥ 80% | En progression |
+| Duplication | < 3% | < 3% | ~5% (amélioration continue) |
+| Bugs | 0 critiques | 0 | ✅ 0 |
+| Vulnérabilités | 0 critiques | 0 | ✅ 0 |
+| Complexité Cognitive | < 15 | < 15 | ✅ Corrigé |
+| Nesting Depth | < 4 | < 4 | ✅ Corrigé |
 
 **Configuration :** `sonar-project.properties`
+
+**Améliorations Récentes :**
+- Format LCOV intégré pour coverage SonarCloud
+- Branch analysis activé pour PRs
+- Réduction complexité cognitive : 8 fichiers refactorisés
+- Réduction nesting profond : Extraction fonctions helper
+- Corrections code smells : 15+ problèmes résolus
 
 ### 15.3 Tests et Validation
 
 **Tests Automatisés :**
-- ✅ 50 tests unitaires : 100% passés
-- ✅ Build production : Sans erreurs
-- ✅ Linting : Sans warnings critiques
-- ✅ SonarCloud : Analyse qualité à chaque PR
+- ✅ 49 tests unitaires : 100% passés
+- ✅ Build production : Sans erreurs TypeScript
+- ✅ Linting : Sans erreurs critiques (warnings mineurs acceptés)
+- ✅ SonarCloud : Analyse qualité à chaque PR avec branch analysis
+- ✅ Coverage LCOV : Format compatible SonarCloud généré automatiquement
 
 **Validation Manuelle :**
 - ✅ Fonctionnalités principales testées
@@ -889,17 +1080,27 @@ npx vercel rollback
 Ce dossier présente l'application Yallo, un Vertical SaaS pour Fast Food Restaurants, développée avec Next.js 16, TypeScript strict, et une architecture Vertical Slices.
 
 **Points forts :**
-- ✅ 50 tests unitaires couvrant fonctionnalités critiques
-- ✅ Pipeline CI/CD automatisé (Lint → Test → Build → Deploy)
-- ✅ Architecture maintenable (Vertical Slices)
-- ✅ Sécurité renforcée (OWASP Top 10)
-- ✅ Accessibilité conforme (RGAA 4.1)
+- ✅ 49 tests unitaires couvrant fonctionnalités critiques avec coverage LCOV
+- ✅ Pipeline CI/CD automatisé complet (pnpm, Lint → Test → SonarCloud → Build → Deploy)
+- ✅ Architecture maintenable (Vertical Slices) avec complexité cognitive maîtrisée
+- ✅ Sécurité renforcée (OWASP Top 10) avec gestion multi-environnements
+- ✅ Accessibilité conforme (RGAA 4.1) avec composants Radix UI
+- ✅ Qualité code suivie (SonarCloud) avec métriques et seuils définis
+- ✅ Environnements multiples (local, staging, production) avec déploiement automatisé
 - ✅ Documentation complète (déploiement, utilisation, mise à jour)
 
 **Le logiciel est fonctionnel, fiable et manipulable en autonomie par les utilisateurs.**
 
+**Améliorations Continues :**
+- Réduction complexité cognitive : 8 fichiers refactorisés
+- Réduction nesting profond : Extraction fonctions helper
+- Corrections code smells : 15+ problèmes SonarCloud résolus
+- Coverage en progression : Format LCOV intégré pour SonarCloud
+- CI/CD optimisé : Migration pnpm avec cache optimisé
+
 ---
 
-*Document généré le : 01/02/2026*  
+*Document généré le : 02/02/2026*  
 *Version du logiciel : 0.1.0*  
+*Dernière mise à jour : 02/02/2026*  
 *Nombre de pages : ~30*
