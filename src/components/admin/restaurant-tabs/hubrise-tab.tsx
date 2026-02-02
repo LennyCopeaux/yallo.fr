@@ -62,7 +62,6 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
 
   return (
     <div className="space-y-6">
-      {/* Status Card */}
       <Card className={`border ${hasConfig ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-amber-400/20 bg-amber-400/5'}`}>
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
@@ -84,7 +83,6 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
         </CardContent>
       </Card>
 
-      {/* Configuration Form */}
       <Card className="border-border bg-card/30">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -97,7 +95,6 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Location ID */}
             <div className="space-y-2">
               <Label htmlFor="hubriseLocationId">HubRise Location ID</Label>
               <div className="relative">
@@ -118,7 +115,6 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
               </p>
             </div>
 
-            {/* Access Token */}
             <div className="space-y-2">
               <Label htmlFor="hubriseAccessToken">HubRise Access Token</Label>
               <div className="relative">
@@ -152,7 +148,6 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
               </p>
             </div>
 
-            {/* Info Alert */}
             <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-400/10 border border-blue-400/20">
               <AlertCircle className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
               <div className="space-y-1 text-sm">
@@ -164,7 +159,6 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
               </div>
             </div>
 
-            {/* Actions */}
             <div className="pt-4 border-t border-border">
               <Button
                 type="submit"

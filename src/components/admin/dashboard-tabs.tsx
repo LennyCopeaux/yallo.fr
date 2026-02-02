@@ -66,7 +66,6 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, default
         </TabsTrigger>
       </TabsList>
 
-      {/* Onglet Restaurants */}
       <TabsContent value="restaurants" className="space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -78,7 +77,6 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, default
           <AddRestaurantDialog owners={owners} />
         </div>
 
-        {/* Stats rapides */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
             <p className="text-xl sm:text-2xl font-bold">{restaurants.length}</p>
@@ -116,11 +114,9 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, default
           </div>
         </div>
 
-        {/* DataTable */}
         <RestaurantsDataTable data={restaurants} />
       </TabsContent>
 
-      {/* Onglet Utilisateurs */}
       <TabsContent value="users" className="space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -132,7 +128,6 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, default
           <AddUserDialog />
         </div>
 
-        {/* Stats rapides */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
             <p className="text-xl sm:text-2xl font-bold">{users.length}</p>
@@ -158,7 +153,6 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, default
           </div>
         </div>
 
-        {/* DataTable */}
         <UsersDataTable data={users} />
       </TabsContent>
     </Tabs>
