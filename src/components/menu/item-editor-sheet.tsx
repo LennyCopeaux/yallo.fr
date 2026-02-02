@@ -284,34 +284,6 @@ export function ItemEditorDialog({
     await addModifiersForIngredients(group.id, toAddIngredients, createModifier);
   }
 
-async function removeModifiersForIngredients(
-  group: { options: Array<{ id: string; name: string }> },
-  ingredients: Ingredient[],
-  ingredientIdsToRemove: string[],
-  deleteModifier: (id: string) => Promise<unknown>
-): Promise<void> {
-  for (const ingredientId of ingredientIdsToRemove) {
-    const modifier = findModifierForIngredient(group, ingredients, ingredientId);
-    if (modifier) {
-      await deleteModifier(modifier.id);
-    }
-  }
-}
-
-async function addModifiersForIngredients(
-  groupId: string,
-  ingredientIdsToAdd: string[],
-  createModifier: (formData: FormData) => Promise<unknown>
-): Promise<void> {
-  for (const ingredientId of ingredientIdsToAdd) {
-    const modifierFormData = new FormData();
-    modifierFormData.append("groupId", groupId);
-    modifierFormData.append("ingredientId", ingredientId);
-    modifierFormData.append("priceExtra", "0");
-    await createModifier(modifierFormData);
-  }
-  }
-
   async function addNewModifierGroups(variationId: string, categoryIdsToAdd: string[]): Promise<void> {
     for (const categoryIdToAdd of categoryIdsToAdd) {
       const formData = new FormData();

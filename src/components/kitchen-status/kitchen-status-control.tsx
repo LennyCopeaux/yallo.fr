@@ -52,15 +52,15 @@ type StatusConfigType = typeof STATUS_CONFIG[KitchenStatus];
 type StatusType = "CALM" | "NORMAL" | "RUSH";
 
 interface StatusDelayConfigProps {
-  status: StatusType;
-  label: string;
-  config: StatusSettings;
-  useFixed: boolean;
-  onUseFixedChange: (checked: boolean) => void;
-  onConfigUpdate: (status: StatusType, useFixed: boolean, value: number | { min: number; max: number }) => void;
-  defaultFixed: number;
-  defaultMin: number;
-  defaultMax: number;
+  readonly status: StatusType;
+  readonly label: string;
+  readonly config: StatusSettings;
+  readonly useFixed: boolean;
+  readonly onUseFixedChange: (checked: boolean) => void;
+  readonly onConfigUpdate: (status: StatusType, useFixed: boolean, value: number | { min: number; max: number }) => void;
+  readonly defaultFixed: number;
+  readonly defaultMin: number;
+  readonly defaultMax: number;
 }
 
 function StatusDelayConfig({
