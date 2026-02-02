@@ -36,5 +36,10 @@ export function buildAppUrlServer(pathname: string, host: string): string {
     return `http://app.localhost:${port}${normalizedPath}`;
   }
   
+  const isStaging = host.includes("staging");
+  if (isStaging) {
+    return `https://app.staging.yallo.fr${normalizedPath}`;
+  }
+  
   return `https://app.yallo.fr${normalizedPath}`;
 }

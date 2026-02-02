@@ -14,6 +14,11 @@ function buildAppUrl(pathname: string, host: string): URL {
     return new URL(`http://app.localhost:${port}${pathname}`);
   }
   
+  const isStaging = host.includes("staging");
+  if (isStaging) {
+    return new URL(`https://app.staging.yallo.fr${pathname}`);
+  }
+  
   return new URL(`https://app.yallo.fr${pathname}`);
 }
 

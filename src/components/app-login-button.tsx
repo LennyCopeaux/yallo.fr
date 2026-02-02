@@ -12,6 +12,8 @@ export function AppLoginButton() {
     
     if (hostname === "localhost") {
       setHref(`http://app.localhost:${port}/login`);
+    } else if (hostname.includes("staging")) {
+      setHref("https://app.staging.yallo.fr/login");
     } else if (hostname.includes("yallo") && !hostname.startsWith("app.")) {
       setHref("https://app.yallo.fr/login");
     } else {

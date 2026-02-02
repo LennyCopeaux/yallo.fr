@@ -17,6 +17,8 @@ export function MarketingHomeLink({
     
     if (hostname === "app.localhost") {
       setHref(`http://localhost:${port}/`);
+    } else if (hostname.includes("staging")) {
+      setHref("https://staging.yallo.fr/");
     } else if (hostname.startsWith("app.") && hostname.includes("yallo")) {
       setHref("https://yallo.fr/");
     } else {

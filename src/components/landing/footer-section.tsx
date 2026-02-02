@@ -9,6 +9,8 @@ export function FooterSection() {
     const port = typeof window !== "undefined" && window.location.port ? window.location.port : "3000";
     const appUrl = hostname.includes("localhost") 
       ? `http://app.localhost:${port}/login`
+      : hostname.includes("staging")
+      ? "https://app.staging.yallo.fr/login"
       : "https://app.yallo.fr/login";
     window.location.href = appUrl;
   };
