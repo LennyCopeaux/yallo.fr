@@ -781,7 +781,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                               <DialogHeader>
                                 <DialogTitle>Ajouter une catégorie d&apos;ingrédients</DialogTitle>
                                 <DialogDescription>
-                                  Sélectionnez une catégorie d'ingrédients à ajouter à cette variation
+                                  Sélectionnez une catégorie d&apos;ingrédients à ajouter à cette variation
                                 </DialogDescription>
                               </DialogHeader>
                               <input type="hidden" name="variationId" value={selectedVariationId || ""} />
@@ -869,7 +869,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
               className="space-y-4"
             >
               <DialogHeader>
-                <DialogTitle>Modifier "{editingVariationFull.name}"</DialogTitle>
+                <DialogTitle>Modifier &quot;{editingVariationFull.name}&quot;</DialogTitle>
                 <DialogDescription>
                   Gérez le prix, les ingrédients et les catégories de cette variation
                 </DialogDescription>

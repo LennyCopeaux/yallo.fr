@@ -35,7 +35,7 @@ export function OrdersGrid({ initialOrders }: OrdersGridProps) {
           )
         );
         toast.success("Statut mis à jour");
-      } catch (error) {
+      } catch {
         toast.error("Erreur lors de la mise à jour");
       }
     });

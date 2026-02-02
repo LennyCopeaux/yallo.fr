@@ -79,10 +79,10 @@ async function getUserRestaurant(): Promise<{
 // TYPES & SCHEMAS
 // ============================================
 
-export type ActionResult = {
+export type ActionResult<T = unknown> = {
   success: boolean;
   error?: string;
-  data?: any;
+  data?: T;
 };
 
 const toggleIngredientAvailabilitySchema = z.object({

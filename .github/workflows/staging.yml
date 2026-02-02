@@ -87,6 +87,7 @@ jobs:
             -Dsonar.tests=src/__tests__
             -Dsonar.test.inclusions=src/__tests__/**/*.test.ts
             -Dsonar.exclusions=**/node_modules/**,**/.next/**,**/drizzle/**
+            -Dsonar.ci.skip=false
 
   # ==========================================
   # JOB 3: Déploiement Staging

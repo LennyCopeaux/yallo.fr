@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Save, Bot, Brain, FileText, AlertCircle, Sparkles, Code } from "lucide-react";
+import { Loader2, Save, Bot, Brain, FileText, Sparkles, Code } from "lucide-react";
 import { toast } from "sonner";
 import { updateRestaurantAI, createVapiAssistant, updateVapiAssistant } from "@/app/(admin)/admin/restaurants/actions";
 
@@ -137,7 +137,7 @@ export function AITab({ restaurant }: AITabProps) {
                       } else {
                         toast.error(result.error || "Erreur lors de la création de l'assistant");
                       }
-                    } catch (error) {
+                    } catch {
                       toast.error("Erreur lors de la création de l'assistant");
                     } finally {
                       setIsCreatingAssistant(false);
@@ -171,7 +171,7 @@ export function AITab({ restaurant }: AITabProps) {
                       } else {
                         toast.error(result.error || "Erreur lors de la mise à jour de l'assistant");
                       }
-                    } catch (error) {
+                    } catch {
                       toast.error("Erreur lors de la mise à jour de l'assistant");
                     } finally {
                       setIsUpdatingAssistant(false);
@@ -222,7 +222,7 @@ export function AITab({ restaurant }: AITabProps) {
                     const data = await response.json();
                     form.setValue("systemPrompt", data.systemPrompt);
                     toast.success("Prompt système généré");
-                  } catch (error) {
+                  } catch {
                     toast.error("Erreur lors de la génération du prompt");
                   } finally {
                     setIsGeneratingPrompt(false);
@@ -301,7 +301,7 @@ Règles importantes :
                     const data = await response.json();
                     form.setValue("menuContext", data.menuJson);
                     toast.success("JSON menu généré");
-                  } catch (error) {
+                  } catch {
                     toast.error("Erreur lors de la génération du JSON");
                   } finally {
                     setIsGeneratingMenuJson(false);

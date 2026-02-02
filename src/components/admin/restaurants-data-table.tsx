@@ -73,18 +73,16 @@ type Owner = {
 
 interface RestaurantsDataTableProps {
   data: Restaurant[];
-  owners: Owner[];
 }
 
-export function RestaurantsDataTable({ data, owners }: RestaurantsDataTableProps) {
+export function RestaurantsDataTable({ data }: RestaurantsDataTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [searchValue, setSearchValue] = useState(searchParams.get("search") || "");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [restaurantToDelete, setRestaurantToDelete] = useState<Restaurant | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [impersonatingId, setImpersonatingId] = useState<string | null>(null);
 
   // Met à jour les filtres dans l'URL
   const updateFilters = (key: string, value: string | null) => {
