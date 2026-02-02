@@ -176,7 +176,7 @@ export function FeaturesSection() {
                   const duration = durations[i % 3];
                   return (
                     <motion.div
-                      key={i}
+                      key={`wave-bar-${baseHeight}-${i}`}
                       className="w-2 bg-primary rounded-full"
                       initial={{ height: `${Math.min(baseHeight, 40)}px` }}
                       animate={{

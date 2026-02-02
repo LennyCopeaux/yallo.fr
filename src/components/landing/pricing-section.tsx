@@ -176,7 +176,7 @@ export function PricingSection({ pricingConfig }: Readonly<PricingSectionProps>)
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-3">
                     {features.map((feature, i) => (
                       <motion.div
-                        key={i}
+                        key={`feature-${feature.text.slice(0, 20)}-${i}`}
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}

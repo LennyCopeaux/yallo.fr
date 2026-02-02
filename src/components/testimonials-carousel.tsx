@@ -92,7 +92,7 @@ export function TestimonialsCarousel() {
 
             return (
               <CarouselItem
-                key={index}
+                key={`testimonial-${testimonial.author}-${testimonial.company}-${index}`}
                 className="pl-2 md:pl-4 basis-[80%] sm:basis-[60%] md:basis-1/3"
               >
                 <div
@@ -179,9 +179,9 @@ export function TestimonialsCarousel() {
       
       {/* Dots indicator */}
       <div className="flex justify-center gap-2 mt-8">
-        {testimonials.map((_, index) => (
+        {testimonials.map((testimonial, index) => (
           <button
-            key={index}
+            key={`dot-${testimonial.author}-${index}`}
             onClick={() => api?.scrollTo(index)}
             className={cn(
               "h-2 rounded-full transition-all duration-300",

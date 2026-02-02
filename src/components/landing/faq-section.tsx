@@ -77,7 +77,7 @@ export function FaqSection() {
             <Accordion type="single" collapsible className="w-full">
               {faqItems.map((item, i) => (
                 <AccordionItem
-                  key={i}
+                  key={`faq-${item.q.slice(0, 30)}-${i}`}
                   value={`item-${i}`}
                   className={`border border-border rounded-xl px-5 data-[state=open]:border-primary/30 data-[state=open]:bg-primary/5 transition-all duration-300 ${i === faqItems.length - 1 ? 'mb-0' : 'mb-3'}`}
                 >

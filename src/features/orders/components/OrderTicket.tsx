@@ -160,7 +160,7 @@ export function OrderTicket({ order, onStatusChange, className }: OrderTicketPro
               <div className="mt-1 pl-4 flex flex-wrap gap-1">
                 {item.options.split(",").map((option, i) => (
                   <span
-                    key={i}
+                    key={`option-${option.trim()}-${i}`}
                     className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground"
                   >
                     {option.trim()}

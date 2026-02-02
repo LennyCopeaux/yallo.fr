@@ -6,6 +6,80 @@ import { NextResponse } from "next/server";
 import { fetchHubriseCatalog, HubriseError } from "@/lib/services/hubrise";
 import { logger } from "@/lib/logger";
 
+type ModifierData = {
+  modifier: typeof modifiers.$inferSelect;
+  ingredient: typeof ingredients.$inferSelect;
+  groupId: string;
+};
+
+type ModifierGroupData = {
+  group: typeof modifierGroups.$inferSelect;
+  variationId: string;
+  ingredientCategory: typeof ingredientCategories.$inferSelect;
+};
+
+type VariationData = {
+  variation: typeof productVariations.$inferSelect;
+  categoryId: string;
+};
+
+function transformModifiersForJson(
+  allModifiers: ModifierData[],
+  groupId: string
+): Array<{ name: string; priceExtra: number; isAvailable: boolean }> {
+  return allModifiers
+    .filter((m) => m.groupId === groupId)
+    .map((m) => ({
+      name: m.ingredient.name,
+      priceExtra: m.modifier.priceExtra / 100,
+      isAvailable: m.ingredient.isAvailable,
+    }));
+}
+
+function transformModifierGroupsForJson(
+  allModifierGroups: ModifierGroupData[],
+  allModifiers: ModifierData[],
+  variationId: string
+): Array<{
+  category: string;
+  minSelect: number;
+  maxSelect: number;
+  options: Array<{ name: string; priceExtra: number; isAvailable: boolean }>;
+}> {
+  return allModifierGroups
+    .filter((mg) => mg.variationId === variationId)
+    .map((mg) => ({
+      category: mg.ingredientCategory.name,
+      minSelect: mg.group.minSelect,
+      maxSelect: mg.group.maxSelect,
+      options: transformModifiersForJson(allModifiers, mg.group.id),
+    }));
+}
+
+function transformVariationsForJson(
+  allVariations: VariationData[],
+  allModifierGroups: ModifierGroupData[],
+  allModifiers: ModifierData[],
+  categoryId: string
+): Array<{
+  name: string;
+  price: number;
+  modifierGroups: Array<{
+    category: string;
+    minSelect: number;
+    maxSelect: number;
+    options: Array<{ name: string; priceExtra: number; isAvailable: boolean }>;
+  }>;
+}> {
+  return allVariations
+    .filter((v) => v.categoryId === categoryId)
+    .map((v) => ({
+      name: v.variation.name,
+      price: v.variation.price / 100,
+      modifierGroups: transformModifierGroupsForJson(allModifierGroups, allModifiers, v.variation.id),
+    }));
+}
+
 async function requireAdmin() {
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -93,40 +167,9 @@ export async function GET(
       .innerJoin(modifierGroups, eq(modifiers.groupId, modifierGroups.id))
       .where(eq(ingredients.restaurantId, id));
 
-    function transformModifiers(groupId: string) {
-      return allModifiers
-        .filter((m) => m.groupId === groupId)
-        .map((m) => ({
-          name: m.ingredient.name,
-          priceExtra: m.modifier.priceExtra / 100,
-          isAvailable: m.ingredient.isAvailable,
-        }));
-    }
-
-    function transformModifierGroups(variationId: string) {
-      return allModifierGroups
-        .filter((mg) => mg.variationId === variationId)
-        .map((mg) => ({
-          category: mg.ingredientCategory.name,
-          minSelect: mg.group.minSelect,
-          maxSelect: mg.group.maxSelect,
-          options: transformModifiers(mg.group.id),
-        }));
-    }
-
-    function transformVariations(categoryId: string) {
-      return allVariations
-        .filter((v) => v.categoryId === categoryId)
-        .map((v) => ({
-          name: v.variation.name,
-          price: v.variation.price / 100,
-          modifierGroups: transformModifierGroups(v.variation.id),
-        }));
-    }
-
     const menuJson = allCategories.map((category) => ({
       category: category.name,
-      items: transformVariations(category.id),
+      items: transformVariationsForJson(allVariations, allModifierGroups, allModifiers, category.id),
     }));
 
     return NextResponse.json({ menuJson: JSON.stringify(menuJson, null, 2) });

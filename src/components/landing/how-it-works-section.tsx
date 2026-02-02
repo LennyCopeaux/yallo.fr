@@ -80,9 +80,9 @@ export function HowItWorksSection() {
                   {[
                     { number: "06 12 34 56 78", label: "Client régulier" },
                     { number: "06 98 76 54 32", label: "Nouveau client" },
-                  ].map((call, i) => (
+                  ].map((call) => (
                     <motion.div
-                      key={i}
+                      key={`call-${call.number}-${call.label}`}
                       initial={{ opacity: 0, y: 10 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}

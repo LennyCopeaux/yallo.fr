@@ -64,9 +64,9 @@ export default function DemoPage() {
                   SANDWICHS
                 </h2>
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {menuSandwichs.map((item, i) => (
+                  {menuSandwichs.map((item) => (
                     <div
-                      key={i}
+                      key={`menu-${item.name}`}
                       className="flex items-center justify-between p-3 rounded-lg bg-card/30 border border-border hover:border-primary/30 transition-colors"
                     >
                       <span className="text-foreground font-medium">{item.name}</span>
@@ -82,8 +82,8 @@ export default function DemoPage() {
                   Liste des viandes (pour Tacos)
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {viandes.map((viande, i) => (
-                    <Badge key={i} variant="outline" className="text-sm">
+                  {viandes.map((viande) => (
+                    <Badge key={`viande-${viande}`} variant="outline" className="text-sm">
                       {viande}
                     </Badge>
                   ))}
@@ -96,8 +96,8 @@ export default function DemoPage() {
                   Liste des sauces
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {sauces.map((sauce, i) => (
-                    <Badge key={i} variant="outline" className="text-sm">
+                  {sauces.map((sauce) => (
+                    <Badge key={`sauce-${sauce}`} variant="outline" className="text-sm">
                       {sauce}
                     </Badge>
                   ))}
@@ -110,8 +110,8 @@ export default function DemoPage() {
                   Liste des crudités
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {crudites.map((crudite, i) => (
-                    <Badge key={i} variant="outline" className="text-sm">
+                  {crudites.map((crudite) => (
+                    <Badge key={`crudite-${crudite}`} variant="outline" className="text-sm">
                       {crudite}
                     </Badge>
                   ))}
