@@ -98,7 +98,7 @@ export async function middleware(req: NextRequest) {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
   const host = req.headers.get("host") || "";
-  const isAppDomain = host.startsWith("app.") || (process.env.NEXT_PUBLIC_APP_URL && host.includes("ngrok"));
+  const isAppDomain = host.startsWith("app.");
 
   if (!isAppDomain) {
     return handleNonAppDomain(pathname, host);

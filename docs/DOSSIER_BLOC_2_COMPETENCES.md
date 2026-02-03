@@ -785,7 +785,7 @@ Les composants shadcn/ui sont basés sur **Radix UI** qui implémente :
 - Correction : Implémentation flux API correct (2 étapes)
 - Leçon : Vérifier documentation API officielle
 
-**BUG-002 : Redirection NextAuth ngrok** (S2)
+**BUG-002 : Redirection NextAuth** (S2)
 - Cause : URLs hardcodées
 - Correction : Priorisation `NEXT_PUBLIC_APP_URL`
 - Leçon : Centraliser logique construction URLs
