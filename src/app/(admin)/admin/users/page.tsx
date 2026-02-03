@@ -5,7 +5,6 @@ import { UsersDataTable, AddUserDialog } from "@/components/admin";
 import { Suspense } from "react";
 import { Loader2, Users } from "lucide-react";
 
-// Récupère tous les utilisateurs
 async function getUsers() {
   return await db
     .select({
@@ -26,7 +25,6 @@ export default async function UsersPage() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold">Utilisateurs</h1>
@@ -37,7 +35,6 @@ export default async function UsersPage() {
         <AddUserDialog />
       </div>
 
-      {/* Stats rapides */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl border border-border bg-card/30">
           <p className="text-2xl font-bold">{usersList.length}</p>
@@ -63,7 +60,6 @@ export default async function UsersPage() {
         </div>
       </div>
 
-      {/* DataTable */}
       <Suspense fallback={
         <div className="flex items-center justify-center py-16">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />

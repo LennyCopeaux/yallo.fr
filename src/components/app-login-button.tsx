@@ -1,38 +1,23 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useSyncExternalStore, useCallback } from "react";
-
-function getLoginUrl(): string {
-  if (typeof globalThis.window === "undefined") {
-    return "/login";
-  }
-  
-  const hostname = globalThis.window.location.hostname;
-  const port = globalThis.window.location.port || "3000";
-  
-  if (hostname === "localhost") {
-    return `http://app.localhost:${port}/login`;
-  }
-  if (hostname.includes("staging")) {
-    return "https://app.staging.yallo.fr/login";
-  }
-  if (hostname.includes("yallo") && !hostname.startsWith("app.")) {
-    return "https://app.yallo.fr/login";
-  }
-  return "/login";
-}
-
-function subscribeToNothing() {
-  return () => {};
-}
+import { useEffect, useState } from "react";
 
 export function AppLoginButton() {
-  const href = useSyncExternalStore(
-    subscribeToNothing,
-    useCallback(() => getLoginUrl(), []),
-    useCallback(() => "/login", [])
-  );
+  const [href, setHref] = useState("/login");
+
+  useEffect(() => {
+    const hostname = window.location.hostname;
+    const port = window.location.port || "3000";
+    
+    if (hostname === "localhost") {
+      setHref(`http://app.localhost:${port}/login`);
+    } else if (hostname.includes("yallo") && !hostname.startsWith("app.")) {
+      setHref("https://app.yallo.fr/login");
+    } else {
+      setHref("/login");
+    }
+  }, []);
 
   return (
     <Button 

@@ -96,7 +96,6 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Nom */}
             <div className="space-y-2">
               <Label htmlFor="name">Nom du restaurant *</Label>
               <Input
@@ -110,7 +109,6 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
               )}
             </div>
 
-            {/* Slug */}
             <div className="space-y-2">
               <Label htmlFor="slug">Slug (URL) *</Label>
               <div className="flex items-center gap-2">
@@ -130,7 +128,6 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
               </p>
             </div>
 
-            {/* Propriétaire */}
             <div className="space-y-2">
               <Label htmlFor="ownerId">Propriétaire *</Label>
               <Select
@@ -157,7 +154,6 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
               )}
             </div>
 
-            {/* Statut */}
             <div className="space-y-2">
               <Label htmlFor="status">Statut *</Label>
               <Select
@@ -195,7 +191,6 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
             </div>
           </div>
 
-          {/* Adresse */}
           <div className="space-y-2">
             <Label htmlFor="address">Adresse</Label>
             <Textarea
@@ -211,7 +206,6 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
             )}
           </div>
 
-          {/* Métadonnées et Actions alignés */}
           <div className="pt-4 border-t border-border">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">

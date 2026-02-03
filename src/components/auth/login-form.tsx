@@ -15,8 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import { MarketingHomeLink } from "@/components/marketing-home-link";
-import { ModeToggle } from "@/components/mode-toggle";
+import { MarketingHomeLink, ModeToggle } from "@/components/navigation";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -53,17 +52,13 @@ export function LoginForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-      {/* Theme Toggle - Top Right */}
       <div className="absolute top-4 right-4 z-20">
         <ModeToggle />
       </div>
 
-      {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-primary/15 blur-[120px]" />
         <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-primary/5 blur-[100px]" />
-        
-        {/* Grid overlay - Light mode visible, Dark mode subtle */}
         <div 
           className="absolute inset-0"
           style={{ 

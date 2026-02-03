@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 
 function StockToggleCard() {
   const [isAvailable, setIsAvailable] = useState(true);
-  const [isFritesXLAvailable, setIsFritesXLAvailable] = useState(false); // Épuisé par défaut
+  const [isFritesXLAvailable, setIsFritesXLAvailable] = useState(false);
 
   return (
     <motion.div
@@ -149,9 +149,7 @@ export function FeaturesSection() {
         </h2>
       </motion.div>
 
-      {/* Bento Grid - Ligne 1 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-        {/* Carte 1 - Grande (Largeur x2) : Compréhension Vocale Avancée */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -210,7 +208,6 @@ export function FeaturesSection() {
           </Card>
         </motion.div>
 
-        {/* Carte 3 - Moyenne : Ligne Infinie (Scalabilité) */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -309,13 +306,11 @@ export function FeaturesSection() {
         <StockToggleCard />
       </div>
 
-      {/* Bento Grid - Ligne 2 */}
       <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${showAllCards ? '' : 'hidden md:grid'}`}>
         <UpsellIntelligentCard />
 
         <div className="lg:col-span-2 grid grid-rows-[auto_auto] gap-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Carte 5 - Petite : Relais Humain */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -377,7 +372,6 @@ export function FeaturesSection() {
               </Card>
             </motion.div>
 
-            {/* Carte 6 - Petite : Carte 100% Flexible */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -420,7 +414,6 @@ export function FeaturesSection() {
             </motion.div>
           </div>
 
-          {/* Carte 7 - Full Width : Intégration Caisse */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -480,7 +473,6 @@ export function FeaturesSection() {
         </div>
       </div>
 
-      {/* Bouton Voir plus / Voir moins - Mobile uniquement */}
       <div className="md:hidden flex justify-center mt-6">
         <Button
           variant="outline"

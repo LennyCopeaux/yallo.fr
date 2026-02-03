@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "@/components/navigation";
 
 const navigation = [
   {
@@ -26,12 +26,9 @@ const navigation = [
   },
 ];
 
-// Fonction pour gérer la déconnexion avec la bonne redirection
 async function handleLogout(): Promise<void> {
-  // Déconnecter sans redirection automatique
   await signOut({ redirect: false });
   
-  // Rediriger manuellement vers la bonne URL
   if (typeof globalThis.window !== "undefined") {
     const hostname = globalThis.window.location.hostname;
     const port = globalThis.window.location.port || "3000";
@@ -58,10 +55,8 @@ export default function AdminDashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Sidebar */}
       <aside className="fixed inset-y-0 left-0 w-64 border-r border-border bg-card/30 backdrop-blur-xl hidden lg:block">
         <div className="flex flex-col h-full">
-          {/* Logo */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-border">
             <Link href="/admin" className="flex items-center gap-3">
               <span className="text-xl font-black gradient-text">Yallo</span>
@@ -72,7 +67,6 @@ export default function AdminDashboardLayout({
             <ModeToggle />
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 px-3 py-4 space-y-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href || 
@@ -99,7 +93,6 @@ export default function AdminDashboardLayout({
             })}
           </nav>
 
-          {/* Footer */}
           <div className="p-3 border-t border-border space-y-2">
             <Button
               variant="ghost"
@@ -113,7 +106,6 @@ export default function AdminDashboardLayout({
         </div>
       </aside>
 
-      {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-50 h-16 border-b border-border bg-card/50 backdrop-blur-xl">
         <div className="flex items-center justify-between h-full px-4">
           <Link href="/admin" className="flex items-center gap-2">
@@ -135,7 +127,6 @@ export default function AdminDashboardLayout({
         </div>
       </header>
 
-      {/* Mobile Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 h-16 border-t border-border bg-card/80 backdrop-blur-xl">
         <div className="flex items-center justify-around h-full">
           {navigation.map((item) => {
@@ -161,7 +152,6 @@ export default function AdminDashboardLayout({
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="lg:pl-64">
         <div className="min-h-screen pb-20 lg:pb-0">
           {children}

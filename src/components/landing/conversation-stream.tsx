@@ -8,8 +8,7 @@ interface Message {
   text: string;
 }
 
-// Messages statiques sans animation de typing pour meilleure performance
-const displayedMessages: Message[] = [
+const conversationMessages: Message[] = [
   { id: 1, speaker: "yallo", text: "Bonjour ! Yallo à votre service, que puis-je vous préparer aujourd'hui ?" },
   { id: 2, speaker: "client", text: "Salut, je voudrais un kebab viande avec des frites s'il vous plaît." },
   { id: 3, speaker: "yallo", text: "Parfait ! Quelle sauce souhaitez-vous ? Nous avons blanche, harissa, algérienne..." },
@@ -20,7 +19,7 @@ export function ConversationStream() {
     <div className="relative h-36 overflow-hidden">
       <div className="h-full overflow-y-auto overflow-x-hidden px-1 no-scrollbar">
         <div className="space-y-2 py-2">
-          {displayedMessages.map((message, index) => (
+          {conversationMessages.map((message, index) => (
             <motion.div
               key={message.id}
               initial={{ opacity: 0, y: 10 }}

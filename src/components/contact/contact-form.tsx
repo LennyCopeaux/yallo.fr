@@ -25,8 +25,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { submitContactForm } from "@/app/(marketing)/contact/actions";
-import { ScrollToTop } from "@/components/scroll-to-top";
-import { BackToHomeLink } from "@/components/back-to-home-link";
+import { ScrollToTop } from "@/components/layout";
+import { BackToHomeLink } from "@/components/navigation";
 
 const contactFormSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { BackToHomeLink } from "@/components/back-to-home-link";
-import { ScrollToTop } from "@/components/scroll-to-top";
+import { BackToHomeLink } from "@/components/navigation";
+import { ScrollToTop } from "@/components/layout";
 
 export const metadata = {
   title: "Guide de démarrage | Yallo",

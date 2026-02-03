@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BackToHomeLink } from "@/components/back-to-home-link";
-import { ScrollToTop } from "@/components/scroll-to-top";
+import { BackToHomeLink } from "@/components/navigation";
+import { ScrollToTop } from "@/components/layout";
 import { DemoCallButton } from "@/components/demo/demo-call-button";
 import { DemoHeader } from "@/components/demo/demo-header";
 

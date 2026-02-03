@@ -1,43 +1,28 @@
 "use client";
 
-import { useSyncExternalStore, useCallback } from "react";
-
-function getHomeUrl(): string {
-  if (typeof globalThis.window === "undefined") {
-    return "/";
-  }
-  
-  const hostname = globalThis.window.location.hostname;
-  const port = globalThis.window.location.port || "3000";
-  
-  if (hostname === "app.localhost") {
-    return `http://localhost:${port}/`;
-  }
-  if (hostname.includes("staging")) {
-    return "https://staging.yallo.fr/";
-  }
-  if (hostname.startsWith("app.") && hostname.includes("yallo")) {
-    return "https://yallo.fr/";
-  }
-  return "/";
-}
-
-function subscribeToNothing() {
-  return () => {};
-}
+import { useEffect, useState } from "react";
 
 export function MarketingHomeLink({ 
   children, 
   className 
-}: Readonly<{ 
+}: { 
   children: React.ReactNode;
   className?: string;
-}>) {
-  const href = useSyncExternalStore(
-    subscribeToNothing,
-    useCallback(() => getHomeUrl(), []),
-    useCallback(() => "/", [])
-  );
+}) {
+  const [href, setHref] = useState("/");
+
+  useEffect(() => {
+    const hostname = window.location.hostname;
+    const port = window.location.port || "3000";
+    
+    if (hostname === "app.localhost") {
+      setHref(`http://localhost:${port}/`);
+    } else if (hostname.startsWith("app.") && hostname.includes("yallo")) {
+      setHref("https://yallo.fr/");
+    } else {
+      setHref("/");
+    }
+  }, []);
 
   return (
     <a href={href} className={className}>

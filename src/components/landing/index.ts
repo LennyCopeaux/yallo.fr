@@ -6,3 +6,5 @@ export { PricingSection } from "./pricing-section";
 export { FaqSection } from "./faq-section";
 export { CtaSection } from "./cta-section";
 export { FooterSection } from "./footer-section";
+export { ConversationStream } from "./conversation-stream";
+export { TestimonialsCarousel } from "./testimonials-carousel";

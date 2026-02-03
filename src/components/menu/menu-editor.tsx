@@ -8,7 +8,7 @@ import { CategorySidebar } from "./category-sidebar";
 import { ItemsPanel } from "./items-panel";
 import { ItemEditorDialog } from "./item-editor-sheet";
 import { IngredientsTab } from "./ingredients-tab";
-import { getMenuDataV2 } from "@/features/menu/actions-v2";
+import { getMenuData } from "@/features/menu/actions";
 import { toast } from "sonner";
 
 import type { Item, MenuData } from "./types";
@@ -128,7 +128,7 @@ export function MenuEditor({ initialMenuData }: Readonly<MenuEditorProps>) {
   async function refreshMenuData() {
     setIsRefreshing(true);
     try {
-      const freshData = await getMenuDataV2();
+      const freshData = await getMenuData();
       if (freshData) {
         const transformed = transformMenuData(freshData as BackendMenuData);
         setMenuData(transformed);

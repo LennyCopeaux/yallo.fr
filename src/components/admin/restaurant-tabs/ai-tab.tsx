@@ -70,7 +70,6 @@ export function AITab({ restaurant }: AITabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Status Card */}
       <Card className={`border ${hasVapiId ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-amber-400/20 bg-amber-400/5'}`}>
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
@@ -93,7 +92,6 @@ export function AITab({ restaurant }: AITabProps) {
       </Card>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Assistant Vapi */}
         <Card className="border-border bg-card/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -196,7 +194,6 @@ export function AITab({ restaurant }: AITabProps) {
           </CardContent>
         </Card>
 
-        {/* Prompt Système */}
         <Card className="border-border bg-card/30">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -275,7 +272,6 @@ Règles importantes :
           </CardContent>
         </Card>
 
-        {/* Menu Context */}
         <Card className="border-border bg-card/30">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -360,7 +356,6 @@ Règles importantes :
           </CardContent>
         </Card>
 
-        {/* Actions */}
         <div className="flex justify-end">
           <Button
             type="submit"

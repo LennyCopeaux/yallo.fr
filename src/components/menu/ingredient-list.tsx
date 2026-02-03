@@ -32,7 +32,7 @@ import {
   createIngredientCategory,
   updateIngredientCategory,
   deleteIngredientCategory,
-} from "@/features/menu/actions-v2";
+} from "@/features/menu/actions";
 import { useRouter } from "next/navigation";
 
 // Types

@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { AppLoginButton } from "@/components/app-login-button";
-import { MarketingLogoLink } from "@/components/marketing-logo-link";
-import { ModeToggle } from "@/components/mode-toggle";
+import { AppLoginButton, MarketingLogoLink, ModeToggle } from "@/components/navigation";
 
 export default function MarketingLayout({
   children,

@@ -14,37 +14,27 @@ export default {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
+        if (!credentials?.email || !credentials?.password) return null;
 
-        const email = credentials.email as string;
-        const password = credentials.password as string;
-
-        // Recherche l'utilisateur par email
-        const [user] = await db
+        const [existingUser] = await db
           .select()
           .from(users)
-          .where(eq(users.email, email))
+          .where(eq(users.email, credentials.email as string))
           .limit(1);
 
-        if (!user) {
-          return null;
-        }
+        if (!existingUser) return null;
 
-        // Vérifie le mot de passe
-        const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password as string,
+          existingUser.passwordHash
+        );
+        if (!isPasswordValid) return null;
 
-        if (!passwordMatch) {
-          return null;
-        }
-
-        // Retourne tous les champs nécessaires, y compris mustChangePassword
         return {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          mustChangePassword: user.mustChangePassword,
+          id: existingUser.id,
+          email: existingUser.email,
+          role: existingUser.role,
+          mustChangePassword: existingUser.mustChangePassword,
         };
       },
     }),
@@ -54,27 +44,20 @@ export default {
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
-      // Permet les redirections vers staging
-      if (url.startsWith("https://app.staging.yallo.fr") || url.startsWith("https://staging.yallo.fr")) {
-        return url;
-      }
-      
-      // Permet les redirections vers production
-      if (url.startsWith("https://app.yallo.fr") || url.startsWith("https://yallo.fr")) {
-        return url;
-      }
-      
-      // Permet les redirections locales
-      if (url.startsWith("http://app.localhost") || url.startsWith("http://localhost")) {
-        return url;
-      }
-      
-      // Permet les URLs relatives
-      if (url.startsWith("/")) {
-        return `${baseUrl}${url}`;
-      }
-      
-      // Par défaut, retourne la base URL
+      const allowedOrigins = [
+        "https://app.staging.yallo.fr",
+        "https://staging.yallo.fr",
+        "https://app.yallo.fr",
+        "https://yallo.fr",
+        "http://app.localhost",
+        "http://localhost",
+      ];
+
+      const isAllowedOrigin = allowedOrigins.some((origin) => url.startsWith(origin));
+      if (isAllowedOrigin) return url;
+
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+
       return baseUrl;
     },
   },

@@ -84,7 +84,6 @@ export function PricingSection({ pricingConfig }: Readonly<PricingSectionProps>)
         </h2>
       </motion.div>
 
-      {/* Single Card - Centered */}
       <div className="relative z-10 flex justify-center">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -93,7 +92,6 @@ export function PricingSection({ pricingConfig }: Readonly<PricingSectionProps>)
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="relative w-full max-w-5xl"
         >
-          {/* Glow effect */}
           <div className="absolute -inset-1 bg-primary/20 rounded-3xl blur-2xl opacity-50" />
 
           <Card
@@ -102,7 +100,6 @@ export function PricingSection({ pricingConfig }: Readonly<PricingSectionProps>)
               background: `linear-gradient(135deg, hsl(var(--card) / 0.9) 0%, hsl(var(--card) / 0.7) 100%)`,
             }}
           >
-            {/* Pattern overlay */}
             <div
               className="absolute inset-0 opacity-[0.03] pointer-events-none"
               style={{
@@ -112,13 +109,9 @@ export function PricingSection({ pricingConfig }: Readonly<PricingSectionProps>)
             />
 
             <CardContent className="relative z-10 p-6 sm:p-8 md:p-10">
-              {/* Grid Layout: 2 columns on desktop */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-                
-                {/* LEFT COLUMN: Finance & Action */}
                 <div className="flex flex-col justify-between space-y-6">
                   <div className="space-y-4">
-                    {/* Badge */}
                     <div className="flex justify-start">
                       <Badge className="bg-primary/10 text-primary border-primary/20 px-4 py-1.5">
                         <Sparkles className="w-3 h-3 mr-1.5" />
@@ -126,17 +119,14 @@ export function PricingSection({ pricingConfig }: Readonly<PricingSectionProps>)
                       </Badge>
                     </div>
 
-                    {/* Title */}
                     <CardTitle className="text-3xl sm:text-4xl font-bold text-foreground">
                       Yallo Infinity
                     </CardTitle>
 
-                    {/* Hook phrase */}
                     <p className="text-sm font-medium text-primary">
                       Rentable dès le 5ème appel récupéré.
                     </p>
 
-                    {/* Price */}
                     <div className="flex items-baseline gap-2">
                       <span className="text-6xl sm:text-7xl font-black text-foreground">
                         {monthlyPrice.toFixed(0)}€
@@ -147,7 +137,6 @@ export function PricingSection({ pricingConfig }: Readonly<PricingSectionProps>)
                       sans engagement
                     </CardDescription>
 
-                    {/* Setup fee - Compact */}
                     <div className="pt-4 border-t border-border/50">
                       <p className="text-xs text-muted-foreground mb-1">
                         Frais de mise en service unique :
@@ -158,7 +147,6 @@ export function PricingSection({ pricingConfig }: Readonly<PricingSectionProps>)
                     </div>
                   </div>
 
-                  {/* CTA Button */}
                   <Link href="/contact?subject=installation" className="block">
                     <Button
                       className="w-full h-14 bg-primary text-black hover:bg-primary/90 btn-shine font-semibold shadow-lg shadow-primary/30 transition-all duration-300 text-base sm:text-lg"
@@ -170,9 +158,7 @@ export function PricingSection({ pricingConfig }: Readonly<PricingSectionProps>)
                   </Link>
                 </div>
 
-                {/* RIGHT COLUMN: Features & Details */}
                 <div className="flex flex-col justify-between space-y-6">
-                  {/* Features list - 2 columns for compactness */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-3">
                     {features.map((feature, i) => (
                       <motion.div
@@ -193,7 +179,6 @@ export function PricingSection({ pricingConfig }: Readonly<PricingSectionProps>)
                     ))}
                   </div>
 
-                  {/* Security notice */}
                   <motion.div
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}

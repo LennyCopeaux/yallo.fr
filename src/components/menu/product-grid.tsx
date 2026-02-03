@@ -26,7 +26,7 @@ import { Loader2, Package, Edit2, Check, X, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   updateVariationPrice,
-  createCategoryV2,
+  createCategory,
   updateCategory,
   deleteCategory,
   createVariation,
@@ -35,10 +35,9 @@ import {
   createModifierGroup,
   deleteModifierGroup,
   deleteModifier,
-} from "@/features/menu/actions-v2";
+} from "@/features/menu/actions";
 import { useRouter } from "next/navigation";
 
-// Types
 interface IngredientCategory {
   id: string;
   name: string;
@@ -256,7 +255,6 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
   const [editingVariation, setEditingVariation] = useState<string | null>(null);
   const [variationPrice, setVariationPrice] = useState<string>("");
 
-  // États pour les modales
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [variationDialogOpen, setVariationDialogOpen] = useState(false);
@@ -268,7 +266,6 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
   const [editingVariationFull, setEditingVariationFull] = useState<ProductVariation | null>(null);
 
 
-  // Fonction helper pour rafraîchir les données
   function refreshData() {
     startTransition(() => {
       router.refresh();
@@ -320,7 +317,7 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
   async function handleCreateCategory(formData: FormData) {
     setLoadingId("create-category");
     try {
-      const result = await createCategoryV2(formData);
+      const result = await createCategory(formData);
       if (result.success) {
         toast.success("Catégorie créée", { description: "La catégorie a été ajoutée avec succès" });
         setCategoryDialogOpen(false);
@@ -822,7 +819,6 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                         </div>
                       </div>
 
-                      {/* Groupes de modificateurs */}
                       {variation.modifierGroups.length > 0 && (
                         <ModifierGroupsSection
                           groups={variation.modifierGroups}
@@ -833,7 +829,6 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
                         />
                       )}
 
-                      {/* Bouton pour ajouter une catégorie d&apos;ingrédients */}
                       <div className="pt-2 border-t border-border">
                         <Dialog
                           open={modifierGroupDialogOpen && selectedVariationId === variation.id}
@@ -932,7 +927,6 @@ export function ProductGrid({ categories, ingredients, ingredientCategories }: P
         ))}
       </Tabs>
 
-      {/* Modale d'édition complète de variation */}
       <Dialog open={variationEditDialogOpen} onOpenChange={setVariationEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           {editingVariationFull && (

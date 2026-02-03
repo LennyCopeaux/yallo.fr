@@ -24,7 +24,6 @@ export async function sendWelcomeEmail(
       />
     );
 
-    // Version texte pour les clients email qui ne supportent pas HTML
     const text = `Bonjour,
 
 Bienvenue sur Yallo ! Votre compte a été créé avec succès.
@@ -68,7 +67,6 @@ export async function sendResetPasswordEmail(
       />
     );
 
-    // Version texte pour les clients email qui ne supportent pas HTML
     const text = `Bonjour,
 
 Vous avez demandé la réinitialisation de votre mot de passe pour votre compte Yallo.
