@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Table,
@@ -61,6 +61,7 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const currentTab = searchParams.get("tab");
   const [searchValue, setSearchValue] = useState(searchParams.get("search") || "");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -69,27 +70,35 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
   const [resettingFor, setResettingFor] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
+  useEffect(() => {
+    if (currentTab === "users") {
+      setSearchValue(searchParams.get("search") || "");
+    }
+  }, [currentTab, searchParams]);
+
   const updateFilters = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", "users");
     if (value && value !== "all") {
       params.set(key, value);
     } else {
       params.delete(key);
     }
     startTransition(() => {
-      router.push(`/admin?tab=users&${params.toString()}`);
+      router.push(`/admin?${params.toString()}`);
     });
   };
 
   const handleSearchSubmit = () => {
     const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", "users");
     if (searchValue.trim()) {
       params.set("search", searchValue.trim());
     } else {
       params.delete("search");
     }
     startTransition(() => {
-      router.push(`/admin?tab=users&${params.toString()}`);
+      router.push(`/admin?${params.toString()}`);
     });
   };
 
@@ -159,7 +168,7 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder="Rechercher par nom ou email..."
               value={searchValue}
@@ -172,7 +181,7 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
             type="button"
             onClick={handleSearchSubmit}
             disabled={isPending}
-            className="bg-primary text-black hover:bg-primary/90 h-10 min-h-[44px] min-w-[44px]"
+            className="bg-primary text-black hover:bg-primary/90 h-10 w-10 p-0 min-w-[44px]"
           >
             <Search className="w-4 h-4" />
           </Button>
