@@ -73,7 +73,6 @@ export const users = pgTable("users", {
 export const restaurants = pgTable("restaurants", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
-  slug: text("slug").unique().notNull(),
   address: text("address"),
   phoneNumber: text("phone_number").notNull(),
   ownerId: uuid("owner_id")
@@ -96,12 +95,10 @@ export const restaurants = pgTable("restaurants", {
   menuData: jsonb("menu_data").$type<MenuData>(),
   
   twilioPhoneNumber: text("twilio_phone_number"),
-  forwardingPhoneNumber: text("forwarding_phone_number"),
   businessHours: text("business_hours"),
   
   hubriseLocationId: text("hubrise_location_id"),
   hubriseAccessToken: text("hubrise_access_token"),
-  hubriseCatalogCache: jsonb("hubrise_catalog_cache"),
   
   currentStatus: kitchenStatusPgEnum("current_status").default("CALM").notNull(),
   statusSettings: jsonb("status_settings").$type<{
