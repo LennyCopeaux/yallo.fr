@@ -120,7 +120,7 @@ export function AITab({ restaurant }: AITabProps) {
                   }
                 </p>
               </div>
-              {!hasVapiId ? (
+              {hasVapiId === false ? (
                 <Button
                   type="button"
                   variant="default"

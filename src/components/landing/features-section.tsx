@@ -170,7 +170,7 @@ export function FeaturesSection() {
               </CardDescription>
               <div className="flex items-end justify-center gap-1.5 h-12 mb-3">
                 {[8, 15, 22, 18, 35, 28, 45, 38, 32, 25, 18, 12].map((baseHeight, i) => {
-                  const durations = [0.8, 1.0, 1.2];
+                  const durations = [0.8, 1, 1.2];
                   const duration = durations[i % 3];
                   return (
                     <motion.div

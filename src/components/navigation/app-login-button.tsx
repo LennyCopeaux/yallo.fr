@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useSyncExternalStore, useCallback } from "react";
 
 function getLoginUrl(): string {
-  if (typeof globalThis.window === "undefined") {
+  if (globalThis.window === undefined) {
     return "/login";
   }
   

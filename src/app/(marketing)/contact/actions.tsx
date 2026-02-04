@@ -4,6 +4,7 @@ import { Resend } from "resend";
 import { z } from "zod";
 import { render } from "@react-email/render";
 import { ContactEmail } from "@/lib/emails/contact-email";
+import { logger } from "@/lib/logger";
 
 if (!process.env.RESEND_API_KEY) {
   throw new Error("RESEND_API_KEY is not set in environment variables");
@@ -80,7 +81,7 @@ ${message}`;
 
     return { success: true };
   } catch (error) {
-    console.error("Erreur lors de l'envoi de l'email:", error);
+    logger.error("Erreur lors de l'envoi de l'email de contact", error instanceof Error ? error : new Error(String(error)));
     return {
       success: false,
       error: "Une erreur est survenue lors de l'envoi du message. Veuillez réessayer.",

@@ -9,12 +9,12 @@ export function getAppUrl(path: string = ""): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   
   const isLocalhost = 
-    (typeof window !== "undefined" && window.location.hostname.includes("localhost")) ||
+    (globalThis.window !== undefined && globalThis.window.location.hostname.includes("localhost")) ||
     (typeof process !== "undefined" && process.env.NODE_ENV === "development");
   
   if (isLocalhost) {
-    const port = typeof window !== "undefined" && window.location.port 
-      ? window.location.port 
+    const port = globalThis.window !== undefined && globalThis.window.location.port 
+      ? globalThis.window.location.port 
       : "3000";
     return `http://app.localhost:${port}${normalizedPath}`;
   }

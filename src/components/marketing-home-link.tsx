@@ -12,8 +12,8 @@ export function MarketingHomeLink({
   const [href, setHref] = useState("/");
 
   useEffect(() => {
-    const hostname = window.location.hostname;
-    const port = window.location.port || "3000";
+    const hostname = globalThis.window.location.hostname;
+    const port = globalThis.window.location.port || "3000";
     
     if (hostname === "app.localhost") {
       setHref(`http://localhost:${port}/`);

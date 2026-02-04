@@ -15,12 +15,7 @@ vi.mock("@/db", () => ({
   },
 }));
 vi.mock("@/db/schema", () => ({
-  categories: {},
-  productVariations: {},
-  modifierGroups: {},
-  modifiers: {},
-  ingredients: {},
-  ingredientCategories: {},
+  restaurants: {},
 }));
 vi.mock("drizzle-orm", () => ({
   eq: vi.fn(),
@@ -44,6 +39,7 @@ describe("generateSystemPrompt", () => {
     vapiAssistantId: null,
     systemPrompt: null,
     menuContext: null,
+    menuData: null,
     twilioPhoneNumber: null,
     forwardingPhoneNumber: null,
     businessHours: "Lundi-Vendredi: 10h-22h",

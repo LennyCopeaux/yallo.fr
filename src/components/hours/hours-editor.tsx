@@ -221,33 +221,25 @@ export function HoursEditor({ initialHours }: Readonly<HoursEditorProps>) {
                     <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        variant="outline"
+                        variant={!hasTwoSlots ? "default" : "outline"}
                         size="sm"
                         onClick={() => {
                           form.setValue(`schedule.${day.key}.hasTwoSlots`, false, { shouldValidate: true });
                         }}
                         disabled={isSaving}
-                        className={`
-                          ${!hasTwoSlots 
-                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90" 
-                            : "bg-background border-border hover:bg-accent"}
-                        `}
+                        className={!hasTwoSlots ? "!bg-yellow-500 !text-yellow-950 !border-yellow-500 hover:!bg-yellow-600 dark:!bg-yellow-500 dark:!text-yellow-950" : ""}
                       >
                         Un seul créneau
                       </Button>
                       <Button
                         type="button"
-                        variant="outline"
+                        variant={hasTwoSlots ? "default" : "outline"}
                         size="sm"
                         onClick={() => {
                           form.setValue(`schedule.${day.key}.hasTwoSlots`, true, { shouldValidate: true });
                         }}
                         disabled={isSaving}
-                        className={`
-                          ${hasTwoSlots 
-                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90" 
-                            : "bg-background border-border hover:bg-accent"}
-                        `}
+                        className={hasTwoSlots ? "!bg-yellow-500 !text-yellow-950 !border-yellow-500 hover:!bg-yellow-600 dark:!bg-yellow-500 dark:!text-yellow-950" : ""}
                       >
                         Midi et soir
                       </Button>

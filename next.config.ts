@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "20mb",
+    },
+  },
   allowedDevOrigins: [
     "http://localhost:3000",
     "http://app.localhost:3000",

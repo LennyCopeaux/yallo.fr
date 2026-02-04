@@ -1,0 +1,41 @@
+{
+  "exportedAt": "2026-02-03T15:30:24.573Z",
+  "restaurants": [
+    {
+      "id": "d556c75c-ff60-4df4-97d6-d4dc7f5df50e",
+      "name": "Kebab La Medina",
+      "slug": "kebab-la-medina"
+    }
+  ],
+  "categories": [
+    {
+      "id": "6d8eff2a-b2b8-44b2-aac9-39c39bc36a99",
+      "restaurantId": "d556c75c-ff60-4df4-97d6-d4dc7f5df50e",
+      "name": "Boissons",
+      "rank": 0,
+      "createdAt": "2026-02-03T15:19:11.033Z"
+    }
+  ],
+  "productVariations": [
+    {
+      "id": "d438be74-6776-44f1-9b9b-b8de0eb0f693",
+      "categoryId": "6d8eff2a-b2b8-44b2-aac9-39c39bc36a99",
+      "name": "Soda",
+      "price": 1200,
+      "isAvailable": true,
+      "createdAt": "2026-02-03T15:19:19.522Z"
+    }
+  ],
+  "modifierGroups": [],
+  "modifiers": [],
+  "ingredientCategories": [
+    {
+      "id": "6e5f0a9b-4ec0-46d1-a93d-d968da6f67cb",
+      "restaurantId": "d556c75c-ff60-4df4-97d6-d4dc7f5df50e",
+      "name": "tacos",
+      "rank": 0,
+      "createdAt": "2026-02-03T15:19:24.276Z"
+    }
+  ],
+  "ingredients": []
+}

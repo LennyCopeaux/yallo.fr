@@ -31,7 +31,7 @@ export async function getRestaurantsWithFilters(searchParams: RestaurantSearchPa
   }
 
   if (searchParams.search) {
-    const sanitizedSearch = searchParams.search.replace(/[%_]/g, "");
+    const sanitizedSearch = searchParams.search.replaceAll(/[%_]/g, "");
     const searchPattern = `%${sanitizedSearch}%`;
     conditions.push(
       sql`(${restaurants.name} ILIKE ${searchPattern} OR ${users.email} ILIKE ${searchPattern})`

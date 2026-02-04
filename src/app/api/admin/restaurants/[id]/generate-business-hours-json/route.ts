@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth/auth";
+import { logger } from "@/lib/logger";
 
 export async function GET(
   request: Request,
@@ -59,7 +60,7 @@ export async function GET(
 
     return NextResponse.json({ businessHoursJson: JSON.stringify(businessHours, null, 2) });
   } catch (error) {
-    console.error("Erreur génération JSON horaires:", error);
+    logger.error("Erreur génération JSON horaires", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: "Erreur lors de la génération du JSON" },
       { status: 500 }

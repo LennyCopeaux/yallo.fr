@@ -10,7 +10,8 @@ import { sendWelcomeEmail, sendResetPasswordEmail } from "@/lib/mail";
 import { z } from "zod";
 import { cookies } from "next/headers";
 import { DEFAULT_STATUS_SETTINGS } from "@/features/kitchen-status/constants";
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
+import { logger } from "@/lib/logger";
 
 const createUserSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -148,13 +149,13 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
     try {
       await sendWelcomeEmail(email, tempPassword);
     } catch (emailError) {
-      console.error("Erreur envoi email (utilisateur créé):", emailError);
+      logger.error("Erreur envoi email (utilisateur créé)", emailError instanceof Error ? emailError : new Error(String(emailError)));
     }
 
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    console.error("Erreur création utilisateur:", error);
+    logger.error("Erreur création utilisateur", error instanceof Error ? error : new Error(String(error)));
     if (error instanceof Error) {
       if (error.message.includes("users_email_unique")) {
         return { success: false, error: "Cet email est déjà utilisé" };
@@ -196,7 +197,7 @@ export async function resendWelcomeEmail(userId: string): Promise<ActionResult> 
 
     return { success: true };
   } catch (error) {
-    console.error("Erreur renvoi email:", error);
+    logger.error("Erreur renvoi email", error instanceof Error ? error : new Error(String(error)));
     return { success: false, error: "Erreur lors du renvoi de l'email" };
   }
 }
@@ -231,7 +232,7 @@ export async function updateUser(
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    console.error("Erreur mise à jour utilisateur:", error);
+    logger.error("Erreur mise à jour utilisateur", error instanceof Error ? error : new Error(String(error)));
     if (error instanceof Error && error.message.includes("users_email_unique")) {
       return { success: false, error: "Cet email est déjà utilisé" };
     }
@@ -280,7 +281,7 @@ export async function sendPasswordResetEmail(userId: string): Promise<ActionResu
 
     return { success: true };
   } catch (error) {
-    console.error("Erreur envoi email réinitialisation:", error);
+    logger.error("Erreur envoi email réinitialisation", error instanceof Error ? error : new Error(String(error)));
     return { success: false, error: "Erreur lors de l'envoi de l'email" };
   }
 }
@@ -301,7 +302,7 @@ export async function deleteUser(id: string): Promise<ActionResult> {
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    console.error("Erreur suppression utilisateur:", error);
+    logger.error("Erreur suppression utilisateur", error instanceof Error ? error : new Error(String(error)));
     return { success: false, error: "Erreur lors de la suppression" };
   }
 }
@@ -337,7 +338,7 @@ export async function createRestaurant(formData: FormData): Promise<ActionResult
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    console.error("Erreur création restaurant:", error);
+    logger.error("Erreur création restaurant", error instanceof Error ? error : new Error(String(error)));
     if (error instanceof Error && error.message.includes("restaurants_slug_unique")) {
       return { success: false, error: "Un restaurant avec ce nom existe déjà" };
     }
@@ -375,7 +376,7 @@ export async function updateRestaurantGeneral(
     if (parsed.data.address !== undefined) updateData.address = parsed.data.address;
     if (parsed.data.ownerId !== undefined) updateData.ownerId = parsed.data.ownerId;
     if (parsed.data.status !== undefined) {
-      updateData.status = parsed.data.status as RestaurantStatus;
+      updateData.status = parsed.data.status;
       updateData.isActive = parsed.data.status === "active";
     }
 
@@ -384,7 +385,7 @@ export async function updateRestaurantGeneral(
     revalidatePath(`/admin/restaurants/${id}`);
     return { success: true };
   } catch (error) {
-    console.error("Erreur mise à jour restaurant:", error);
+    logger.error("Erreur mise à jour restaurant", error instanceof Error ? error : new Error(String(error)));
     if (error instanceof Error && error.message.includes("restaurants_slug_unique")) {
       return { success: false, error: "Un restaurant avec ce slug existe déjà" };
     }
@@ -427,7 +428,7 @@ export async function createVapiAssistant(id: string): Promise<ActionResult<{ as
 
     return { success: true, data: { assistantId: assistant.id } };
   } catch (error) {
-    console.error("Erreur création assistant Vapi:", error);
+    logger.error("Erreur création assistant Vapi", error instanceof Error ? error : new Error(String(error)));
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur lors de la création de l'assistant",
@@ -470,7 +471,7 @@ export async function updateVapiAssistant(id: string): Promise<ActionResult> {
 
     return { success: true };
   } catch (error) {
-    console.error("Erreur mise à jour assistant Vapi:", error);
+    logger.error("Erreur mise à jour assistant Vapi", error instanceof Error ? error : new Error(String(error)));
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur lors de la mise à jour de l'assistant",
@@ -507,7 +508,7 @@ export async function updateRestaurantAI(
     revalidatePath(`/admin/restaurants/${id}`);
     return { success: true };
   } catch (error) {
-    console.error("Erreur mise à jour IA restaurant:", error);
+    logger.error("Erreur mise à jour IA restaurant", error instanceof Error ? error : new Error(String(error)));
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
@@ -541,7 +542,7 @@ export async function updateRestaurantTelephony(
     revalidatePath(`/admin/restaurants/${id}`);
     return { success: true };
   } catch (error) {
-    console.error("Erreur mise à jour téléphonie restaurant:", error);
+    logger.error("Erreur mise à jour téléphonie restaurant", error instanceof Error ? error : new Error(String(error)));
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
@@ -576,7 +577,7 @@ export async function updateRestaurantBilling(
     revalidatePath(`/admin/restaurants/${id}`);
     return { success: true };
   } catch (error) {
-    console.error("Erreur mise à jour facturation restaurant:", error);
+    logger.error("Erreur mise à jour facturation restaurant", error instanceof Error ? error : new Error(String(error)));
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
@@ -613,7 +614,7 @@ export async function updateHubriseConfig(
     revalidatePath(`/admin/restaurants/${id}`);
     return { success: true };
   } catch (error) {
-    console.error("Erreur mise à jour configuration HubRise:", error);
+    logger.error("Erreur mise à jour configuration HubRise", error instanceof Error ? error : new Error(String(error)));
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
@@ -630,7 +631,7 @@ export async function deleteRestaurant(id: string): Promise<ActionResult> {
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    console.error("Erreur suppression restaurant:", error);
+    logger.error("Erreur suppression restaurant", error instanceof Error ? error : new Error(String(error)));
     return { success: false, error: "Erreur lors de la suppression" };
   }
 }
@@ -673,7 +674,7 @@ export async function impersonateRestaurant(restaurantId: string): Promise<Actio
       data: `/dashboard?impersonate=${restaurant.ownerId}` 
     };
   } catch (error) {
-    console.error("Erreur impersonation:", error);
+    logger.error("Erreur impersonation", error instanceof Error ? error : new Error(String(error)));
     return { success: false, error: "Erreur lors de l'impersonation" };
   }
 }
@@ -691,7 +692,7 @@ export async function stopImpersonation(): Promise<ActionResult<string>> {
 
     return { success: true, data: "/admin" };
   } catch (error) {
-    console.error("Erreur arrêt impersonation:", error);
+    logger.error("Erreur arrêt impersonation", error instanceof Error ? error : new Error(String(error)));
     return { success: false, error: "Erreur lors de l'arrêt de l'impersonation" };
   }
 }
@@ -719,7 +720,7 @@ export async function toggleRestaurantStatus(
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    console.error("Erreur toggle statut restaurant:", error);
+    logger.error("Erreur toggle statut restaurant", error instanceof Error ? error : new Error(String(error)));
     return { success: false, error: "Erreur lors de la mise à jour du statut" };
   }
 }

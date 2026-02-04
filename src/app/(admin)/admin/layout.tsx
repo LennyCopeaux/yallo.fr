@@ -29,7 +29,7 @@ const navigation = [
 async function handleLogout(): Promise<void> {
   await signOut({ redirect: false });
   
-  if (typeof globalThis.window !== "undefined") {
+  if (globalThis.window !== undefined) {
     const hostname = globalThis.window.location.hostname;
     const port = globalThis.window.location.port || "3000";
     

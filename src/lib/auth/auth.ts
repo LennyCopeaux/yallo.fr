@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import authConfig from "@/lib/auth/auth.config";
 import type { UserRole } from "@/db/schema";
+import { logger } from "@/lib/logger";
 
 declare module "next-auth" {
   interface User {
@@ -36,8 +37,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const hasValidRole = token.role === "ADMIN" || token.role === "OWNER";
       if (!hasValidRole) {
-        console.error("[AUTH] Invalid session: missing or invalid role", {
-          userId: token.id,
+        logger.error("[AUTH] Invalid session: missing or invalid role", undefined, {
+          userId: typeof token.id === "string" ? token.id : String(token.id),
           email: session.user.email,
           tokenRole: token.role,
         });

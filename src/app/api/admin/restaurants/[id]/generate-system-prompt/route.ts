@@ -4,10 +4,11 @@ import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { generateSystemPrompt } from "@/lib/services/system-prompt";
+import { logger } from "@/lib/logger";
 
 async function requireAdmin() {
   const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user?.role || session.user.role !== "ADMIN") {
     throw new Error("Non autorisé");
   }
   return session;
@@ -35,7 +36,7 @@ export async function GET(
 
     return NextResponse.json({ systemPrompt });
   } catch (error) {
-    console.error("Erreur génération prompt:", error);
+    logger.error("Erreur génération prompt", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: "Erreur lors de la génération du prompt" },
       { status: 500 }
