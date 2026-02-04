@@ -1,31 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Save, Bot, Brain, FileText, Sparkles, Code } from "lucide-react";
+import { Loader2, Bot, Brain, FileText, Sparkles, Code, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { updateRestaurantAI, createVapiAssistant, updateVapiAssistant } from "@/app/(admin)/admin/restaurants/actions";
-
-const formSchema = z.object({
-  vapiAssistantId: z.string().max(100).optional(),
-  systemPrompt: z.string().max(10000, "Prompt trop long").optional(),
-  menuContext: z.string().max(50000, "Menu trop long").optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { createVapiAssistant, updateVapiAssistant, deleteVapiAssistant } from "@/app/(admin)/admin/restaurants/actions";
 
 type Restaurant = {
   id: string;
   vapiAssistantId: string | null;
   systemPrompt: string | null;
   menuContext: string | null;
+  businessHours: string | null;
 };
 
 interface AITabProps {
@@ -33,40 +24,28 @@ interface AITabProps {
 }
 
 export function AITab({ restaurant }: AITabProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [isGeneratingMenuJson, setIsGeneratingMenuJson] = useState(false);
+  const [isGeneratingHoursJson, setIsGeneratingHoursJson] = useState(false);
   const [isCreatingAssistant, setIsCreatingAssistant] = useState(false);
   const [isUpdatingAssistant, setIsUpdatingAssistant] = useState(false);
+  const [isDeletingAssistant, setIsDeletingAssistant] = useState(false);
+  const [systemPrompt, setSystemPrompt] = useState(restaurant.systemPrompt || "");
+  const [menuContext, setMenuContext] = useState(restaurant.menuContext || "");
+  const [businessHoursJson, setBusinessHoursJson] = useState<string>("");
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      vapiAssistantId: restaurant.vapiAssistantId || "",
-      systemPrompt: restaurant.systemPrompt || "",
-      menuContext: restaurant.menuContext || "",
-    },
-  });
-
-  async function onSubmit(data: FormValues) {
-    setIsLoading(true);
-    
-    const result = await updateRestaurantAI(restaurant.id, {
-      vapiAssistantId: data.vapiAssistantId || null,
-      systemPrompt: data.systemPrompt || null,
-      menuContext: data.menuContext || null,
-    });
-
-    if (result.success) {
-      toast.success("Configuration IA mise à jour");
-    } else {
-      toast.error(result.error || "Erreur lors de la mise à jour");
+  useEffect(() => {
+    if (restaurant.businessHours) {
+      try {
+        setBusinessHoursJson(JSON.stringify(JSON.parse(restaurant.businessHours), null, 2));
+      } catch {
+        setBusinessHoursJson("");
+      }
     }
+  }, [restaurant.businessHours]);
 
-    setIsLoading(false);
-  }
-
-  const hasVapiId = !!form.watch("vapiAssistantId");
+  const hasVapiId = !!restaurant.vapiAssistantId;
 
   return (
     <div className="space-y-6">
@@ -91,7 +70,7 @@ export function AITab({ restaurant }: AITabProps) {
         </CardContent>
       </Card>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <div className="space-y-6">
         <Card className="border-border bg-card/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -104,34 +83,38 @@ export function AITab({ restaurant }: AITabProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="vapiAssistantId">ID de l&apos;assistant Vapi</Label>
-                <Input
-                  id="vapiAssistantId"
-                  {...form.register("vapiAssistantId")}
-                  disabled={isLoading || isCreatingAssistant}
-                  placeholder="a7f3b2c9-8d4e-4f1a-9b6c-3e5d7a8f2c1b"
-                  className="bg-background/50 border-border focus:border-primary/50 font-mono"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {hasVapiId 
-                    ? "L'assistant Vapi est configuré et prêt à recevoir des appels"
-                    : "Créez un assistant Vapi ou entrez manuellement l'ID existant"
-                  }
+              {hasVapiId && (
+                <div className="space-y-2">
+                  <Label htmlFor="vapiAssistantId">ID de l&apos;assistant Vapi</Label>
+                  <Input
+                    id="vapiAssistantId"
+                    readOnly
+                    disabled
+                    value={restaurant.vapiAssistantId || ""}
+                    className="bg-muted/50 cursor-not-allowed font-mono"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    L&apos;assistant Vapi est configuré et prêt à recevoir des appels
+                  </p>
+                </div>
+              )}
+              {!hasVapiId && (
+                <p className="text-sm text-muted-foreground">
+                  Cliquez sur le bouton ci-dessous pour créer un assistant Vapi. L&apos;ID sera généré automatiquement.
                 </p>
-              </div>
-              {hasVapiId === false ? (
+              )}
+              {!hasVapiId ? (
                 <Button
                   type="button"
                   variant="default"
-                  disabled={isCreatingAssistant || isLoading}
+                  disabled={isCreatingAssistant}
                   onClick={async () => {
                     setIsCreatingAssistant(true);
                     try {
                       const result = await createVapiAssistant(restaurant.id);
                       if (result.success && result.data) {
-                        form.setValue("vapiAssistantId", result.data.assistantId);
                         toast.success("Assistant Vapi créé avec succès");
+                        router.refresh();
                       } else {
                         toast.error(result.error || "Erreur lors de la création de l'assistant");
                       }
@@ -156,39 +139,72 @@ export function AITab({ restaurant }: AITabProps) {
                   )}
                 </Button>
               ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isUpdatingAssistant || isLoading}
-                  onClick={async () => {
-                    setIsUpdatingAssistant(true);
-                    try {
-                      const result = await updateVapiAssistant(restaurant.id);
-                      if (result.success) {
-                        toast.success("Assistant Vapi mis à jour avec succès");
-                      } else {
-                        toast.error(result.error || "Erreur lors de la mise à jour de l'assistant");
+                <div className="flex gap-2 w-full">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isUpdatingAssistant || isDeletingAssistant}
+                    onClick={async () => {
+                      setIsUpdatingAssistant(true);
+                      try {
+                        const result = await updateVapiAssistant(restaurant.id);
+                        if (result.success) {
+                          toast.success("Assistant Vapi mis à jour avec succès");
+                        } else {
+                          toast.error(result.error || "Erreur lors de la mise à jour de l'assistant");
+                        }
+                      } catch {
+                        toast.error("Erreur lors de la mise à jour de l'assistant");
+                      } finally {
+                        setIsUpdatingAssistant(false);
                       }
-                    } catch {
-                      toast.error("Erreur lors de la mise à jour de l'assistant");
-                    } finally {
-                      setIsUpdatingAssistant(false);
-                    }
-                  }}
-                  className="w-full"
-                >
-                  {isUpdatingAssistant ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Mise à jour en cours...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Mettre à jour l&apos;agent IA
-                    </>
-                  )}
-                </Button>
+                    }}
+                    className="flex-1"
+                  >
+                    {isUpdatingAssistant ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Mise à jour...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Mettre à jour
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    disabled={isDeletingAssistant}
+                    className="!bg-destructive !text-destructive-foreground hover:!bg-destructive/90 dark:!bg-destructive dark:hover:!bg-destructive/90"
+                    onClick={async () => {
+                      if (!confirm("Êtes-vous sûr de vouloir supprimer l'agent IA ? Cette action est irréversible.")) {
+                        return;
+                      }
+                      setIsDeletingAssistant(true);
+                      try {
+                        const result = await deleteVapiAssistant(restaurant.id);
+                        if (result.success) {
+                          toast.success("Agent IA supprimé avec succès");
+                          router.refresh();
+                        } else {
+                          toast.error(result.error || "Erreur lors de la suppression de l'agent");
+                        }
+                      } catch {
+                        toast.error("Erreur lors de la suppression de l'agent");
+                      } finally {
+                        setIsDeletingAssistant(false);
+                      }
+                    }}
+                  >
+                    {isDeletingAssistant ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
               )}
             </div>
           </CardContent>
@@ -217,7 +233,7 @@ export function AITab({ restaurant }: AITabProps) {
                     const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-system-prompt`);
                     if (!response.ok) throw new Error("Erreur lors de la génération");
                     const data = await response.json();
-                    form.setValue("systemPrompt", data.systemPrompt);
+                    setSystemPrompt(data.systemPrompt);
                     toast.success("Prompt système généré");
                   } catch {
                     toast.error("Erreur lors de la génération du prompt");
@@ -245,8 +261,9 @@ export function AITab({ restaurant }: AITabProps) {
               <Label htmlFor="systemPrompt">Instructions de l&apos;IA</Label>
               <Textarea
                 id="systemPrompt"
-                {...form.register("systemPrompt")}
-                disabled={isLoading}
+                readOnly
+                disabled
+                value={systemPrompt}
                 rows={8}
                 placeholder={`Tu es l'assistant téléphonique de [NOM DU RESTAURANT].
 
@@ -260,13 +277,10 @@ Règles importantes :
 - Reste professionnel et amical
 - Si tu ne comprends pas, demande de répéter
 - Transfère vers un humain si le client le demande`}
-                className="bg-background/50 border-border focus:border-primary/50 font-mono text-sm resize-y min-h-[200px]"
+                className="bg-muted/50 cursor-not-allowed font-mono text-sm resize-y min-h-[200px]"
               />
-              {form.formState.errors.systemPrompt && (
-                <p className="text-sm text-red-400">{form.formState.errors.systemPrompt.message}</p>
-              )}
               <p className="text-xs text-muted-foreground">
-                {form.watch("systemPrompt")?.length || 0} / 10 000 caractères
+                {systemPrompt.length} / 10 000 caractères (lecture seule)
               </p>
             </div>
           </CardContent>
@@ -295,8 +309,13 @@ Règles importantes :
                     const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-menu-json`);
                     if (!response.ok) throw new Error("Erreur lors de la génération");
                     const data = await response.json();
-                    form.setValue("menuContext", data.menuJson);
-                    toast.success("JSON menu généré");
+                    if (data.menuJson === "Menu non configuré") {
+                      setMenuContext("Menu non configuré");
+                      toast.info("Aucun menu configuré pour ce restaurant");
+                    } else {
+                      setMenuContext(data.menuJson);
+                      toast.success("JSON menu généré");
+                    }
                   } catch {
                     toast.error("Erreur lors de la génération du JSON");
                   } finally {
@@ -323,8 +342,9 @@ Règles importantes :
                 <Label htmlFor="menuContext">Données du menu</Label>
                 <Textarea
                   id="menuContext"
-                  {...form.register("menuContext")}
-                  disabled={isLoading}
+                  readOnly
+                  disabled
+                  value={menuContext}
                   rows={12}
                   placeholder={`{
   "categories": [
@@ -344,38 +364,93 @@ Règles importantes :
     }
   ]
 }`}
-                  className="bg-background/50 border-border focus:border-primary/50 font-mono text-sm resize-y min-h-[300px]"
+                  className="bg-muted/50 cursor-not-allowed font-mono text-sm resize-y min-h-[300px]"
                 />
-                {form.formState.errors.menuContext && (
-                  <p className="text-sm text-red-400">{form.formState.errors.menuContext.message}</p>
-                )}
                 <p className="text-xs text-muted-foreground">
-                  {form.watch("menuContext")?.length || 0} / 50 000 caractères
+                  {menuContext.length} / 50 000 caractères (lecture seule)
                 </p>
             </div>
           </CardContent>
         </Card>
 
-        <div className="flex justify-end">
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="bg-primary text-black hover:bg-primary/90"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Enregistrement...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Enregistrer la configuration IA
-              </>
-            )}
-          </Button>
-        </div>
-      </form>
+        <Card className="border-border bg-card/30">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-cyan-400" />
+                  Horaires d&apos;ouverture
+                </CardTitle>
+                <CardDescription>
+                  Configuration des horaires au format JSON (utilisés par l&apos;IA pour informer les clients)
+                </CardDescription>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isGeneratingHoursJson}
+                onClick={async () => {
+                  setIsGeneratingHoursJson(true);
+                  try {
+                    const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-business-hours-json`);
+                    if (!response.ok) {
+                      throw new Error("Erreur lors de la génération");
+                    }
+                    const data = await response.json();
+                    if (data.businessHoursJson === "Horaires d'ouverture non configurée") {
+                      setBusinessHoursJson("Horaires d'ouverture non configurée");
+                      toast.info("Aucun horaire configuré pour ce restaurant");
+                    } else {
+                      setBusinessHoursJson(data.businessHoursJson);
+                      toast.success("JSON horaires généré");
+                    }
+                  } catch {
+                    toast.error("Erreur lors de la génération du JSON");
+                  } finally {
+                    setIsGeneratingHoursJson(false);
+                  }
+                }}
+              >
+                {isGeneratingHoursJson ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Génération...
+                  </>
+                ) : (
+                  <>
+                    <Code className="w-4 h-4 mr-2" />
+                    Générer JSON Horaires
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label htmlFor="businessHours">Horaires (JSON)</Label>
+              <Textarea
+                id="businessHours"
+                readOnly
+                disabled
+                value={businessHoursJson}
+                rows={12}
+                placeholder={`{
+  "timezone": "Europe/Paris",
+  "schedule": {
+    "monday": { "open": "11:00", "close": "22:00" },
+    "tuesday": { "open": "11:00", "close": "22:00" }
+  }
+}`}
+                className="bg-muted/50 cursor-not-allowed font-mono text-sm resize-y min-h-[250px]"
+              />
+              <p className="text-xs text-muted-foreground">
+                Format JSON avec les jours de la semaine et les horaires d&apos;ouverture/fermeture (lecture seule)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

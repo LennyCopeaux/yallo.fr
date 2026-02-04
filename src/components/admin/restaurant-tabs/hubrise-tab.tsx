@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -31,7 +32,7 @@ interface HubriseTabProps {
 
 export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
   const [isLoading, setIsLoading] = useState(false);
-  const [showToken, setShowToken] = useState(false);
+  const router = useRouter();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -51,6 +52,7 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
 
     if (result.success) {
       toast.success("Configuration HubRise mise à jour");
+      router.refresh();
     } else {
       toast.error(result.error || "Erreur lors de la mise à jour");
     }
@@ -58,7 +60,7 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
     setIsLoading(false);
   }
 
-  const hasConfig = !!(form.watch("hubriseLocationId") && form.watch("hubriseAccessToken"));
+  const hasConfig = !!(restaurant.hubriseLocationId && restaurant.hubriseAccessToken);
 
   return (
     <div className="space-y-6">
@@ -120,25 +122,13 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
               <div className="relative">
                 <Input
                   id="hubriseAccessToken"
-                  type={showToken ? "text" : "password"}
+                  type="text"
                   {...form.register("hubriseAccessToken")}
                   disabled={isLoading}
                   placeholder="Votre token d'accès API HubRise"
-                  className="bg-background/50 border-border focus:border-primary/50 pl-10 pr-10"
+                  className="bg-background/50 border-border focus:border-primary/50 pl-10 font-mono"
                 />
                 <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <button
-                  type="button"
-                  onClick={() => setShowToken(!showToken)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
-                >
-                  {showToken ? (
-                    <span className="text-xs">Masquer</span>
-                  ) : (
-                    <span className="text-xs">Afficher</span>
-                  )}
-                </button>
               </div>
               {form.formState.errors.hubriseAccessToken && (
                 <p className="text-sm text-red-400">{form.formState.errors.hubriseAccessToken.message}</p>
@@ -154,33 +144,33 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
                 <p className="font-medium text-blue-400">Mode Hybride</p>
                 <p className="text-muted-foreground">
                   Une fois connecté à HubRise, le menu et les commandes seront synchronisés automatiquement. 
-                  Vous pouvez toujours gérer votre menu manuellement si nécessaire.
                 </p>
               </div>
-            </div>
-
-            <div className="pt-4 border-t border-border">
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="bg-primary text-black hover:bg-primary/90"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Enregistrement...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Enregistrer la configuration
-                  </>
-                )}
-              </Button>
             </div>
           </form>
         </CardContent>
       </Card>
+
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          disabled={isLoading}
+          onClick={form.handleSubmit(onSubmit)}
+          className="bg-primary text-black hover:bg-primary/90"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Enregistrement...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4 mr-2" />
+              Enregistrer la configuration
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

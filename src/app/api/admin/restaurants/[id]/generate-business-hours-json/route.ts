@@ -27,35 +27,24 @@ export async function GET(
   }
 
   try {
-    let parsedHours;
-    
-    if (restaurant.businessHours) {
-      try {
-        parsedHours = JSON.parse(restaurant.businessHours);
-      } catch {
-        parsedHours = null;
-      }
+    if (!restaurant.businessHours) {
+      return NextResponse.json({ businessHoursJson: "Horaires d'ouverture non configurée" });
     }
-    
-    if (!parsedHours) {
-      const defaultHours = {
-        timezone: "Europe/Paris",
-        schedule: {
-          monday: { open: "11:00", close: "22:00" },
-          tuesday: { open: "11:00", close: "22:00" },
-          wednesday: { open: "11:00", close: "22:00" },
-          thursday: { open: "11:00", close: "22:00" },
-          friday: { open: "11:00", close: "23:00" },
-          saturday: { open: "11:00", close: "23:00" },
-          sunday: { open: "11:00", close: "22:00" },
-        },
-      };
-      return NextResponse.json({ businessHoursJson: JSON.stringify(defaultHours, null, 2) });
+
+    let parsedHours;
+    try {
+      parsedHours = JSON.parse(restaurant.businessHours);
+    } catch {
+      return NextResponse.json({ businessHoursJson: "Horaires d'ouverture non configurée" });
+    }
+
+    if (!parsedHours || !parsedHours.schedule || Object.keys(parsedHours.schedule).length === 0) {
+      return NextResponse.json({ businessHoursJson: "Horaires d'ouverture non configurée" });
     }
 
     const businessHours = {
       timezone: parsedHours.timezone || "Europe/Paris",
-      schedule: parsedHours.schedule || {},
+      schedule: parsedHours.schedule,
     };
 
     return NextResponse.json({ businessHoursJson: JSON.stringify(businessHours, null, 2) });

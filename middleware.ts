@@ -140,7 +140,9 @@ export async function middleware(req: NextRequest) {
   );
   if (protectedRedirect) return protectedRedirect;
 
-  if (isUpdatePasswordPage && !isLoggedIn) {
+  const hasResetToken = nextUrl.searchParams.has("token");
+  
+  if (isUpdatePasswordPage && !isLoggedIn && !hasResetToken) {
     return NextResponse.redirect(buildAppUrl("/login", host), 307);
   }
 

@@ -58,7 +58,7 @@ export async function sendResetPasswordEmail(
   resetToken: string
 ): Promise<void> {
   try {
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://app.localhost:3000"}/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://app.localhost:3000"}/update-password?token=${resetToken}`;
     
     const html = await render(
       <ResetPasswordEmail

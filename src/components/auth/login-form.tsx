@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -14,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, Phone } from "lucide-react";
 import { MarketingHomeLink, ModeToggle } from "@/components/navigation";
 
 export function LoginForm() {
@@ -59,36 +60,39 @@ export function LoginForm() {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-primary/15 blur-[120px]" />
         <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-primary/5 blur-[100px]" />
-        <div 
-          className="absolute inset-0"
-          style={{ 
-            backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.15) 1px, transparent 1px)',
-            backgroundSize: '64px 64px',
-          }}
-        />
-        <div 
-          className="absolute inset-0 dark:block hidden"
-          style={{ 
-            backgroundImage: 'linear-gradient(var(--pattern) 1px, transparent 1px), linear-gradient(90deg, var(--pattern) 1px, transparent 1px)',
-            backgroundSize: '64px 64px',
-            opacity: 0.1,
-          }}
-        />
       </div>
 
-      <Card className="w-full max-w-md mx-4 relative z-10 bg-card/50 border-border backdrop-blur-xl noise">
-        <CardHeader className="text-center space-y-2 pb-2">
-          <Link href="/" className="inline-block">
-            <CardTitle className="text-3xl font-black gradient-text">
-              Yallo
-            </CardTitle>
-          </Link>
-          <CardDescription className="text-muted-foreground">
-            Connectez-vous à votre espace
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="w-full max-w-md mx-4 relative z-10">
+        <Card className="bg-card/50 border-border backdrop-blur-xl">
+          <CardHeader className="text-center space-y-4 pb-4">
+            <div>
+              <Link href="/" className="inline-block">
+                <CardTitle className="text-4xl font-black gradient-text">
+                  Yallo
+                </CardTitle>
+              </Link>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <motion.div
+                animate={{
+                  rotate: [0, -10, 10, -10, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatDelay: 3,
+                  ease: "easeInOut",
+                }}
+              >
+                <Phone className="w-5 h-5 text-primary" />
+              </motion.div>
+              <CardDescription className="text-muted-foreground text-base">
+                Connectez-vous à votre espace
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">
                 Email
@@ -136,35 +140,40 @@ export function LoginForm() {
               </div>
             </div>
             
-            {error && (
-              <div className="text-sm text-center bg-destructive/10 text-destructive p-3 rounded-lg border border-destructive/20">
-                {error}
-              </div>
-            )}
-            
-            <Button
-              type="submit"
-              className="w-full h-11 bg-primary text-black hover:bg-primary/90 font-semibold btn-shine"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Connexion...
-                </>
-              ) : (
-                "Se connecter"
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-sm text-center bg-destructive/10 text-destructive p-3 rounded-lg border border-destructive/20"
+                >
+                  {error}
+                </motion.div>
               )}
-            </Button>
-          </form>
-          
-          <div className="mt-6 text-center">
-            <MarketingHomeLink className="text-sm text-muted-foreground hover:text-primary transition-colors">
-              ← Retour à l&apos;accueil
-            </MarketingHomeLink>
-          </div>
-        </CardContent>
-      </Card>
+              
+              <Button
+                type="submit"
+                className="w-full h-11 bg-primary text-black hover:bg-primary/90 font-semibold"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Connexion...
+                  </>
+                ) : (
+                  "Se connecter"
+                )}
+              </Button>
+            </form>
+            
+            <div className="mt-6 text-center">
+              <MarketingHomeLink className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                ← Retour à l&apos;accueil
+              </MarketingHomeLink>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

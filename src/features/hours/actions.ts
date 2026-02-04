@@ -61,14 +61,19 @@ export async function getBusinessHours(): Promise<ActionResult> {
     .limit(1);
 
   if (!ownerRestaurant) return { success: false, error: "Aucun restaurant trouvé" };
-  if (!ownerRestaurant.businessHours) return { success: true, data: DEFAULT_BUSINESS_HOURS };
+  if (!ownerRestaurant.businessHours) {
+    return { success: true, data: { timezone: "Europe/Paris", schedule: {} } };
+  }
 
   try {
     const parsedHours = JSON.parse(ownerRestaurant.businessHours);
     const validationResult = businessHoursSchema.safeParse(parsedHours);
-    return { success: true, data: validationResult.success ? validationResult.data : DEFAULT_BUSINESS_HOURS };
+    if (!validationResult.success || !parsedHours.schedule || Object.keys(parsedHours.schedule).length === 0) {
+      return { success: true, data: { timezone: "Europe/Paris", schedule: {} } };
+    }
+    return { success: true, data: validationResult.data };
   } catch {
-    return { success: true, data: DEFAULT_BUSINESS_HOURS };
+    return { success: true, data: { timezone: "Europe/Paris", schedule: {} } };
   }
 }
 

@@ -1,0 +1,1 @@
+ALTER TABLE "restaurants" DROP COLUMN "forwarding_phone_number";
