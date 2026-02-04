@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useTransition, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Bot, Phone, CreditCard, Link2 } from "lucide-react";
 import { GeneralTab } from "@/components/admin/restaurant-tabs/general-tab";
@@ -11,7 +13,6 @@ import { HubriseTab } from "@/components/admin/restaurant-tabs/hubrise-tab";
 type Restaurant = {
   id: string;
   name: string;
-  slug: string;
   address: string | null;
   phoneNumber: string;
   ownerId: string;
@@ -23,7 +24,6 @@ type Restaurant = {
   systemPrompt: string | null;
   menuContext: string | null;
   twilioPhoneNumber: string | null;
-  forwardingPhoneNumber: string | null;
   businessHours: string | null;
   hubriseLocationId: string | null;
   hubriseAccessToken: string | null;
@@ -43,8 +43,27 @@ interface RestaurantDetailTabsProps {
 }
 
 export function RestaurantDetailTabs({ restaurant, owners }: RestaurantDetailTabsProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const urlTab = searchParams.get("tab") || "general";
+  const [activeTab, setActiveTab] = useState(urlTab);
+
+  useEffect(() => {
+    setActiveTab(urlTab);
+  }, [urlTab]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    startTransition(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", value);
+      router.push(`?${params.toString()}`, { scroll: false });
+    });
+  };
+
   return (
-    <Tabs defaultValue="general" className="space-y-6">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
       <TabsList className="bg-card/30 border border-border p-1 w-full justify-start overflow-x-auto">
         <TabsTrigger 
           value="general" 
