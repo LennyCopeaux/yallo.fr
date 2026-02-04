@@ -1,9 +1,13 @@
 import OpenAI from "openai";
 import { MenuData } from "@/db/schema";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAIClient(): OpenAI {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("OPENAI_API_KEY is not configured");
+  }
+  return new OpenAI({ apiKey });
+}
 
 const MENU_EXTRACTION_PROMPT = `Rôle : Expert OCR et Architecte de Données.
 
@@ -45,10 +49,6 @@ FORMAT DES PRIX : Uniquement des nombres en format string (ex: "7.50"), sans sym
 Retourne UNIQUEMENT le JSON.`;
 
 export async function parseMenuFromImages(imageUrls: string[]): Promise<MenuData> {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY is not configured");
-  }
-
   if (imageUrls.length === 0) {
     throw new Error("At least one image URL is required");
   }
@@ -56,6 +56,8 @@ export async function parseMenuFromImages(imageUrls: string[]): Promise<MenuData
   if (imageUrls.length > 5) {
     throw new Error("Maximum 5 images allowed per request");
   }
+
+  const openai = getOpenAIClient();
 
   const imageContent = imageUrls.map((url) => ({
     type: "image_url" as const,
