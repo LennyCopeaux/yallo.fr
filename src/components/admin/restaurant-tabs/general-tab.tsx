@@ -22,7 +22,6 @@ import { updateRestaurantGeneral } from "@/app/(admin)/admin/restaurants/actions
 
 const formSchema = z.object({
   name: z.string().min(2, "Nom trop court").max(100, "Nom trop long"),
-  slug: z.string().min(2, "Slug trop court").max(50, "Slug trop long"),
   address: z.string().max(500, "Adresse trop longue").optional(),
   ownerId: z.string().uuid("ID propriétaire invalide"),
   status: z.enum(["active", "suspended", "onboarding"]),
@@ -33,7 +32,6 @@ type FormValues = z.infer<typeof formSchema>;
 type Restaurant = {
   id: string;
   name: string;
-  slug: string;
   address: string | null;
   ownerId: string;
   status: "active" | "suspended" | "onboarding";
@@ -58,7 +56,6 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: restaurant.name,
-      slug: restaurant.slug,
       address: restaurant.address || "",
       ownerId: restaurant.ownerId,
       status: restaurant.status,
@@ -70,7 +67,6 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
     
     const result = await updateRestaurantGeneral(restaurant.id, {
       name: data.name,
-      slug: data.slug,
       address: data.address || null,
       ownerId: data.ownerId,
       status: data.status,
@@ -107,25 +103,6 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
               {form.formState.errors.name && (
                 <p className="text-sm text-red-400">{form.formState.errors.name.message}</p>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="slug">Slug (URL) *</Label>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">/</span>
-                <Input
-                  id="slug"
-                  {...form.register("slug")}
-                  disabled={isLoading}
-                  className="bg-background/50 border-border focus:border-primary/50"
-                />
-              </div>
-              {form.formState.errors.slug && (
-                <p className="text-sm text-red-400">{form.formState.errors.slug.message}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Sert uniquement à générer l&apos;URL publique du menu (ex: yallo.fr/menu/mon-resto). Ne sert pas à la connexion.
-              </p>
             </div>
 
             <div className="space-y-2">

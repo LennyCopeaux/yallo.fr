@@ -9,9 +9,6 @@ const userLoginSchema = z.object({
 
 const restaurantSchema = z.object({
   name: z.string().min(1, "Le nom est requis").max(100, "Le nom est trop long"),
-  slug: z.string()
-    .min(1, "Le slug est requis")
-    .regex(/^[a-z0-9-]+$/, "Le slug ne doit contenir que des lettres minuscules, chiffres et tirets"),
   phoneNumber: z.string()
     .min(10, "Le numéro de téléphone doit contenir au moins 10 chiffres")
     .regex(/^[+]?[0-9\s-]+$/, "Format de téléphone invalide"),
@@ -80,7 +77,6 @@ describe("restaurantSchema", () => {
   it("devrait valider un restaurant complet", () => {
     const data = {
       name: "Kebab La Medina",
-      slug: "kebab-la-medina",
       phoneNumber: "+33 1 23 45 67 89",
       address: "123 Rue de Paris",
     };
@@ -92,7 +88,6 @@ describe("restaurantSchema", () => {
   it("devrait valider sans adresse (optionnelle)", () => {
     const data = {
       name: "Kebab La Medina",
-      slug: "kebab-la-medina",
       phoneNumber: "0123456789",
     };
     const result = restaurantSchema.safeParse(data);
@@ -100,33 +95,9 @@ describe("restaurantSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("devrait rejeter un slug avec majuscules", () => {
-    const data = {
-      name: "Kebab La Medina",
-      slug: "Kebab-La-Medina",
-      phoneNumber: "0123456789",
-    };
-    const result = restaurantSchema.safeParse(data);
-    
-    expect(result.success).toBe(false);
-    expect(getFirstErrorMessage(result)).toBeDefined();
-  });
-
-  it("devrait rejeter un slug avec espaces", () => {
-    const data = {
-      name: "Kebab La Medina",
-      slug: "kebab la medina",
-      phoneNumber: "0123456789",
-    };
-    const result = restaurantSchema.safeParse(data);
-    
-    expect(result.success).toBe(false);
-  });
-
   it("devrait rejeter un nom vide", () => {
     const data = {
       name: "",
-      slug: "kebab-la-medina",
       phoneNumber: "0123456789",
     };
     const result = restaurantSchema.safeParse(data);
@@ -138,7 +109,6 @@ describe("restaurantSchema", () => {
   it("devrait rejeter un numéro de téléphone invalide", () => {
     const data = {
       name: "Kebab La Medina",
-      slug: "kebab-la-medina",
       phoneNumber: "abc",
     };
     const result = restaurantSchema.safeParse(data);

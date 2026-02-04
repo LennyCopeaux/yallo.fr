@@ -92,6 +92,20 @@
       "when": 1770132714943,
       "tag": "0012_remove-menu-tables-add-menudata",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1770204127801,
+      "tag": "0013_remove-hubrise-catalog-cache",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1770205732796,
+      "tag": "0014_remove-forwarding-phone-number",
+      "breakpoints": true
     }
   ]
 }

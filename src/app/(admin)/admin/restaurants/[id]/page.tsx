@@ -46,7 +46,6 @@ async function getRestaurant(id: string) {
     .select({
       id: restaurants.id,
       name: restaurants.name,
-      slug: restaurants.slug,
       address: restaurants.address,
       phoneNumber: restaurants.phoneNumber,
       ownerId: restaurants.ownerId,
@@ -58,7 +57,6 @@ async function getRestaurant(id: string) {
       systemPrompt: restaurants.systemPrompt,
       menuContext: restaurants.menuContext,
       twilioPhoneNumber: restaurants.twilioPhoneNumber,
-      forwardingPhoneNumber: restaurants.forwardingPhoneNumber,
       businessHours: restaurants.businessHours,
       hubriseLocationId: restaurants.hubriseLocationId,
       hubriseAccessToken: restaurants.hubriseAccessToken,
@@ -109,8 +107,6 @@ export default async function RestaurantDetailPage({
               {getStatusBadge(restaurant.status)}
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-1 text-muted-foreground">
-              <span className="text-xs sm:text-sm">/{restaurant.slug}</span>
-              <span className="hidden sm:inline">•</span>
               <span className="text-xs sm:text-sm break-all">{restaurant.ownerEmail}</span>
             </div>
           </div>
