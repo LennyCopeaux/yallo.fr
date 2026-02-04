@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getMenuData, saveMenuData, generateMenuFromImages, clearMenuData } from "@/features/menu/actions";
+import type { Session } from "next-auth";
+
+const mockAuth = vi.fn() as any;
 
 vi.mock("@/lib/auth/auth", () => ({
-  auth: vi.fn() as any,
+  auth: () => mockAuth(),
 }));
 
 vi.mock("@/db", () => ({
@@ -36,7 +39,6 @@ vi.mock("@/lib/services/menu-parser", () => ({
   parseMenuFromBase64Images: vi.fn(),
 }));
 
-import { auth } from "@/lib/auth/auth";
 import { db } from "@/db";
 import { parseMenuFromBase64Images } from "@/lib/services/menu-parser";
 
@@ -47,16 +49,16 @@ describe("menu actions", () => {
 
   describe("getMenuData", () => {
     it("should throw error when not authenticated", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      mockAuth.mockResolvedValue(null);
 
       await expect(getMenuData()).rejects.toThrow("Non authentifié");
     });
 
     it("should throw error when no restaurant found", async () => {
-      vi.mocked(auth).mockResolvedValue({
-        user: { id: "user-1" },
+      mockAuth.mockResolvedValue({
+        user: { id: "user-1", email: "test@example.com", role: "OWNER", mustChangePassword: false },
         expires: new Date().toISOString(),
-      });
+      } as Session);
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([]),
@@ -71,10 +73,10 @@ describe("menu actions", () => {
         categories: [{ name: "Tacos", products: [] }],
         option_lists: [],
       };
-      vi.mocked(auth).mockResolvedValue({
-        user: { id: "user-1" },
+      mockAuth.mockResolvedValue({
+        user: { id: "user-1", email: "test@example.com", role: "OWNER", mustChangePassword: false },
         expires: new Date().toISOString(),
-      });
+      } as Session);
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([{ menuData: mockMenuData }]),
@@ -87,10 +89,10 @@ describe("menu actions", () => {
     });
 
     it("should return null when menuData is not set", async () => {
-      vi.mocked(auth).mockResolvedValue({
-        user: { id: "user-1" },
+      mockAuth.mockResolvedValue({
+        user: { id: "user-1", email: "test@example.com", role: "OWNER", mustChangePassword: false },
         expires: new Date().toISOString(),
-      });
+      } as Session);
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([{ menuData: null }]),
@@ -154,7 +156,7 @@ describe("menu actions", () => {
 
   describe("saveMenuData", () => {
     it("should throw error when not authenticated", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      mockAuth.mockResolvedValue(null);
 
       const result = await saveMenuData({ categories: [], option_lists: [] });
 
@@ -167,7 +169,7 @@ describe("menu actions", () => {
 
   describe("clearMenuData", () => {
     it("should throw error when not authenticated", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      mockAuth.mockResolvedValue(null);
 
       const result = await clearMenuData();
 
