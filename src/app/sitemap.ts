@@ -10,7 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: siteUrl,
       lastModified: currentDate,
       changeFrequency: "weekly",
-      priority: 1.0,
+      priority: 1,
     },
     {
       url: `${siteUrl}/demo`,

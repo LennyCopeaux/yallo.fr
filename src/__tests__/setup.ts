@@ -11,4 +11,4 @@ afterEach(() => {
 vi.stubEnv("NODE_ENV", "test");
 
 // Mock global de fetch pour les tests
-global.fetch = vi.fn();
+globalThis.fetch = vi.fn() as typeof fetch;

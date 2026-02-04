@@ -120,7 +120,7 @@ export function TestimonialsCarousel() {
                       <div className="flex gap-1 mb-4">
                         {Array.from({ length: 5 }).map((_, starIndex) => (
                           <Star
-                            key={`star-${starIndex}`}
+                            key={`star-${testimonial.author}-${starIndex}`}
                             className={cn(
                               "w-4 h-4 transition-colors duration-500",
                               isCenter

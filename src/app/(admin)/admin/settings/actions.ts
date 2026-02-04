@@ -6,6 +6,7 @@ import { pricingConfig } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 async function requireAdmin() {
   const session = await auth();
@@ -50,7 +51,7 @@ export async function getPricingConfig() {
 
     return config;
   } catch (error) {
-    console.error("Erreur récupération config prix:", error);
+    logger.error("Erreur récupération config prix", error instanceof Error ? error : new Error(String(error)));
     return {
       id: "",
       monthlyPrice: 14900,
@@ -99,7 +100,7 @@ export async function updatePricingConfig(
     revalidatePath("/");
     return { success: true };
   } catch (error) {
-    console.error("Erreur mise à jour config prix:", error);
+    logger.error("Erreur mise à jour config prix", error instanceof Error ? error : new Error(String(error)));
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }

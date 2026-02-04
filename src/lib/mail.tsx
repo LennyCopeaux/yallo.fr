@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { render } from "@react-email/render";
 import { WelcomeEmail } from "./emails/welcome-email";
 import { ResetPasswordEmail } from "./emails/reset-password-email";
+import { logger } from "./logger";
 
 if (!process.env.RESEND_API_KEY) {
   throw new Error("RESEND_API_KEY is not set in environment variables");
@@ -47,7 +48,7 @@ L'équipe Yallo`;
       text,
     });
   } catch (error) {
-    console.error("Erreur lors de l'envoi de l'email:", error);
+    logger.error("Erreur lors de l'envoi de l'email de bienvenue", error instanceof Error ? error : new Error(String(error)));
     throw new Error("Impossible d'envoyer l'email de bienvenue");
   }
 }
@@ -90,7 +91,7 @@ L'équipe Yallo`;
       text,
     });
   } catch (error) {
-    console.error("Erreur lors de l'envoi de l'email:", error);
+    logger.error("Erreur lors de l'envoi de l'email de réinitialisation", error instanceof Error ? error : new Error(String(error)));
     throw new Error("Impossible d'envoyer l'email de réinitialisation");
   }
 }

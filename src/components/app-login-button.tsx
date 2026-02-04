@@ -7,8 +7,8 @@ export function AppLoginButton() {
   const [href, setHref] = useState("/login");
 
   useEffect(() => {
-    const hostname = window.location.hostname;
-    const port = window.location.port || "3000";
+    const hostname = globalThis.window.location.hostname;
+    const port = globalThis.window.location.port || "3000";
     
     if (hostname === "localhost") {
       setHref(`http://app.localhost:${port}/login`);

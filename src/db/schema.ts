@@ -19,6 +19,44 @@ export const kitchenStatusEnum = ["CALM", "NORMAL", "RUSH", "STOP"] as const;
 export type KitchenStatus = (typeof kitchenStatusEnum)[number];
 export const kitchenStatusPgEnum = pgEnum("kitchen_status", kitchenStatusEnum);
 
+// Type pour la structure JSON du menu (compatible HubRise/Vapi)
+export type MenuSku = {
+  ref: string;
+  name: string;
+  price: string;
+};
+
+export type MenuProduct = {
+  name: string;
+  description?: string;
+  skus: MenuSku[];
+  option_list_refs?: string[];
+};
+
+export type MenuCategory = {
+  name: string;
+  products: MenuProduct[];
+};
+
+export type MenuOption = {
+  ref: string;
+  name: string;
+  price?: string;
+};
+
+export type MenuOptionList = {
+  ref: string;
+  name: string;
+  min?: number;
+  max?: number;
+  options: MenuOption[];
+};
+
+export type MenuData = {
+  categories: MenuCategory[];
+  option_lists: MenuOptionList[];
+};
+
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").unique().notNull(),
@@ -54,6 +92,9 @@ export const restaurants = pgTable("restaurants", {
   systemPrompt: text("system_prompt"),
   menuContext: text("menu_context"),
   
+  // Nouveau champ: stockage document-oriented du menu complet
+  menuData: jsonb("menu_data").$type<MenuData>(),
+  
   twilioPhoneNumber: text("twilio_phone_number"),
   forwardingPhoneNumber: text("forwarding_phone_number"),
   businessHours: text("business_hours"),
@@ -86,81 +127,8 @@ export const restaurantsRelations = relations(restaurants, ({ one, many }) => ({
     fields: [restaurants.ownerId],
     references: [users.id],
   }),
-  categories: many(categories),
-  ingredients: many(ingredients),
-  ingredientCategories: many(ingredientCategories),
   orders: many(orders),
 }));
-
-export const ingredientCategories = pgTable("ingredient_categories", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  restaurantId: uuid("restaurant_id")
-    .notNull()
-    .references(() => restaurants.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  rank: integer("rank").default(0).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const ingredients = pgTable("ingredients", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  restaurantId: uuid("restaurant_id")
-    .notNull()
-    .references(() => restaurants.id, { onDelete: "cascade" }),
-  ingredientCategoryId: uuid("ingredient_category_id")
-    .notNull()
-    .references(() => ingredientCategories.id, { onDelete: "restrict" }),
-  name: text("name").notNull(),
-  price: integer("price").default(0).notNull(),
-  isAvailable: boolean("is_available").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const categories = pgTable("categories", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  restaurantId: uuid("restaurant_id")
-    .notNull()
-    .references(() => restaurants.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  rank: integer("rank").default(0).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const productVariations = pgTable("product_variations", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  categoryId: uuid("category_id")
-    .notNull()
-    .references(() => categories.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  price: integer("price").notNull(),
-  isAvailable: boolean("is_available").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const modifierGroups = pgTable("modifier_groups", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  variationId: uuid("variation_id")
-    .notNull()
-    .references(() => productVariations.id, { onDelete: "cascade" }),
-  ingredientCategoryId: uuid("ingredient_category_id")
-    .notNull()
-    .references(() => ingredientCategories.id, { onDelete: "restrict" }),
-  minSelect: integer("min_select").default(0).notNull(),
-  maxSelect: integer("max_select").default(1).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const modifiers = pgTable("modifiers", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  groupId: uuid("group_id")
-    .notNull()
-    .references(() => modifierGroups.id, { onDelete: "cascade" }),
-  ingredientId: uuid("ingredient_id")
-    .notNull()
-    .references(() => ingredients.id, { onDelete: "cascade" }),
-  priceExtra: integer("price_extra").default(0).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
 
 export const pricingConfig = pgTable("pricing_config", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -200,66 +168,6 @@ export const orderItems = pgTable("order_items", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const ingredientCategoriesRelations = relations(ingredientCategories, ({ one, many }) => ({
-  restaurant: one(restaurants, {
-    fields: [ingredientCategories.restaurantId],
-    references: [restaurants.id],
-  }),
-  ingredients: many(ingredients),
-  modifierGroups: many(modifierGroups),
-}));
-
-export const ingredientsRelations = relations(ingredients, ({ one, many }) => ({
-  restaurant: one(restaurants, {
-    fields: [ingredients.restaurantId],
-    references: [restaurants.id],
-  }),
-  ingredientCategory: one(ingredientCategories, {
-    fields: [ingredients.ingredientCategoryId],
-    references: [ingredientCategories.id],
-  }),
-  modifiers: many(modifiers),
-}));
-
-export const categoriesRelations = relations(categories, ({ one, many }) => ({
-  restaurant: one(restaurants, {
-    fields: [categories.restaurantId],
-    references: [restaurants.id],
-  }),
-  variations: many(productVariations),
-}));
-
-export const productVariationsRelations = relations(productVariations, ({ one, many }) => ({
-  category: one(categories, {
-    fields: [productVariations.categoryId],
-    references: [categories.id],
-  }),
-  modifierGroups: many(modifierGroups),
-}));
-
-export const modifierGroupsRelations = relations(modifierGroups, ({ one, many }) => ({
-  variation: one(productVariations, {
-    fields: [modifierGroups.variationId],
-    references: [productVariations.id],
-  }),
-  ingredientCategory: one(ingredientCategories, {
-    fields: [modifierGroups.ingredientCategoryId],
-    references: [ingredientCategories.id],
-  }),
-  modifiers: many(modifiers),
-}));
-
-export const modifiersRelations = relations(modifiers, ({ one }) => ({
-  group: one(modifierGroups, {
-    fields: [modifiers.groupId],
-    references: [modifierGroups.id],
-  }),
-  ingredient: one(ingredients, {
-    fields: [modifiers.ingredientId],
-    references: [ingredients.id],
-  }),
-}));
-
 export const ordersRelations = relations(orders, ({ one, many }) => ({
   restaurant: one(restaurants, {
     fields: [orders.restaurantId],
@@ -279,18 +187,6 @@ export type SelectUser = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type SelectRestaurant = typeof restaurants.$inferSelect;
 export type InsertRestaurant = typeof restaurants.$inferInsert;
-export type SelectIngredientCategory = typeof ingredientCategories.$inferSelect;
-export type InsertIngredientCategory = typeof ingredientCategories.$inferInsert;
-export type SelectIngredient = typeof ingredients.$inferSelect;
-export type InsertIngredient = typeof ingredients.$inferInsert;
-export type SelectCategory = typeof categories.$inferSelect;
-export type InsertCategory = typeof categories.$inferInsert;
-export type SelectProductVariation = typeof productVariations.$inferSelect;
-export type InsertProductVariation = typeof productVariations.$inferInsert;
-export type SelectModifierGroup = typeof modifierGroups.$inferSelect;
-export type InsertModifierGroup = typeof modifierGroups.$inferInsert;
-export type SelectModifier = typeof modifiers.$inferSelect;
-export type InsertModifier = typeof modifiers.$inferInsert;
 export type SelectOrder = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
 export type SelectOrderItem = typeof orderItems.$inferSelect;

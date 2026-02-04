@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
+import { logger } from "@/lib/logger";
 
 export type UpdatePasswordResult = {
   success: boolean;
@@ -69,7 +70,7 @@ export async function updatePassword(
       // Si c'est une erreur d'auth, on log mais on continue
       // car le mot de passe a été mis à jour avec succès
       if (signInError instanceof AuthError) {
-        console.error("Erreur re-login silencieux:", signInError);
+        logger.error("Erreur re-login silencieux", signInError);
         // On continue quand même, le user devra se reconnecter manuellement
       } else {
         throw signInError;
@@ -93,7 +94,7 @@ export async function updatePassword(
       throw error;
     }
 
-    console.error("Erreur mise à jour mot de passe:", error);
+    logger.error("Erreur mise à jour mot de passe", error instanceof Error ? error : new Error(String(error)));
     return { success: false, error: "Erreur lors de la mise à jour du mot de passe" };
   }
 }

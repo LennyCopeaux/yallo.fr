@@ -5,8 +5,8 @@ import Link from "next/link";
 export function FooterSection() {
   const handleLoginClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    const hostname = typeof window !== "undefined" ? window.location.hostname : "";
-    const port = typeof window !== "undefined" && window.location.port ? window.location.port : "3000";
+    const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : "";
+    const port = globalThis.window !== undefined && globalThis.window.location.port ? globalThis.window.location.port : "3000";
     
     let appUrl: string;
     if (hostname.includes("localhost")) {
@@ -17,7 +17,7 @@ export function FooterSection() {
       appUrl = "https://app.yallo.fr/login";
     }
     
-    window.location.href = appUrl;
+    globalThis.window.location.href = appUrl;
   };
 
   return (

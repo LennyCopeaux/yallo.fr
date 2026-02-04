@@ -5,8 +5,8 @@ import Link from "next/link";
 export function MarketingLogoLink() {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    window.scrollTo({ top: 0, behavior: "instant" });
-    window.location.href = "/";
+    globalThis.window.scrollTo({ top: 0, behavior: "instant" });
+    globalThis.window.location.href = "/";
   };
 
   return (

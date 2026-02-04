@@ -13,7 +13,7 @@ export function DemoCallButton({ phoneNumber }: Readonly<DemoCallButtonProps>) {
 
   const handleCall = () => {
     setIsCalling(true);
-    window.location.href = `tel:${phoneNumber}`;
+    globalThis.window.location.href = `tel:${phoneNumber}`;
   };
 
   return (

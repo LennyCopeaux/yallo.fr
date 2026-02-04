@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut, ArrowLeft } from "lucide-react";
 import { getMenuData } from "@/features/menu/actions";
-import { MenuEditor } from "@/components/menu";
+import { MenuManager } from "@/components/menu";
 import { ModeToggle } from "@/components/navigation";
 import Link from "next/link";
 
@@ -25,16 +25,6 @@ export default async function MenuPage() {
   }
 
   const menuData = await getMenuData();
-
-  if (!menuData) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground">Aucun restaurant trouvé</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -72,16 +62,23 @@ export default async function MenuPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link href="/dashboard">
           <Button variant="ghost" size="sm" className="mb-6 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour au tableau de bord
           </Button>
         </Link>
-        <MenuEditor initialMenuData={menuData} />
+
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">Gestion du Menu</h1>
+          <p className="text-muted-foreground mt-2">
+            Importez votre menu via photo ou modifiez-le manuellement en JSON.
+          </p>
+        </div>
+
+        <MenuManager initialMenuData={menuData} />
       </main>
     </div>
   );
 }
-

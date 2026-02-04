@@ -3,6 +3,7 @@ import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { generateSystemPrompt } from "@/lib/services/system-prompt";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
   try {
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ systemPrompt });
   } catch (error) {
-    console.error("Erreur génération prompt Vapi:", error);
+    logger.error("Erreur génération prompt Vapi", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: "Erreur lors de la génération du prompt" },
       { status: 500 }
