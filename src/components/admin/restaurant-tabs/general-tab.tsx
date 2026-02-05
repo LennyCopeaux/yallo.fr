@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Save, User } from "lucide-react";
 import { toast } from "sonner";
 import { updateRestaurantGeneral } from "@/app/(admin)/admin/restaurants/actions";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   name: z.string().min(2, "Nom trop court").max(100, "Nom trop long"),
@@ -62,6 +63,8 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
     },
   });
 
+  const isDirty = form.formState.isDirty;
+
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
     
@@ -74,6 +77,7 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
 
     if (result.success) {
       toast.success("Restaurant mis à jour");
+      form.reset(data); // Reset form state après succès
     } else {
       toast.error(result.error || "Erreur lors de la mise à jour");
     }
@@ -82,6 +86,7 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
   }
 
   return (
+    <>
     <Card className="border-border bg-card/30">
       <CardHeader>
         <CardTitle>Informations générales</CardTitle>
@@ -184,55 +189,61 @@ export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
           </div>
 
           <div className="pt-4 border-t border-border">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                <span>
-                  Créé le{" "}
-                  {restaurant.createdAt
-                    ? new Date(restaurant.createdAt).toLocaleDateString("fr-FR", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })
-                    : "-"}
-                </span>
-                {restaurant.updatedAt && (
-                  <>
-                    <span>•</span>
-                    <span>
-                      Modifié le{" "}
-                      {new Date(restaurant.updatedAt).toLocaleDateString("fr-FR", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </>
-                )}
-              </div>
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="bg-primary text-black hover:bg-primary/90"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Enregistrement...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Enregistrer
-                  </>
-                )}
-              </Button>
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <span>
+                Créé le{" "}
+                {restaurant.createdAt
+                  ? new Date(restaurant.createdAt).toLocaleDateString("fr-FR", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : "-"}
+              </span>
+              {restaurant.updatedAt && (
+                <>
+                  <span>•</span>
+                  <span>
+                    Modifié le{" "}
+                    {new Date(restaurant.updatedAt).toLocaleDateString("fr-FR", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </form>
       </CardContent>
     </Card>
+    
+    <div className="flex justify-end mt-6">
+      <Button
+        type="button"
+        disabled={isLoading || !isDirty}
+        onClick={form.handleSubmit(onSubmit)}
+        className={cn(
+          "bg-primary text-black hover:bg-primary/90",
+          !isDirty && "opacity-50 cursor-not-allowed"
+        )}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Enregistrement...
+          </>
+        ) : (
+          <>
+            <Save className="w-4 h-4 mr-2" />
+            Enregistrer
+          </>
+        )}
+      </Button>
+    </div>
+    </>
   );
 }

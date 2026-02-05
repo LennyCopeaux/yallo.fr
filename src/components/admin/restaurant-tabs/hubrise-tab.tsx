@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Save, Link2, Key, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { updateHubriseConfig } from "@/app/(admin)/admin/restaurants/actions";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   hubriseLocationId: z.string().max(100, "Location ID trop long").optional(),
@@ -42,6 +43,8 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
     },
   });
 
+  const isDirty = form.formState.isDirty;
+
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
     
@@ -52,6 +55,7 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
 
     if (result.success) {
       toast.success("Configuration HubRise mise à jour");
+      form.reset(data); // Reset form state après succès
       router.refresh();
     } else {
       toast.error(result.error || "Erreur lors de la mise à jour");
@@ -63,7 +67,7 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
   const hasConfig = !!(restaurant.hubriseLocationId && restaurant.hubriseAccessToken);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 md:pb-6">
       <Card className={`border ${hasConfig ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-amber-400/20 bg-amber-400/5'}`}>
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
@@ -151,12 +155,15 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end pb-6">
         <Button
           type="button"
-          disabled={isLoading}
+          disabled={isLoading || !isDirty}
           onClick={form.handleSubmit(onSubmit)}
-          className="bg-primary text-black hover:bg-primary/90"
+          className={cn(
+            "bg-primary text-black hover:bg-primary/90",
+            !isDirty && "opacity-50 cursor-not-allowed"
+          )}
         >
           {isLoading ? (
             <>
@@ -166,7 +173,7 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
           ) : (
             <>
               <Save className="w-4 h-4 mr-2" />
-              Enregistrer la configuration
+              Enregistrer
             </>
           )}
         </Button>

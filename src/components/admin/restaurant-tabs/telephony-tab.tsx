@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Save, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { updateRestaurantTelephony } from "@/app/(admin)/admin/restaurants/actions";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   phoneNumber: z.string().min(10, "Numéro invalide"),
@@ -42,6 +43,8 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
     },
   });
 
+  const isDirty = form.formState.isDirty;
+
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
     
@@ -52,6 +55,7 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
 
     if (result.success) {
       toast.success("Configuration téléphonie mise à jour");
+      form.reset(data); // Reset form state après succès
     } else {
       toast.error(result.error || "Erreur lors de la mise à jour");
     }
@@ -129,11 +133,14 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end pb-6">
           <Button
             type="submit"
-            disabled={isLoading}
-            className="bg-primary text-black hover:bg-primary/90"
+            disabled={isLoading || !isDirty}
+            className={cn(
+              "bg-primary text-black hover:bg-primary/90",
+              !isDirty && "opacity-50 cursor-not-allowed"
+            )}
           >
             {isLoading ? (
               <>
@@ -143,7 +150,7 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
             ) : (
               <>
                 <Save className="w-4 h-4 mr-2" />
-                Enregistrer la téléphonie
+                Enregistrer
               </>
             )}
           </Button>
