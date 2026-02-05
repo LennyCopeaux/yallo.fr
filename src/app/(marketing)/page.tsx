@@ -8,10 +8,10 @@ import {
   CtaSection,
   FooterSection,
 } from "@/components/landing";
-import { getPricingConfig } from "@/app/(admin)/admin/settings/actions";
+import { getPricingPlans } from "@/app/(admin)/admin/settings/actions";
 
 export default async function Home() {
-  const pricingConfig = await getPricingConfig();
+  const pricingPlans = await getPricingPlans();
 
   return (
     <div className="relative">
@@ -19,7 +19,7 @@ export default async function Home() {
       <SocialProofSection />
       <HowItWorksSection />
       <FeaturesSection />
-      <PricingSection pricingConfig={pricingConfig} />
+      <PricingSection pricingPlans={pricingPlans} />
       <FaqSection />
       <CtaSection />
       <FooterSection />
