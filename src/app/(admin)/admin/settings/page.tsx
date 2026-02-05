@@ -1,12 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreditCard, ArrowLeft } from "lucide-react";
-import { PricingSettingsFormWrapperWithCard } from "@/components/admin";
-import { getPricingConfig } from "./actions";
+import { PricingPlansForm } from "@/components/admin/pricing-plans-form";
+import { getPricingPlans } from "./actions";
 import Link from "next/link";
 
 export default async function SettingsPage() {
-  const pricingConfig = await getPricingConfig();
+  const pricingPlans = await getPricingPlans();
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
@@ -29,7 +29,20 @@ export default async function SettingsPage() {
         </div>
       </div>
 
-      <PricingSettingsFormWrapperWithCard initialConfig={pricingConfig} />
+      <Card className="border-border bg-card/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="w-5 h-5 text-primary" />
+            Configuration des Offres Tarifaires
+          </CardTitle>
+          <CardDescription>
+            Gérez les prix des 3 offres (Starter, Essential, Infinity). Les modifications sont immédiatement visibles sur la page marketing.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PricingPlansForm initialPlans={pricingPlans} />
+        </CardContent>
+      </Card>
     </div>
   );
 }
