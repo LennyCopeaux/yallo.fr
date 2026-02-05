@@ -75,7 +75,7 @@ describe("Kitchen Status Actions", () => {
     });
 
     it("should return null for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      vi.mocked(auth).mockResolvedValue(null as any);
 
       const result = await getKitchenStatus();
 
@@ -127,7 +127,7 @@ describe("Kitchen Status Actions", () => {
     });
 
     it("should throw error for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      vi.mocked(auth).mockResolvedValue(null as any);
 
       await expect(updateKitchenStatus("NORMAL")).rejects.toThrow("Non autorisé");
     });
@@ -212,7 +212,7 @@ describe("Kitchen Status Actions", () => {
     });
 
     it("should throw error for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      vi.mocked(auth).mockResolvedValue(null as any);
 
       await expect(updateStatusSettings({})).rejects.toThrow("Non autorisé");
     });

@@ -52,7 +52,7 @@ describe("Orders Actions Integration", () => {
     });
 
     it("should return null for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      vi.mocked(auth).mockResolvedValue(null as any);
 
       const result = await getUserRestaurant();
 
@@ -97,7 +97,7 @@ describe("Orders Actions Integration", () => {
     });
 
     it("should throw error for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      vi.mocked(auth).mockResolvedValue(null as any);
 
       await expect(getOrders()).rejects.toThrow("Non autorisé");
     });
@@ -141,7 +141,7 @@ describe("Orders Actions Integration", () => {
     });
 
     it("should throw error for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      vi.mocked(auth).mockResolvedValue(null as any);
 
       await expect(updateOrderStatus("order-123", "PREPARING")).rejects.toThrow("Non autorisé");
     });
@@ -198,7 +198,7 @@ describe("Orders Actions Integration", () => {
     });
 
     it("should throw error for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      vi.mocked(auth).mockResolvedValue(null as any);
 
       await expect(simulateOrder()).rejects.toThrow("Non autorisé");
     });

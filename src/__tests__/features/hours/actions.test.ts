@@ -73,7 +73,7 @@ describe("Business Hours Actions", () => {
     });
 
     it("should return error for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      vi.mocked(auth).mockResolvedValue(null as any);
 
       const result = await getBusinessHours();
 
@@ -216,7 +216,7 @@ describe("Business Hours Actions", () => {
     });
 
     it("should return error for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      vi.mocked(auth).mockResolvedValue(null as any);
 
       const formData = new FormData();
       formData.append("businessHours", JSON.stringify({ schedule: {} }));
