@@ -1,17 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { randomBytes } from "crypto";
 
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replaceAll(/[\u0300-\u036f]/g, "")
-    .replaceAll(/[^a-z0-9\s-]/g, "")
-    .replaceAll(/\s+/g, "-")
-    .replaceAll(/-+/g, "-")
-    .trim();
-}
-
 function generateSecureString(length: number): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
   const bytes = randomBytes(length);
@@ -31,33 +20,6 @@ function generateResetToken(): string {
 }
 
 describe("Admin Actions Utils", () => {
-  describe("generateSlug", () => {
-    it("should convert name to lowercase slug", () => {
-      expect(generateSlug("Restaurant Test")).toBe("restaurant-test");
-    });
-
-    it("should handle French accents", () => {
-      expect(generateSlug("Café Résidence")).toBe("cafe-residence");
-    });
-
-    it("should remove special characters", () => {
-      expect(generateSlug("L'Étoile & Co.")).toBe("letoile-co");
-    });
-
-    it("should collapse multiple spaces", () => {
-      expect(generateSlug("Test   Multiple   Spaces")).toBe("test-multiple-spaces");
-    });
-
-    it("should collapse multiple dashes", () => {
-      expect(generateSlug("Test---Multiple---Dashes")).toBe("test-multiple-dashes");
-    });
-
-    it("should handle leading and trailing spaces", () => {
-      const result = generateSlug("  Trimmed  ");
-      expect(result).toContain("trimmed");
-    });
-  });
-
   describe("generateTempPassword", () => {
     it("should generate 12 character password", () => {
       const password = generateTempPassword();

@@ -91,3 +91,24 @@ export async function updateVapiAssistant(assistantId: string, restaurant: Resta
     throw new Error(error.message || `Erreur Vapi API: ${response.status}`);
   }
 }
+
+export async function deleteVapiAssistant(assistantId: string): Promise<void> {
+  const apiKey = process.env.VAPI_PRIVATE_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("VAPI_PRIVATE_API_KEY n'est pas configurée dans les variables d'environnement");
+  }
+
+  const response = await fetch(`${VAPI_API_URL}/assistant/${assistantId}`, {
+    method: "DELETE",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Erreur inconnue" }));
+    throw new Error(error.message || `Erreur Vapi API: ${response.status}`);
+  }
+}

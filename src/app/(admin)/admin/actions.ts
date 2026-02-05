@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth/auth";
 import { db } from "@/db";
-import { users, restaurants, RestaurantStatus } from "@/db/schema";
+import { users, restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
@@ -36,7 +36,6 @@ const createRestaurantSchema = z.object({
 
 const updateRestaurantGeneralSchema = z.object({
   name: z.string().min(2, "Nom trop court").max(100, "Nom trop long").optional(),
-  slug: z.string().min(2, "Slug trop court").max(50, "Slug trop long").optional(),
   address: z.string().max(500, "Adresse trop longue").optional().nullable(),
   ownerId: z.string().uuid("ID propriétaire invalide").optional(),
   status: z.enum(["active", "suspended", "onboarding"]).optional(),
@@ -51,7 +50,6 @@ const updateRestaurantAISchema = z.object({
 const updateRestaurantTelephonySchema = z.object({
   phoneNumber: z.string().min(10, "Numéro invalide").optional(),
   twilioPhoneNumber: z.string().max(20).optional().nullable(),
-  businessHours: z.string().max(5000).optional().nullable(),
 });
 
 const updateRestaurantBillingSchema = z.object({
@@ -70,16 +68,6 @@ export type ActionResult<T = void> = {
   data?: T;
 };
 
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replaceAll(/[\u0300-\u036f]/g, "")
-    .replaceAll(/[^a-z0-9\s-]/g, "")
-    .replaceAll(/\s+/g, "-")
-    .replaceAll(/-+/g, "-")
-    .trim();
-}
 
 function generateSecureString(length: number): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
@@ -323,11 +311,9 @@ export async function createRestaurant(formData: FormData): Promise<ActionResult
     }
 
     const { name, phoneNumber, ownerId, address } = parsed.data;
-    const slug = generateSlug(name);
 
     await db.insert(restaurants).values({
       name,
-      slug,
       phoneNumber,
       ownerId,
       address: address || null,
@@ -339,9 +325,6 @@ export async function createRestaurant(formData: FormData): Promise<ActionResult
     return { success: true };
   } catch (error) {
     logger.error("Erreur création restaurant", error instanceof Error ? error : new Error(String(error)));
-    if (error instanceof Error && error.message.includes("restaurants_slug_unique")) {
-      return { success: false, error: "Un restaurant avec ce nom existe déjà" };
-    }
     return { success: false, error: "Erreur lors de la création" };
   }
 }
@@ -366,13 +349,7 @@ export async function updateRestaurantGeneral(
       updatedAt: new Date(),
     };
 
-    if (parsed.data.name !== undefined) {
-      updateData.name = parsed.data.name;
-      if (!parsed.data.slug) {
-        updateData.slug = generateSlug(parsed.data.name);
-      }
-    }
-    if (parsed.data.slug !== undefined) updateData.slug = parsed.data.slug;
+    if (parsed.data.name !== undefined) updateData.name = parsed.data.name;
     if (parsed.data.address !== undefined) updateData.address = parsed.data.address;
     if (parsed.data.ownerId !== undefined) updateData.ownerId = parsed.data.ownerId;
     if (parsed.data.status !== undefined) {
@@ -386,9 +363,6 @@ export async function updateRestaurantGeneral(
     return { success: true };
   } catch (error) {
     logger.error("Erreur mise à jour restaurant", error instanceof Error ? error : new Error(String(error)));
-    if (error instanceof Error && error.message.includes("restaurants_slug_unique")) {
-      return { success: false, error: "Un restaurant avec ce slug existe déjà" };
-    }
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
@@ -479,6 +453,57 @@ export async function updateVapiAssistant(id: string): Promise<ActionResult> {
   }
 }
 
+export async function deleteVapiAssistant(id: string): Promise<ActionResult> {
+  "use server";
+
+  const session = await auth();
+  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "OWNER")) {
+    return { success: false, error: "Non autorisé" };
+  }
+
+  try {
+    const [restaurant] = await db
+      .select()
+      .from(restaurants)
+      .where(eq(restaurants.id, id))
+      .limit(1);
+
+    if (!restaurant) {
+      return { success: false, error: "Restaurant non trouvé" };
+    }
+
+    if (session.user.role === "OWNER" && restaurant.ownerId !== session.user.id) {
+      return { success: false, error: "Non autorisé" };
+    }
+
+    if (!restaurant.vapiAssistantId) {
+      return { success: false, error: "Aucun assistant Vapi configuré pour ce restaurant" };
+    }
+
+    const { deleteVapiAssistant: deleteAssistant } = await import("@/lib/services/vapi");
+    await deleteAssistant(restaurant.vapiAssistantId);
+
+    await db
+      .update(restaurants)
+      .set({ 
+        vapiAssistantId: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(restaurants.id, id));
+
+    revalidatePath(`/admin/restaurants/${id}`);
+    revalidatePath(`/dashboard`);
+
+    return { success: true };
+  } catch (error) {
+    logger.error("Erreur suppression assistant Vapi", error instanceof Error ? error : new Error(String(error)));
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur lors de la suppression de l'assistant",
+    };
+  }
+}
+
 export async function updateRestaurantAI(
   id: string,
   data: z.infer<typeof updateRestaurantAISchema>
@@ -535,7 +560,6 @@ export async function updateRestaurantTelephony(
 
     if (parsed.data.phoneNumber !== undefined) updateData.phoneNumber = parsed.data.phoneNumber;
     if (parsed.data.twilioPhoneNumber !== undefined) updateData.twilioPhoneNumber = parsed.data.twilioPhoneNumber;
-    if (parsed.data.businessHours !== undefined) updateData.businessHours = parsed.data.businessHours;
 
     await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
     revalidatePath("/admin");

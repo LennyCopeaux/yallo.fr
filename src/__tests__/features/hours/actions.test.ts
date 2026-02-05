@@ -1,110 +1,230 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { getBusinessHours, updateBusinessHours } from "@/features/hours/actions";
+import { db } from "@/db";
+import { restaurants } from "@/db/schema";
+import { auth } from "@/lib/auth/auth";
 
-describe("Hours Actions", () => {
-  describe("Business Hours Validation", () => {
-    it("should validate time format HH:MM", () => {
-      const validTimes = ["09:00", "12:30", "23:59", "00:00"];
-      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+vi.mock("@/db", () => ({
+  db: {
+    select: vi.fn(),
+    update: vi.fn(),
+  },
+}));
 
-      validTimes.forEach((time) => {
-        expect(timeRegex.test(time)).toBe(true);
-      });
-    });
+vi.mock("@/lib/auth/auth", () => ({
+  auth: vi.fn(),
+}));
 
-    it("should reject invalid time formats", () => {
-      const invalidTimes = ["9:00", "25:00", "12:60", "abc", ""];
-      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
 
-      invalidTimes.forEach((time) => {
-        expect(timeRegex.test(time)).toBe(false);
-      });
-    });
+describe("Business Hours Actions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it("should validate day of week range 0-6", () => {
-      const validDays = [0, 1, 2, 3, 4, 5, 6];
-      validDays.forEach((day) => {
-        expect(day >= 0 && day <= 6).toBe(true);
-      });
-    });
+  describe("getBusinessHours", () => {
+    it("should return business hours for authenticated owner", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
+      } as any);
 
-    it("should reject invalid day of week", () => {
-      const invalidDays = [-1, 7, 10];
-      invalidDays.forEach((day) => {
-        expect(day >= 0 && day <= 6).toBe(false);
-      });
-    });
-
-    it("should validate close time is after open time", () => {
-      const parseTime = (time: string) => {
-        const [hours, minutes] = time.split(":").map(Number);
-        return hours * 60 + minutes;
+      const mockHours = {
+        timezone: "Europe/Paris",
+        schedule: {
+          monday: { open: "11:00", close: "22:00" },
+        },
       };
 
-      const openTime = "09:00";
-      const closeTime = "22:00";
+      const selectMock = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ businessHours: JSON.stringify(mockHours) }]),
+          }),
+        }),
+      });
+      vi.mocked(db.select).mockReturnValue(selectMock() as any);
 
-      expect(parseTime(closeTime)).toBeGreaterThan(parseTime(openTime));
+      const result = await getBusinessHours();
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockHours);
+    });
+
+    it("should return default empty schedule if no hours set", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
+      } as any);
+
+      const selectMock = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ businessHours: null }]),
+          }),
+        }),
+      });
+      vi.mocked(db.select).mockReturnValue(selectMock() as any);
+
+      const result = await getBusinessHours();
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual({ timezone: "Europe/Paris", schedule: {} });
+    });
+
+    it("should return error for unauthenticated user", async () => {
+      vi.mocked(auth).mockResolvedValue(null);
+
+      const result = await getBusinessHours();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Non autorisé");
+    });
+
+    it("should return error for admin without restaurant", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "admin-123", role: "ADMIN", email: "admin@test.com" },
+      } as any);
+
+      const result = await getBusinessHours();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Un restaurant doit être spécifié pour les admins");
+    });
+
+    it("should return error if restaurant not found", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
+      } as any);
+
+      const selectMock = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
+      vi.mocked(db.select).mockReturnValue(selectMock() as any);
+
+      const result = await getBusinessHours();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Aucun restaurant trouvé");
+    });
+
+    it("should handle invalid JSON gracefully", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
+      } as any);
+
+      const selectMock = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ businessHours: "invalid json" }]),
+          }),
+        }),
+      });
+      vi.mocked(db.select).mockReturnValue(selectMock() as any);
+
+      const result = await getBusinessHours();
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual({ timezone: "Europe/Paris", schedule: {} });
     });
   });
 
-  describe("Schedule Structure", () => {
-    it("should validate schedule has required fields", () => {
-      const validSchedule = {
-        dayOfWeek: 1,
-        isOpen: true,
-        openTime: "09:00",
-        closeTime: "22:00",
+  describe("updateBusinessHours", () => {
+    it("should update business hours successfully", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
+      } as any);
+
+      const mockHours = {
+        timezone: "Europe/Paris",
+        schedule: {
+          monday: { open: "11:00", close: "22:00" },
+        },
       };
 
-      expect(validSchedule).toHaveProperty("dayOfWeek");
-      expect(validSchedule).toHaveProperty("isOpen");
-      expect(validSchedule).toHaveProperty("openTime");
-      expect(validSchedule).toHaveProperty("closeTime");
-    });
-
-    it("should handle closed days", () => {
-      const closedDay = {
-        dayOfWeek: 0, // Sunday
-        isOpen: false,
-        openTime: null,
-        closeTime: null,
-      };
-
-      expect(closedDay.isOpen).toBe(false);
-      expect(closedDay.openTime).toBeNull();
-      expect(closedDay.closeTime).toBeNull();
-    });
-
-    it("should validate week has 7 days", () => {
-      const weekSchedule = Array.from({ length: 7 }, (_, i) => ({
-        dayOfWeek: i,
-        isOpen: i !== 0, // Closed on Sunday
-        openTime: i !== 0 ? "09:00" : null,
-        closeTime: i !== 0 ? "22:00" : null,
-      }));
-
-      expect(weekSchedule).toHaveLength(7);
-      weekSchedule.forEach((day, index) => {
-        expect(day.dayOfWeek).toBe(index);
+      const selectMock = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ id: "rest-123" }]),
+          }),
+        }),
       });
+      const updateMock = vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined),
+        }),
+      });
+
+      vi.mocked(db.select).mockReturnValue(selectMock() as any);
+      vi.mocked(db.update).mockReturnValue(updateMock() as any);
+
+      const formData = new FormData();
+      formData.append("businessHours", JSON.stringify(mockHours));
+
+      const result = await updateBusinessHours(formData);
+
+      expect(result.success).toBe(true);
+      expect(db.update).toHaveBeenCalled();
     });
-  });
 
-  describe("Day Names", () => {
-    it("should map day numbers to French names", () => {
-      const dayNames: Record<number, string> = {
-        0: "Dimanche",
-        1: "Lundi",
-        2: "Mardi",
-        3: "Mercredi",
-        4: "Jeudi",
-        5: "Vendredi",
-        6: "Samedi",
-      };
+    it("should return error for invalid form data", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
+      } as any);
 
-      expect(dayNames[0]).toBe("Dimanche");
-      expect(dayNames[1]).toBe("Lundi");
-      expect(Object.keys(dayNames)).toHaveLength(7);
+      const selectMock = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ id: "rest-123" }]),
+          }),
+        }),
+      });
+      vi.mocked(db.select).mockReturnValue(selectMock() as any);
+
+      const formData = new FormData();
+
+      const result = await updateBusinessHours(formData);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Horaires invalides");
+    });
+
+    it("should return error for invalid JSON", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
+      } as any);
+
+      const selectMock = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ id: "rest-123" }]),
+          }),
+        }),
+      });
+      vi.mocked(db.select).mockReturnValue(selectMock() as any);
+
+      const formData = new FormData();
+      formData.append("businessHours", "invalid json");
+
+      const result = await updateBusinessHours(formData);
+
+      expect(result.success).toBe(false);
+    });
+
+    it("should return error for unauthenticated user", async () => {
+      vi.mocked(auth).mockResolvedValue(null);
+
+      const formData = new FormData();
+      formData.append("businessHours", JSON.stringify({ schedule: {} }));
+
+      const result = await updateBusinessHours(formData);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("Non autorisé");
     });
   });
 });

@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Save, Calendar, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { updateRestaurantBilling } from "@/app/(admin)/admin/restaurants/actions";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   stripeCustomerId: z.string().max(100).optional(),
@@ -50,6 +51,8 @@ export function BillingTab({ restaurant }: BillingTabProps) {
     },
   });
 
+  const isDirty = form.formState.isDirty;
+
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
     
@@ -60,6 +63,7 @@ export function BillingTab({ restaurant }: BillingTabProps) {
 
     if (result.success) {
       toast.success("Configuration facturation mise à jour");
+      form.reset(data); // Reset form state après succès
     } else {
       toast.error(result.error || "Erreur lors de la mise à jour");
     }
@@ -68,6 +72,7 @@ export function BillingTab({ restaurant }: BillingTabProps) {
   }
 
   return (
+    <>
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card className="border-border bg-card/30">
           <CardHeader>
@@ -136,26 +141,31 @@ export function BillingTab({ restaurant }: BillingTabProps) {
             </div>
           </CardContent>
         </Card>
-
-        <div className="flex justify-end">
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="bg-primary text-black hover:bg-primary/90"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Enregistrement...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Enregistrer la facturation
-              </>
-            )}
-          </Button>
-        </div>
       </form>
+      
+      <div className="flex justify-end mt-6 pb-6">
+        <Button
+          type="button"
+          disabled={isLoading || !isDirty}
+          onClick={form.handleSubmit(onSubmit)}
+          className={cn(
+            "bg-primary text-black hover:bg-primary/90",
+            !isDirty && "opacity-50 cursor-not-allowed"
+          )}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Enregistrement...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4 mr-2" />
+              Enregistrer
+            </>
+          )}
+        </Button>
+      </div>
+    </>
   );
 }

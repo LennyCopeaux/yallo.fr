@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useTransition, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UtensilsCrossed, Users } from "lucide-react";
 import { RestaurantsDataTable } from "@/components/admin/restaurants-data-table";
@@ -10,7 +12,6 @@ import { AddUserDialog } from "@/components/admin/add-user-dialog";
 type Restaurant = {
   id: string;
   name: string;
-  slug: string;
   address: string | null;
   phoneNumber: string;
   ownerId: string;
@@ -47,8 +48,25 @@ interface DashboardTabsProps {
 }
 
 export function DashboardTabs({ restaurants, users, owners, totalOrders, defaultTab = "restaurants" }: DashboardTabsProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const urlTab = searchParams.get("tab") || defaultTab;
+  const [activeTab, setActiveTab] = useState(urlTab);
+
+  useEffect(() => {
+    setActiveTab(urlTab);
+  }, [urlTab]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    startTransition(() => {
+      router.replace(`/admin?tab=${value}`);
+    });
+  };
+
   return (
-    <Tabs defaultValue={defaultTab} className="space-y-6">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
       <TabsList className="bg-card/30 border border-border p-1 w-full sm:w-auto">
         <TabsTrigger 
           value="restaurants" 

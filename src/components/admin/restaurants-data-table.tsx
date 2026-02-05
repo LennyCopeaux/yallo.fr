@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -53,7 +53,6 @@ import { deleteRestaurant } from "@/app/(admin)/admin/restaurants/actions";
 type Restaurant = {
   id: string;
   name: string;
-  slug: string;
   address: string | null;
   phoneNumber: string;
   ownerId: string;
@@ -74,32 +73,41 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const currentTab = searchParams.get("tab");
   const [searchValue, setSearchValue] = useState(searchParams.get("search") || "");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [restaurantToDelete, setRestaurantToDelete] = useState<Restaurant | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  useEffect(() => {
+    if (currentTab === "restaurants") {
+      setSearchValue(searchParams.get("search") || "");
+    }
+  }, [currentTab, searchParams]);
+
   const updateFilters = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", "restaurants");
     if (value && value !== "all") {
       params.set(key, value);
     } else {
       params.delete(key);
     }
     startTransition(() => {
-      router.push(`/admin?tab=restaurants&${params.toString()}`);
+      router.push(`/admin?${params.toString()}`);
     });
   };
 
   const handleSearchSubmit = () => {
     const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", "restaurants");
     if (searchValue.trim()) {
       params.set("search", searchValue.trim());
     } else {
       params.delete("search");
     }
     startTransition(() => {
-      router.push(`/admin?tab=restaurants&${params.toString()}`);
+      router.push(`/admin?${params.toString()}`);
     });
   };
 
@@ -158,7 +166,7 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder="Rechercher par nom ou email..."
               value={searchValue}
@@ -171,7 +179,7 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
             type="button"
             onClick={handleSearchSubmit}
             disabled={isPending}
-            className="bg-primary text-black hover:bg-primary/90 h-10 min-h-[44px] min-w-[44px]"
+            className="bg-primary text-black hover:bg-primary/90 h-10 w-10 p-0 min-w-[44px]"
           >
             <Search className="w-4 h-4" />
           </Button>
@@ -235,9 +243,6 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
                 <TableCell className="min-w-[150px]">
                   <div>
                     <div className="font-medium text-sm sm:text-base">{restaurant.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      /{restaurant.slug}
-                    </div>
                     <div className="text-xs text-muted-foreground md:hidden mt-1">
                       {restaurant.ownerEmail}
                     </div>

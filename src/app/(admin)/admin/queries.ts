@@ -42,7 +42,6 @@ export async function getRestaurantsWithFilters(searchParams: RestaurantSearchPa
     .select({
       id: restaurants.id,
       name: restaurants.name,
-      slug: restaurants.slug,
       address: restaurants.address,
       phoneNumber: restaurants.phoneNumber,
       ownerId: restaurants.ownerId,
@@ -61,7 +60,6 @@ export async function getRestaurantsWithFilters(searchParams: RestaurantSearchPa
     .groupBy(
       restaurants.id,
       restaurants.name,
-      restaurants.slug,
       restaurants.address,
       restaurants.phoneNumber,
       restaurants.ownerId,
