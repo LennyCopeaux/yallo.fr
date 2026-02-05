@@ -1,12 +1,7 @@
-import { auth, signOut } from "@/lib/auth/auth";
+import { auth } from "@/lib/auth/auth";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { LogOut, Utensils, AlertTriangle, Clock } from "lucide-react";
-import Link from "next/link";
-import { buildAppUrlServer } from "@/lib/utils";
-import { ModeToggle } from "@/components/navigation";
+import { AlertTriangle } from "lucide-react";
 import { DashboardContent } from "./dashboard-content";
 import { getOrders, getUserRestaurant } from "@/features/orders/actions";
 import { UpdateAssistantButton } from "@/components/dashboard/update-assistant-button";
@@ -60,44 +55,7 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <span className="text-xl font-black gradient-text">Yallo</span>
-              <span className="text-muted-foreground text-sm hidden sm:block">/ Dashboard</span>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-sm text-muted-foreground hidden sm:block">
-                  {session.user.email}
-                </span>
-              </div>
-              <ModeToggle />
-              <form
-                action={async () => {
-                  "use server";
-                  const headersList = await headers();
-                  const host = headersList.get("host") || "";
-                  const loginUrl = buildAppUrlServer("/login", host);
-                  await signOut({ redirectTo: loginUrl });
-                }}
-              >
-                <Button type="submit" variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent">
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:inline ml-2">Déconnexion</span>
-                </Button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
@@ -150,42 +108,6 @@ export default async function DashboardPage() {
         {/* Quick Actions - seulement si restaurant */}
         {restaurant && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              <Link href="/dashboard/menu">
-                <Card className="bg-card border-border hover:border-primary/30 transition-all cursor-pointer h-full">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold mb-2">Gestion du Menu</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Gérez vos produits, catégories et disponibilité
-                        </p>
-                      </div>
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <Utensils className="w-6 h-6 text-primary" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-              <Link href="/dashboard/hours">
-                <Card className="bg-card border-border hover:border-primary/30 transition-all cursor-pointer h-full">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold mb-2">Horaires d&apos;ouverture</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Configurez vos horaires d&apos;ouverture
-                        </p>
-                      </div>
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <Clock className="w-6 h-6 text-primary" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            </div>
             {restaurant.vapiAssistantId && (
               <Card className="bg-card border-border mb-8">
                 <CardContent className="p-6">
@@ -206,7 +128,6 @@ export default async function DashboardPage() {
 
         {/* Dashboard Content with KPIs, Graph, and Orders - seulement si restaurant */}
         {restaurant && <DashboardContent orders={orders} />}
-      </main>
     </div>
   );
 }
