@@ -127,12 +127,19 @@ export const restaurantsRelations = relations(restaurants, ({ one, many }) => ({
   orders: many(orders),
 }));
 
-export const pricingConfig = pgTable("pricing_config", {
+export const pricingPlans = pgTable("pricing_plans", {
   id: uuid("id").primaryKey().defaultRandom(),
-  monthlyPrice: integer("monthly_price").default(14900).notNull(),
-  setupFee: integer("setup_fee").default(19900).notNull(),
-  includedMinutes: integer("included_minutes").default(600).notNull(),
-  overflowPricePerMinute: integer("overflow_price_per_minute").default(20).notNull(),
+  name: text("name").notNull().unique(),
+  subtitle: text("subtitle").notNull(),
+  target: text("target").notNull(),
+  monthlyPrice: integer("monthly_price").notNull(),
+  setupFee: integer("setup_fee"),
+  commissionRate: integer("commission_rate"),
+  includedMinutes: integer("included_minutes"),
+  overflowPricePerMinute: integer("overflow_price_per_minute"),
+  hubrise: boolean("hubrise").default(false).notNull(),
+  popular: boolean("popular").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
@@ -188,3 +195,5 @@ export type SelectOrder = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
 export type SelectOrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = typeof orderItems.$inferInsert;
+export type SelectPricingPlan = typeof pricingPlans.$inferSelect;
+export type InsertPricingPlan = typeof pricingPlans.$inferInsert;
