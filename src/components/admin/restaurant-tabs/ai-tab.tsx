@@ -10,6 +10,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Bot, Brain, FileText, Sparkles, Code, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { createVapiAssistant, updateVapiAssistant, deleteVapiAssistant } from "@/app/(admin)/admin/restaurants/actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Restaurant = {
   id: string;
@@ -31,6 +41,7 @@ export function AITab({ restaurant }: AITabProps) {
   const [isCreatingAssistant, setIsCreatingAssistant] = useState(false);
   const [isUpdatingAssistant, setIsUpdatingAssistant] = useState(false);
   const [isDeletingAssistant, setIsDeletingAssistant] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState(restaurant.systemPrompt || "");
   const [menuContext, setMenuContext] = useState(restaurant.menuContext || "");
   const [businessHoursJson, setBusinessHoursJson] = useState<string>("");
@@ -178,31 +189,9 @@ export function AITab({ restaurant }: AITabProps) {
                     variant="destructive"
                     disabled={isDeletingAssistant}
                     className="!bg-destructive !text-destructive-foreground hover:!bg-destructive/90 dark:!bg-destructive dark:hover:!bg-destructive/90"
-                    onClick={async () => {
-                      if (!confirm("Êtes-vous sûr de vouloir supprimer l'agent IA ? Cette action est irréversible.")) {
-                        return;
-                      }
-                      setIsDeletingAssistant(true);
-                      try {
-                        const result = await deleteVapiAssistant(restaurant.id);
-                        if (result.success) {
-                          toast.success("Agent IA supprimé avec succès");
-                          router.refresh();
-                        } else {
-                          toast.error(result.error || "Erreur lors de la suppression de l'agent");
-                        }
-                      } catch {
-                        toast.error("Erreur lors de la suppression de l'agent");
-                      } finally {
-                        setIsDeletingAssistant(false);
-                      }
-                    }}
+                    onClick={() => setShowDeleteDialog(true)}
                   >
-                    {isDeletingAssistant ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               )}
@@ -451,6 +440,49 @@ Règles importantes :
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer l&apos;agent IA</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer l&apos;agent IA ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                setShowDeleteDialog(false);
+                setIsDeletingAssistant(true);
+                try {
+                  const result = await deleteVapiAssistant(restaurant.id);
+                  if (result.success) {
+                    toast.success("Agent IA supprimé avec succès");
+                    router.refresh();
+                  } else {
+                    toast.error(result.error || "Erreur lors de la suppression de l'agent");
+                  }
+                } catch {
+                  toast.error("Erreur lors de la suppression de l'agent");
+                } finally {
+                  setIsDeletingAssistant(false);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingAssistant ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Suppression...
+                </>
+              ) : (
+                "Supprimer"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

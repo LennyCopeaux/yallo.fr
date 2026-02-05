@@ -111,9 +111,10 @@ export function AdminMenu() {
                     variant="ghost"
                     onClick={item.action}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-lg",
-                      "hover:bg-primary/10",
-                      isActive && "bg-primary text-black"
+                      "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors",
+                      isActive 
+                        ? "bg-primary text-black hover:bg-primary/90" 
+                        : "hover:bg-primary/10"
                     )}
                   >
                     <item.icon className="w-4 h-4" />
@@ -128,9 +129,10 @@ export function AdminMenu() {
                   href={item.href}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 rounded-lg",
-                    "hover:bg-primary/10",
-                    isActive && "bg-primary text-black"
+                    "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors",
+                    isActive 
+                      ? "bg-primary text-black hover:bg-primary/90" 
+                      : "hover:bg-primary/10"
                   )}
                 >
                   <item.icon className="w-4 h-4" />
@@ -154,9 +156,10 @@ export function AdminMenu() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center gap-1 px-4 py-2 rounded-lg",
-                  "hover:bg-primary/10",
-                  isActive && "bg-primary text-black"
+                  "flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors",
+                  isActive 
+                    ? "bg-primary text-black hover:bg-primary/90" 
+                    : "hover:bg-primary/10"
                 )}
               >
                 <item.icon className={cn("w-5 h-5", isActive && "scale-110")} />
