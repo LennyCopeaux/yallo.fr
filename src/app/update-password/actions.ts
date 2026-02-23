@@ -14,18 +14,76 @@ export type UpdatePasswordResult = {
   error?: string;
 };
 
+export async function verifyResetToken(token: string): Promise<{ valid: boolean; email?: string; error?: string }> {
+  if (!token) {
+    return { valid: false, error: "Token manquant" };
+  }
+
+  try {
+    const [user] = await db
+      .select({
+        email: users.email,
+        resetToken: users.resetToken,
+        resetTokenExpires: users.resetTokenExpires,
+      })
+      .from(users)
+      .where(eq(users.resetToken, token))
+      .limit(1);
+
+    if (!user || !user.resetToken) {
+      return { valid: false, error: "Token invalide" };
+    }
+
+    if (!user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+      return { valid: false, error: "Token expiré. Veuillez demander un nouveau lien de réinitialisation." };
+    }
+
+    return { valid: true, email: user.email };
+  } catch (error) {
+    logger.error("Erreur vérification token réinitialisation", error instanceof Error ? error : new Error(String(error)));
+    return { valid: false, error: "Erreur lors de la vérification du token" };
+  }
+}
+
 export async function updatePassword(
   formData: FormData
 ): Promise<UpdatePasswordResult> {
-  // 1. Vérifie que l'utilisateur est connecté
-  const session = await auth();
+  const resetToken = formData.get("token") as string | null;
   
-  if (!session?.user) {
-    return { success: false, error: "Non autorisé" };
-  }
+  let userEmail: string;
+  let userRole: string;
+  let userId: string;
 
-  const userEmail = session.user.email;
-  const userRole = session.user.role;
+  if (resetToken) {
+    const tokenVerification = await verifyResetToken(resetToken);
+    if (!tokenVerification.valid || !tokenVerification.email) {
+      return { success: false, error: tokenVerification.error || "Token invalide" };
+    }
+
+    const [user] = await db
+      .select({ id: users.id, email: users.email, role: users.role })
+      .from(users)
+      .where(eq(users.resetToken, resetToken))
+      .limit(1);
+
+    if (!user) {
+      return { success: false, error: "Utilisateur non trouvé" };
+    }
+
+    userEmail = user.email;
+    userRole = user.role;
+    userId = user.id;
+  } else {
+    const session = await auth();
+    
+    if (!session?.user) {
+      return { success: false, error: "Non autorisé" };
+    }
+
+    userEmail = session.user.email;
+    userRole = session.user.role;
+    userId = session.user.id;
+  }
 
   // 2. Récupère et valide les mots de passe
   const newPassword = formData.get("newPassword") as string;
@@ -49,13 +107,20 @@ export async function updatePassword(
     const passwordHash = await bcrypt.hash(newPassword, 10);
 
     // 5. Update BDD : Met à jour le password_hash et passe must_change_password à false
+    const updateData: Record<string, unknown> = {
+      passwordHash,
+      mustChangePassword: false,
+    };
+
+    if (resetToken) {
+      updateData.resetToken = null;
+      updateData.resetTokenExpires = null;
+    }
+
     await db
       .update(users)
-      .set({
-        passwordHash,
-        mustChangePassword: false,
-      })
-      .where(eq(users.id, session.user.id));
+      .set(updateData)
+      .where(eq(users.id, userId));
 
     // 6. CRUCIAL - RE-LOGIN SILENCIEUX pour régénérer le JWT
     // Cela force Next-Auth à générer un nouveau Token JWT propre

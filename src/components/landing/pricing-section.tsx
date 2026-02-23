@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,60 +8,258 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 import { DotPatternSubtle } from "@/components/ui/dot-pattern";
 import {
   ArrowRight,
   Sparkles,
+  Check,
+  X,
   Clock,
   Smartphone,
   Tablet,
   Settings,
-  MessageCircle,
-  Shield,
+  Mail,
+  Link2,
+  Info,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import Autoplay from "embla-carousel-autoplay";
 import Link from "next/link";
 
-type PricingConfig = {
+type PricingPlan = {
+  id: string;
+  name: string;
+  subtitle: string;
+  target: string;
   monthlyPrice: number;
-  setupFee: number;
-  includedMinutes: number;
-  overflowPricePerMinute: number;
+  setupFee: number | null;
+  commissionRate: number | null;
+  includedMinutes: number | null;
+  overflowPricePerMinute: number | null;
+  hubrise: boolean;
+  popular: boolean;
 };
 
 interface PricingSectionProps {
-  pricingConfig: PricingConfig;
+  pricingPlans: PricingPlan[];
 }
 
-export function PricingSection({ pricingConfig }: Readonly<PricingSectionProps>) {
-  const monthlyPrice = pricingConfig.monthlyPrice / 100; // Convertir centimes en euros
-  const setupFee = pricingConfig.setupFee / 100;
-  const includedMinutes = pricingConfig.includedMinutes;
-  const overflowPricePerMinute = pricingConfig.overflowPricePerMinute / 100;
+function formatPrice(priceInCents: number): string {
+  const price = priceInCents / 100;
+  // Formater avec 2 décimales si nécessaire, sinon nombre entier
+  return price % 1 === 0 ? price.toString() : price.toFixed(2).replace(".", ",");
+}
 
-  const features = [
-    {
-      text: "IA Vocale disponible 24h/24 et 7j/7",
-      icon: Clock,
-    },
-    {
-      text: `${includedMinutes} minutes d'appels incluses`,
-      icon: Smartphone,
-    },
-    {
-      text: "Dashboard Tablette Cuisine (PWA)",
-      icon: Tablet,
-    },
-    {
-      text: "Modifications du menu illimitées",
-      icon: Settings,
-    },
-    {
-      text: "Support prioritaire WhatsApp",
-      icon: MessageCircle,
-    },
-  ];
+function getSupportText(planName: string): string {
+  if (planName === "infinity") {
+    return "Support Prioritaire";
+  }
+  return "Support Email Réactif";
+}
+
+export function PricingSection({ pricingPlans }: Readonly<PricingSectionProps>) {
+  const plugin = React.useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true })
+  );
+  const [api, setApi] = React.useState<CarouselApi>();
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!api) return;
+
+    setSelectedIndex(api.selectedScrollSnap());
+
+    api.on("select", () => {
+      setSelectedIndex(api.selectedScrollSnap());
+    });
+  }, [api]);
+
+  // Transformer les plans de la BDD en format pour l'affichage
+  const plans = pricingPlans.map((plan) => {
+    const contactSubject = `plan-${plan.name}`;
+    const minutes = plan.includedMinutes !== null ? plan.includedMinutes : "Illimitées";
+    const overflowPrice = plan.overflowPricePerMinute !== null 
+      ? `${formatPrice(plan.overflowPricePerMinute)}€`
+      : null;
+    const setupFee = plan.setupFee !== null 
+      ? `${plan.setupFee / 100}€ (Offerts si engagement)`
+      : undefined;
+
+    return {
+      ...plan,
+      price: plan.monthlyPrice / 100,
+      commission: plan.commissionRate ?? 0,
+      minutes,
+      overflowPrice,
+      contactSubject,
+      setupFee,
+      support: getSupportText(plan.name),
+    };
+  });
+
+  const renderPlanCard = (plan: typeof plans[0]) => (
+    <>
+      <Card
+        className={`relative glass-strong overflow-hidden noise h-full flex flex-col transition-all ${
+          plan.popular
+            ? "md:border-4 border-2 md:shadow-2xl md:shadow-primary/40 border-primary"
+            : "border-2 border-border"
+        }`}
+        style={{
+          background: `linear-gradient(135deg, hsl(var(--card) / 0.9) 0%, hsl(var(--card) / 0.7) 100%)`,
+        }}
+      >
+              <div
+                className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                style={{
+                  backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--pattern)) 1px, transparent 0)`,
+                  backgroundSize: "20px 20px",
+                }}
+              />
+
+              {plan.popular && (
+                <div className="absolute top-4 right-4 z-20 hidden md:block">
+                  <Badge className="bg-primary text-black border-primary px-3 py-1 font-semibold shadow-lg">
+                    <Sparkles className="w-3 h-3 mr-1.5" />
+                    Populaire
+                  </Badge>
+                </div>
+              )}
+
+              <CardHeader className="relative z-10 pb-4">
+                <CardTitle className="text-2xl font-bold text-foreground mb-1">
+                  {plan.name}
+                </CardTitle>
+                <CardDescription className="text-sm text-muted-foreground">
+                  {plan.subtitle}
+                </CardDescription>
+                <p className="text-xs text-muted-foreground mt-2">{plan.target}</p>
+              </CardHeader>
+
+              <CardContent className="relative z-10 p-6 flex flex-col flex-1">
+                <div className="space-y-4 mb-6">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-black text-foreground">
+                      {plan.price}€
+                    </span>
+                    <span className="text-muted-foreground text-lg">/mois</span>
+                  </div>
+
+                  {plan.setupFee && (
+                    <div className="pt-2 border-t border-border/50">
+                      <p className="text-xs text-muted-foreground">
+                        Frais de mise en service :
+                      </p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {plan.setupFee}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="space-y-3 pt-4 border-t border-border/50">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Commission</span>
+                      <span className="font-semibold text-foreground">
+                        {plan.commission > 0 ? `${plan.commission}%` : "0%"} / commande
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground flex items-center gap-1.5">
+                        <Clock className="w-4 h-4" />
+                        {typeof plan.minutes === "number" ? "Minutes incluses" : "Minutes"}
+                      </span>
+                      <span className={`font-semibold ${
+                        typeof plan.minutes === "string" && plan.minutes === "Illimitées"
+                          ? "text-emerald-500 font-bold"
+                          : "text-foreground"
+                      }`}>
+                        {typeof plan.minutes === "number"
+                          ? `${plan.minutes} min`
+                          : plan.minutes}
+                      </span>
+                    </div>
+
+                    {plan.overflowPrice && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Coût min sup</span>
+                        <span className="font-semibold text-foreground">
+                          {plan.overflowPrice}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between text-sm pt-3 border-t border-border/50">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-muted-foreground flex items-center gap-1.5 cursor-help">
+                            <Link2 className="w-4 h-4" />
+                            Connexion Logiciel de Caisse
+                            <Info className="w-3 h-3" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>via HubRise</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      {plan.hubrise ? (
+                        <Check className="w-5 h-5 text-emerald-500" />
+                      ) : (
+                        <X className="w-5 h-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 mb-6 flex-1">
+                  <div className="flex items-start gap-2 text-xs">
+                    <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">IA Vocale 24/7</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs">
+                    <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">Dashboard Tablette</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs">
+                    <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">Menu illimité</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs">
+                    <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">{plan.support}</span>
+                  </div>
+                </div>
+
+                <Link href={`/contact?subject=${plan.contactSubject}`} className="mt-auto">
+                  <Button
+                    className={`w-full h-12 font-semibold transition-all ${
+                      plan.popular
+                        ? "bg-primary text-black hover:bg-primary/90 shadow-lg shadow-primary/30"
+                        : "bg-muted text-foreground hover:bg-muted/80 border border-border"
+                    }`}
+                    size="lg"
+                  >
+                    Choisir ce plan
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+    </>
+  );
 
   return (
     <section
@@ -84,124 +283,99 @@ export function PricingSection({ pricingConfig }: Readonly<PricingSectionProps>)
         </h2>
       </motion.div>
 
-      <div className="relative z-10 flex justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="relative w-full max-w-5xl"
-        >
-          <div className="absolute -inset-1 bg-primary/20 rounded-3xl blur-2xl opacity-50" />
-
-          <Card
-            className="relative glass-strong border-border overflow-hidden noise"
-            style={{
-              background: `linear-gradient(135deg, hsl(var(--card) / 0.9) 0%, hsl(var(--card) / 0.7) 100%)`,
-            }}
+      {/* Desktop: Grid */}
+      <div className="hidden md:grid relative z-10 grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+        {plans.map((plan, index) => (
+          <motion.div
+            key={plan.name}
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: index * 0.1 }}
+            className={`relative ${
+              plan.popular 
+                ? "z-20 md:scale-105" 
+                : "z-10 md:mt-[2.5%]"
+            }`}
           >
-            <div
-              className="absolute inset-0 opacity-[0.03] pointer-events-none"
-              style={{
-                backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--pattern)) 1px, transparent 0)`,
-                backgroundSize: "20px 20px",
-              }}
-            />
-
-            <CardContent className="relative z-10 p-6 sm:p-8 md:p-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-                <div className="flex flex-col justify-between space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex justify-start">
-                      <Badge className="bg-primary/10 text-primary border-primary/20 px-4 py-1.5">
-                        <Sparkles className="w-3 h-3 mr-1.5" />
-                        Offre Unique
-                      </Badge>
-                    </div>
-
-                    <CardTitle className="text-3xl sm:text-4xl font-bold text-foreground">
-                      Yallo Infinity
-                    </CardTitle>
-
-                    <p className="text-sm font-medium text-primary">
-                      Rentable dès le 5ème appel récupéré.
-                    </p>
-
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-6xl sm:text-7xl font-black text-foreground">
-                        {monthlyPrice.toFixed(0)}€
-                      </span>
-                      <span className="text-muted-foreground text-xl">/mois</span>
-                    </div>
-                    <CardDescription className="text-base text-muted-foreground">
-                      sans engagement
-                    </CardDescription>
-
-                    <div className="pt-4 border-t border-border/50">
-                      <p className="text-xs text-muted-foreground mb-1">
-                        Frais de mise en service unique :
-                      </p>
-                      <p className="text-lg font-semibold text-foreground">
-                        <span className="text-primary">{setupFee.toFixed(0)}€</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <Link href="/contact?subject=installation" className="block">
-                    <Button
-                      className="w-full h-14 bg-primary text-black hover:bg-primary/90 btn-shine font-semibold shadow-lg shadow-primary/30 transition-all duration-300 text-base sm:text-lg"
-                      size="lg"
-                    >
-                      Commander mon IA
-                      <ArrowRight className="w-5 h-5 ml-2" />
-                    </Button>
-                  </Link>
-                </div>
-
-                <div className="flex flex-col justify-between space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-3">
-                    {features.map((feature, i) => (
-                      <motion.div
-                        key={`feature-${feature.text.slice(0, 20)}-${i}`}
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: i * 0.1 }}
-                        className="flex items-start gap-3"
-                      >
-                        <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-                          <feature.icon className="w-3.5 h-3.5 text-primary" />
-                        </div>
-                        <span className="text-xs sm:text-sm text-foreground leading-relaxed">
-                          {feature.text}
-                        </span>
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
-                    className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border/50"
-                  >
-                    <Shield className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                        <span className="font-medium text-foreground">Sécurité :</span>{" "}
-                        Au-delà de {includedMinutes} minutes : {overflowPricePerMinute.toFixed(2)}€ / min supplémentaire. Vous ne
-                        payez que ce que vous consommez vraiment en cas de gros rush.
-                      </p>
-                    </div>
-                  </motion.div>
-                </div>
-
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+            {plan.popular && (
+              <div className="absolute -inset-1 bg-primary/30 rounded-3xl blur-2xl opacity-60" />
+            )}
+            {renderPlanCard(plan)}
+          </motion.div>
+        ))}
       </div>
+
+      {/* Mobile: Carousel */}
+      <div className="md:hidden relative z-10 max-w-sm mx-auto">
+        <Carousel
+          setApi={setApi}
+          opts={{
+            align: "center",
+            loop: true,
+          }}
+          plugins={[plugin.current]}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-2">
+            {plans.map((plan) => (
+              <CarouselItem key={plan.name} className="pl-2 basis-full">
+                <div className="relative">
+                  {renderPlanCard(plan)}
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
+        
+        {/* Indicateurs de pagination */}
+        <div className="flex justify-center gap-2 mt-6">
+          {plans.map((_, index) => (
+            <button
+              key={index}
+              className={`transition-all rounded-full ${
+                selectedIndex === index
+                  ? "w-8 h-2 bg-primary"
+                  : "w-2 h-2 bg-muted-foreground/30"
+              }`}
+              onClick={() => api?.scrollTo(index)}
+              aria-label={`Aller à la slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Section Enterprise */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-50px" }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="relative z-10 mt-12 max-w-6xl mx-auto"
+      >
+        <div className="bg-muted/30 border border-border/50 rounded-xl p-6 md:p-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex-1">
+              <p className="text-base md:text-lg font-semibold text-foreground mb-2">
+                🚀 Besoin de plus de puissance ?
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Pour les franchises et les restaurants à très fort volume (&gt; 40 appels / jour), découvrez notre offre{" "}
+                <span className="font-semibold text-foreground">Enterprise</span> avec minutes illimitées et support dédié.
+              </p>
+            </div>
+            <Link href="/contact?subject=enterprise">
+              <Button
+                variant="outline"
+                className="w-full md:w-auto border-primary/50 text-foreground hover:bg-primary/10 hover:border-primary transition-all"
+              >
+                Contacter l&apos;équipe commerciale
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </motion.div>
     </section>
   );
 }

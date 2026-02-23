@@ -306,28 +306,28 @@ export function HoursEditor({ initialHours }: Readonly<HoursEditorProps>) {
               </div>
             );
           })}
-
-          <div className="flex justify-end pt-6 border-t border-border mt-6">
-            <Button
-              type="submit"
-              disabled={isSaving}
-              className="bg-primary text-black hover:bg-primary/90 min-h-[44px] px-8"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Enregistrement...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Enregistrer les horaires
-                </>
-              )}
-            </Button>
-          </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-end gap-4">
+        <Button
+          type="submit"
+          disabled={isSaving}
+          className="bg-primary text-black hover:bg-primary/90 min-h-[44px] px-8"
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Enregistrement...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4 mr-2" />
+              Enregistrer
+            </>
+          )}
+        </Button>
+      </div>
     </form>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Save, Link2, Key, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { updateHubriseConfig } from "@/app/(admin)/admin/restaurants/actions";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   hubriseLocationId: z.string().max(100, "Location ID trop long").optional(),
@@ -31,7 +33,7 @@ interface HubriseTabProps {
 
 export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
   const [isLoading, setIsLoading] = useState(false);
-  const [showToken, setShowToken] = useState(false);
+  const router = useRouter();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -40,6 +42,8 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
       hubriseAccessToken: restaurant.hubriseAccessToken || "",
     },
   });
+
+  const isDirty = form.formState.isDirty;
 
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
@@ -51,6 +55,8 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
 
     if (result.success) {
       toast.success("Configuration HubRise mise à jour");
+      form.reset(data); // Reset form state après succès
+      router.refresh();
     } else {
       toast.error(result.error || "Erreur lors de la mise à jour");
     }
@@ -58,10 +64,10 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
     setIsLoading(false);
   }
 
-  const hasConfig = !!(form.watch("hubriseLocationId") && form.watch("hubriseAccessToken"));
+  const hasConfig = !!(restaurant.hubriseLocationId && restaurant.hubriseAccessToken);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 md:pb-6">
       <Card className={`border ${hasConfig ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-amber-400/20 bg-amber-400/5'}`}>
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
@@ -120,25 +126,13 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
               <div className="relative">
                 <Input
                   id="hubriseAccessToken"
-                  type={showToken ? "text" : "password"}
+                  type="text"
                   {...form.register("hubriseAccessToken")}
                   disabled={isLoading}
                   placeholder="Votre token d'accès API HubRise"
-                  className="bg-background/50 border-border focus:border-primary/50 pl-10 pr-10"
+                  className="bg-background/50 border-border focus:border-primary/50 pl-10 font-mono"
                 />
                 <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <button
-                  type="button"
-                  onClick={() => setShowToken(!showToken)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
-                >
-                  {showToken ? (
-                    <span className="text-xs">Masquer</span>
-                  ) : (
-                    <span className="text-xs">Afficher</span>
-                  )}
-                </button>
               </div>
               {form.formState.errors.hubriseAccessToken && (
                 <p className="text-sm text-red-400">{form.formState.errors.hubriseAccessToken.message}</p>
@@ -154,33 +148,36 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
                 <p className="font-medium text-blue-400">Mode Hybride</p>
                 <p className="text-muted-foreground">
                   Une fois connecté à HubRise, le menu et les commandes seront synchronisés automatiquement. 
-                  Vous pouvez toujours gérer votre menu manuellement si nécessaire.
                 </p>
               </div>
-            </div>
-
-            <div className="pt-4 border-t border-border">
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="bg-primary text-black hover:bg-primary/90"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Enregistrement...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Enregistrer la configuration
-                  </>
-                )}
-              </Button>
             </div>
           </form>
         </CardContent>
       </Card>
+
+      <div className="flex justify-end pb-6">
+        <Button
+          type="button"
+          disabled={isLoading || !isDirty}
+          onClick={form.handleSubmit(onSubmit)}
+          className={cn(
+            "bg-primary text-black hover:bg-primary/90",
+            !isDirty && "opacity-50 cursor-not-allowed"
+          )}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Enregistrement...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4 mr-2" />
+              Enregistrer
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

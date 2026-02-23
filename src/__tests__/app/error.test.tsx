@@ -2,6 +2,18 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
 import ErrorPage from "@/app/error";
 
+// Mock motion/react pour éviter les problèmes avec addEventListener dans les tests
+vi.mock("motion/react", () => ({
+  motion: {
+    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  },
+}));
+
+// Mock ModeToggle
+vi.mock("@/components/navigation", () => ({
+  ModeToggle: () => <div>Changer de thème</div>,
+}));
+
 describe("ErrorPage", () => {
   const mockError = new Error("Test error");
   const mockReset = vi.fn();
@@ -12,8 +24,11 @@ describe("ErrorPage", () => {
     Object.defineProperty(globalThis, "window", {
       value: {
         location: { href: "" },
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
       },
       writable: true,
+      configurable: true,
     });
   });
 

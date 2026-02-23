@@ -1,124 +1,220 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { getKitchenStatus, updateKitchenStatus, updateStatusSettings } from "@/features/kitchen-status/actions";
+import { db } from "@/db";
+import { restaurants } from "@/db/schema";
+import { auth } from "@/lib/auth/auth";
+import { DEFAULT_STATUS_SETTINGS } from "@/features/kitchen-status/constants";
+
+vi.mock("@/db", () => ({
+  db: {
+    query: {
+      restaurants: {
+        findFirst: vi.fn(),
+      },
+    },
+    update: vi.fn(),
+  },
+}));
+
+vi.mock("@/lib/auth/auth", () => ({
+  auth: vi.fn(),
+}));
+
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
 
 describe("Kitchen Status Actions", () => {
-  describe("Status Values", () => {
-    it("should have valid kitchen status values", () => {
-      const validStatuses = ["CALM", "NORMAL", "RUSH"];
-      expect(validStatuses).toHaveLength(3);
-      expect(validStatuses).toContain("CALM");
-      expect(validStatuses).toContain("NORMAL");
-      expect(validStatuses).toContain("RUSH");
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("getKitchenStatus", () => {
+    it("should return kitchen status for authenticated user", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", email: "test@test.com" },
+      } as any);
+
+      const mockRestaurant = {
+        id: "rest-123",
+        currentStatus: "NORMAL",
+        statusSettings: { CALM: { fixed: 5 }, NORMAL: { min: 10, max: 15 } },
+      };
+
+      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as any);
+
+      const result = await getKitchenStatus();
+
+      expect(result).toEqual(mockRestaurant);
     });
 
-    it("should reject invalid status values", () => {
-      const validStatuses = ["CALM", "NORMAL", "RUSH"];
-      const invalidStatuses = ["BUSY", "CLOSED", "OPEN", ""];
+    it("should initialize default settings if none exist", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", email: "test@test.com" },
+      } as any);
 
-      invalidStatuses.forEach((status) => {
-        expect(validStatuses).not.toContain(status);
+      const mockRestaurant = {
+        id: "rest-123",
+        currentStatus: "NORMAL",
+        statusSettings: null,
+      };
+
+      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as any);
+
+      const updateMock = vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined),
+        }),
       });
+      vi.mocked(db.update).mockReturnValue(updateMock() as any);
+
+      const result = await getKitchenStatus();
+
+      expect(db.update).toHaveBeenCalled();
+      expect(result?.statusSettings).toEqual(DEFAULT_STATUS_SETTINGS);
+    });
+
+    it("should return null for unauthenticated user", async () => {
+      vi.mocked(auth).mockResolvedValue(null as any);
+
+      const result = await getKitchenStatus();
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null if restaurant not found", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", email: "test@test.com" },
+      } as any);
+
+      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(undefined);
+
+      const result = await getKitchenStatus();
+
+      expect(result).toBeNull();
     });
   });
 
-  describe("Status Settings Structure", () => {
-    it("should validate status settings has required fields", () => {
-      const validSettings = {
-        CALM: { useFixed: true, fixedDelay: 15, minDelay: 10, maxDelay: 20 },
-        NORMAL: { useFixed: true, fixedDelay: 20, minDelay: 15, maxDelay: 25 },
-        RUSH: { useFixed: false, fixedDelay: 30, minDelay: 25, maxDelay: 45 },
-      };
+  describe("updateKitchenStatus", () => {
+    it("should update status successfully", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", email: "test@test.com" },
+      } as any);
 
-      expect(validSettings.CALM).toHaveProperty("useFixed");
-      expect(validSettings.CALM).toHaveProperty("fixedDelay");
-      expect(validSettings.CALM).toHaveProperty("minDelay");
-      expect(validSettings.CALM).toHaveProperty("maxDelay");
-    });
+      const mockRestaurant = { id: "rest-123", ownerId: "user-123" };
 
-    it("should validate delay values are positive numbers", () => {
-      const delays = [15, 20, 30, 45];
-      delays.forEach((delay) => {
-        expect(delay).toBeGreaterThan(0);
-        expect(typeof delay).toBe("number");
+      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as any);
+
+      const updateMock = vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined),
+        }),
       });
+      vi.mocked(db.update).mockReturnValue(updateMock() as any);
+
+      const result = await updateKitchenStatus("RUSH");
+
+      expect(result.success).toBe(true);
+      expect(db.update).toHaveBeenCalled();
     });
 
-    it("should have default settings for each status", () => {
-      const defaultSettings = {
-        CALM: { useFixed: true, fixedDelay: 15, minDelay: 10, maxDelay: 20 },
-        NORMAL: { useFixed: true, fixedDelay: 20, minDelay: 15, maxDelay: 30 },
-        RUSH: { useFixed: true, fixedDelay: 35, minDelay: 25, maxDelay: 45 },
-      };
+    it("should throw error for invalid status", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", email: "test@test.com" },
+      } as any);
 
-      expect(defaultSettings).toHaveProperty("CALM");
-      expect(defaultSettings).toHaveProperty("NORMAL");
-      expect(defaultSettings).toHaveProperty("RUSH");
-    });
-  });
-
-  describe("Delay Calculation", () => {
-    it("should use fixed delay when useFixed is true", () => {
-      const settings = {
-        useFixed: true,
-        fixedDelay: 20,
-        minDelay: 15,
-        maxDelay: 25,
-      };
-      const expectedDelay = settings.useFixed ? settings.fixedDelay : null;
-      expect(expectedDelay).toBe(20);
+      await expect(updateKitchenStatus("INVALID" as any)).rejects.toThrow("Statut invalide");
     });
 
-    it("should calculate random delay within range when useFixed is false", () => {
-      const settings = {
-        useFixed: false,
-        fixedDelay: 20,
-        minDelay: 15,
-        maxDelay: 25,
-      };
+    it("should throw error for unauthenticated user", async () => {
+      vi.mocked(auth).mockResolvedValue(null as any);
 
-      // Simulate range calculation
-      const min = settings.minDelay;
-      const max = settings.maxDelay;
-      const randomDelay = Math.floor(Math.random() * (max - min + 1)) + min;
-
-      expect(randomDelay).toBeGreaterThanOrEqual(min);
-      expect(randomDelay).toBeLessThanOrEqual(max);
+      await expect(updateKitchenStatus("NORMAL")).rejects.toThrow("Non autorisé");
     });
 
-    it("should validate minDelay is less than maxDelay", () => {
-      const settings = { minDelay: 15, maxDelay: 25 };
-      expect(settings.minDelay).toBeLessThan(settings.maxDelay);
-    });
+    it("should throw error if restaurant not found", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", email: "test@test.com" },
+      } as any);
 
-    it("should validate fixedDelay is within min/max range", () => {
-      const settings = { fixedDelay: 20, minDelay: 15, maxDelay: 25 };
-      expect(settings.fixedDelay).toBeGreaterThanOrEqual(settings.minDelay);
-      expect(settings.fixedDelay).toBeLessThanOrEqual(settings.maxDelay);
+      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(undefined);
+
+      await expect(updateKitchenStatus("NORMAL")).rejects.toThrow("Restaurant non trouvé");
     });
   });
 
-  describe("Status Display", () => {
-    it("should map status to French labels", () => {
-      const statusLabels: Record<string, string> = {
-        CALM: "Calme",
-        NORMAL: "Normal",
-        RUSH: "Rush",
+  describe("updateStatusSettings", () => {
+    it("should update settings successfully", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", email: "test@test.com" },
+      } as any);
+
+      const mockRestaurant = {
+        id: "rest-123",
+        ownerId: "user-123",
+        statusSettings: { CALM: { fixed: 5 } },
       };
 
-      expect(statusLabels.CALM).toBe("Calme");
-      expect(statusLabels.NORMAL).toBe("Normal");
-      expect(statusLabels.RUSH).toBe("Rush");
+      const newSettings = { NORMAL: { min: 10, max: 15 } };
+
+      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as any);
+
+      const updateMock = vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined),
+        }),
+      });
+      vi.mocked(db.update).mockReturnValue(updateMock() as any);
+
+      const result = await updateStatusSettings(newSettings);
+
+      expect(result.success).toBe(true);
+      expect(db.update).toHaveBeenCalled();
     });
 
-    it("should map status to colors", () => {
-      const statusColors: Record<string, string> = {
-        CALM: "green",
-        NORMAL: "yellow",
-        RUSH: "red",
+    it("should merge with existing settings", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", email: "test@test.com" },
+      } as any);
+
+      const mockRestaurant = {
+        id: "rest-123",
+        ownerId: "user-123",
+        statusSettings: { CALM: { fixed: 5 } },
       };
 
-      expect(statusColors).toHaveProperty("CALM");
-      expect(statusColors).toHaveProperty("NORMAL");
-      expect(statusColors).toHaveProperty("RUSH");
+      const newSettings = { NORMAL: { min: 10, max: 15 } };
+
+      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as any);
+
+      const setFn = vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+      const updateMock = vi.fn().mockReturnValue({
+        set: setFn,
+      });
+      vi.mocked(db.update).mockReturnValue(updateMock() as any);
+
+      await updateStatusSettings(newSettings);
+
+      expect(setFn).toHaveBeenCalled();
+      const setCall = setFn.mock.calls[0][0];
+      expect(setCall.statusSettings).toHaveProperty("CALM");
+      expect(setCall.statusSettings).toHaveProperty("NORMAL");
+    });
+
+    it("should throw error for invalid settings", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-123", email: "test@test.com" },
+      } as any);
+
+      await expect(updateStatusSettings({ CALM: { fixed: -1 } } as any)).rejects.toThrow();
+    });
+
+    it("should throw error for unauthenticated user", async () => {
+      vi.mocked(auth).mockResolvedValue(null as any);
+
+      await expect(updateStatusSettings({})).rejects.toThrow("Non autorisé");
     });
   });
 });

@@ -9,14 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Save, Phone, Clock, Code } from "lucide-react";
+import { Loader2, Save, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { updateRestaurantTelephony } from "@/app/(admin)/admin/restaurants/actions";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   phoneNumber: z.string().min(10, "Numéro invalide"),
   twilioPhoneNumber: z.string().max(20).optional(),
-  businessHours: z.string().max(5000).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -25,38 +25,25 @@ type Restaurant = {
   id: string;
   phoneNumber: string;
   twilioPhoneNumber: string | null;
-  businessHours: string | null;
 };
 
 interface TelephonyTabProps {
   restaurant: Restaurant;
 }
 
-const defaultBusinessHours = `{
-  "timezone": "Europe/Paris",
-  "schedule": {
-    "monday": { "open": "11:00", "close": "22:00" },
-    "tuesday": { "open": "11:00", "close": "22:00" },
-    "wednesday": { "open": "11:00", "close": "22:00" },
-    "thursday": { "open": "11:00", "close": "22:00" },
-    "friday": { "open": "11:00", "close": "23:00" },
-    "saturday": { "open": "11:00", "close": "23:00" },
-    "sunday": { "open": "11:00", "close": "22:00" }
-  }
-}`;
 
 export function TelephonyTab({ restaurant }: TelephonyTabProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [isGeneratingHoursJson, setIsGeneratingHoursJson] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       phoneNumber: restaurant.phoneNumber,
       twilioPhoneNumber: restaurant.twilioPhoneNumber || "",
-      businessHours: restaurant.businessHours || "",
     },
   });
+
+  const isDirty = form.formState.isDirty;
 
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
@@ -64,11 +51,11 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
     const result = await updateRestaurantTelephony(restaurant.id, {
       phoneNumber: data.phoneNumber,
       twilioPhoneNumber: data.twilioPhoneNumber || null,
-      businessHours: data.businessHours || null,
     });
 
     if (result.success) {
       toast.success("Configuration téléphonie mise à jour");
+      form.reset(data); // Reset form state après succès
     } else {
       toast.error(result.error || "Erreur lors de la mise à jour");
     }
@@ -146,88 +133,14 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-border bg-card/30">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-cyan-400" />
-                  Horaires d&apos;ouverture
-                </CardTitle>
-                <CardDescription>
-                  Configuration des horaires au format JSON (utilisés par l&apos;IA pour informer les clients)
-                </CardDescription>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isGeneratingHoursJson}
-                onClick={async () => {
-                  setIsGeneratingHoursJson(true);
-                  try {
-                    const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-business-hours-json`);
-                    if (!response.ok) {
-                      const currentHours = form.watch("businessHours") || defaultBusinessHours;
-                      let parsedHours;
-                      try {
-                        parsedHours = JSON.parse(currentHours);
-                      } catch {
-                        parsedHours = JSON.parse(defaultBusinessHours);
-                      }
-                      form.setValue("businessHours", JSON.stringify(parsedHours, null, 2));
-                    } else {
-                      const data = await response.json();
-                      form.setValue("businessHours", data.businessHoursJson);
-                    }
-                    toast.success("JSON horaires généré");
-                  } catch {
-                    toast.error("Erreur lors de la génération du JSON");
-                  } finally {
-                    setIsGeneratingHoursJson(false);
-                  }
-                }}
-              >
-                {isGeneratingHoursJson ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Génération...
-                  </>
-                ) : (
-                  <>
-                    <Code className="w-4 h-4 mr-2" />
-                    Générer JSON Horaires
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="businessHours">Horaires (JSON)</Label>
-              <Textarea
-                id="businessHours"
-                {...form.register("businessHours")}
-                disabled={isLoading}
-                rows={12}
-                placeholder={defaultBusinessHours}
-                className="bg-background/50 border-border focus:border-primary/50 font-mono text-sm resize-y min-h-[250px]"
-              />
-              {form.formState.errors.businessHours && (
-                <p className="text-sm text-red-400">{form.formState.errors.businessHours.message}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Format JSON avec les jours de la semaine et les horaires d&apos;ouverture/fermeture
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-end">
+        <div className="flex justify-end pb-6">
           <Button
             type="submit"
-            disabled={isLoading}
-            className="bg-primary text-black hover:bg-primary/90"
+            disabled={isLoading || !isDirty}
+            className={cn(
+              "bg-primary text-black hover:bg-primary/90",
+              !isDirty && "opacity-50 cursor-not-allowed"
+            )}
           >
             {isLoading ? (
               <>
@@ -237,7 +150,7 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
             ) : (
               <>
                 <Save className="w-4 h-4 mr-2" />
-                Enregistrer la téléphonie
+                Enregistrer
               </>
             )}
           </Button>

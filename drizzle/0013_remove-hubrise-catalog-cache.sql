@@ -1,0 +1,1 @@
+ALTER TABLE "restaurants" DROP COLUMN "hubrise_catalog_cache";
