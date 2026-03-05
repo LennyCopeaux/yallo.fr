@@ -13,9 +13,6 @@ type MockUpdateBuilder = {
     where: () => Promise<undefined>;
   };
 };
-type MockInsertBuilder = {
-  values: () => Promise<unknown>;
-};
 
 vi.mock("@/db", () => ({
   db: {
