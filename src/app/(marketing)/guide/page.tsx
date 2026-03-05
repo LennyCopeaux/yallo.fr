@@ -79,9 +79,9 @@ export default function GuidePage() {
                       <h2 className="text-2xl font-semibold text-foreground mb-3">
                         {step.title}
                       </h2>
-                      <p className="text-muted-foreground leading-relaxed">
+                      <div className="text-muted-foreground leading-relaxed">
                         {step.description}
-                      </p>
+                      </div>
                     </div>
                   </div>
                 </div>
