@@ -14,6 +14,56 @@ export type UpdatePasswordResult = {
   error?: string;
 };
 
+type ResolvedUser = { email: string; role: string; id: string };
+
+async function resolveUser(resetToken: string | null): Promise<{ success: true; user: ResolvedUser } | { success: false; error: string }> {
+  if (resetToken) {
+    const tokenVerification = await verifyResetToken(resetToken);
+    if (!tokenVerification.valid || !tokenVerification.email) {
+      return { success: false, error: tokenVerification.error || "Token invalide" };
+    }
+
+    const [user] = await db
+      .select({ id: users.id, email: users.email, role: users.role })
+      .from(users)
+      .where(eq(users.resetToken, resetToken))
+      .limit(1);
+
+    if (!user) {
+      return { success: false, error: "Utilisateur non trouvé" };
+    }
+
+    return { success: true, user: { email: user.email, role: user.role, id: user.id } };
+  }
+
+  const session = await auth();
+  if (!session?.user) {
+    return { success: false, error: "Non autorisé" };
+  }
+
+  return {
+    success: true,
+    user: {
+      email: session.user.email ?? "",
+      role: session.user.role,
+      id: session.user.id,
+    },
+  };
+}
+
+function validatePasswords(newPassword: string, confirmPassword: string): { valid: true } | { valid: false; error: string } {
+  if (!newPassword || !confirmPassword) {
+    return { valid: false, error: "Tous les champs sont requis" };
+  }
+  if (newPassword.length < 6) {
+    return { valid: false, error: "Le mot de passe doit contenir au moins 6 caractères" };
+  }
+  if (newPassword !== confirmPassword) {
+    return { valid: false, error: "Les mots de passe ne correspondent pas" };
+  }
+  return { valid: true };
+}
+
 export async function verifyResetToken(token: string): Promise<{ valid: boolean; email?: string; error?: string }> {
   if (!token) {
     return { valid: false, error: "Token manquant" };
@@ -30,7 +80,7 @@ export async function verifyResetToken(token: string): Promise<{ valid: boolean;
       .where(eq(users.resetToken, token))
       .limit(1);
 
-    if (!user || !user.resetToken) {
+    if (!user?.resetToken) {
       return { valid: false, error: "Token invalide" };
     }
 
@@ -49,57 +99,18 @@ export async function updatePassword(
   formData: FormData
 ): Promise<UpdatePasswordResult> {
   const resetToken = formData.get("token") as string | null;
-  
-  let userEmail: string;
-  let userRole: string;
-  let userId: string;
-
-  if (resetToken) {
-    const tokenVerification = await verifyResetToken(resetToken);
-    if (!tokenVerification.valid || !tokenVerification.email) {
-      return { success: false, error: tokenVerification.error || "Token invalide" };
-    }
-
-    const [user] = await db
-      .select({ id: users.id, email: users.email, role: users.role })
-      .from(users)
-      .where(eq(users.resetToken, resetToken))
-      .limit(1);
-
-    if (!user) {
-      return { success: false, error: "Utilisateur non trouvé" };
-    }
-
-    userEmail = user.email;
-    userRole = user.role;
-    userId = user.id;
-  } else {
-    const session = await auth();
-    
-    if (!session?.user) {
-      return { success: false, error: "Non autorisé" };
-    }
-
-    userEmail = session.user.email;
-    userRole = session.user.role;
-    userId = session.user.id;
+  const userResult = await resolveUser(resetToken);
+  if (!userResult.success) {
+    return { success: false, error: userResult.error };
   }
 
-  // 2. Récupère et valide les mots de passe
+  const { user } = userResult;
   const newPassword = formData.get("newPassword") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
 
-  if (!newPassword || !confirmPassword) {
-    return { success: false, error: "Tous les champs sont requis" };
-  }
-
-  if (newPassword.length < 6) {
-    return { success: false, error: "Le mot de passe doit contenir au moins 6 caractères" };
-  }
-
-  // 3. Vérifie que les deux mots de passe correspondent
-  if (newPassword !== confirmPassword) {
-    return { success: false, error: "Les mots de passe ne correspondent pas" };
+  const validation = validatePasswords(newPassword, confirmPassword);
+  if (!validation.valid) {
+    return { success: false, error: validation.error };
   }
 
   try {
@@ -120,14 +131,14 @@ export async function updatePassword(
     await db
       .update(users)
       .set(updateData)
-      .where(eq(users.id, userId));
+      .where(eq(users.id, user.id));
 
     // 6. CRUCIAL - RE-LOGIN SILENCIEUX pour régénérer le JWT
     // Cela force Next-Auth à générer un nouveau Token JWT propre
     // où must_change_password sera false
     try {
       await signIn("credentials", {
-        email: userEmail,
+        email: user.email,
         password: newPassword,
         redirect: false,
       });
@@ -144,7 +155,7 @@ export async function updatePassword(
 
     // 7. Redirection finale vers le dashboard approprié
     // Utilise redirect() qui lance une exception NEXT_REDIRECT
-    const redirectPath = userRole === "ADMIN" ? "/admin" : "/dashboard";
+    const redirectPath = user.role === "ADMIN" ? "/admin" : "/dashboard";
     redirect(redirectPath);
     
   } catch (error) {

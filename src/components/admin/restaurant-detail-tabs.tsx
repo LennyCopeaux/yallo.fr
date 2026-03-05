@@ -21,6 +21,7 @@ type Restaurant = {
   stripeCustomerId: string | null;
   billingStartDate: string | null;
   vapiAssistantId: string | null;
+  vapiPhoneNumberId: string | null;
   systemPrompt: string | null;
   menuContext: string | null;
   twilioPhoneNumber: string | null;
@@ -42,10 +43,10 @@ interface RestaurantDetailTabsProps {
   owners: Owner[];
 }
 
-export function RestaurantDetailTabs({ restaurant, owners }: RestaurantDetailTabsProps) {
+export function RestaurantDetailTabs({ restaurant, owners }: Readonly<RestaurantDetailTabsProps>) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const urlTab = searchParams.get("tab") || "general";
   const [activeTab, setActiveTab] = useState(urlTab);
 

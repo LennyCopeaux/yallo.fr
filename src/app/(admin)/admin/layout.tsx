@@ -1,7 +1,4 @@
-"use client";
-
-import { ModeToggle } from "@/components/navigation";
-import { AdminMenu } from "@/components/admin/admin-menu";
+import { AdminSidebar } from "@/components/admin/admin-sidebar";
 
 export default function AdminDashboardLayout({
   children,
@@ -9,19 +6,11 @@ export default function AdminDashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="fixed top-4 right-4 z-50">
-        <ModeToggle />
-      </div>
-
-      <AdminMenu />
-
-      <main>
-        <div className="min-h-screen">
-          {children}
-        </div>
+    <div className="flex h-screen overflow-hidden bg-background">
+      <AdminSidebar />
+      <main className="flex-1 overflow-y-auto">
+        {children}
       </main>
     </div>
   );
 }
-

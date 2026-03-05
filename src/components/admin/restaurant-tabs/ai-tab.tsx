@@ -24,6 +24,8 @@ import {
 type Restaurant = {
   id: string;
   vapiAssistantId: string | null;
+  vapiPhoneNumberId: string | null;
+  twilioPhoneNumber: string | null;
   systemPrompt: string | null;
   menuContext: string | null;
   businessHours: string | null;
@@ -33,7 +35,38 @@ interface AITabProps {
   restaurant: Restaurant;
 }
 
-export function AITab({ restaurant }: AITabProps) {
+function getAIStatusText(
+  isFullyOperational: boolean,
+  hasVapiId: boolean,
+  hasPhoneLinked: boolean,
+  hasTwilioNumber: boolean,
+  twilioPhoneNumber: string | null
+): { title: string; description: string } {
+  if (isFullyOperational) {
+    return {
+      title: "IA Opérationnelle",
+      description: `Agent IA actif sur le ${twilioPhoneNumber}`,
+    };
+  }
+  if (hasVapiId && !hasPhoneLinked) {
+    return {
+      title: "IA partiellement configurée",
+      description: "L'assistant existe mais aucun numéro de téléphone n'est lié",
+    };
+  }
+  if (!hasTwilioNumber) {
+    return {
+      title: "IA Non configurée",
+      description: "Renseignez d'abord le numéro Twilio dans l'onglet Téléphonie",
+    };
+  }
+  return {
+    title: "IA Non configurée",
+    description: "Créez l'agent IA pour activer la prise de commande vocale",
+  };
+}
+
+export function AITab({ restaurant }: Readonly<AITabProps>) {
   const router = useRouter();
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [isGeneratingMenuJson, setIsGeneratingMenuJson] = useState(false);
@@ -57,26 +90,43 @@ export function AITab({ restaurant }: AITabProps) {
   }, [restaurant.businessHours]);
 
   const hasVapiId = !!restaurant.vapiAssistantId;
+  const hasPhoneLinked = !!restaurant.vapiPhoneNumberId;
+  const hasTwilioNumber = !!restaurant.twilioPhoneNumber;
+  const isFullyOperational = hasVapiId && hasPhoneLinked;
+
+  const statusText = getAIStatusText(isFullyOperational, hasVapiId, hasPhoneLinked, hasTwilioNumber, restaurant.twilioPhoneNumber);
+  const statusCardClassName = isFullyOperational ? "border-emerald-400/20 bg-emerald-400/5" : "border-amber-400/20 bg-amber-400/5";
 
   return (
     <div className="space-y-6">
-      <Card className={`border ${hasVapiId ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-amber-400/20 bg-amber-400/5'}`}>
+      <Card className={`border ${statusCardClassName}`}>
         <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg ${hasVapiId ? 'bg-emerald-400/10' : 'bg-amber-400/10'} flex items-center justify-center`}>
-              <Bot className={`w-5 h-5 ${hasVapiId ? 'text-emerald-400' : 'text-amber-400'}`} />
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-lg ${isFullyOperational ? "bg-emerald-400/10" : "bg-amber-400/10"} flex items-center justify-center`}>
+                <Bot className={`w-5 h-5 ${isFullyOperational ? "text-emerald-400" : "text-amber-400"}`} />
+              </div>
+              <div>
+                <p className={`font-medium ${isFullyOperational ? "text-emerald-400" : "text-amber-400"}`}>
+                  {statusText.title}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {statusText.description}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className={`font-medium ${hasVapiId ? 'text-emerald-400' : 'text-amber-400'}`}>
-                {hasVapiId ? 'IA Active' : 'IA Non configurée'}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {hasVapiId 
-                  ? 'L\'assistant vocal est prêt à recevoir des appels'
-                  : 'Configurez un ID d\'assistant Vapi pour activer l\'IA'
-                }
-              </p>
-            </div>
+            {hasVapiId && (
+              <div className="flex items-center gap-4 ml-[52px] text-xs">
+                <span className={`flex items-center gap-1.5 ${hasVapiId ? 'text-emerald-400' : 'text-muted-foreground'}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${hasVapiId ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
+                  Assistant
+                </span>
+                <span className={`flex items-center gap-1.5 ${hasPhoneLinked ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${hasPhoneLinked ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                  {hasPhoneLinked ? `Numéro lié (${restaurant.twilioPhoneNumber})` : 'Numéro non lié'}
+                </span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -104,27 +154,36 @@ export function AITab({ restaurant }: AITabProps) {
                     value={restaurant.vapiAssistantId || ""}
                     className="bg-muted/50 cursor-not-allowed font-mono"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    L&apos;assistant Vapi est configuré et prêt à recevoir des appels
-                  </p>
+                  {hasPhoneLinked && (
+                    <p className="text-xs text-emerald-400">
+                      Numéro {restaurant.twilioPhoneNumber} lié à l&apos;assistant — les appels sont routés vers l&apos;IA
+                    </p>
+                  )}
+                  {!hasPhoneLinked && (
+                    <p className="text-xs text-red-400">
+                      Aucun numéro lié — supprimez l&apos;agent et recréez-le après avoir configuré le numéro Twilio
+                    </p>
+                  )}
                 </div>
               )}
               {!hasVapiId && (
                 <p className="text-sm text-muted-foreground">
-                  Cliquez sur le bouton ci-dessous pour créer un assistant Vapi. L&apos;ID sera généré automatiquement.
+                  {hasTwilioNumber
+                    ? `Le numéro ${restaurant.twilioPhoneNumber} sera automatiquement importé dans Vapi et lié à l'agent.`
+                    : 'Renseignez d\'abord le numéro Twilio dans l\'onglet Téléphonie, puis revenez ici pour créer l\'agent.'}
                 </p>
               )}
               {!hasVapiId ? (
                 <Button
                   type="button"
                   variant="default"
-                  disabled={isCreatingAssistant}
+                  disabled={isCreatingAssistant || !hasTwilioNumber}
                   onClick={async () => {
                     setIsCreatingAssistant(true);
                     try {
                       const result = await createVapiAssistant(restaurant.id);
                       if (result.success && result.data) {
-                        toast.success("Assistant Vapi créé avec succès");
+                        toast.success("Agent IA créé et numéro de téléphone lié avec succès");
                         router.refresh();
                       } else {
                         toast.error(result.error || "Erreur lors de la création de l'assistant");
@@ -188,7 +247,7 @@ export function AITab({ restaurant }: AITabProps) {
                     type="button"
                     variant="destructive"
                     disabled={isDeletingAssistant}
-                    className="!bg-destructive !text-destructive-foreground hover:!bg-destructive/90 dark:!bg-destructive dark:hover:!bg-destructive/90"
+                    className="!bg-destructive !text-destructive-foreground hover:!bg-destructive/90"
                     onClick={() => setShowDeleteDialog(true)}
                   >
                     <Trash2 className="w-4 h-4" />

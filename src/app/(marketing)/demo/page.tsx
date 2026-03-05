@@ -13,17 +13,16 @@ export const metadata = {
 const phoneNumber = "0000000000";
 const formattedPhoneNumber = "+33 0 00 00 00 00";
 
-const menuSandwichs = [
-  { name: "Kebab (Veau/Dinde)", price: "7€" },
-  { name: "Tacos 1 viande", price: "8€" },
-  { name: "Tacos 2 viandes", price: "10€" },
-  { name: "Cheese Naan Kebab", price: "8.50€" },
+const menuItems = [
+  { name: "Menu Classique", price: "8€" },
+  { name: "Menu XL", price: "10€" },
+  { name: "Formule Duo", price: "15€" },
   { name: "Burger", price: "5€" },
+  { name: "Pizza Margherita", price: "9€" },
 ];
 
-const viandes = ["Kebab", "Cordon Bleu", "Tenders", "Kefta"];
-const sauces = ["Blanche", "Algérienne", "Mayo", "Ketchup", "Harissa", "Biggy", "Samouraï", "Barbecue"];
-const crudites = ["Salade", "Tomate", "Oignon"];
+const options = ["Supplément Fromage", "Double Viande", "Sans Oignon", "Bien Cuit"];
+const accompagnements = ["Salade", "Potatoes", "Onion Rings", "Coleslaw"];
 
 export default function DemoPage() {
   return (
@@ -33,7 +32,6 @@ export default function DemoPage() {
         <BackToHomeLink />
         
         <DemoHeader>
-          {/* Call CTA */}
           <Card className="mb-12 border-primary/30 bg-primary/5">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl mb-2">Prêt à tester ?</CardTitle>
@@ -49,7 +47,6 @@ export default function DemoPage() {
             </CardContent>
           </Card>
 
-          {/* Menu - Contenu statique SEO-friendly */}
           <Card className="border-border">
             <CardHeader>
               <CardTitle className="text-2xl text-foreground">Menu de démonstration</CardTitle>
@@ -58,13 +55,12 @@ export default function DemoPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
-              {/* Sandwiches */}
               <section>
                 <h2 className="text-xl font-bold text-foreground mb-4 pb-2 border-b border-border">
-                  SANDWICHS
+                  PLATS
                 </h2>
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {menuSandwichs.map((item) => (
+                  {menuItems.map((item) => (
                     <div
                       key={`menu-${item.name}`}
                       className="flex items-center justify-between p-3 rounded-lg bg-card/30 border border-border hover:border-primary/30 transition-colors"
@@ -76,49 +72,32 @@ export default function DemoPage() {
                 </div>
               </section>
 
-              {/* Viandes pour Tacos */}
               <section>
                 <h3 className="text-lg font-semibold text-foreground mb-3">
-                  Liste des viandes (pour Tacos)
+                  Options disponibles
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {viandes.map((viande) => (
-                    <Badge key={`viande-${viande}`} variant="outline" className="text-sm">
-                      {viande}
+                  {options.map((option) => (
+                    <Badge key={`option-${option}`} variant="outline" className="text-sm">
+                      {option}
                     </Badge>
                   ))}
                 </div>
               </section>
 
-              {/* Sauces */}
               <section>
                 <h3 className="text-lg font-semibold text-foreground mb-3">
-                  Liste des sauces
+                  Accompagnements
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {sauces.map((sauce) => (
-                    <Badge key={`sauce-${sauce}`} variant="outline" className="text-sm">
-                      {sauce}
+                  {accompagnements.map((acc) => (
+                    <Badge key={`acc-${acc}`} variant="outline" className="text-sm">
+                      {acc}
                     </Badge>
                   ))}
                 </div>
               </section>
 
-              {/* Crudités */}
-              <section>
-                <h3 className="text-lg font-semibold text-foreground mb-3">
-                  Liste des crudités
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {crudites.map((crudite) => (
-                    <Badge key={`crudite-${crudite}`} variant="outline" className="text-sm">
-                      {crudite}
-                    </Badge>
-                  ))}
-                </div>
-              </section>
-
-              {/* Boissons & Desserts */}
               <section>
                 <h2 className="text-xl font-bold text-foreground mb-4 pb-2 border-b border-border">
                   BOISSONS & DESSERTS
@@ -141,13 +120,12 @@ export default function DemoPage() {
             </CardContent>
           </Card>
 
-          {/* Info */}
           <Card className="mt-8 border-primary/20 bg-primary/5">
             <CardContent className="py-4 px-4">
               <div className="flex items-center justify-center">
                 <p className="text-sm text-muted-foreground text-center leading-relaxed">
-                  💡 <strong className="text-foreground">Astuce :</strong> Essayez de commander avec des accents, du slang (&quot;un grec&quot;, &quot;naan&quot;), 
-                  ou demandez des modifications. L&apos;IA comprend tout !
+                  <strong className="text-foreground">Astuce :</strong> Essayez de commander avec des accents, 
+                  des modifications ou des demandes spéciales. L&apos;IA comprend tout !
                 </p>
               </div>
             </CardContent>

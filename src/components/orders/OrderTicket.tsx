@@ -37,32 +37,32 @@ interface OrderTicketProps {
 const statusConfig: Record<OrderStatus, { label: string; color: string; bgColor: string; icon: React.ReactNode }> = {
   NEW: {
     label: "Nouveau",
-    color: "text-blue-600 dark:text-blue-400",
-    bgColor: "bg-blue-100 dark:bg-blue-500/20 border-blue-200 dark:border-blue-500/30",
+    color: "text-blue-600",
+    bgColor: "bg-blue-100 border-blue-200",
     icon: <Receipt className="w-3 h-3" />,
   },
   PREPARING: {
     label: "En préparation",
-    color: "text-orange-600 dark:text-orange-400",
-    bgColor: "bg-orange-100 dark:bg-orange-500/20 border-orange-200 dark:border-orange-500/30",
+    color: "text-orange-600",
+    bgColor: "bg-orange-100 border-orange-200",
     icon: <ChefHat className="w-3 h-3" />,
   },
   READY: {
     label: "Prêt",
-    color: "text-emerald-600 dark:text-emerald-400",
-    bgColor: "bg-emerald-100 dark:bg-emerald-500/20 border-emerald-200 dark:border-emerald-500/30",
+    color: "text-emerald-600",
+    bgColor: "bg-emerald-100 border-emerald-200",
     icon: <CheckCircle2 className="w-3 h-3" />,
   },
   DELIVERED: {
     label: "Livré",
-    color: "text-gray-600 dark:text-gray-400",
-    bgColor: "bg-gray-100 dark:bg-gray-500/20 border-gray-200 dark:border-gray-500/30",
+    color: "text-gray-600",
+    bgColor: "bg-gray-100 border-gray-200",
     icon: <CheckCircle2 className="w-3 h-3" />,
   },
   CANCELLED: {
     label: "Annulé",
-    color: "text-red-600 dark:text-red-400",
-    bgColor: "bg-red-100 dark:bg-red-500/20 border-red-200 dark:border-red-500/30",
+    color: "text-red-600",
+    bgColor: "bg-red-100 border-red-200",
     icon: <XCircle className="w-3 h-3" />,
   },
 };
@@ -79,7 +79,7 @@ function formatTime(date: Date | null): string {
   });
 }
 
-export function OrderTicket({ order, onStatusChange, className }: OrderTicketProps) {
+export function OrderTicket({ order, onStatusChange, className }: Readonly<OrderTicketProps>) {
   const status = statusConfig[order.status];
 
   return (
@@ -169,8 +169,8 @@ export function OrderTicket({ order, onStatusChange, className }: OrderTicketPro
       </div>
 
       {order.notes && (
-        <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
-          <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+        <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200">
+          <p className="text-xs text-amber-700 font-medium">
             📝 {order.notes}
           </p>
         </div>
@@ -221,7 +221,7 @@ export function OrderTicket({ order, onStatusChange, className }: OrderTicketPro
   );
 }
 
-export function OrderTicketCompact({ order, onClick }: { order: Order; onClick?: () => void }) {
+export function OrderTicketCompact({ order, onClick }: Readonly<{ order: Order; onClick?: () => void }>) {
   const status = statusConfig[order.status];
 
   return (

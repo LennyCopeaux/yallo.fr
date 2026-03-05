@@ -11,7 +11,7 @@ export default function MentionsLegalesPage() {
     <>
       <ScrollToTop />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12">
-        <div className="max-w-4xl mx-auto prose prose-lg dark:prose-invert">
+        <div className="max-w-4xl mx-auto prose prose-lg">
           <BackToHomeLink />
           <h1 className="text-4xl font-bold text-foreground mb-8">Mentions légales</h1>
           

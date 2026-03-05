@@ -12,6 +12,7 @@ import { cookies } from "next/headers";
 import { DEFAULT_STATUS_SETTINGS } from "@/features/kitchen-status/constants";
 import { randomBytes } from "node:crypto";
 import { logger } from "@/lib/logger";
+import { normalizeFrenchPhoneNumber } from "@/lib/utils";
 
 const createUserSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -49,7 +50,25 @@ const updateRestaurantAISchema = z.object({
 
 const updateRestaurantTelephonySchema = z.object({
   phoneNumber: z.string().min(10, "Numéro invalide").optional(),
-  twilioPhoneNumber: z.string().max(20).optional().nullable(),
+  twilioPhoneNumber: z
+    .string()
+    .max(20)
+    .optional()
+    .nullable()
+    .transform((val) => {
+      if (!val) return null;
+      const normalized = normalizeFrenchPhoneNumber(val);
+      if (!normalized) {
+        throw new z.ZodError([
+          {
+            code: "custom",
+            path: ["twilioPhoneNumber"],
+            message: "Format invalide. Utilisez le format +33XXXXXXXXX (ex: +33939035299) ou 0XXXXXXXXX (ex: 0939035299)",
+          },
+        ]);
+      }
+      return normalized;
+    }),
 });
 
 const updateRestaurantBillingSchema = z.object({
@@ -390,12 +409,55 @@ export async function createVapiAssistant(id: string): Promise<ActionResult<{ as
       return { success: false, error: "Un assistant Vapi existe déjà pour ce restaurant" };
     }
 
-    const { createVapiAssistant } = await import("@/lib/services/vapi");
-    const assistant = await createVapiAssistant(restaurant);
+    if (!restaurant.twilioPhoneNumber) {
+      return {
+        success: false,
+        error: "Veuillez d'abord renseigner le numéro Twilio dans l'onglet Téléphonie avant de créer l'agent IA",
+      };
+    }
+
+    const { createVapiAssistant: createAssistant, importTwilioPhoneNumber } = await import("@/lib/services/vapi");
+
+    // 1. Créer l'assistant Vapi
+    const assistant = await createAssistant(restaurant);
+
+    // 2. Importer le numéro Twilio dans Vapi et l'associer à l'assistant
+    let vapiPhoneNumberId: string | null = null;
+    try {
+      const phoneResult = await importTwilioPhoneNumber(
+        restaurant.twilioPhoneNumber,
+        assistant.id
+      );
+      vapiPhoneNumberId = phoneResult.id;
+      logger.info("Numéro Twilio importé et lié à l'assistant Vapi", {
+        restaurantId: id,
+        assistantId: assistant.id,
+        phoneNumberId: phoneResult.id,
+        phoneNumber: restaurant.twilioPhoneNumber,
+      });
+    } catch (phoneError) {
+      // L'assistant a été créé mais le numéro n'a pas pu être importé — on nettoie
+      const { deleteVapiAssistant: cleanupAssistant } = await import("@/lib/services/vapi");
+      try {
+        await cleanupAssistant(assistant.id);
+      } catch {
+        // Ignore — on ne peut rien faire de plus
+      }
+      const errorMessage = phoneError instanceof Error ? phoneError.message : String(phoneError);
+      logger.error("Échec import numéro Twilio dans Vapi, assistant supprimé", new Error(errorMessage));
+      return {
+        success: false,
+        error: `Impossible d'importer le numéro Twilio (${restaurant.twilioPhoneNumber}) dans Vapi : ${errorMessage}. Vérifiez que le numéro est bien actif sur Twilio et que les identifiants Twilio sont corrects.`,
+      };
+    }
 
     await db
       .update(restaurants)
-      .set({ vapiAssistantId: assistant.id })
+      .set({
+        vapiAssistantId: assistant.id,
+        vapiPhoneNumberId,
+        updatedAt: new Date(),
+      })
       .where(eq(restaurants.id, id));
 
     revalidatePath(`/admin/restaurants/${id}`);
@@ -453,32 +515,52 @@ export async function updateVapiAssistant(id: string): Promise<ActionResult> {
   }
 }
 
+async function deleteVapiPhoneNumberIfExists(restaurantId: string, phoneNumberId: string | null): Promise<void> {
+  if (!phoneNumberId) return;
+  try {
+    const { deleteVapiPhoneNumber } = await import("@/lib/services/vapi");
+    await deleteVapiPhoneNumber(phoneNumberId);
+  } catch (phoneError) {
+    logger.warn("Impossible de supprimer le numéro Vapi (on continue la suppression de l'assistant)", {
+      restaurantId,
+      error: phoneError instanceof Error ? phoneError.message : String(phoneError),
+    });
+  }
+}
+
+function canDeleteVapiAssistant(
+  session: { user: { id: string; role: string } } | null,
+  restaurant: { ownerId: string | null }
+): boolean {
+  if (!session?.user) return false;
+  if (session.user.role === "ADMIN") return true;
+  return session.user.role === "OWNER" && restaurant.ownerId === session.user.id;
+}
+
 export async function deleteVapiAssistant(id: string): Promise<ActionResult> {
   "use server";
 
   const session = await auth();
-  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "OWNER")) {
+  const [restaurant] = await db
+    .select()
+    .from(restaurants)
+    .where(eq(restaurants.id, id))
+    .limit(1);
+
+  if (!restaurant) {
+    return { success: false, error: "Restaurant non trouvé" };
+  }
+
+  if (!canDeleteVapiAssistant(session, restaurant)) {
     return { success: false, error: "Non autorisé" };
   }
 
+  if (!restaurant.vapiAssistantId) {
+    return { success: false, error: "Aucun assistant Vapi configuré pour ce restaurant" };
+  }
+
   try {
-    const [restaurant] = await db
-      .select()
-      .from(restaurants)
-      .where(eq(restaurants.id, id))
-      .limit(1);
-
-    if (!restaurant) {
-      return { success: false, error: "Restaurant non trouvé" };
-    }
-
-    if (session.user.role === "OWNER" && restaurant.ownerId !== session.user.id) {
-      return { success: false, error: "Non autorisé" };
-    }
-
-    if (!restaurant.vapiAssistantId) {
-      return { success: false, error: "Aucun assistant Vapi configuré pour ce restaurant" };
-    }
+    await deleteVapiPhoneNumberIfExists(id, restaurant.vapiPhoneNumberId);
 
     const { deleteVapiAssistant: deleteAssistant } = await import("@/lib/services/vapi");
     await deleteAssistant(restaurant.vapiAssistantId);
@@ -487,6 +569,7 @@ export async function deleteVapiAssistant(id: string): Promise<ActionResult> {
       .update(restaurants)
       .set({ 
         vapiAssistantId: null,
+        vapiPhoneNumberId: null,
         updatedAt: new Date(),
       })
       .where(eq(restaurants.id, id));

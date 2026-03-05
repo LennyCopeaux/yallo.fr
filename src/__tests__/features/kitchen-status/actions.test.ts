@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getKitchenStatus, updateKitchenStatus, updateStatusSettings } from "@/features/kitchen-status/actions";
+import type { MockedFunction } from "vitest";
+import { getKitchenStatus, updateKitchenStatus, updateStatusSettings, type StatusSettings } from "@/features/kitchen-status/actions";
 import { db } from "@/db";
-import { restaurants } from "@/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { DEFAULT_STATUS_SETTINGS } from "@/features/kitchen-status/constants";
+import type { Session } from "next-auth";
+import type { SelectRestaurant, KitchenStatus } from "@/db/schema";
 
 vi.mock("@/db", () => ({
   db: {
@@ -24,6 +26,9 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+// Cast auth en mock typé pour éviter la confusion avec la surcharge NextMiddleware
+const authMock = auth as unknown as MockedFunction<() => Promise<Session | null>>;
+
 describe("Kitchen Status Actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -31,9 +36,9 @@ describe("Kitchen Status Actions", () => {
 
   describe("getKitchenStatus", () => {
     it("should return kitchen status for authenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", email: "test@test.com" },
-      } as any);
+      } as unknown as Session);
 
       const mockRestaurant = {
         id: "rest-123",
@@ -41,7 +46,7 @@ describe("Kitchen Status Actions", () => {
         statusSettings: { CALM: { fixed: 5 }, NORMAL: { min: 10, max: 15 } },
       };
 
-      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as any);
+      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as unknown as SelectRestaurant | undefined);
 
       const result = await getKitchenStatus();
 
@@ -49,9 +54,9 @@ describe("Kitchen Status Actions", () => {
     });
 
     it("should initialize default settings if none exist", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", email: "test@test.com" },
-      } as any);
+      } as unknown as Session);
 
       const mockRestaurant = {
         id: "rest-123",
@@ -59,14 +64,14 @@ describe("Kitchen Status Actions", () => {
         statusSettings: null,
       };
 
-      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as any);
+      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as unknown as SelectRestaurant | undefined);
 
       const updateMock = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue(undefined),
         }),
       });
-      vi.mocked(db.update).mockReturnValue(updateMock() as any);
+      vi.mocked(db.update).mockReturnValue(updateMock() as unknown as ReturnType<typeof db.update>);
 
       const result = await getKitchenStatus();
 
@@ -75,7 +80,7 @@ describe("Kitchen Status Actions", () => {
     });
 
     it("should return null for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any);
+      authMock.mockResolvedValue(null);
 
       const result = await getKitchenStatus();
 
@@ -83,9 +88,9 @@ describe("Kitchen Status Actions", () => {
     });
 
     it("should return null if restaurant not found", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", email: "test@test.com" },
-      } as any);
+      } as unknown as Session);
 
       vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(undefined);
 
@@ -97,20 +102,20 @@ describe("Kitchen Status Actions", () => {
 
   describe("updateKitchenStatus", () => {
     it("should update status successfully", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", email: "test@test.com" },
-      } as any);
+      } as unknown as Session);
 
       const mockRestaurant = { id: "rest-123", ownerId: "user-123" };
 
-      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as any);
+      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as unknown as SelectRestaurant | undefined);
 
       const updateMock = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue(undefined),
         }),
       });
-      vi.mocked(db.update).mockReturnValue(updateMock() as any);
+      vi.mocked(db.update).mockReturnValue(updateMock() as unknown as ReturnType<typeof db.update>);
 
       const result = await updateKitchenStatus("RUSH");
 
@@ -119,23 +124,23 @@ describe("Kitchen Status Actions", () => {
     });
 
     it("should throw error for invalid status", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", email: "test@test.com" },
-      } as any);
+      } as unknown as Session);
 
-      await expect(updateKitchenStatus("INVALID" as any)).rejects.toThrow("Statut invalide");
+      await expect(updateKitchenStatus("INVALID" as KitchenStatus)).rejects.toThrow("Statut invalide");
     });
 
     it("should throw error for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any);
+      authMock.mockResolvedValue(null);
 
       await expect(updateKitchenStatus("NORMAL")).rejects.toThrow("Non autorisé");
     });
 
     it("should throw error if restaurant not found", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", email: "test@test.com" },
-      } as any);
+      } as unknown as Session);
 
       vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(undefined);
 
@@ -145,9 +150,9 @@ describe("Kitchen Status Actions", () => {
 
   describe("updateStatusSettings", () => {
     it("should update settings successfully", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", email: "test@test.com" },
-      } as any);
+      } as unknown as Session);
 
       const mockRestaurant = {
         id: "rest-123",
@@ -157,14 +162,14 @@ describe("Kitchen Status Actions", () => {
 
       const newSettings = { NORMAL: { min: 10, max: 15 } };
 
-      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as any);
+      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as unknown as SelectRestaurant | undefined);
 
       const updateMock = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue(undefined),
         }),
       });
-      vi.mocked(db.update).mockReturnValue(updateMock() as any);
+      vi.mocked(db.update).mockReturnValue(updateMock() as unknown as ReturnType<typeof db.update>);
 
       const result = await updateStatusSettings(newSettings);
 
@@ -173,9 +178,9 @@ describe("Kitchen Status Actions", () => {
     });
 
     it("should merge with existing settings", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", email: "test@test.com" },
-      } as any);
+      } as unknown as Session);
 
       const mockRestaurant = {
         id: "rest-123",
@@ -185,7 +190,7 @@ describe("Kitchen Status Actions", () => {
 
       const newSettings = { NORMAL: { min: 10, max: 15 } };
 
-      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as any);
+      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as unknown as SelectRestaurant | undefined);
 
       const setFn = vi.fn().mockReturnValue({
         where: vi.fn().mockResolvedValue(undefined),
@@ -193,7 +198,7 @@ describe("Kitchen Status Actions", () => {
       const updateMock = vi.fn().mockReturnValue({
         set: setFn,
       });
-      vi.mocked(db.update).mockReturnValue(updateMock() as any);
+      vi.mocked(db.update).mockReturnValue(updateMock() as unknown as ReturnType<typeof db.update>);
 
       await updateStatusSettings(newSettings);
 
@@ -204,15 +209,15 @@ describe("Kitchen Status Actions", () => {
     });
 
     it("should throw error for invalid settings", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", email: "test@test.com" },
-      } as any);
+      } as unknown as Session);
 
-      await expect(updateStatusSettings({ CALM: { fixed: -1 } } as any)).rejects.toThrow();
+      await expect(updateStatusSettings({ CALM: { fixed: -1 } } as StatusSettings)).rejects.toThrow();
     });
 
     it("should throw error for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any);
+      authMock.mockResolvedValue(null);
 
       await expect(updateStatusSettings({})).rejects.toThrow("Non autorisé");
     });

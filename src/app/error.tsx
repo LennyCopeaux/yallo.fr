@@ -5,8 +5,6 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Phone, AlertCircle, Home, RefreshCw } from "lucide-react";
-import { ModeToggle } from "@/components/navigation";
-
 interface ErrorPageProps {
   error: Error & { digest?: string };
   reset: () => void;
@@ -22,10 +20,6 @@ export default function ErrorPage({
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background relative overflow-hidden">
-      <div className="absolute top-4 right-4 z-20">
-        <ModeToggle />
-      </div>
-
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-amber-400/15 blur-[120px]" />
         <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-amber-400/5 blur-[100px]" />

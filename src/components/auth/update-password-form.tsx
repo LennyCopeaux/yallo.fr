@@ -17,7 +17,6 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Lock, Shield, Eye, EyeOff, AlertCircle, Clock } from "lucide-react";
 import { updatePassword, verifyResetToken } from "@/app/update-password/actions";
 import { toast } from "sonner";
-import { ModeToggle } from "@/components/navigation";
 
 function UpdatePasswordFormContent() {
   const { data: session, status } = useSession();
@@ -86,7 +85,7 @@ function UpdatePasswordFormContent() {
     }
   }, [session, status, router, resetToken]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setIsLoading(true);
@@ -141,9 +140,6 @@ function UpdatePasswordFormContent() {
   if (isVerifyingToken) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-        <div className="absolute top-4 right-4 z-20">
-          <ModeToggle />
-        </div>
         <Card className="w-full max-w-md mx-4 relative z-10 bg-card/50 border-border backdrop-blur-xl">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center justify-center space-y-4">
@@ -159,10 +155,6 @@ function UpdatePasswordFormContent() {
   if (resetToken && !isValidToken) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-        <div className="absolute top-4 right-4 z-20">
-          <ModeToggle />
-        </div>
-        
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-amber-400/10 blur-[120px]" />
           <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-amber-400/5 blur-[100px]" />
@@ -223,7 +215,7 @@ function UpdatePasswordFormContent() {
               
               <Button
                 onClick={() => router.push("/login")}
-                className="w-full !bg-yellow-500 hover:!bg-yellow-600 !text-black dark:!text-black"
+                className="w-full !bg-yellow-500 hover:!bg-yellow-600 !text-black"
               >
                 Retour à la connexion
               </Button>
@@ -234,46 +226,17 @@ function UpdatePasswordFormContent() {
     );
   }
 
-  if (!resetToken) {
-    if (status === "loading") {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-          <div className="absolute top-4 right-4 z-20">
-            <ModeToggle />
-          </div>
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-
-    if (!session) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-          <div className="absolute top-4 right-4 z-20">
-            <ModeToggle />
-          </div>
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-
-    if (session.user.mustChangePassword === false) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-          <div className="absolute top-4 right-4 z-20">
-            <ModeToggle />
-          </div>
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      );
-    }
+  const showSessionLoading = !resetToken && (status === "loading" || !session || session.user.mustChangePassword === false);
+  if (showSessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-      <div className="absolute top-4 right-4 z-20">
-        <ModeToggle />
-      </div>
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-primary/15 blur-[120px]" />
         <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-primary/5 blur-[100px]" />
@@ -411,9 +374,6 @@ export function UpdatePasswordForm() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-        <div className="absolute top-4 right-4 z-20">
-          <ModeToggle />
-        </div>
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     }>

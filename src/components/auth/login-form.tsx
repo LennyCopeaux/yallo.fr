@@ -16,7 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Eye, EyeOff, Phone } from "lucide-react";
-import { MarketingHomeLink, ModeToggle } from "@/components/navigation";
+import { MarketingHomeLink } from "@/components/navigation";
+import { DotPatternSubtle } from "@/components/ui/dot-pattern";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -26,7 +27,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setIsLoading(true);
@@ -53,14 +54,7 @@ export function LoginForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-      <div className="absolute top-4 right-4 z-20">
-        <ModeToggle />
-      </div>
-
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-primary/15 blur-[120px]" />
-        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-primary/5 blur-[100px]" />
-      </div>
+      <DotPatternSubtle className="z-0" />
 
       <div className="w-full max-w-md mx-4 relative z-10">
         <Card className="bg-card/50 border-border backdrop-blur-xl">

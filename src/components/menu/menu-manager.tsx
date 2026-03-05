@@ -26,35 +26,40 @@ type MenuManagerProps = {
 
 type MenuState = "initial" | "generated" | "saved";
 
-export function MenuManager({ initialMenuData }: MenuManagerProps) {
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+export function MenuManager({ initialMenuData }: Readonly<MenuManagerProps>) {
   const [menuState, setMenuState] = useState<MenuState>(
     initialMenuData ? "saved" : "initial"
   );
   const [menuJson, setMenuJson] = useState<string>(
     initialMenuData ? JSON.stringify(initialMenuData, null, 2) : ""
   );
-  const [images, setImages] = useState<string[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imageItems, setImageItems] = useState<Array<{ id: string; data: string }>>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (images.length + acceptedFiles.length > 5) {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (imageItems.length + acceptedFiles.length > 5) {
       toast.error("Maximum 5 images autorisées");
       return;
     }
 
-    acceptedFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result as string;
-        setImages((prev) => [...prev, base64]);
-        setImagePreviews((prev) => [...prev, base64]);
-      };
-      reader.readAsDataURL(file);
-    });
-  }, [images.length]);
+    const base64List = await Promise.all(acceptedFiles.map(readFileAsDataUrl));
+    const newItems = base64List.map((data) => ({
+      id: crypto.randomUUID(),
+      data,
+    }));
+    setImageItems((prev) => [...prev, ...newItems]);
+  }, [imageItems.length]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -64,13 +69,12 @@ export function MenuManager({ initialMenuData }: MenuManagerProps) {
     maxSize: 20 * 1024 * 1024,
   });
 
-  const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  const removeImage = (id: string) => {
+    setImageItems((prev) => prev.filter((item) => item.id !== id));
   };
 
   const handleGenerate = async () => {
-    if (images.length === 0) {
+    if (imageItems.length === 0) {
       toast.error("Ajoutez au moins une image du menu");
       return;
     }
@@ -84,7 +88,7 @@ export function MenuManager({ initialMenuData }: MenuManagerProps) {
     });
 
     try {
-      const result = await generateMenuFromImages(images);
+      const result = await generateMenuFromImages(imageItems.map((item) => item.data));
 
       if (result.success && result.menuData) {
         setMenuJson(JSON.stringify(result.menuData, null, 2));
@@ -134,8 +138,7 @@ export function MenuManager({ initialMenuData }: MenuManagerProps) {
 
   const handleCancel = () => {
     setMenuJson("");
-    setImages([]);
-    setImagePreviews([]);
+    setImageItems([]);
     setMenuState("initial");
   };
 
@@ -147,8 +150,7 @@ export function MenuManager({ initialMenuData }: MenuManagerProps) {
 
       if (result.success) {
         setMenuJson("");
-        setImages([]);
-        setImagePreviews([]);
+        setImageItems([]);
         setMenuState("initial");
         toast.success("Menu supprimé");
       } else {
@@ -201,17 +203,17 @@ export function MenuManager({ initialMenuData }: MenuManagerProps) {
               )}
             </div>
 
-            {imagePreviews.length > 0 && (
+            {imageItems.length > 0 && (
               <div className="flex flex-wrap gap-4">
-                {imagePreviews.map((preview, index) => (
-                  <div key={index} className="relative group">
+                {imageItems.map((item, index) => (
+                  <div key={item.id} className="relative group">
                     <img
-                      src={preview}
+                      src={item.data}
                       alt={`Menu page ${index + 1}`}
                       className="w-24 h-24 object-cover rounded-lg border"
                     />
                     <button
-                      onClick={() => removeImage(index)}
+                      onClick={() => removeImage(item.id)}
                       className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="w-3 h-3" />
@@ -223,7 +225,7 @@ export function MenuManager({ initialMenuData }: MenuManagerProps) {
 
             <Button
               onClick={handleGenerate}
-              disabled={images.length === 0 || isGenerating}
+              disabled={imageItems.length === 0 || isGenerating}
               className="w-full"
             >
               {isGenerating ? (

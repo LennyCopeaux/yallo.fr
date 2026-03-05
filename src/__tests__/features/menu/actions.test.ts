@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getMenuData, saveMenuData, generateMenuFromImages, clearMenuData } from "@/features/menu/actions";
 import type { Session } from "next-auth";
 
-const mockAuth = vi.fn() as any;
+const mockAuth = vi.fn<() => Promise<Session | null>>();
 
 vi.mock("@/lib/auth/auth", () => ({
   auth: () => mockAuth(),
@@ -63,7 +63,7 @@ describe("menu actions", () => {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([]),
         }),
-      } as any);
+      } as unknown as ReturnType<typeof db.select>);
 
       await expect(getMenuData()).rejects.toThrow("Restaurant non trouvé");
     });
@@ -81,7 +81,7 @@ describe("menu actions", () => {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([{ menuData: mockMenuData }]),
         }),
-      } as any);
+      } as unknown as ReturnType<typeof db.select>);
 
       const result = await getMenuData();
 
@@ -97,7 +97,7 @@ describe("menu actions", () => {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([{ menuData: null }]),
         }),
-      } as any);
+      } as unknown as ReturnType<typeof db.select>);
 
       const result = await getMenuData();
 
