@@ -8,11 +8,11 @@ import { AppLoginButton, MarketingLogoLink } from "@/components/navigation";
 const SCROLL_THRESHOLD = 50;
 
 export function MarketingNavbar() {
-  const [visible, setVisible] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      setVisible(window.scrollY > SCROLL_THRESHOLD);
+      setScrolled(window.scrollY > SCROLL_THRESHOLD);
     };
 
     handleScroll();
@@ -23,9 +23,9 @@ export function MarketingNavbar() {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        visible
+        scrolled
           ? "translate-y-0 opacity-100"
-          : "-translate-y-full opacity-0 pointer-events-none"
+          : "translate-y-0 opacity-60 hover:opacity-100"
       }`}
     >
       <div className="mx-4 mt-4 sm:mx-6 lg:mx-8">
