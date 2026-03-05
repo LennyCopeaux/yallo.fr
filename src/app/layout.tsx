@@ -1,12 +1,26 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider, AuthSessionProvider } from "@/components/providers";
+import localFont from "next/font/local";
+import { Geist_Mono } from "next/font/google";
+import { AuthSessionProvider } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const aeonik = localFont({
+  src: [
+    {
+      path: "../lib/fonts/fonnts.com-Aeonik-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../lib/fonts/fonnts.com-Aeonik-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-aeonik",
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
 const geistMono = Geist_Mono({
@@ -23,7 +37,7 @@ export const metadata: Metadata = {
     template: "%s | Yallo - Assistant Vocal Restaurant",
   },
   description:
-    "Standard téléphonique automatique pour restaurant. Notre IA Kebab gère la prise de commande 24/7 pour votre Kebab, Tacos, Pizzeria ou Sushi. Zéro attente, zéro commande perdue.",
+    "Standard téléphonique automatique pour restaurant. Notre IA gère la prise de commande 24/7 pour votre fast food. Zéro attente, zéro commande perdue.",
   icons: {
     icon: [
       { url: "/logo.png", sizes: "any" },
@@ -33,17 +47,15 @@ export const metadata: Metadata = {
     apple: "/logo.png",
   },
   keywords: [
-    "IA Kebab",
     "IA restaurant",
     "standard automatique restaurant",
     "prise de commande téléphone",
     "commande vocale restaurant",
     "assistant vocal restaurant",
-    "IA tacos",
+    "IA fast food",
     "IA pizzeria",
-    "IA sushi",
+    "IA restauration rapide",
     "standard téléphonique automatique",
-    "chatbot restaurant",
     "automatisation commande",
   ],
   authors: [{ name: "Yallo" }],
@@ -67,7 +79,7 @@ export const metadata: Metadata = {
     siteName: "Yallo",
     title: "Yallo - L'IA qui prend vos commandes par téléphone",
     description:
-      "Standard téléphonique automatique pour Kebab, Tacos, Pizzeria et Sushi. Notre IA gère vos commandes 24/7. Zéro attente, zéro commande perdue.",
+      "Standard téléphonique automatique pour la restauration rapide. Notre IA gère vos commandes 24/7. Zéro attente, zéro commande perdue.",
     images: [
       {
         url: "/og-image.png",
@@ -91,7 +103,6 @@ export const metadata: Metadata = {
   category: "technology",
 };
 
-// JSON-LD Schema for SoftwareApplication
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
@@ -99,7 +110,7 @@ const jsonLd = {
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
   description:
-    "Assistant vocal IA pour la prise de commande téléphonique dans la restauration rapide (Kebab, Tacos, Pizzeria, Sushi).",
+    "Assistant vocal IA pour la prise de commande téléphonique dans la restauration rapide.",
   url: siteUrl,
   author: {
     "@type": "Organization",
@@ -122,7 +133,7 @@ const jsonLd = {
   featureList: [
     "Prise de commande vocale 24/7",
     "Intégration standard téléphonique",
-    "Compatible Kebab, Tacos, Pizzeria, Sushi",
+    "Compatible avec tous les types de restaurants",
     "Zéro latence",
     "Français natif",
   ],
@@ -134,34 +145,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang="fr" className={`${aeonik.variable} ${geistMono.variable}`}>
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-background text-foreground`}
-      >
+      <body className="font-sans antialiased bg-background text-foreground">
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         >
           Aller au contenu principal
         </a>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
-          disableTransitionOnChange
-          storageKey="yallo-theme"
-        >
-          <AuthSessionProvider>
-            {children}
-            <Toaster richColors position="bottom-right" />
-          </AuthSessionProvider>
-        </ThemeProvider>
+        <AuthSessionProvider>
+          {children}
+          <Toaster richColors position="bottom-right" />
+        </AuthSessionProvider>
       </body>
     </html>
   );
