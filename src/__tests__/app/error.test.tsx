@@ -9,10 +9,7 @@ vi.mock("motion/react", () => ({
   },
 }));
 
-// Mock ModeToggle
-vi.mock("@/components/navigation", () => ({
-  ModeToggle: () => <div>Changer de thème</div>,
-}));
+vi.mock("@/components/navigation", () => ({}));
 
 describe("ErrorPage", () => {
   const mockError = new Error("Test error");

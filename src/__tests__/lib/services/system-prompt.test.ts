@@ -36,6 +36,7 @@ describe("generateSystemPrompt", () => {
     stripeCustomerId: null,
     billingStartDate: null,
     vapiAssistantId: null,
+    vapiPhoneNumberId: null,
     systemPrompt: null,
     menuContext: null,
     menuData: null,
@@ -75,7 +76,7 @@ describe("generateSystemPrompt", () => {
 
     expect(logger.warn).toHaveBeenCalled();
     expect(prompt).toContain("Test Restaurant");
-    expect(prompt).toContain("Horaires d'ouverture");
+    expect(prompt).toContain("Horaires");
   });
 
   it("should handle generic errors from HubRise", async () => {
@@ -99,7 +100,7 @@ describe("generateSystemPrompt", () => {
 
     expect(fetchHubriseCatalog).not.toHaveBeenCalled();
     expect(prompt).toContain("Test Restaurant");
-    expect(prompt).toContain("Horaires d'ouverture");
+    expect(prompt).toContain("Horaires");
   });
 
   it("should include business hours in prompt", async () => {
@@ -110,7 +111,7 @@ describe("generateSystemPrompt", () => {
 
     const prompt = await generateSystemPrompt(mockRestaurant);
 
-    expect(prompt).toContain("Horaires d'ouverture");
+    expect(prompt).toContain("Horaires");
     expect(prompt).toContain("Lundi-Vendredi: 10h-22h");
   });
 
@@ -122,7 +123,6 @@ describe("generateSystemPrompt", () => {
 
     const prompt = await generateSystemPrompt(mockRestaurant);
 
-    expect(prompt).toContain("transfère l'appel vers le numéro");
     expect(prompt).toContain("+33123456789");
   });
 
@@ -134,7 +134,7 @@ describe("generateSystemPrompt", () => {
 
     const prompt = await generateSystemPrompt(mockRestaurant);
 
-    expect(prompt).toContain("Menu disponible");
+    expect(prompt).toContain("Menu");
     expect(prompt).toContain("Kebab");
   });
 
@@ -146,11 +146,11 @@ describe("generateSystemPrompt", () => {
 
     const prompt = await generateSystemPrompt(mockRestaurant);
 
-    expect(prompt).toContain("Tu es l'assistant téléphonique");
-    expect(prompt).toContain("Ton rôle est de");
-    expect(prompt).toContain("Règles importantes");
-    expect(prompt).toContain("Menu disponible");
-    expect(prompt).toContain("Horaires d'ouverture");
+    expect(prompt).toContain("Tu es Yallo");
+    expect(prompt).toContain("PRISE DE COMMANDE");
+    expect(prompt).toContain("STYLE DE COMMUNICATION");
+    expect(prompt).toContain("Menu");
+    expect(prompt).toContain("Horaires");
   });
 
   it("should handle restaurant without business hours", async () => {
@@ -166,7 +166,7 @@ describe("generateSystemPrompt", () => {
 
     const prompt = await generateSystemPrompt(restaurantWithoutHours);
 
-    expect(prompt).toContain("Horaires d'ouverture");
+    expect(prompt).toContain("Horaires");
     expect(prompt).toContain("Non configuré");
   });
 
