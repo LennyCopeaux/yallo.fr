@@ -47,7 +47,7 @@ export default function GuidePage() {
   return (
     <div className="min-h-screen bg-background">
       <ScrollToTop />
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12 w-full">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 w-full">
         <div className="max-w-3xl mx-auto">
           <BackToHomeLink />
           
