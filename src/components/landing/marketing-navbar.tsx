@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -9,22 +9,28 @@ import { AppLoginButton, MarketingLogoLink } from "@/components/navigation";
 const SCROLL_THRESHOLD = 50;
 
 export function MarketingNavbar() {
-  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const isHomePage = pathname === "/";
   
   // Sur la page d'accueil, le navbar est masqué au début et apparaît au scroll
   // Sur les autres pages (guide, legal, contact, etc.), il est toujours visible
-  const isHomePage = pathname === "/";
+  // Initialiser directement avec la bonne valeur selon la page
+  const [scrolled, setScrolled] = useState(!isHomePage);
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     // Sur les pages autres que l'accueil, on n'a pas besoin d'écouter le scroll
     if (!isHomePage) {
-      setScrolled(true);
+      startTransition(() => {
+        setScrolled(true);
+      });
       return;
     }
 
     const handleScroll = () => {
-      setScrolled(globalThis.window.scrollY > SCROLL_THRESHOLD);
+      startTransition(() => {
+        setScrolled(globalThis.window.scrollY > SCROLL_THRESHOLD);
+      });
     };
 
     handleScroll();
