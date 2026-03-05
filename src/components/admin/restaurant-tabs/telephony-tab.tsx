@@ -12,11 +12,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Save, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { updateRestaurantTelephony } from "@/app/(admin)/admin/restaurants/actions";
-import { cn } from "@/lib/utils";
+import { cn, normalizeFrenchPhoneNumber } from "@/lib/utils";
 
 const formSchema = z.object({
   phoneNumber: z.string().min(10, "Numéro invalide"),
-  twilioPhoneNumber: z.string().max(20).optional(),
+  twilioPhoneNumber: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        return normalizeFrenchPhoneNumber(val) !== null;
+      },
+      {
+        message: "Format invalide. Utilisez le format +33XXXXXXXXX (ex: +33939035299) ou 0XXXXXXXXX (ex: 0939035299)",
+      }
+    ),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -48,9 +59,14 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
     
+    // Normalise le numéro Twilio au format E.164 avant l'envoi
+    const normalizedTwilioNumber = data.twilioPhoneNumber
+      ? normalizeFrenchPhoneNumber(data.twilioPhoneNumber) || data.twilioPhoneNumber
+      : null;
+    
     const result = await updateRestaurantTelephony(restaurant.id, {
       phoneNumber: data.phoneNumber,
-      twilioPhoneNumber: data.twilioPhoneNumber || null,
+      twilioPhoneNumber: normalizedTwilioNumber,
     });
 
     if (result.success) {
@@ -118,16 +134,19 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="twilioPhoneNumber">Numéro Twilio (IA)</Label>
+              <Label htmlFor="twilioPhoneNumber">Numéro Twilio (IA) *</Label>
               <Input
                 id="twilioPhoneNumber"
                 {...form.register("twilioPhoneNumber")}
                 disabled={isLoading}
-                placeholder="+33xxxxxxxxx"
+                placeholder="0939035299 ou +33939035299"
                 className="bg-background/50 border-border focus:border-primary/50 font-mono"
               />
+              {form.formState.errors.twilioPhoneNumber && (
+                <p className="text-sm text-red-400">{form.formState.errors.twilioPhoneNumber.message}</p>
+              )}
               <p className="text-xs text-muted-foreground">
-                Numéro acheté sur Twilio pour recevoir les appels de l&apos;IA
+                Numéro acheté sur Twilio pour recevoir les appels de l&apos;IA. Format accepté : 0939035299 ou +33939035299 (sera automatiquement converti en +33XXXXXXXXX)
               </p>
             </div>
           </CardContent>

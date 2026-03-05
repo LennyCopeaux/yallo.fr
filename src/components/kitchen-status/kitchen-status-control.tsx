@@ -29,22 +29,22 @@ const STATUS_CONFIG = {
   CALM: {
     label: "Calme",
     activeColor: "bg-emerald-600 border-2 border-emerald-400 text-white hover:bg-emerald-700 hover:border-emerald-500",
-    inactiveColor: "bg-muted border border-border text-muted-foreground hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 dark:hover:bg-emerald-950 dark:hover:border-emerald-800 dark:hover:text-emerald-300",
+    inactiveColor: "bg-muted border border-border text-muted-foreground hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700",
   },
   NORMAL: {
     label: "Normal",
     activeColor: "bg-yellow-600 border-2 border-yellow-400 text-white hover:bg-yellow-700 hover:border-yellow-500",
-    inactiveColor: "bg-muted border border-border text-muted-foreground hover:bg-yellow-50 hover:border-yellow-200 hover:text-yellow-700 dark:hover:bg-yellow-950 dark:hover:border-yellow-800 dark:hover:text-yellow-300",
+    inactiveColor: "bg-muted border border-border text-muted-foreground hover:bg-yellow-50 hover:border-yellow-200 hover:text-yellow-700",
   },
   RUSH: {
     label: "Rush",
     activeColor: "bg-red-600 border-2 border-red-400 text-white hover:bg-red-700 hover:border-red-500",
-    inactiveColor: "bg-muted border border-border text-muted-foreground hover:bg-red-50 hover:border-red-200 hover:text-red-700 dark:hover:bg-red-950 dark:hover:border-red-800 dark:hover:text-red-300",
+    inactiveColor: "bg-muted border border-border text-muted-foreground hover:bg-red-50 hover:border-red-200 hover:text-red-700",
   },
   STOP: {
     label: "Stop",
     activeColor: "bg-gray-600 border-2 border-gray-400 text-white hover:bg-gray-700 hover:border-gray-500",
-    inactiveColor: "bg-muted border border-border text-muted-foreground hover:bg-gray-50 hover:border-gray-200 hover:text-gray-700 dark:hover:bg-gray-950 dark:hover:border-gray-800 dark:hover:text-gray-300",
+    inactiveColor: "bg-muted border border-border text-muted-foreground hover:bg-gray-50 hover:border-gray-200 hover:text-gray-700",
   },
 } as const;
 

@@ -21,6 +21,7 @@ type Restaurant = {
   stripeCustomerId: string | null;
   billingStartDate: string | null;
   vapiAssistantId: string | null;
+  vapiPhoneNumberId: string | null;
   systemPrompt: string | null;
   menuContext: string | null;
   twilioPhoneNumber: string | null;
