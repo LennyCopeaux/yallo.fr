@@ -30,9 +30,9 @@ import { BackToHomeLink } from "@/components/navigation";
 
 const contactFormSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
-  email: z.string().email("Email invalide"),
+  email: z.string().email(),
   subject: z.string().refine(
-    (val) => ["installation", "rdv-expert", "plan-commission", "plan-fixe", "support", "autre"].includes(val),
+    (val) => ["installation", "rdv-expert", "plan-starter", "plan-essential", "plan-infinity", "enterprise", "support", "autre"].includes(val),
     { message: "Veuillez sélectionner un sujet" }
   ),
   message: z.string().min(10, "Le message doit contenir au moins 10 caractères"),
@@ -43,8 +43,10 @@ type ContactFormData = z.infer<typeof contactFormSchema>;
 const subjectOptions = [
   { value: "installation", label: "Installation" },
   { value: "rdv-expert", label: "Parler à un expert" },
-  { value: "plan-commission", label: "Plan Commission (5%)" },
-  { value: "plan-fixe", label: "Plan Abonnement (299€/mois)" },
+  { value: "plan-starter", label: "Plan Starter" },
+  { value: "plan-essential", label: "Plan Essential" },
+  { value: "plan-infinity", label: "Plan Infinity" },
+  { value: "enterprise", label: "Offre Enterprise" },
   { value: "support", label: "Support Technique" },
   { value: "autre", label: "Autre demande" },
 ];
@@ -55,8 +57,11 @@ function mapUrlSubjectToValue(subject: string | null): string | undefined {
     "autre": "autre",
     "installation": "installation",
     "rdv-expert": "rdv-expert",
-    "plan-commission": "plan-commission",
-    "plan-fixe": "plan-fixe",
+    "plan-starter": "plan-starter",
+    "plan-essential": "plan-essential",
+    "plan-infinity": "plan-infinity",
+    "enterprise": "enterprise",
+    "demo": "rdv-expert", // Redirection demo vers rdv-expert
   };
   return subject ? mapping[subject] : undefined;
 }
@@ -65,8 +70,10 @@ function getDefaultMessage(subject: string | null): string {
   const messages: Record<string, string> = {
     "installation": "Bonjour,\n\nJe souhaite installer Yallo pour mon restaurant et obtenir un accès à la plateforme.\n\nMerci de me recontacter pour discuter des modalités d'installation.\n\nCordialement,",
     "rdv-expert": "Bonjour,\n\nJe souhaite prendre rendez-vous avec un expert pour discuter de la solution Yallo pour mon restaurant.\n\nMerci de me proposer des créneaux disponibles.\n\nCordialement,",
-    "plan-commission": "Bonjour,\n\nJe suis intéressé par le Plan Commission (5% par commande).\n\nPourriez-vous me fournir plus d'informations sur cette formule ?\n\nCordialement,",
-    "plan-fixe": "Bonjour,\n\nJe suis intéressé par le Plan Abonnement (299€/mois).\n\nPourriez-vous me fournir plus d'informations sur cette formule ?\n\nCordialement,",
+    "plan-starter": "Bonjour,\n\nJe suis intéressé par le Plan Starter.\n\nPourriez-vous me fournir plus d'informations sur cette formule ?\n\nCordialement,",
+    "plan-essential": "Bonjour,\n\nJe suis intéressé par le Plan Essential.\n\nPourriez-vous me fournir plus d'informations sur cette formule ?\n\nCordialement,",
+    "plan-infinity": "Bonjour,\n\nJe suis intéressé par le Plan Infinity.\n\nPourriez-vous me fournir plus d'informations sur cette formule ?\n\nCordialement,",
+    "enterprise": "Bonjour,\n\nJe suis intéressé par l'offre Enterprise pour ma franchise / restaurant à fort volume.\n\nPourriez-vous me contacter pour discuter d'une solution sur mesure ?\n\nCordialement,",
     "support": "Bonjour,\n\nJ'ai besoin d'aide concernant...\n\nMerci de votre retour.\n\nCordialement,",
   };
   return messages[subject || ""] || "";
@@ -93,16 +100,27 @@ function ContactFormInner() {
 
   const selectedSubject = watch("subject");
 
+  // Mettre à jour le message quand le sujet change (depuis URL ou sélection)
   useEffect(() => {
     const mappedSubject = mapUrlSubjectToValue(urlSubject);
     if (mappedSubject) {
       setValue("subject", mappedSubject);
-    }
-    const defaultMsg = getDefaultMessage(urlSubject);
-    if (defaultMsg) {
-      setValue("message", defaultMsg);
+      const defaultMsg = getDefaultMessage(mappedSubject);
+      if (defaultMsg) {
+        setValue("message", defaultMsg);
+      }
     }
   }, [urlSubject, setValue]);
+
+  // Mettre à jour le message quand l'utilisateur change le sujet manuellement
+  useEffect(() => {
+    if (selectedSubject) {
+      const defaultMsg = getDefaultMessage(selectedSubject);
+      if (defaultMsg) {
+        setValue("message", defaultMsg);
+      }
+    }
+  }, [selectedSubject, setValue]);
 
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
@@ -180,7 +198,13 @@ function ContactFormInner() {
                   </Label>
                   <Select
                     value={selectedSubject || ""}
-                    onValueChange={(value) => setValue("subject", value)}
+                    onValueChange={(value) => {
+                      setValue("subject", value);
+                      const defaultMsg = getDefaultMessage(value);
+                      if (defaultMsg) {
+                        setValue("message", defaultMsg);
+                      }
+                    }}
                     disabled={isSubmitting}
                   >
                     <SelectTrigger className="w-full bg-background/50 border-border">

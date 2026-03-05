@@ -26,13 +26,13 @@ export function CtaSection() {
             Rejoignez les centaines de restaurants qui ont déjà automatisé leur prise de commande.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/contact?subject=installation">
+            <Link href="/contact?subject=installation" className="cursor-pointer">
               <Button size="lg" className="bg-primary text-black hover:bg-primary/90 h-14 px-8 text-lg btn-shine font-semibold glow-yellow">
                 Demander mon installation
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
-            <Link href="/contact?subject=rdv-expert">
+            <Link href="/contact?subject=rdv-expert" className="cursor-pointer">
               <Button size="lg" variant="outline" className="border-border hover:border-primary hover:bg-accent h-14 px-8 text-lg">
                 Parler à un expert
               </Button>

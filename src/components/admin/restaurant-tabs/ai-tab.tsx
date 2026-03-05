@@ -97,6 +97,114 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
   const statusText = getAIStatusText(isFullyOperational, hasVapiId, hasPhoneLinked, hasTwilioNumber, restaurant.twilioPhoneNumber);
   const statusCardClassName = isFullyOperational ? "border-emerald-400/20 bg-emerald-400/5" : "border-amber-400/20 bg-amber-400/5";
 
+  const handleCreateAssistant = async () => {
+    setIsCreatingAssistant(true);
+    try {
+      const result = await createVapiAssistant(restaurant.id);
+      if (result.success && result.data) {
+        toast.success("Agent IA créé et numéro de téléphone lié avec succès");
+        router.refresh();
+      } else {
+        toast.error(result.error || "Erreur lors de la création de l'assistant");
+      }
+    } catch {
+      toast.error("Erreur lors de la création de l'assistant");
+    } finally {
+      setIsCreatingAssistant(false);
+    }
+  };
+
+  const handleUpdateAssistant = async () => {
+    setIsUpdatingAssistant(true);
+    try {
+      const result = await updateVapiAssistant(restaurant.id);
+      if (result.success) {
+        toast.success("Assistant Vapi mis à jour avec succès");
+      } else {
+        toast.error(result.error || "Erreur lors de la mise à jour de l'assistant");
+      }
+    } catch {
+      toast.error("Erreur lors de la mise à jour de l'assistant");
+    } finally {
+      setIsUpdatingAssistant(false);
+    }
+  };
+
+  const handleDeleteAssistant = async () => {
+    setShowDeleteDialog(false);
+    setIsDeletingAssistant(true);
+    try {
+      const result = await deleteVapiAssistant(restaurant.id);
+      if (result.success) {
+        toast.success("Agent IA supprimé avec succès");
+        router.refresh();
+      } else {
+        toast.error(result.error || "Erreur lors de la suppression de l'agent");
+      }
+    } catch {
+      toast.error("Erreur lors de la suppression de l'agent");
+    } finally {
+      setIsDeletingAssistant(false);
+    }
+  };
+
+  const handleGeneratePrompt = async () => {
+    setIsGeneratingPrompt(true);
+    try {
+      const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-system-prompt`);
+      if (!response.ok) throw new Error("Erreur lors de la génération");
+      const data = await response.json();
+      setSystemPrompt(data.systemPrompt);
+      toast.success("Prompt système généré");
+    } catch {
+      toast.error("Erreur lors de la génération du prompt");
+    } finally {
+      setIsGeneratingPrompt(false);
+    }
+  };
+
+  const handleGenerateMenuJson = async () => {
+    setIsGeneratingMenuJson(true);
+    try {
+      const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-menu-json`);
+      if (!response.ok) throw new Error("Erreur lors de la génération");
+      const data = await response.json();
+      if (data.menuJson === "Menu non configuré") {
+        setMenuContext("Menu non configuré");
+        toast.info("Aucun menu configuré pour ce restaurant");
+      } else {
+        setMenuContext(data.menuJson);
+        toast.success("JSON menu généré");
+      }
+    } catch {
+      toast.error("Erreur lors de la génération du JSON");
+    } finally {
+      setIsGeneratingMenuJson(false);
+    }
+  };
+
+  const handleGenerateHoursJson = async () => {
+    setIsGeneratingHoursJson(true);
+    try {
+      const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-business-hours-json`);
+      if (!response.ok) {
+        throw new Error("Erreur lors de la génération");
+      }
+      const data = await response.json();
+      if (data.businessHoursJson === "Horaires d'ouverture non configurée") {
+        setBusinessHoursJson("Horaires d'ouverture non configurée");
+        toast.info("Aucun horaire configuré pour ce restaurant");
+      } else {
+        setBusinessHoursJson(data.businessHoursJson);
+        toast.success("JSON horaires généré");
+      }
+    } catch {
+      toast.error("Erreur lors de la génération du JSON");
+    } finally {
+      setIsGeneratingHoursJson(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card className={`border ${statusCardClassName}`}>
@@ -178,22 +286,7 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
                   type="button"
                   variant="default"
                   disabled={isCreatingAssistant || !hasTwilioNumber}
-                  onClick={async () => {
-                    setIsCreatingAssistant(true);
-                    try {
-                      const result = await createVapiAssistant(restaurant.id);
-                      if (result.success && result.data) {
-                        toast.success("Agent IA créé et numéro de téléphone lié avec succès");
-                        router.refresh();
-                      } else {
-                        toast.error(result.error || "Erreur lors de la création de l'assistant");
-                      }
-                    } catch {
-                      toast.error("Erreur lors de la création de l'assistant");
-                    } finally {
-                      setIsCreatingAssistant(false);
-                    }
-                  }}
+                  onClick={handleCreateAssistant}
                   className="w-full"
                 >
                   {isCreatingAssistant ? (
@@ -214,21 +307,7 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
                     type="button"
                     variant="outline"
                     disabled={isUpdatingAssistant || isDeletingAssistant}
-                    onClick={async () => {
-                      setIsUpdatingAssistant(true);
-                      try {
-                        const result = await updateVapiAssistant(restaurant.id);
-                        if (result.success) {
-                          toast.success("Assistant Vapi mis à jour avec succès");
-                        } else {
-                          toast.error(result.error || "Erreur lors de la mise à jour de l'assistant");
-                        }
-                      } catch {
-                        toast.error("Erreur lors de la mise à jour de l'assistant");
-                      } finally {
-                        setIsUpdatingAssistant(false);
-                      }
-                    }}
+                    onClick={handleUpdateAssistant}
                     className="flex-1"
                   >
                     {isUpdatingAssistant ? (
@@ -275,20 +354,7 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
                 variant="outline"
                 size="sm"
                 disabled={isGeneratingPrompt}
-                onClick={async () => {
-                  setIsGeneratingPrompt(true);
-                  try {
-                    const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-system-prompt`);
-                    if (!response.ok) throw new Error("Erreur lors de la génération");
-                    const data = await response.json();
-                    setSystemPrompt(data.systemPrompt);
-                    toast.success("Prompt système généré");
-                  } catch {
-                    toast.error("Erreur lors de la génération du prompt");
-                  } finally {
-                    setIsGeneratingPrompt(false);
-                  }
-                }}
+                onClick={handleGeneratePrompt}
               >
                 {isGeneratingPrompt ? (
                   <>
@@ -351,25 +417,7 @@ Règles importantes :
                 variant="outline"
                 size="sm"
                 disabled={isGeneratingMenuJson}
-                onClick={async () => {
-                  setIsGeneratingMenuJson(true);
-                  try {
-                    const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-menu-json`);
-                    if (!response.ok) throw new Error("Erreur lors de la génération");
-                    const data = await response.json();
-                    if (data.menuJson === "Menu non configuré") {
-                      setMenuContext("Menu non configuré");
-                      toast.info("Aucun menu configuré pour ce restaurant");
-                    } else {
-                      setMenuContext(data.menuJson);
-                      toast.success("JSON menu généré");
-                    }
-                  } catch {
-                    toast.error("Erreur lors de la génération du JSON");
-                  } finally {
-                    setIsGeneratingMenuJson(false);
-                  }
-                }}
+                onClick={handleGenerateMenuJson}
               >
                 {isGeneratingMenuJson ? (
                   <>
@@ -438,27 +486,7 @@ Règles importantes :
                 variant="outline"
                 size="sm"
                 disabled={isGeneratingHoursJson}
-                onClick={async () => {
-                  setIsGeneratingHoursJson(true);
-                  try {
-                    const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-business-hours-json`);
-                    if (!response.ok) {
-                      throw new Error("Erreur lors de la génération");
-                    }
-                    const data = await response.json();
-                    if (data.businessHoursJson === "Horaires d'ouverture non configurée") {
-                      setBusinessHoursJson("Horaires d'ouverture non configurée");
-                      toast.info("Aucun horaire configuré pour ce restaurant");
-                    } else {
-                      setBusinessHoursJson(data.businessHoursJson);
-                      toast.success("JSON horaires généré");
-                    }
-                  } catch {
-                    toast.error("Erreur lors de la génération du JSON");
-                  } finally {
-                    setIsGeneratingHoursJson(false);
-                  }
-                }}
+                onClick={handleGenerateHoursJson}
               >
                 {isGeneratingHoursJson ? (
                   <>
@@ -511,23 +539,7 @@ Règles importantes :
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
-              onClick={async () => {
-                setShowDeleteDialog(false);
-                setIsDeletingAssistant(true);
-                try {
-                  const result = await deleteVapiAssistant(restaurant.id);
-                  if (result.success) {
-                    toast.success("Agent IA supprimé avec succès");
-                    router.refresh();
-                  } else {
-                    toast.error(result.error || "Erreur lors de la suppression de l'agent");
-                  }
-                } catch {
-                  toast.error("Erreur lors de la suppression de l'agent");
-                } finally {
-                  setIsDeletingAssistant(false);
-                }
-              }}
+              onClick={handleDeleteAssistant}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeletingAssistant ? (

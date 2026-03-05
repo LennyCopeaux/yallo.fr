@@ -33,8 +33,20 @@ const steps = [
   },
   {
     number: 4,
-    title: "Configuration du menu",
-    description: "Accédez à votre tableau de bord et configurez votre menu : ajoutez vos catégories, vos produits, leurs variations et leurs prix. L'interface est intuitive et vous permet de tout configurer en quelques minutes.",
+    title: "Configuration de votre restaurant",
+    description: (
+      <>
+        Accédez à votre tableau de bord et configurez votre restaurant. Vous avez deux options :
+        <ul className="list-disc list-inside mt-3 space-y-2 text-muted-foreground">
+          <li>
+            <strong className="text-foreground">Si vous utilisez HubRise :</strong> Connectez votre logiciel de caisse dans l&apos;onglet HubRise. Votre menu et vos stocks se synchroniseront automatiquement.
+          </li>
+          <li>
+            <strong className="text-foreground">Sinon :</strong> Configurez manuellement votre menu (catégories, produits, variations, prix) et vos horaires d&apos;ouverture. L&apos;interface est intuitive et vous permet de tout configurer en quelques minutes.
+          </li>
+        </ul>
+      </>
+    ),
   },
   {
     number: 5,
@@ -47,7 +59,7 @@ export default function GuidePage() {
   return (
     <div className="min-h-screen bg-background">
       <ScrollToTop />
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-12 w-full">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 w-full">
         <div className="max-w-3xl mx-auto">
           <BackToHomeLink />
           
@@ -67,9 +79,9 @@ export default function GuidePage() {
                       <h2 className="text-2xl font-semibold text-foreground mb-3">
                         {step.title}
                       </h2>
-                      <p className="text-muted-foreground leading-relaxed">
+                      <div className="text-muted-foreground leading-relaxed">
                         {step.description}
-                      </p>
+                      </div>
                     </div>
                   </div>
                 </div>
