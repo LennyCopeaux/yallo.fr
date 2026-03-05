@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AppLoginButton, MarketingLogoLink } from "@/components/navigation";
@@ -9,8 +10,19 @@ const SCROLL_THRESHOLD = 50;
 
 export function MarketingNavbar() {
   const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
+  
+  // Sur la page d'accueil, le navbar est masqué au début et apparaît au scroll
+  // Sur les autres pages (guide, legal, contact, etc.), il est toujours visible
+  const isHomePage = pathname === "/";
 
   useEffect(() => {
+    // Sur les pages autres que l'accueil, on n'a pas besoin d'écouter le scroll
+    if (!isHomePage) {
+      setScrolled(true);
+      return;
+    }
+
     const handleScroll = () => {
       setScrolled(globalThis.window.scrollY > SCROLL_THRESHOLD);
     };
@@ -18,12 +30,12 @@ export function MarketingNavbar() {
     handleScroll();
     globalThis.window.addEventListener("scroll", handleScroll, { passive: true });
     return () => globalThis.window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isHomePage]);
 
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
+        scrolled || !isHomePage
           ? "translate-y-0 opacity-100"
           : "-translate-y-full opacity-0 pointer-events-none"
       }`}
@@ -36,7 +48,7 @@ export function MarketingNavbar() {
 
               <div className="hidden md:flex items-center gap-8">
                 <Link href="/#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer">
-                  Comment ca marche
+                  Comment ça marche
                 </Link>
                 <Link href="/#features" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer">
                   Fonctionnalités
