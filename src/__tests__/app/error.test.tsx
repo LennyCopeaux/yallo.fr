@@ -5,7 +5,7 @@ import ErrorPage from "@/app/error";
 // Mock motion/react pour éviter les problèmes avec addEventListener dans les tests
 vi.mock("motion/react", () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, ...props }: React.ComponentPropsWithoutRef<"div">) => <div {...props}>{children}</div>,
   },
 }));
 

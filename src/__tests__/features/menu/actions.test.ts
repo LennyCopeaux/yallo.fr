@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getMenuData, saveMenuData, generateMenuFromImages, clearMenuData } from "@/features/menu/actions";
 import type { Session } from "next-auth";
 
-const mockAuth = vi.fn() as any;
+const mockAuth = vi.fn<() => Promise<Session | null>>();
 
 vi.mock("@/lib/auth/auth", () => ({
   auth: () => mockAuth(),
@@ -59,11 +59,16 @@ describe("menu actions", () => {
         user: { id: "user-1", email: "test@example.com", role: "OWNER", mustChangePassword: false },
         expires: new Date().toISOString(),
       } as Session);
+      type MockSelectBuilder = {
+        from: () => {
+          where: () => Promise<Array<{ menuData: unknown }>>;
+        };
+      };
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([]),
         }),
-      } as any);
+      } as unknown as MockSelectBuilder);
 
       await expect(getMenuData()).rejects.toThrow("Restaurant non trouvé");
     });
@@ -77,11 +82,16 @@ describe("menu actions", () => {
         user: { id: "user-1", email: "test@example.com", role: "OWNER", mustChangePassword: false },
         expires: new Date().toISOString(),
       } as Session);
+      type MockSelectBuilder = {
+        from: () => {
+          where: () => Promise<Array<{ menuData: unknown }>>;
+        };
+      };
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([{ menuData: mockMenuData }]),
         }),
-      } as any);
+      } as unknown as MockSelectBuilder);
 
       const result = await getMenuData();
 
@@ -97,7 +107,7 @@ describe("menu actions", () => {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([{ menuData: null }]),
         }),
-      } as any);
+      } as unknown as MockSelectBuilder);
 
       const result = await getMenuData();
 

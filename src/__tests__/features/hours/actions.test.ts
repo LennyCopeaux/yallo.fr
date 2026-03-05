@@ -1,8 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getBusinessHours, updateBusinessHours } from "@/features/hours/actions";
 import { db } from "@/db";
-import { restaurants } from "@/db/schema";
 import { auth } from "@/lib/auth/auth";
+import type { Session } from "next-auth";
+
+type MockAuthSession = Session | null;
+type MockSelectBuilder = {
+  from: () => {
+    where: () => {
+      limit: () => Promise<Array<{ businessHours: string | null; id?: string }>>;
+    };
+  };
+};
+type MockUpdateBuilder = {
+  set: () => {
+    where: () => Promise<undefined>;
+  };
+};
 
 vi.mock("@/db", () => ({
   db: {
@@ -28,7 +42,7 @@ describe("Business Hours Actions", () => {
     it("should return business hours for authenticated owner", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
-      } as any);
+      } as MockAuthSession);
 
       const mockHours = {
         timezone: "Europe/Paris",
@@ -44,7 +58,7 @@ describe("Business Hours Actions", () => {
           }),
         }),
       });
-      vi.mocked(db.select).mockReturnValue(selectMock() as any);
+      vi.mocked(db.select).mockReturnValue(selectMock() as unknown as MockSelectBuilder);
 
       const result = await getBusinessHours();
 
@@ -55,7 +69,7 @@ describe("Business Hours Actions", () => {
     it("should return default empty schedule if no hours set", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
-      } as any);
+      } as MockAuthSession);
 
       const selectMock = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
@@ -64,7 +78,7 @@ describe("Business Hours Actions", () => {
           }),
         }),
       });
-      vi.mocked(db.select).mockReturnValue(selectMock() as any);
+      vi.mocked(db.select).mockReturnValue(selectMock() as unknown as MockSelectBuilder);
 
       const result = await getBusinessHours();
 
@@ -73,7 +87,7 @@ describe("Business Hours Actions", () => {
     });
 
     it("should return error for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any);
+      vi.mocked(auth).mockResolvedValue(null as MockAuthSession);
 
       const result = await getBusinessHours();
 
@@ -84,7 +98,7 @@ describe("Business Hours Actions", () => {
     it("should return error for admin without restaurant", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "admin-123", role: "ADMIN", email: "admin@test.com" },
-      } as any);
+      } as MockAuthSession);
 
       const result = await getBusinessHours();
 
@@ -95,7 +109,7 @@ describe("Business Hours Actions", () => {
     it("should return error if restaurant not found", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
-      } as any);
+      } as MockAuthSession);
 
       const selectMock = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
@@ -104,7 +118,7 @@ describe("Business Hours Actions", () => {
           }),
         }),
       });
-      vi.mocked(db.select).mockReturnValue(selectMock() as any);
+      vi.mocked(db.select).mockReturnValue(selectMock() as unknown as MockSelectBuilder);
 
       const result = await getBusinessHours();
 
@@ -115,7 +129,7 @@ describe("Business Hours Actions", () => {
     it("should handle invalid JSON gracefully", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
-      } as any);
+      } as MockAuthSession);
 
       const selectMock = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
@@ -124,7 +138,7 @@ describe("Business Hours Actions", () => {
           }),
         }),
       });
-      vi.mocked(db.select).mockReturnValue(selectMock() as any);
+      vi.mocked(db.select).mockReturnValue(selectMock() as unknown as MockSelectBuilder);
 
       const result = await getBusinessHours();
 
@@ -137,7 +151,7 @@ describe("Business Hours Actions", () => {
     it("should update business hours successfully", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
-      } as any);
+      } as MockAuthSession);
 
       const mockHours = {
         timezone: "Europe/Paris",
@@ -159,8 +173,8 @@ describe("Business Hours Actions", () => {
         }),
       });
 
-      vi.mocked(db.select).mockReturnValue(selectMock() as any);
-      vi.mocked(db.update).mockReturnValue(updateMock() as any);
+      vi.mocked(db.select).mockReturnValue(selectMock() as unknown as MockSelectBuilder);
+      vi.mocked(db.update).mockReturnValue(updateMock() as unknown as MockUpdateBuilder);
 
       const formData = new FormData();
       formData.append("businessHours", JSON.stringify(mockHours));
@@ -174,7 +188,7 @@ describe("Business Hours Actions", () => {
     it("should return error for invalid form data", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
-      } as any);
+      } as MockAuthSession);
 
       const selectMock = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
@@ -183,7 +197,7 @@ describe("Business Hours Actions", () => {
           }),
         }),
       });
-      vi.mocked(db.select).mockReturnValue(selectMock() as any);
+      vi.mocked(db.select).mockReturnValue(selectMock() as unknown as MockSelectBuilder);
 
       const formData = new FormData();
 
@@ -196,7 +210,7 @@ describe("Business Hours Actions", () => {
     it("should return error for invalid JSON", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
-      } as any);
+      } as MockAuthSession);
 
       const selectMock = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
@@ -205,7 +219,7 @@ describe("Business Hours Actions", () => {
           }),
         }),
       });
-      vi.mocked(db.select).mockReturnValue(selectMock() as any);
+      vi.mocked(db.select).mockReturnValue(selectMock() as unknown as MockSelectBuilder);
 
       const formData = new FormData();
       formData.append("businessHours", "invalid json");
@@ -216,7 +230,7 @@ describe("Business Hours Actions", () => {
     });
 
     it("should return error for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any);
+      vi.mocked(auth).mockResolvedValue(null as MockAuthSession);
 
       const formData = new FormData();
       formData.append("businessHours", JSON.stringify({ schedule: {} }));
