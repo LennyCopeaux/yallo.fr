@@ -38,7 +38,7 @@ export function AppLoginButton() {
     <Button 
       variant="ghost" 
       size="sm" 
-      className="hidden sm:flex text-muted-foreground hover:text-foreground hover:bg-accent"
+      className="text-muted-foreground hover:text-foreground hover:bg-accent"
       asChild
     >
       <a href={href}>Connexion</a>

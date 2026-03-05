@@ -10,8 +10,8 @@ interface Message {
 
 const conversationMessages: Message[] = [
   { id: 1, speaker: "yallo", text: "Bonjour ! Yallo à votre service, que puis-je vous préparer aujourd'hui ?" },
-  { id: 2, speaker: "client", text: "Salut, je voudrais un kebab viande avec des frites s'il vous plaît." },
-  { id: 3, speaker: "yallo", text: "Parfait ! Quelle sauce souhaitez-vous ? Nous avons blanche, harissa, algérienne..." },
+  { id: 2, speaker: "client", text: "Salut, je voudrais un menu classique avec supplément fromage s'il vous plaît." },
+  { id: 3, speaker: "yallo", text: "Parfait ! Souhaitez-vous ajouter une boisson ou un dessert ?" },
 ];
 
 export function ConversationStream() {

@@ -54,6 +54,7 @@ async function getRestaurant(id: string) {
       stripeCustomerId: restaurants.stripeCustomerId,
       billingStartDate: restaurants.billingStartDate,
       vapiAssistantId: restaurants.vapiAssistantId,
+      vapiPhoneNumberId: restaurants.vapiPhoneNumberId,
       systemPrompt: restaurants.systemPrompt,
       menuContext: restaurants.menuContext,
       twilioPhoneNumber: restaurants.twilioPhoneNumber,

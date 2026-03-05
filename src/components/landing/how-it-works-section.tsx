@@ -15,7 +15,7 @@ export function HowItWorksSection() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="text-center mb-20"
       >
-        <Badge className="mb-4 px-4 py-1.5 bg-muted/50 dark:bg-muted/50 text-foreground border-border">
+        <Badge className="mb-4 px-4 py-1.5 bg-muted/50 text-foreground border-border">
           Simple comme bonjour
         </Badge>
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
@@ -224,12 +224,12 @@ export function HowItWorksSection() {
                   </div>
                   <div className="space-y-2 text-sm mb-4">
                     <div className="flex justify-between">
-                      <span className="text-foreground">1x Kebab Viande</span>
-                      <span className="text-muted-foreground">8.50€</span>
+                      <span className="text-foreground">1x Menu Classique</span>
+                      <span className="text-muted-foreground">9.50€</span>
                     </div>
-                    <div className="text-xs text-muted-foreground pl-4">→ Sauce blanche + harissa</div>
+                    <div className="text-xs text-muted-foreground pl-4">→ Supplément fromage</div>
                     <div className="flex justify-between">
-                      <span className="text-foreground">1x Frites</span>
+                      <span className="text-foreground">1x Accompagnement</span>
                       <span className="text-muted-foreground">3.00€</span>
                     </div>
                     <div className="flex justify-between">

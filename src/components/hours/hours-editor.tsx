@@ -227,7 +227,7 @@ export function HoursEditor({ initialHours }: Readonly<HoursEditorProps>) {
                           form.setValue(`schedule.${day.key}.hasTwoSlots`, false, { shouldValidate: true });
                         }}
                         disabled={isSaving}
-                        className={!hasTwoSlots ? "!bg-yellow-500 !text-yellow-950 !border-yellow-500 hover:!bg-yellow-600 dark:!bg-yellow-500 dark:!text-yellow-950" : ""}
+                        className={!hasTwoSlots ? "!bg-yellow-500 !text-yellow-950 !border-yellow-500 hover:!bg-yellow-600" : ""}
                       >
                         Un seul créneau
                       </Button>
@@ -239,7 +239,7 @@ export function HoursEditor({ initialHours }: Readonly<HoursEditorProps>) {
                           form.setValue(`schedule.${day.key}.hasTwoSlots`, true, { shouldValidate: true });
                         }}
                         disabled={isSaving}
-                        className={hasTwoSlots ? "!bg-yellow-500 !text-yellow-950 !border-yellow-500 hover:!bg-yellow-600 dark:!bg-yellow-500 dark:!text-yellow-950" : ""}
+                        className={hasTwoSlots ? "!bg-yellow-500 !text-yellow-950 !border-yellow-500 hover:!bg-yellow-600" : ""}
                       >
                         Midi et soir
                       </Button>

@@ -195,7 +195,7 @@ export function DashboardContent({ orders }: DashboardContentProps) {
               <TabsTrigger value="new" className="relative">
                 Nouvelles
                 {newOrders.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs bg-blue-500/20 text-blue-600 dark:text-blue-400">
+                  <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs bg-blue-500/20 text-blue-600">
                     {newOrders.length}
                   </Badge>
                 )}
@@ -203,7 +203,7 @@ export function DashboardContent({ orders }: DashboardContentProps) {
               <TabsTrigger value="preparing" className="relative">
                 En préparation
                 {preparingOrders.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs bg-orange-500/20 text-orange-600 dark:text-orange-400">
+                  <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs bg-orange-500/20 text-orange-600">
                     {preparingOrders.length}
                   </Badge>
                 )}
