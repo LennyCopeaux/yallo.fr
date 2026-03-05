@@ -72,9 +72,11 @@ export function UsersDataTable({ data }: UsersDataTableProps) {
 
   useEffect(() => {
     if (currentTab === "users") {
-      setSearchValue(searchParams.get("search") || "");
+      startTransition(() => {
+        setSearchValue(searchParams.get("search") || "");
+      });
     }
-  }, [currentTab, searchParams]);
+  }, [currentTab, searchParams, startTransition]);
 
   const updateFilters = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());

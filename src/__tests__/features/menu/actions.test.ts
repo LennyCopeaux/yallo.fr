@@ -59,16 +59,11 @@ describe("menu actions", () => {
         user: { id: "user-1", email: "test@example.com", role: "OWNER", mustChangePassword: false },
         expires: new Date().toISOString(),
       } as Session);
-      type MockSelectBuilder = {
-        from: () => {
-          where: () => Promise<Array<{ menuData: unknown }>>;
-        };
-      };
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([]),
         }),
-      } as unknown as MockSelectBuilder);
+      } as unknown as ReturnType<typeof db.select>);
 
       await expect(getMenuData()).rejects.toThrow("Restaurant non trouvé");
     });
@@ -91,7 +86,7 @@ describe("menu actions", () => {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([{ menuData: mockMenuData }]),
         }),
-      } as unknown as MockSelectBuilder);
+      } as unknown as ReturnType<typeof db.select>);
 
       const result = await getMenuData();
 
@@ -107,7 +102,7 @@ describe("menu actions", () => {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([{ menuData: null }]),
         }),
-      } as unknown as MockSelectBuilder);
+      } as unknown as ReturnType<typeof db.select>);
 
       const result = await getMenuData();
 
