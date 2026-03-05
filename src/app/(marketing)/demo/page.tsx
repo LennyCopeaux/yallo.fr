@@ -11,7 +11,7 @@ export const metadata = {
 };
 
 const phoneNumber = "0000000000";
-const formattedPhoneNumber = "+33 0 00 00 00 00";
+const formattedPhoneNumber = "+33 •• •• •• •• ••";
 
 const menuItems = [
   { name: "Menu Classique", price: "8€" },
@@ -40,10 +40,13 @@ export default function DemoPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
-              <div className="text-3xl font-bold text-foreground mb-2">
+              <div className="text-3xl font-bold text-foreground mb-2 blur-sm select-none">
                 {formattedPhoneNumber}
               </div>
-              <DemoCallButton phoneNumber={phoneNumber} />
+              <div className="text-sm text-muted-foreground mb-2 text-center">
+                Numéro de démonstration temporairement indisponible
+              </div>
+              <DemoCallButton phoneNumber={phoneNumber} disabled={true} />
             </CardContent>
           </Card>
 
@@ -124,8 +127,8 @@ export default function DemoPage() {
             <CardContent className="py-4 px-4">
               <div className="flex items-center justify-center">
                 <p className="text-sm text-muted-foreground text-center leading-relaxed">
-                  <strong className="text-foreground">Astuce :</strong> Essayez de commander avec des accents, 
-                  des modifications ou des demandes spéciales. L&apos;IA comprend tout !
+                  <strong className="text-foreground">Astuce :</strong> Essayez de commander avec des modifications 
+                  ou des demandes spéciales. L&apos;IA comprend tout !
                 </p>
               </div>
             </CardContent>
