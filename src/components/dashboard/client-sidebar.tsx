@@ -29,11 +29,7 @@ async function handleLogout(): Promise<void> {
   }
 }
 
-interface ClientSidebarProps {
-  readonly hasHubRise: boolean;
-}
-
-export function ClientSidebar({ }: ClientSidebarProps) {
+export function ClientSidebar() {
   const [expanded, setExpanded] = useState(true);
   const pathname = usePathname();
 
