@@ -82,7 +82,7 @@ export function FooterSection() {
                 <button 
                   type="button"
                   onClick={handleLoginClick}
-                  className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                  className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer"
                 >
                   Connexion
                 </button>

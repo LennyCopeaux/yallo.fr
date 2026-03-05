@@ -12,12 +12,12 @@ export function MarketingNavbar() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > SCROLL_THRESHOLD);
+      setScrolled(globalThis.window.scrollY > SCROLL_THRESHOLD);
     };
 
     handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    globalThis.window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => globalThis.window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
@@ -25,7 +25,7 @@ export function MarketingNavbar() {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
           ? "translate-y-0 opacity-100"
-          : "translate-y-0 opacity-60 hover:opacity-100"
+          : "-translate-y-full opacity-0 pointer-events-none"
       }`}
     >
       <div className="mx-4 mt-4 sm:mx-6 lg:mx-8">

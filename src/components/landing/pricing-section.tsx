@@ -211,7 +211,7 @@ export function PricingSection() {
               <div className="inline-flex items-center bg-muted rounded-full p-1 shadow-sm border border-border/50">
                 <button
                   onClick={() => setBillingCycle("monthly")}
-                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
                     billingCycle === "monthly"
                       ? "bg-white text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -221,7 +221,7 @@ export function PricingSection() {
                 </button>
                 <button
                   onClick={() => setBillingCycle("annual")}
-                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-1.5 ${
+                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                     billingCycle === "annual"
                       ? "bg-white text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -273,7 +273,7 @@ export function PricingSection() {
           {PLANS.map((plan, index) => (
             <button
               key={`dot-${plan.name}`}
-              className={`transition-all rounded-full ${
+              className={`transition-all rounded-full cursor-pointer ${
                 selectedIndex === index
                   ? "w-8 h-2 bg-primary"
                   : "w-2 h-2 bg-muted-foreground/30"
