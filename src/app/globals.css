@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-aeonik), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   
   --color-background: hsl(var(--background));
@@ -24,30 +24,21 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   
-  /* Brand Yallo Yellow */
   --color-brand: hsl(var(--brand));
   --color-brand-foreground: hsl(var(--brand-foreground));
   
-  /* Decorative Pattern Color (dots, grids, watermarks) */
   --color-pattern: var(--pattern);
 }
 
-/* ============================================
-   LIGHT MODE - Clean Professional Dashboard
-   ============================================ */
 :root {
-  /* Background: Warm white paper */
   --background: 0 0% 100%;
   --foreground: 240 10% 3.9%;
-  /* Card: Slightly off-white */
   --card: 0 0% 100%;
   --card-foreground: 240 10% 3.9%;
   --popover: 0 0% 100%;
   --popover-foreground: 240 10% 3.9%;
-  /* Primary: Yallo Yellow #f2bf26 */
   --primary: 45 89% 55%;
   --primary-foreground: 0 0% 0%;
-  /* Secondary: Light gray */
   --secondary: 240 4.8% 95.9%;
   --secondary-foreground: 240 5.9% 10%;
   --muted: 240 4.8% 95.9%;
@@ -56,20 +47,16 @@
   --accent-foreground: 240 5.9% 10%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 100%;
-  /* Borders: Light subtle */
   --border: 240 5.9% 90%;
   --input: 240 5.9% 90%;
   --ring: 45 89% 55%;
   --radius: 0.625rem;
   
-  /* Brand Yallo Yellow */
   --brand: 45 89% 55%;
   --brand-foreground: 0 0% 0%;
   
-  /* Grid */
   --grid-color: rgba(0, 0, 0, 0.02);
   
-  /* Decorative Pattern Color (dots, grids, watermarks) */
   --pattern: #cfcfcf;
   --dot-opacity: 0.45;
   --yallo-watermark-opacity: 0.12;
@@ -77,66 +64,13 @@
   color-scheme: light;
 }
 
-/* ============================================
-   DARK MODE - Deep Dark Tech (Vapi.ai style)
-   ============================================ */
-.dark {
-  /* Background: Deep black #0a0a0a */
-  --background: 0 0% 4%;
-  --foreground: 0 0% 98%;
-  /* Card: Slightly lighter #111111 */
-  --card: 0 0% 7%;
-  --card-foreground: 0 0% 98%;
-  --popover: 0 0% 7%;
-  --popover-foreground: 0 0% 98%;
-  /* Primary: Yallo Yellow #f2bf26 */
-  --primary: 45 89% 55%;
-  --primary-foreground: 0 0% 0%;
-  /* Secondary: Dark zinc */
-  --secondary: 0 0% 12%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 12%;
-  --muted-foreground: 0 0% 55%;
-  --accent: 0 0% 12%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62% 50%;
-  --destructive-foreground: 0 0% 100%;
-  /* Borders: Very dark, subtle */
-  --border: 0 0% 15%;
-  --input: 0 0% 15%;
-  --ring: 45 89% 55%;
-  
-  /* Brand Yallo Yellow */
-  --brand: 45 89% 55%;
-  --brand-foreground: 0 0% 0%;
-  
-  /* Grid */
-  --grid-color: rgba(255, 255, 255, 0.02);
-  
-  /* Decorative Pattern Color (dots, grids, watermarks) */
-  --pattern: #cfcfcf;
-  --dot-opacity: 0.12;
-  --yallo-watermark-opacity: 0.03;
-  
-  color-scheme: dark;
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
-/* Custom animations */
-@keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(3deg); }
-}
-
-@keyframes blob {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(15px, -20px) scale(1.02); }
-  50% { transform: translate(-8px, 15px) scale(0.98); }
-  75% { transform: translate(-15px, -8px) scale(1.01); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
+.animate-marquee {
+  animation: marquee 40s linear infinite;
 }
 
 @keyframes pulse-dot {
@@ -149,31 +83,10 @@
   100% { transform: translateX(100%); }
 }
 
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.animate-blob {
-  animation: blob 25s ease-in-out infinite;
-}
-
-.animate-blob-delay-2 {
-  animation: blob 25s ease-in-out infinite 3s;
-}
-
-.animate-blob-delay-4 {
-  animation: blob 25s ease-in-out infinite 6s;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 5s ease-in-out infinite;
-}
-
 .animate-pulse-dot {
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
-/* Glassmorphism utilities - Works in both modes */
 .glass {
   background: hsl(var(--card) / 0.6);
   backdrop-filter: blur(16px);
@@ -188,7 +101,6 @@
   border: 1px solid hsl(var(--border) / 0.6);
 }
 
-/* Gradient text - Yallo Yellow (adapts to theme) */
 .gradient-text {
   background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
   -webkit-background-clip: text;
@@ -203,7 +115,6 @@
   background-clip: text;
 }
 
-/* Button shine effect */
 .btn-shine {
   position: relative;
   overflow: hidden;
@@ -229,25 +140,14 @@
   animation: shine 0.6s ease-in-out;
 }
 
-/* Glow effect for primary accent */
-.glow-primary {
-  box-shadow: 0 0 40px hsl(var(--primary) / 0.3);
-}
-
 .glow-primary-subtle {
   box-shadow: 0 0 60px hsl(var(--primary) / 0.15);
-}
-
-/* Legacy aliases */
-.glow-yellow {
-  box-shadow: 0 0 40px hsl(var(--primary) / 0.3);
 }
 
 .glow-yellow-subtle {
   box-shadow: 0 0 60px hsl(var(--primary) / 0.15);
 }
 
-/* Card hover with primary border */
 .card-hover-primary {
   transition: all 0.3s ease;
 }
@@ -256,16 +156,6 @@
   border-color: hsl(var(--primary) / 0.3);
 }
 
-/* Legacy alias */
-.card-hover-yellow {
-  transition: all 0.3s ease;
-}
-
-.card-hover-yellow:hover {
-  border-color: hsl(var(--primary) / 0.3);
-}
-
-/* Status badge animations */
 .status-online {
   position: relative;
 }
@@ -283,7 +173,6 @@
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
-/* Noise texture overlay */
 .noise {
   position: relative;
 }
@@ -298,17 +187,14 @@
   border-radius: inherit;
 }
 
-/* Selection color */
 ::selection {
   background: hsl(var(--primary) / 0.3);
 }
 
-/* Smooth scrolling */
 html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar - Adapts to theme */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -327,24 +213,15 @@ html {
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* Focus ring - Primary */
 .focus-ring-primary:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary));
 }
 
-/* Legacy alias */
-.focus-ring-yellow:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary));
-}
-
-/* Table row hover - subtle */
 .table-row-hover:hover {
   background: hsl(var(--primary) / 0.02);
 }
 
-/* Sidebar active state */
 .sidebar-active {
   background: hsl(var(--primary) / 0.1);
   color: hsl(var(--primary));
@@ -360,7 +237,6 @@ html {
   background: hsl(var(--primary));
 }
 
-/* Hide scrollbar utility */
 .no-scrollbar,
 .scrollbar-hide {
   -ms-overflow-style: none;
@@ -376,7 +252,6 @@ html {
    ORDER TICKET STYLES
    ============================================ */
 
-/* Receipt paper effect - Light mode */
 .ticket-paper {
   background: linear-gradient(180deg, #fefefe 0%, #faf9f6 100%);
   box-shadow: 
@@ -384,15 +259,6 @@ html {
     0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
-/* Receipt paper effect - Dark mode */
-.dark .ticket-paper {
-  background: linear-gradient(180deg, hsl(0 0% 10%) 0%, hsl(0 0% 8%) 100%);
-  box-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.3),
-    0 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-/* Zigzag bottom border for ticket effect */
 .ticket-edge {
   position: relative;
 }
@@ -404,28 +270,9 @@ html {
   left: 0;
   right: 0;
   height: 8px;
-  background: linear-gradient(135deg, hsl(var(--card)) 25%, transparent 25%) -8px 0,
-              linear-gradient(225deg, hsl(var(--card)) 25%, transparent 25%) -8px 0,
-              linear-gradient(315deg, hsl(var(--card)) 25%, transparent 25%),
-              linear-gradient(45deg, hsl(var(--card)) 25%, transparent 25%);
-  background-size: 16px 16px;
-  background-color: transparent;
-}
-
-/* Light mode zigzag */
-:root .ticket-edge::after {
   background: linear-gradient(135deg, #faf9f6 25%, transparent 25%) -8px 0,
               linear-gradient(225deg, #faf9f6 25%, transparent 25%) -8px 0,
               linear-gradient(315deg, #faf9f6 25%, transparent 25%),
               linear-gradient(45deg, #faf9f6 25%, transparent 25%);
-  background-size: 16px 16px;
-}
-
-/* Dark mode zigzag */
-.dark .ticket-edge::after {
-  background: linear-gradient(135deg, hsl(0 0% 8%) 25%, transparent 25%) -8px 0,
-              linear-gradient(225deg, hsl(0 0% 8%) 25%, transparent 25%) -8px 0,
-              linear-gradient(315deg, hsl(0 0% 8%) 25%, transparent 25%),
-              linear-gradient(45deg, hsl(0 0% 8%) 25%, transparent 25%);
   background-size: 16px 16px;
 }
