@@ -163,7 +163,7 @@ export function PricingSection() {
           ))}
         </div>
 
-        <Link href={`/contact?subject=plan-${plan.name.toLowerCase()}`} className="mt-auto">
+        <Link href={`/contact?subject=plan-${plan.name.toLowerCase()}`} className="mt-auto cursor-pointer">
           <Button
             className={`w-full h-12 font-semibold transition-all ${
               plan.popular
@@ -211,7 +211,7 @@ export function PricingSection() {
               <div className="inline-flex items-center bg-muted rounded-full p-1 shadow-sm border border-border/50">
                 <button
                   onClick={() => setBillingCycle("monthly")}
-                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-all cursor-pointer ${
                     billingCycle === "monthly"
                       ? "bg-white text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -221,13 +221,13 @@ export function PricingSection() {
                 </button>
                 <button
                   onClick={() => setBillingCycle("annual")}
-                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-1.5 ${
+                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                     billingCycle === "annual"
                       ? "bg-white text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  Annuel
+                  Annuel{" "}
                   <span className="text-[11px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-semibold">
                     -35%
                   </span>
@@ -273,7 +273,7 @@ export function PricingSection() {
           {PLANS.map((plan, index) => (
             <button
               key={`dot-${plan.name}`}
-              className={`transition-all rounded-full ${
+              className={`transition-all rounded-full cursor-pointer ${
                 selectedIndex === index
                   ? "w-8 h-2 bg-primary"
                   : "w-2 h-2 bg-muted-foreground/30"
@@ -303,7 +303,7 @@ export function PricingSection() {
                 <span className="font-semibold text-foreground">Enterprise</span> sur mesure.
               </p>
             </div>
-            <Link href="/contact?subject=enterprise">
+            <Link href="/contact?subject=enterprise" className="cursor-pointer">
               <Button
                 variant="outline"
                 className="w-full md:w-auto border-primary/50 text-foreground hover:bg-primary/10 hover:border-primary transition-all"

@@ -2,10 +2,10 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { OrderTicket, type Order } from "@/components/orders";
-import { updateOrderStatus, simulateOrder } from "@/features/orders/actions";
+import { updateOrderStatus } from "@/features/orders/actions";
 import { type OrderStatus } from "@/db/schema";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -16,7 +16,6 @@ interface OrdersGridProps {
 export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
   const [orders, setOrders] = useState(initialOrders);
   const [, startTransition] = useTransition();
-  const [isSimulating, setIsSimulating] = useState(false);
   const router = useRouter();
 
   // Synchroniser les orders avec initialOrders quand ils changent (filtres)
@@ -42,20 +41,6 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
     });
   };
 
-  const handleSimulate = async () => {
-    setIsSimulating(true);
-    try {
-      const result = await simulateOrder();
-      toast.success(`Commande ${result.orderNumber} créée !`);
-      router.refresh();
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Erreur lors de la simulation";
-      toast.error(message);
-    } finally {
-      setIsSimulating(false);
-    }
-  };
-
   const handleRefresh = () => {
     router.refresh();
   };
@@ -79,22 +64,9 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
           <span className="text-5xl">📋</span>
         </div>
         <h3 className="text-xl font-semibold mb-2 text-center">Aucune commande</h3>
-        <p className="text-muted-foreground text-center max-w-md mb-6">
+        <p className="text-muted-foreground text-center max-w-md">
           Les commandes prises par votre assistant vocal apparaîtront ici en temps réel.
         </p>
-        <Button onClick={handleSimulate} disabled={isSimulating} size="lg">
-          {isSimulating ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Création en cours...
-            </>
-          ) : (
-            <>
-              <Plus className="w-4 h-4 mr-2" />
-              Simuler une commande
-            </>
-          )}
-        </Button>
       </div>
     );
   }
@@ -112,16 +84,6 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
-        <Button onClick={handleSimulate} disabled={isSimulating} size="sm">
-          {isSimulating ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              <Plus className="w-4 h-4 mr-1" />
-              Simuler
-            </>
-          )}
-        </Button>
       </div>
 
       {/* Orders Grid */}

@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 
 function getHomeUrl(): string {
-  if (typeof globalThis.window === "undefined") {
+  if (globalThis.window === undefined) {
     return "/";
   }
   

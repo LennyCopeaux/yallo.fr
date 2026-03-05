@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { MockedFunction } from "vitest";
-import { getUserRestaurant, getOrders, updateOrderStatus, simulateOrder } from "@/features/orders/actions";
+import { getUserRestaurant, getOrders, updateOrderStatus } from "@/features/orders/actions";
 import { db } from "@/db";
 import { auth } from "@/lib/auth/auth";
 import type { Session } from "next-auth";
@@ -173,50 +173,6 @@ describe("Orders Actions Integration", () => {
       vi.mocked(db.query.orders.findFirst).mockResolvedValue(undefined);
 
       await expect(updateOrderStatus("order-123", "PREPARING")).rejects.toThrow("Commande non trouvée");
-    });
-  });
-
-  describe("simulateOrder", () => {
-    it("should create simulated order successfully", async () => {
-      authMock.mockResolvedValue({
-        user: { id: "user-123", email: "test@test.com" },
-      } as unknown as Session);
-
-      const mockRestaurant = { id: "rest-123", ownerId: "user-123" };
-      const mockOrder = { id: "order-123", orderNumber: "#1234" };
-
-      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as unknown as SelectRestaurant | undefined);
-
-      const insertMock = vi.fn().mockReturnValue({
-        values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([mockOrder]),
-        }),
-      });
-      vi.mocked(db.insert).mockReturnValueOnce(insertMock() as unknown as ReturnType<typeof db.insert>).mockReturnValueOnce({
-        values: vi.fn().mockResolvedValue(undefined),
-      } as unknown as ReturnType<typeof db.insert>);
-
-      const result = await simulateOrder();
-
-      expect(result.success).toBe(true);
-      expect(result.orderNumber).toBeDefined();
-      expect(db.insert).toHaveBeenCalledTimes(2);
-    });
-
-    it("should throw error for unauthenticated user", async () => {
-      authMock.mockResolvedValue(null);
-
-      await expect(simulateOrder()).rejects.toThrow("Non autorisé");
-    });
-
-    it("should throw error if restaurant not found", async () => {
-      authMock.mockResolvedValue({
-        user: { id: "user-123", email: "test@test.com" },
-      } as unknown as Session);
-
-      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(undefined);
-
-      await expect(simulateOrder()).rejects.toThrow("Restaurant non trouvé");
     });
   });
 });

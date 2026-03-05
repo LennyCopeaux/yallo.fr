@@ -29,22 +29,22 @@ export function FooterSection() {
             <h4 className="font-semibold text-foreground mb-4">Produit</h4>
             <ul className="space-y-3">
               <li>
-                <Link href="/#how-it-works" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                <Link href="/#how-it-works" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer">
                   Comment ça marche
                 </Link>
               </li>
               <li>
-                <Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                <Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer">
                   Fonctionnalités
                 </Link>
               </li>
               <li>
-                <Link href="/#pricing" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                <Link href="/#pricing" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer">
                   Tarification
                 </Link>
               </li>
               <li>
-                <Link href="/#faq" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                <Link href="/#faq" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer">
                   FAQ
                 </Link>
               </li>
@@ -54,7 +54,7 @@ export function FooterSection() {
             <h4 className="font-semibold text-foreground mb-4">Légal</h4>
             <ul className="space-y-3">
               <li>
-                <Link href="/legal" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                <Link href="/legal" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer">
                   Mentions légales
                 </Link>
               </li>
@@ -64,12 +64,12 @@ export function FooterSection() {
             <h4 className="font-semibold text-foreground mb-4">Contact</h4>
             <ul className="space-y-3">
               <li>
-                <Link href="/contact?subject=support" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                <Link href="/contact?subject=support" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer">
                   Support Technique
                 </Link>
               </li>
               <li>
-                <Link href="/contact?subject=autre" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                <Link href="/contact?subject=autre" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer">
                   Devenir Partenaire
                 </Link>
               </li>
@@ -82,13 +82,13 @@ export function FooterSection() {
                 <button 
                   type="button"
                   onClick={handleLoginClick}
-                  className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                  className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer"
                 >
                   Connexion
                 </button>
               </li>
               <li>
-                <Link href="/guide" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                <Link href="/guide" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer">
                   Guide de démarrage
                 </Link>
               </li>
