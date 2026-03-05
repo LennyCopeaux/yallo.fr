@@ -35,23 +35,23 @@ export function MarketingNavbar() {
               <MarketingLogoLink />
 
               <div className="hidden md:flex items-center gap-8">
-                <Link href="/#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer">
                   Comment ca marche
                 </Link>
-                <Link href="/#features" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/#features" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer">
                   Fonctionnalités
                 </Link>
-                <Link href="/#pricing" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/#pricing" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer">
                   Tarification
                 </Link>
-                <Link href="/#faq" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/#faq" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer">
                   FAQ
                 </Link>
               </div>
 
               <div className="flex items-center gap-2 sm:gap-3">
                 <AppLoginButton />
-                <Link href="/demo">
+                <Link href="/demo" className="cursor-pointer">
                   <Button size="sm" className="bg-primary text-black hover:bg-primary/90 font-semibold">
                     Démo gratuite
                   </Button>

@@ -74,7 +74,7 @@ export function FaqSection() {
                   <p className="text-sm text-muted-foreground mb-3">Notre équipe vous répond sous 24h.</p>
                   <a 
                     href="mailto:support@yallo.com" 
-                    className="text-primary hover:text-primary/80 font-medium text-sm transition-colors inline-flex items-center gap-1.5"
+                    className="text-primary hover:text-primary/80 font-medium text-sm transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     support@yallo.com
                     <ArrowRight className="w-3.5 h-3.5" />

@@ -163,7 +163,7 @@ export function PricingSection() {
           ))}
         </div>
 
-        <Link href={`/contact?subject=plan-${plan.name.toLowerCase()}`} className="mt-auto">
+        <Link href={`/contact?subject=plan-${plan.name.toLowerCase()}`} className="mt-auto cursor-pointer">
           <Button
             className={`w-full h-12 font-semibold transition-all ${
               plan.popular
@@ -303,7 +303,7 @@ export function PricingSection() {
                 <span className="font-semibold text-foreground">Enterprise</span> sur mesure.
               </p>
             </div>
-            <Link href="/contact?subject=enterprise">
+            <Link href="/contact?subject=enterprise" className="cursor-pointer">
               <Button
                 variant="outline"
                 className="w-full md:w-auto border-primary/50 text-foreground hover:bg-primary/10 hover:border-primary transition-all"

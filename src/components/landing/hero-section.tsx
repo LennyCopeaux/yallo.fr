@@ -61,7 +61,7 @@ export function HeroSection() {
             Découvrir
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
-          <Link href="/demo">
+          <Link href="/demo" className="cursor-pointer">
             <Button
               size="lg"
               variant="outline"
