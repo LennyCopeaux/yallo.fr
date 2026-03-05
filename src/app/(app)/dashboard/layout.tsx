@@ -1,5 +1,4 @@
-import { ModeToggle } from "@/components/navigation";
-import { ClientMenu } from "@/components/dashboard/client-menu";
+import { ClientSidebar } from "@/components/dashboard/client-sidebar";
 import { getUserRestaurant } from "@/features/orders/actions";
 
 export default async function DashboardLayout({
@@ -11,17 +10,10 @@ export default async function DashboardLayout({
   const hasHubRise = !!(restaurant?.hubriseLocationId && restaurant?.hubriseAccessToken);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="fixed top-4 right-4 z-50">
-        <ModeToggle />
-      </div>
-
-      <ClientMenu hasHubRise={hasHubRise} />
-
-      <main>
-        <div className="min-h-screen">
-          {children}
-        </div>
+    <div className="flex h-screen overflow-hidden bg-background">
+      <ClientSidebar hasHubRise={hasHubRise} />
+      <main className="flex-1 overflow-y-auto">
+        {children}
       </main>
     </div>
   );
