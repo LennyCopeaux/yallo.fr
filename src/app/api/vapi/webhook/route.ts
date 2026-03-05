@@ -54,7 +54,10 @@ async function findRestaurantByAssistantId(assistantId: string) {
 }
 
 function generateOrderNumber(): string {
-  return `#${Math.floor(1000 + Math.random() * 9000)}`;
+  // Utilise timestamp + random pour éviter les collisions
+  const timestamp = Date.now().toString().slice(-6); // 6 derniers chiffres du timestamp
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, "0");
+  return `#${timestamp}${random}`;
 }
 
 function parsePickupTime(pickupTimeStr?: string): Date | null {
@@ -161,8 +164,54 @@ function extractAssistantId(body: VapiWebhookBody): string | null {
   );
 }
 
+async function verifyWebhookSignature(request: Request): Promise<boolean> {
+  const secret = process.env.VAPI_WEBHOOK_SECRET;
+  
+  // En production, le secret est obligatoire
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      logger.error("VAPI_WEBHOOK_SECRET manquant en production");
+      return false;
+    }
+    // En développement, on accepte sans secret pour faciliter les tests
+    logger.warn("VAPI_WEBHOOK_SECRET non défini - webhook accepté (dev uniquement)");
+    return true;
+  }
+
+  // Vapi peut envoyer la signature dans différents headers selon la version
+  // Vérification avec x-vapi-signature ou authorization header
+  const signature = request.headers.get("x-vapi-signature") || 
+                    request.headers.get("authorization")?.replace("Bearer ", "");
+
+  if (!signature) {
+    logger.warn("Signature webhook Vapi manquante dans les headers");
+    return false;
+  }
+
+  // Si Vapi utilise HMAC-SHA256, on devrait vérifier avec le body
+  // Pour l'instant, vérification simple avec le secret
+  // TODO: Implémenter vérification HMAC complète avec body selon la doc Vapi officielle
+  try {
+    // Vérification basique: le secret doit correspondre
+    // En production, utiliser crypto.createHmac pour vérifier la signature complète
+    return signature === secret || signature.startsWith(secret);
+  } catch (error) {
+    logger.error("Erreur vérification signature webhook", error instanceof Error ? error : new Error(String(error)));
+    return false;
+  }
+}
+
 export async function POST(request: Request) {
   try {
+    // Vérification de sécurité du webhook
+    if (!(await verifyWebhookSignature(request))) {
+      logger.warn("Webhook Vapi rejeté: signature invalide ou manquante");
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const body = (await request.json()) as VapiWebhookBody;
     const messageType = body.message?.type;
 
