@@ -148,7 +148,8 @@ describe("generateSystemPrompt", () => {
 
     expect(prompt).toContain("Tu es Yallo");
     expect(prompt).toContain("PRISE DE COMMANDE");
-    expect(prompt).toContain("STYLE DE COMMUNICATION");
+    expect(prompt).toContain("TON ULTRA-ACTIF");
+    expect(prompt).toContain("VALIDATION");
     expect(prompt).toContain("Menu");
     expect(prompt).toContain("Horaires");
   });
