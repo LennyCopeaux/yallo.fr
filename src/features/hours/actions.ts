@@ -34,19 +34,6 @@ export type ActionResult = {
   data?: unknown;
 };
 
-const DEFAULT_BUSINESS_HOURS = {
-  timezone: "Europe/Paris",
-  schedule: {
-    monday: { open: "11:00", close: "22:00" },
-    tuesday: { open: "11:00", close: "22:00" },
-    wednesday: { open: "11:00", close: "22:00" },
-    thursday: { open: "11:00", close: "22:00" },
-    friday: { open: "11:00", close: "23:00" },
-    saturday: { open: "11:00", close: "23:00" },
-    sunday: { open: "11:00", close: "22:00" },
-  },
-};
-
 export async function getBusinessHours(): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) return { success: false, error: "Non autorisé" };

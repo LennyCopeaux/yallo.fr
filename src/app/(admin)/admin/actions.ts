@@ -515,46 +515,54 @@ export async function updateVapiAssistant(id: string): Promise<ActionResult> {
   }
 }
 
+async function deleteVapiPhoneNumberIfExists(restaurantId: string, phoneNumberId: string | null): Promise<void> {
+  if (!phoneNumberId) return;
+  try {
+    const { deleteVapiPhoneNumber } = await import("@/lib/services/vapi");
+    await deleteVapiPhoneNumber(phoneNumberId);
+  } catch (phoneError) {
+    logger.warn("Impossible de supprimer le numéro Vapi (on continue la suppression de l'assistant)", {
+      restaurantId,
+      error: phoneError instanceof Error ? phoneError.message : String(phoneError),
+    });
+  }
+}
+
+function canDeleteVapiAssistant(
+  session: { user: { id: string; role: string } } | null,
+  restaurant: { ownerId: string | null }
+): boolean {
+  if (!session?.user) return false;
+  if (session.user.role === "ADMIN") return true;
+  return session.user.role === "OWNER" && restaurant.ownerId === session.user.id;
+}
+
 export async function deleteVapiAssistant(id: string): Promise<ActionResult> {
   "use server";
 
   const session = await auth();
-  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "OWNER")) {
+  const [restaurant] = await db
+    .select()
+    .from(restaurants)
+    .where(eq(restaurants.id, id))
+    .limit(1);
+
+  if (!restaurant) {
+    return { success: false, error: "Restaurant non trouvé" };
+  }
+
+  if (!canDeleteVapiAssistant(session, restaurant)) {
     return { success: false, error: "Non autorisé" };
   }
 
+  if (!restaurant.vapiAssistantId) {
+    return { success: false, error: "Aucun assistant Vapi configuré pour ce restaurant" };
+  }
+
   try {
-    const [restaurant] = await db
-      .select()
-      .from(restaurants)
-      .where(eq(restaurants.id, id))
-      .limit(1);
+    await deleteVapiPhoneNumberIfExists(id, restaurant.vapiPhoneNumberId);
 
-    if (!restaurant) {
-      return { success: false, error: "Restaurant non trouvé" };
-    }
-
-    if (session.user.role === "OWNER" && restaurant.ownerId !== session.user.id) {
-      return { success: false, error: "Non autorisé" };
-    }
-
-    if (!restaurant.vapiAssistantId) {
-      return { success: false, error: "Aucun assistant Vapi configuré pour ce restaurant" };
-    }
-
-    const { deleteVapiAssistant: deleteAssistant, deleteVapiPhoneNumber } = await import("@/lib/services/vapi");
-
-    if (restaurant.vapiPhoneNumberId) {
-      try {
-        await deleteVapiPhoneNumber(restaurant.vapiPhoneNumberId);
-      } catch (phoneError) {
-        logger.warn("Impossible de supprimer le numéro Vapi (on continue la suppression de l'assistant)", {
-          restaurantId: id,
-          error: phoneError instanceof Error ? phoneError.message : String(phoneError),
-        });
-      }
-    }
-
+    const { deleteVapiAssistant: deleteAssistant } = await import("@/lib/services/vapi");
     await deleteAssistant(restaurant.vapiAssistantId);
 
     await db

@@ -48,7 +48,6 @@ const STATUS_CONFIG = {
   },
 } as const;
 
-type StatusConfigType = typeof STATUS_CONFIG[KitchenStatus];
 type StatusType = "CALM" | "NORMAL" | "RUSH";
 
 interface StatusDelayConfigProps {

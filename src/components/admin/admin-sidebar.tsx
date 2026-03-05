@@ -23,15 +23,15 @@ const navigation = [
 
 async function handleLogout(): Promise<void> {
   await signOut({ redirect: false });
-  if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
-    const port = window.location.port || "3000";
+  if (typeof globalThis.window !== "undefined") {
+    const hostname = globalThis.window.location.hostname;
+    const port = globalThis.window.location.port || "3000";
     if (hostname.includes("localhost")) {
-      window.location.href = `http://app.localhost:${port}/login`;
+      globalThis.window.location.href = `http://app.localhost:${port}/login`;
     } else if (hostname.includes("staging")) {
-      window.location.href = "https://app.staging.yallo.fr/login";
+      globalThis.window.location.href = "https://app.staging.yallo.fr/login";
     } else {
-      window.location.href = "https://app.yallo.fr/login";
+      globalThis.window.location.href = "https://app.yallo.fr/login";
     }
   }
 }

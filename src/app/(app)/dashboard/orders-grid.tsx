@@ -13,7 +13,7 @@ interface OrdersGridProps {
   initialOrders: Order[];
 }
 
-export function OrdersGrid({ initialOrders }: OrdersGridProps) {
+export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
   const [orders, setOrders] = useState(initialOrders);
   const [, startTransition] = useTransition();
   const [isSimulating, setIsSimulating] = useState(false);

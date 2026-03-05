@@ -57,7 +57,7 @@ interface UsersDataTableProps {
   data: User[];
 }
 
-export function UsersDataTable({ data }: UsersDataTableProps) {
+export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();

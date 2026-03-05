@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { cn } from "@/lib/utils";
+import { cn, getAppUrl } from "@/lib/utils";
 import {
   LayoutDashboard,
   Utensils,
@@ -14,7 +14,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { getAppUrl } from "@/lib/utils";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -24,8 +23,8 @@ const navigation = [
 
 async function handleLogout(): Promise<void> {
   await signOut({ redirect: false });
-  if (typeof window !== "undefined") {
-    window.location.href = getAppUrl("/login");
+  if (typeof globalThis.window !== "undefined") {
+    globalThis.window.location.href = getAppUrl("/login");
   }
 }
 

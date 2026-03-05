@@ -47,10 +47,10 @@ interface DashboardTabsProps {
   defaultTab?: string;
 }
 
-export function DashboardTabs({ restaurants, users, owners, totalOrders, defaultTab = "restaurants" }: DashboardTabsProps) {
+export function DashboardTabs({ restaurants, users, owners, totalOrders, defaultTab = "restaurants" }: Readonly<DashboardTabsProps>) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const urlTab = searchParams.get("tab") || defaultTab;
   const [activeTab, setActiveTab] = useState(urlTab);
 

@@ -13,13 +13,11 @@ import * as React from "react";
 
 interface ResetPasswordEmailProps {
   email: string;
-  resetToken: string;
   resetUrl: string;
 }
 
 export const ResetPasswordEmail = ({
   email,
-  resetToken,
   resetUrl,
 }: ResetPasswordEmailProps) => {
   return (

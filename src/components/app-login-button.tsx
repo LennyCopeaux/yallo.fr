@@ -1,15 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useSyncExternalStore, useMemo } from "react";
+import { useSyncExternalStore } from "react";
 
 function getLoginUrl(): string {
-  if (typeof window === "undefined") {
+  if (typeof globalThis.window === "undefined") {
     return "/login";
   }
   
-  const hostname = window.location.hostname;
-  const port = window.location.port || "3000";
+  const hostname = globalThis.window.location.hostname;
+  const port = globalThis.window.location.port || "3000";
   
   if (hostname === "localhost") {
     return `http://app.localhost:${port}/login`;

@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { MockedFunction } from "vitest";
 import { getKitchenStatus, updateKitchenStatus, updateStatusSettings, type StatusSettings } from "@/features/kitchen-status/actions";
 import { db } from "@/db";
-import { restaurants } from "@/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { DEFAULT_STATUS_SETTINGS } from "@/features/kitchen-status/constants";
 import type { Session } from "next-auth";

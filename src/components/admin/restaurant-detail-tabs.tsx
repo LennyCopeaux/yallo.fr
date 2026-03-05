@@ -43,10 +43,10 @@ interface RestaurantDetailTabsProps {
   owners: Owner[];
 }
 
-export function RestaurantDetailTabs({ restaurant, owners }: RestaurantDetailTabsProps) {
+export function RestaurantDetailTabs({ restaurant, owners }: Readonly<RestaurantDetailTabsProps>) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const urlTab = searchParams.get("tab") || "general";
   const [activeTab, setActiveTab] = useState(urlTab);
 

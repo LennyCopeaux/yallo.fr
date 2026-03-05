@@ -1,4 +1,4 @@
-import { restaurants, MenuData } from "@/db/schema";
+import { restaurants } from "@/db/schema";
 import { fetchHubriseCatalog, HubriseError } from "./hubrise";
 import { logger } from "@/lib/logger";
 
@@ -6,7 +6,7 @@ type Restaurant = typeof restaurants.$inferSelect;
 
 async function getMenuStructure(
   restaurant: Restaurant
-): Promise<MenuData | unknown> {
+): Promise<unknown> {
   if (restaurant.hubriseAccessToken && restaurant.hubriseLocationId) {
     try {
       const menuJson = await fetchHubriseCatalog(

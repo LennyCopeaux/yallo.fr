@@ -34,7 +34,7 @@ interface AddRestaurantDialogProps {
   owners: Owner[];
 }
 
-export function AddRestaurantDialog({ owners }: AddRestaurantDialogProps) {
+export function AddRestaurantDialog({ owners }: Readonly<AddRestaurantDialogProps>) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedOwnerId, setSelectedOwnerId] = useState<string>("");

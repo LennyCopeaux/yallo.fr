@@ -15,7 +15,7 @@ export function DotPattern({
   dotSize = 1,
   spacing = 20,
   withVignette = true,
-}: DotPatternProps) {
+}: Readonly<DotPatternProps>) {
   // useId() generates stable IDs across server/client renders
   const patternId = useId();
 
@@ -59,7 +59,7 @@ export function DotPattern({
 }
 
 // Preset variations - More visible dots (adaptive via CSS classes)
-export function DotPatternHero({ className }: { className?: string }) {
+export function DotPatternHero({ className }: Readonly<{ className?: string }>) {
   return (
     <DotPattern
       className={className}
@@ -70,7 +70,7 @@ export function DotPatternHero({ className }: { className?: string }) {
   );
 }
 
-export function DotPatternSubtle({ className }: { className?: string }) {
+export function DotPatternSubtle({ className }: Readonly<{ className?: string }>) {
   return (
     <DotPattern
       className={className}

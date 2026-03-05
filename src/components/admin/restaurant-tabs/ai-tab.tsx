@@ -35,7 +35,38 @@ interface AITabProps {
   restaurant: Restaurant;
 }
 
-export function AITab({ restaurant }: AITabProps) {
+function getAIStatusText(
+  isFullyOperational: boolean,
+  hasVapiId: boolean,
+  hasPhoneLinked: boolean,
+  hasTwilioNumber: boolean,
+  twilioPhoneNumber: string | null
+): { title: string; description: string } {
+  if (isFullyOperational) {
+    return {
+      title: "IA Opérationnelle",
+      description: `Agent IA actif sur le ${twilioPhoneNumber}`,
+    };
+  }
+  if (hasVapiId && !hasPhoneLinked) {
+    return {
+      title: "IA partiellement configurée",
+      description: "L'assistant existe mais aucun numéro de téléphone n'est lié",
+    };
+  }
+  if (!hasTwilioNumber) {
+    return {
+      title: "IA Non configurée",
+      description: "Renseignez d'abord le numéro Twilio dans l'onglet Téléphonie",
+    };
+  }
+  return {
+    title: "IA Non configurée",
+    description: "Créez l'agent IA pour activer la prise de commande vocale",
+  };
+}
+
+export function AITab({ restaurant }: Readonly<AITabProps>) {
   const router = useRouter();
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [isGeneratingMenuJson, setIsGeneratingMenuJson] = useState(false);
@@ -63,31 +94,24 @@ export function AITab({ restaurant }: AITabProps) {
   const hasTwilioNumber = !!restaurant.twilioPhoneNumber;
   const isFullyOperational = hasVapiId && hasPhoneLinked;
 
+  const statusText = getAIStatusText(isFullyOperational, hasVapiId, hasPhoneLinked, hasTwilioNumber, restaurant.twilioPhoneNumber);
+  const statusCardClassName = isFullyOperational ? "border-emerald-400/20 bg-emerald-400/5" : "border-amber-400/20 bg-amber-400/5";
+
   return (
     <div className="space-y-6">
-      <Card className={`border ${isFullyOperational ? 'border-emerald-400/20 bg-emerald-400/5' : hasVapiId ? 'border-amber-400/20 bg-amber-400/5' : 'border-amber-400/20 bg-amber-400/5'}`}>
+      <Card className={`border ${statusCardClassName}`}>
         <CardContent className="p-4">
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg ${isFullyOperational ? 'bg-emerald-400/10' : 'bg-amber-400/10'} flex items-center justify-center`}>
-                <Bot className={`w-5 h-5 ${isFullyOperational ? 'text-emerald-400' : 'text-amber-400'}`} />
+              <div className={`w-10 h-10 rounded-lg ${isFullyOperational ? "bg-emerald-400/10" : "bg-amber-400/10"} flex items-center justify-center`}>
+                <Bot className={`w-5 h-5 ${isFullyOperational ? "text-emerald-400" : "text-amber-400"}`} />
               </div>
               <div>
-                <p className={`font-medium ${isFullyOperational ? 'text-emerald-400' : 'text-amber-400'}`}>
-                  {isFullyOperational
-                    ? 'IA Opérationnelle'
-                    : hasVapiId
-                      ? 'IA partiellement configurée'
-                      : 'IA Non configurée'}
+                <p className={`font-medium ${isFullyOperational ? "text-emerald-400" : "text-amber-400"}`}>
+                  {statusText.title}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {isFullyOperational
-                    ? `Agent IA actif sur le ${restaurant.twilioPhoneNumber}`
-                    : hasVapiId && !hasPhoneLinked
-                      ? 'L\'assistant existe mais aucun numéro de téléphone n\'est lié'
-                      : !hasTwilioNumber
-                        ? 'Renseignez d\'abord le numéro Twilio dans l\'onglet Téléphonie'
-                        : 'Créez l\'agent IA pour activer la prise de commande vocale'}
+                  {statusText.description}
                 </p>
               </div>
             </div>

@@ -85,7 +85,7 @@ function UpdatePasswordFormContent() {
     }
   }, [session, status, router, resetToken]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setIsLoading(true);
@@ -226,30 +226,13 @@ function UpdatePasswordFormContent() {
     );
   }
 
-  if (!resetToken) {
-    if (status === "loading") {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-
-    if (!session) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-
-    if (session.user.mustChangePassword === false) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      );
-    }
+  const showSessionLoading = !resetToken && (status === "loading" || !session || session.user.mustChangePassword === false);
+  if (showSessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (

@@ -3,12 +3,12 @@
 import { useSyncExternalStore } from "react";
 
 function getHomeUrl(): string {
-  if (typeof window === "undefined") {
+  if (typeof globalThis.window === "undefined") {
     return "/";
   }
   
-  const hostname = window.location.hostname;
-  const port = window.location.port || "3000";
+  const hostname = globalThis.window.location.hostname;
+  const port = globalThis.window.location.port || "3000";
   
   if (hostname === "app.localhost") {
     return `http://localhost:${port}/`;
@@ -26,10 +26,10 @@ function subscribeToNothing() {
 export function MarketingHomeLink({ 
   children, 
   className 
-}: { 
+}: Readonly<{ 
   children: React.ReactNode;
   className?: string;
-}) {
+}>) {
   const href = useSyncExternalStore(
     subscribeToNothing,
     () => getHomeUrl(),

@@ -63,12 +63,12 @@ function generateOrderNumber(): string {
 function parsePickupTime(pickupTimeStr?: string): Date | null {
   if (!pickupTimeStr) return null;
 
-  const match = pickupTimeStr.match(/^(\d{1,2}):(\d{2})$/);
+  const match = /^(\d{1,2}):(\d{2})$/.exec(pickupTimeStr);
   if (!match) return null;
 
   const now = new Date();
   const pickup = new Date(now);
-  pickup.setHours(parseInt(match[1], 10), parseInt(match[2], 10), 0, 0);
+  pickup.setHours(Number.parseInt(match[1], 10), Number.parseInt(match[2], 10), 0, 0);
 
   if (pickup < now) {
     pickup.setDate(pickup.getDate() + 1);
@@ -190,7 +190,6 @@ async function verifyWebhookSignature(request: Request): Promise<boolean> {
 
   // Si Vapi utilise HMAC-SHA256, on devrait vérifier avec le body
   // Pour l'instant, vérification simple avec le secret
-  // TODO: Implémenter vérification HMAC complète avec body selon la doc Vapi officielle
   try {
     // Vérification basique: le secret doit correspondre
     // En production, utiliser crypto.createHmac pour vérifier la signature complète
@@ -199,6 +198,96 @@ async function verifyWebhookSignature(request: Request): Promise<boolean> {
     logger.error("Erreur vérification signature webhook", error instanceof Error ? error : new Error(String(error)));
     return false;
   }
+}
+
+async function processSubmitOrderToolCall(
+  body: VapiWebhookBody,
+  toolCall: ToolCall
+): Promise<{ name: string; toolCallId: string; result: string }> {
+  const assistantId = extractAssistantId(body);
+  if (!assistantId) {
+    logger.warn("Assistant ID manquant dans tool call", {
+      toolCallId: toolCall.id,
+      body: JSON.stringify(body, null, 2),
+    });
+    return {
+      name: toolCall.name,
+      toolCallId: toolCall.id,
+      result: JSON.stringify({ success: false, message: "Assistant non identifié" }),
+    };
+  }
+
+  try {
+    logger.info("Traitement submit_order", {
+      assistantId,
+      parameters: JSON.stringify(toolCall.parameters),
+    });
+
+    const result = await handleSubmitOrder(
+      assistantId,
+      toolCall.parameters as unknown as SubmitOrderArgs
+    );
+
+    logger.info("submit_order réussi", {
+      toolCallId: toolCall.id,
+      result,
+    });
+
+    return {
+      name: toolCall.name,
+      toolCallId: toolCall.id,
+      result,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error("Erreur submit_order", new Error(errorMessage), {
+      toolCallId: toolCall.id,
+      parameters: JSON.stringify(toolCall.parameters),
+    });
+
+    return {
+      name: toolCall.name,
+      toolCallId: toolCall.id,
+      result: JSON.stringify({
+        success: false,
+        message: `Erreur : ${errorMessage}`,
+      }),
+    };
+  }
+}
+
+async function handleToolCalls(body: VapiWebhookBody): Promise<{ results: Array<{ name: string; toolCallId: string; result: string }> }> {
+  const toolCalls =
+    body.message.toolCallList ||
+    body.message.toolWithToolCallList?.map((t) => ({
+      id: t.toolCall.id,
+      name: t.name,
+      parameters: t.toolCall.parameters,
+    })) ||
+    [];
+
+  logger.info("Tool calls reçus", {
+    count: toolCalls.length,
+    tools: toolCalls.map((t) => t.name),
+  });
+
+  const results = [];
+
+  for (const toolCall of toolCalls) {
+    if (toolCall.name === "submit_order") {
+      const result = await processSubmitOrderToolCall(body, toolCall);
+      results.push(result);
+    } else {
+      logger.warn("Tool call non géré", { name: toolCall.name, id: toolCall.id });
+      results.push({
+        name: toolCall.name,
+        toolCallId: toolCall.id,
+        result: JSON.stringify({ success: false, message: "Tool non implémenté" }),
+      });
+    }
+  }
+
+  return { results };
 }
 
 export async function POST(request: Request) {
@@ -222,88 +311,9 @@ export async function POST(request: Request) {
     });
 
     if (messageType === "tool-calls") {
-      const toolCalls =
-        body.message.toolCallList ||
-        body.message.toolWithToolCallList?.map((t) => ({
-          id: t.toolCall.id,
-          name: t.name,
-          parameters: t.toolCall.parameters,
-        })) ||
-        [];
-
-      logger.info("Tool calls reçus", {
-        count: toolCalls.length,
-        tools: toolCalls.map((t) => t.name),
-      });
-
-      const results = [];
-
-      for (const toolCall of toolCalls) {
-        if (toolCall.name === "submit_order") {
-          const assistantId = extractAssistantId(body);
-          if (!assistantId) {
-            logger.warn("Assistant ID manquant dans tool call", {
-              toolCallId: toolCall.id,
-              body: JSON.stringify(body, null, 2),
-            });
-            results.push({
-              name: toolCall.name,
-              toolCallId: toolCall.id,
-              result: JSON.stringify({ success: false, message: "Assistant non identifié" }),
-            });
-            continue;
-          }
-
-          try {
-            logger.info("Traitement submit_order", {
-              assistantId,
-              parameters: JSON.stringify(toolCall.parameters),
-            });
-
-            const result = await handleSubmitOrder(
-              assistantId,
-              toolCall.parameters as unknown as SubmitOrderArgs
-            );
-
-            logger.info("submit_order réussi", {
-              toolCallId: toolCall.id,
-              result,
-            });
-
-            results.push({
-              name: toolCall.name,
-              toolCallId: toolCall.id,
-              result,
-            });
-          } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            logger.error("Erreur submit_order", new Error(errorMessage), {
-              toolCallId: toolCall.id,
-              parameters: JSON.stringify(toolCall.parameters),
-            });
-
-            results.push({
-              name: toolCall.name,
-              toolCallId: toolCall.id,
-              result: JSON.stringify({
-                success: false,
-                message: `Erreur : ${errorMessage}`,
-              }),
-            });
-          }
-        } else {
-          logger.warn("Tool call non géré", { name: toolCall.name, id: toolCall.id });
-          results.push({
-            name: toolCall.name,
-            toolCallId: toolCall.id,
-            result: JSON.stringify({ success: false, message: "Tool non implémenté" }),
-          });
-        }
-      }
-
-      const response = { results };
+      const { results } = await handleToolCalls(body);
       logger.info("Réponse webhook tool-calls", { resultsCount: results.length });
-      return NextResponse.json(response, { status: 200 });
+      return NextResponse.json({ results }, { status: 200 });
     }
 
     if (messageType === "end-of-call-report") {

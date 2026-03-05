@@ -30,7 +30,7 @@ interface BillingTabProps {
   restaurant: Restaurant;
 }
 
-export function BillingTab({ restaurant }: BillingTabProps) {
+export function BillingTab({ restaurant }: Readonly<BillingTabProps>) {
   const [isLoading, setIsLoading] = useState(false);
 
   const formatDateForInput = (dateString: string | null | undefined): string => {

@@ -9,13 +9,11 @@ export function getAppUrl(path: string = ""): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   
   const isLocalhost = 
-    (globalThis.window !== undefined && globalThis.window.location.hostname.includes("localhost")) ||
+    (globalThis.window?.location?.hostname?.includes("localhost")) ||
     (typeof process !== "undefined" && process.env.NODE_ENV === "development");
   
   if (isLocalhost) {
-    const port = globalThis.window !== undefined && globalThis.window.location.port 
-      ? globalThis.window.location.port 
-      : "3000";
+    const port = globalThis.window?.location?.port ?? "3000";
     return `http://app.localhost:${port}${normalizedPath}`;
   }
   
@@ -60,7 +58,7 @@ export function normalizeFrenchPhoneNumber(phoneNumber: string | null | undefine
   if (!phoneNumber) return null;
   
   // Supprime tous les espaces, tirets, points
-  let cleaned = phoneNumber.replace(/[\s\-\.]/g, "");
+  let cleaned = phoneNumber.replaceAll(/[\s\-.]/g, "");
   
   // Si déjà au format +33, retourne tel quel après nettoyage
   if (cleaned.startsWith("+33")) {

@@ -270,9 +270,9 @@ export function PricingSection() {
         </Carousel>
         
         <div className="flex justify-center gap-2 mt-6">
-          {PLANS.map((_, index) => (
+          {PLANS.map((plan, index) => (
             <button
-              key={`dot-${PLANS[index].name}`}
+              key={`dot-${plan.name}`}
               className={`transition-all rounded-full ${
                 selectedIndex === index
                   ? "w-8 h-2 bg-primary"

@@ -77,11 +77,6 @@ describe("menu actions", () => {
         user: { id: "user-1", email: "test@example.com", role: "OWNER", mustChangePassword: false },
         expires: new Date().toISOString(),
       } as Session);
-      type MockSelectBuilder = {
-        from: () => {
-          where: () => Promise<Array<{ menuData: unknown }>>;
-        };
-      };
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([{ menuData: mockMenuData }]),

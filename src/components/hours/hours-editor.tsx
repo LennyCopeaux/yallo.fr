@@ -28,17 +28,6 @@ const timeSlotSchema = z.object({
   close: z.string(),
 });
 
-const dayScheduleSchema = z.union([
-  z.object({
-    open: z.string(),
-    close: z.string(),
-  }),
-  z.object({
-    lunch: timeSlotSchema,
-    dinner: timeSlotSchema,
-  }),
-]);
-
 const formSchema = z.object({
   schedule: z.record(
     z.string(),
@@ -221,13 +210,13 @@ export function HoursEditor({ initialHours }: Readonly<HoursEditorProps>) {
                     <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        variant={!hasTwoSlots ? "default" : "outline"}
+                        variant={hasTwoSlots ? "outline" : "default"}
                         size="sm"
                         onClick={() => {
                           form.setValue(`schedule.${day.key}.hasTwoSlots`, false, { shouldValidate: true });
                         }}
                         disabled={isSaving}
-                        className={!hasTwoSlots ? "!bg-yellow-500 !text-yellow-950 !border-yellow-500 hover:!bg-yellow-600" : ""}
+                        className={hasTwoSlots ? "" : "!bg-yellow-500 !text-yellow-950 !border-yellow-500 hover:!bg-yellow-600"}
                       >
                         Un seul créneau
                       </Button>

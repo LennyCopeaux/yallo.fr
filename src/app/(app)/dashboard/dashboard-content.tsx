@@ -22,7 +22,7 @@ interface DashboardContentProps {
 
 type FilterStatus = "all" | "new" | "preparing" | "completed";
 
-export function DashboardContent({ orders }: DashboardContentProps) {
+export function DashboardContent({ orders }: Readonly<DashboardContentProps>) {
   const [filter, setFilter] = useState<FilterStatus>("all");
 
   // Calculs des KPIs

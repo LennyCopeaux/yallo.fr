@@ -50,7 +50,7 @@ interface GeneralTabProps {
   owners: Owner[];
 }
 
-export function GeneralTab({ restaurant, owners }: GeneralTabProps) {
+export function GeneralTab({ restaurant, owners }: Readonly<GeneralTabProps>) {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<FormValues>({

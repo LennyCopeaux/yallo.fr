@@ -79,7 +79,7 @@ function formatTime(date: Date | null): string {
   });
 }
 
-export function OrderTicket({ order, onStatusChange, className }: OrderTicketProps) {
+export function OrderTicket({ order, onStatusChange, className }: Readonly<OrderTicketProps>) {
   const status = statusConfig[order.status];
 
   return (
@@ -221,7 +221,7 @@ export function OrderTicket({ order, onStatusChange, className }: OrderTicketPro
   );
 }
 
-export function OrderTicketCompact({ order, onClick }: { order: Order; onClick?: () => void }) {
+export function OrderTicketCompact({ order, onClick }: Readonly<{ order: Order; onClick?: () => void }>) {
   const status = statusConfig[order.status];
 
   return (

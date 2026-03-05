@@ -38,7 +38,7 @@ export async function GET(
       return NextResponse.json({ businessHoursJson: "Horaires d'ouverture non configurée" });
     }
 
-    if (!parsedHours || !parsedHours.schedule || Object.keys(parsedHours.schedule).length === 0) {
+    if (!parsedHours?.schedule || Object.keys(parsedHours.schedule).length === 0) {
       return NextResponse.json({ businessHoursJson: "Horaires d'ouverture non configurée" });
     }
 

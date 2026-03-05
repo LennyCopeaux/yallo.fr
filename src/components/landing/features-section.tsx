@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 const CARD = "h-full bg-card/30 border-border hover:border-primary/30 transition-all duration-300 noise p-6 flex flex-col";
 const ICON = "w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors";
 
-function FadeIn({ children, className }: { children: React.ReactNode; className?: string }) {
+function FadeIn({ children, className }: Readonly<{ children: React.ReactNode; className?: string }>) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -86,7 +86,7 @@ export function FeaturesSection() {
                   const duration = durations[i % 3];
                   return (
                     <motion.div
-                      key={`bar-${i}`}
+                      key={`bar-${baseHeight}-${i}`}
                       className="w-1.5 bg-primary rounded-full"
                       animate={{
                         height: [

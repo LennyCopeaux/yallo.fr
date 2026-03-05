@@ -2,9 +2,9 @@ import { ClientSidebar } from "@/components/dashboard/client-sidebar";
 
 export default async function DashboardLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <ClientSidebar />

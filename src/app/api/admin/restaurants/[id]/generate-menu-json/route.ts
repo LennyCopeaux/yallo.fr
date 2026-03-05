@@ -56,7 +56,7 @@ export async function GET(
       }
     }
 
-    if (!restaurant.menuData || !restaurant.menuData.categories || restaurant.menuData.categories.length === 0) {
+    if (!restaurant.menuData?.categories?.length) {
       return NextResponse.json({ menuJson: "Menu non configuré" });
     }
 

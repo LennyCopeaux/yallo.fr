@@ -63,7 +63,6 @@ export async function sendResetPasswordEmail(
     const html = await render(
       <ResetPasswordEmail
         email={email}
-        resetToken={resetToken}
         resetUrl={resetUrl}
       />
     );
