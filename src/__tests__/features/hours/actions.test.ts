@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { MockedFunction } from "vitest";
 import { getBusinessHours, updateBusinessHours } from "@/features/hours/actions";
 import { db } from "@/db";
 import { auth } from "@/lib/auth/auth";
 import type { Session } from "next-auth";
-import type { PgSelectBuilder } from "drizzle-orm/pg-core";
 
 vi.mock("@/db", () => ({
   db: {
@@ -20,6 +20,9 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+// Cast auth en mock typé pour éviter la confusion avec la surcharge NextMiddleware
+const authMock = auth as unknown as MockedFunction<() => Promise<Session | null>>;
+
 describe("Business Hours Actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -27,7 +30,7 @@ describe("Business Hours Actions", () => {
 
   describe("getBusinessHours", () => {
     it("should return business hours for authenticated owner", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
       } as unknown as Session);
 
@@ -54,7 +57,7 @@ describe("Business Hours Actions", () => {
     });
 
     it("should return default empty schedule if no hours set", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
       } as unknown as Session);
 
@@ -74,7 +77,7 @@ describe("Business Hours Actions", () => {
     });
 
     it("should return error for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      authMock.mockResolvedValue(null);
 
       const result = await getBusinessHours();
 
@@ -83,9 +86,9 @@ describe("Business Hours Actions", () => {
     });
 
     it("should return error for admin without restaurant", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "admin-123", role: "ADMIN", email: "admin@test.com" },
-      } as MockAuthSession);
+      } as unknown as Session);
 
       const result = await getBusinessHours();
 
@@ -94,7 +97,7 @@ describe("Business Hours Actions", () => {
     });
 
     it("should return error if restaurant not found", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
       } as unknown as Session);
 
@@ -114,7 +117,7 @@ describe("Business Hours Actions", () => {
     });
 
     it("should handle invalid JSON gracefully", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
       } as unknown as Session);
 
@@ -136,7 +139,7 @@ describe("Business Hours Actions", () => {
 
   describe("updateBusinessHours", () => {
     it("should update business hours successfully", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
       } as unknown as Session);
 
@@ -173,7 +176,7 @@ describe("Business Hours Actions", () => {
     });
 
     it("should return error for invalid form data", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
       } as unknown as Session);
 
@@ -195,7 +198,7 @@ describe("Business Hours Actions", () => {
     });
 
     it("should return error for invalid JSON", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      authMock.mockResolvedValue({
         user: { id: "user-123", role: "OWNER", email: "owner@test.com" },
       } as unknown as Session);
 
@@ -217,7 +220,7 @@ describe("Business Hours Actions", () => {
     });
 
     it("should return error for unauthenticated user", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      authMock.mockResolvedValue(null);
 
       const formData = new FormData();
       formData.append("businessHours", JSON.stringify({ schedule: {} }));
