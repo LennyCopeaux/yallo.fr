@@ -30,7 +30,7 @@ import { BackToHomeLink } from "@/components/navigation";
 
 const contactFormSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
-  email: z.string().email("Email invalide"),
+  email: z.string().email(),
   subject: z.string().refine(
     (val) => ["installation", "rdv-expert", "plan-starter", "plan-essential", "plan-infinity", "enterprise", "support", "autre"].includes(val),
     { message: "Veuillez sélectionner un sujet" }

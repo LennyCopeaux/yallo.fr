@@ -23,7 +23,7 @@ const navigation = [
 
 async function handleLogout(): Promise<void> {
   await signOut({ redirect: false });
-  if (typeof globalThis.window !== "undefined") {
+  if (globalThis.window !== undefined) {
     globalThis.window.location.href = getAppUrl("/login");
   }
 }

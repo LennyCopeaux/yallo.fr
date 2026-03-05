@@ -227,7 +227,7 @@ export function PricingSection() {
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  Annuel
+                  Annuel{" "}
                   <span className="text-[11px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-semibold">
                     -35%
                   </span>

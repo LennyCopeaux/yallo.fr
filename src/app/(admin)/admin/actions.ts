@@ -15,14 +15,14 @@ import { logger } from "@/lib/logger";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
 
 const createUserSchema = z.object({
-  email: z.string().email("Email invalide"),
+  email: z.string().email(),
   firstName: z.string().max(100).optional(),
   lastName: z.string().max(100).optional(),
   role: z.enum(["ADMIN", "OWNER"]),
 });
 
 const updateUserSchema = z.object({
-  email: z.string().email("Email invalide").optional(),
+  email: z.string().email().optional(),
   firstName: z.string().max(100).optional().nullable(),
   lastName: z.string().max(100).optional().nullable(),
   role: z.enum(["ADMIN", "OWNER"]).optional(),

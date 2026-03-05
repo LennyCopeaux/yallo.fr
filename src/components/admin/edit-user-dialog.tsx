@@ -27,7 +27,7 @@ import { Loader2, Shield, User } from "lucide-react";
 import { toast } from "sonner";
 
 const formSchema = z.object({
-  email: z.string().email("Email invalide"),
+  email: z.string().email(),
   firstName: z.string().max(100).optional(),
   lastName: z.string().max(100).optional(),
   role: z.enum(["ADMIN", "OWNER"]),
