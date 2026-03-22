@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Yallo
 
-## Getting Started
+SaaS vertical pour la restauration rapide : site marketing, **dashboard cuisine (PWA)** et **agent vocal** (Vapi) pour les commandes par téléphone.
 
-First, run the development server:
+## Prérequis
+
+- [Node.js](https://nodejs.org/) 20+
+- [pnpm](https://pnpm.io/) (gestionnaire de paquets du projet)
+
+## Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Créer un fichier `.env.local` avec les variables requises (Neon, NextAuth, Vapi, Twilio, etc.).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Webhook Vapi (commandes vocales)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Si Vapi affiche « server rejected tool-calls webhook », voir **`docs/VAPI_WEBHOOK.md`** (secret, URL, 401).
 
-## Learn More
+### SMS de confirmation de commande (Twilio)
 
-To learn more about Next.js, take a look at the following resources:
+Après une commande vocale réussie, un SMS récap peut être envoyé au numéro de l’appelant (ou `customer_phone` dans `submit_order`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `TWILIO_ORDER_CONFIRMATION_SMS` : mettre `false` pour **désactiver** l’envoi (par défaut : activé si expéditeur + destinataire sont disponibles).
+- `TWILIO_SMS_FROM` : numéro E.164 expéditeur (sinon : numéro Twilio du restaurant `twilio_phone_number` en base).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Développement
 
-## Deploy on Vercel
+```bash
+pnpm dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Marketing : [http://localhost:3000](http://localhost:3000)
+- App dashboard : selon vos hosts (ex. `app.localhost:3000` si configuré)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Qualité
+
+```bash
+pnpm run lint
+pnpm run test:run
+pnpm run build
+```
+
+## Base de données
+
+```bash
+pnpm drizzle-kit generate   # migrations
+pnpm drizzle-kit push       # appliquer (attention aux warnings data-loss)
+```
+
+## Conventions & assistant IA
+
+- Règles Cursor du dépôt : `.cursor/rules/yallo-project.mdc` et `.cursor/rules/nextjs.mdc`.
+- Ancienne copie longue des règles : voir `DEPRACATEDCURSORRULES.md` (référence historique).

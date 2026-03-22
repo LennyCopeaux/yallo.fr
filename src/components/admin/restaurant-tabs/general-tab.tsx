@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -63,11 +63,14 @@ export function GeneralTab({ restaurant, owners }: Readonly<GeneralTabProps>) {
     },
   });
 
+  const ownerIdValue = useWatch({ control: form.control, name: "ownerId" });
+  const statusValue = useWatch({ control: form.control, name: "status" });
+
   const isDirty = form.formState.isDirty;
 
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
-    
+
     const result = await updateRestaurantGeneral(restaurant.id, {
       name: data.name,
       address: data.address || null,
@@ -113,7 +116,7 @@ export function GeneralTab({ restaurant, owners }: Readonly<GeneralTabProps>) {
             <div className="space-y-2">
               <Label htmlFor="ownerId">Propriétaire *</Label>
               <Select
-                value={form.watch("ownerId")}
+                value={ownerIdValue}
                 onValueChange={(value) => form.setValue("ownerId", value)}
                 disabled={isLoading}
               >
@@ -139,7 +142,7 @@ export function GeneralTab({ restaurant, owners }: Readonly<GeneralTabProps>) {
             <div className="space-y-2">
               <Label htmlFor="status">Statut *</Label>
               <Select
-                value={form.watch("status")}
+                value={statusValue}
                 onValueChange={(value: "active" | "suspended" | "onboarding") => form.setValue("status", value)}
                 disabled={isLoading}
               >

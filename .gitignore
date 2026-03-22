@@ -2,7 +2,6 @@
 /node_modules
 /.pnpm-store
 .pnpm-debug.log*
-pnpm-lock.yaml
 
 # Next.js
 /.next/
@@ -19,3 +18,7 @@ pnpm-lock.yaml
 .DS_Store
 *.pem
 .vercel
+
+# Tooling / artefact builds
+coverage/
+*.tsbuildinfo

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -106,6 +106,8 @@ export function HoursEditor({ initialHours }: Readonly<HoursEditorProps>) {
     },
   });
 
+  const scheduleWatched = useWatch({ control: form.control, name: "schedule" });
+
   async function onSubmit(data: FormValues) {
     setIsSaving(true);
     try {
@@ -168,7 +170,7 @@ export function HoursEditor({ initialHours }: Readonly<HoursEditorProps>) {
         </CardHeader>
         <CardContent className="space-y-3">
           {days.map((day) => {
-            const daySchedule = form.watch(`schedule.${day.key}`);
+            const daySchedule = scheduleWatched?.[day.key];
             const enabled = daySchedule?.enabled ?? false;
             const hasTwoSlots = daySchedule?.hasTwoSlots ?? false;
 

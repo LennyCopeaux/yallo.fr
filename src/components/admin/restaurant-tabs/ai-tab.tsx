@@ -246,8 +246,25 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
               <Bot className="w-5 h-5 text-primary" />
               Assistant Vapi
             </CardTitle>
-            <CardDescription>
-              L&apos;identifiant de l&apos;assistant Vapi qui gère les appels
+            <CardDescription className="space-y-2">
+              <span className="block">
+                L&apos;identifiant de l&apos;assistant Vapi qui gère les appels (voix ElevenLabs Turbo v2.5 —{" "}
+                <code className="font-mono text-xs">ELEVENLABS_VOICE_ID</code> optionnel).
+              </span>
+              <span className="block text-xs text-muted-foreground border-l-2 border-amber-500/40 pl-2">
+                <strong>Vercel / prod :</strong> définissez{" "}
+                <code className="font-mono rounded bg-muted px-0.5">VAPI_WEBHOOK_SECRET</code> (chaîne secrète, ex.{" "}
+                <code className="font-mono">openssl rand -hex 32</code>
+                ) puis cliquez sur <strong>Mettre à jour l&apos;assistant</strong> pour que Vapi envoie ce secret au
+                webhook. Sans cela, les commandes vocales échouent (erreur « server rejected »). Optionnel :{" "}
+                <code className="font-mono">NEXT_PUBLIC_APP_URL</code> en https vers votre app.
+              </span>
+              <span className="block text-xs text-muted-foreground border-l-2 border-primary/30 pl-2">
+                Dans le dashboard Vapi, le menu <strong>Tools</strong> peut proposer des outils workspace (
+                <code className="font-mono">api_request_tool</code>, etc.) : ce n&apos;est pas obligatoire. La prise de
+                commande utilise la fonction <code className="font-mono">submit_order</code> poussée par Yallo dans le
+                modèle ; ne la remplacez pas manuellement par un outil vide.
+              </span>
             </CardDescription>
           </CardHeader>
           <CardContent>

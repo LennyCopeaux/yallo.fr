@@ -88,6 +88,8 @@ export const restaurants = pgTable("restaurants", {
   billingStartDate: text("billing_start_date"),
   
   vapiAssistantId: text("vapi_assistant_id"),
+  /** IDs plan d’artefacts Vapi (séparés par virgule). */
+  vapiStructuredOutputIds: text("vapi_structured_output_ids"),
   vapiPhoneNumberId: text("vapi_phone_number_id"),
   systemPrompt: text("system_prompt"),
   menuContext: text("menu_context"),
