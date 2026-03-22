@@ -29,6 +29,10 @@ C’est une **réponse HTTP non acceptée** par Vapi (souvent **401**, **403** o
 4. **Logs**  
    - Vercel → Function Logs sur `/api/vapi/webhook` : chercher `Webhook Vapi rejeté` ou erreur DB.
 
+### Format `toolCalls` (OpenAI) vs `toolCallList`
+
+Vapi peut envoyer les appels d’outils dans `message.toolCalls` avec `function.name` et `function.arguments` (string JSON), au lieu de `toolCallList`. Le webhook Yallo prend désormais en charge **les deux** formes.
+
 ### Dépannage temporaire (dev uniquement)
 
 - `VAPI_WEBHOOK_DISABLE_AUTH=true` : **désactive** la vérification du secret (à ne pas laisser en prod).

@@ -7,6 +7,10 @@ import { pushVoiceOrderToHubrise } from "@/lib/services/hubrise";
 import { normalizeSubmitOrderPayload } from "@/lib/services/vapi-submit-order-args";
 import { trySendOrderConfirmationSms } from "@/lib/services/twilio-sms";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
+import {
+  collectToolCallsFromVapiMessage,
+  vapiMessageHasToolCalls,
+} from "@/lib/services/vapi-tool-call-payload";
 
 interface OrderItem {
   product_name: string;
@@ -45,6 +49,12 @@ interface VapiWebhookBody {
       name: string;
       toolCall: ToolCall;
     }>;
+    /** Format OpenAI (function.name + arguments) — utilisé par certains flux Vapi. */
+    toolCalls?: Array<{
+      id: string;
+      type?: string;
+      function?: { name?: string; arguments?: string };
+    }>;
     assistant?: { id?: string };
     phoneNumber?: string;
     assistantId?: string;
@@ -65,9 +75,7 @@ function isToolCallsPayload(body: VapiWebhookBody): boolean {
   if (t === "tool-calls" || t === "tool_calls") {
     return true;
   }
-  const listLen = body.message?.toolCallList?.length ?? 0;
-  const withLen = body.message?.toolWithToolCallList?.length ?? 0;
-  return listLen > 0 || withLen > 0;
+  return vapiMessageHasToolCalls(body.message);
 }
 
 function extractCallerPhone(body: VapiWebhookBody): string | undefined {
@@ -382,19 +390,16 @@ async function processSubmitOrderToolCall(
 }
 
 async function handleToolCalls(body: VapiWebhookBody): Promise<{ results: Array<{ name: string; toolCallId: string; result: string }> }> {
-  const toolCalls =
-    body.message.toolCallList ||
-    body.message.toolWithToolCallList?.map((t) => ({
-      id: t.toolCall.id,
-      name: t.name,
-      parameters: t.toolCall.parameters,
-      arguments: t.toolCall.arguments,
-    })) ||
-    [];
+  const toolCalls = collectToolCallsFromVapiMessage(body.message);
 
   logger.info("Tool calls reçus", {
     count: toolCalls.length,
     tools: toolCalls.map((t) => t.name),
+    sources: {
+      toolCallList: body.message.toolCallList?.length ?? 0,
+      toolWithToolCallList: body.message.toolWithToolCallList?.length ?? 0,
+      toolCallsOpenAI: body.message.toolCalls?.length ?? 0,
+    },
   });
 
   const results = [];
