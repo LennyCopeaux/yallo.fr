@@ -8,6 +8,7 @@ import { normalizeSubmitOrderPayload } from "@/lib/services/vapi-submit-order-ar
 import { trySendOrderConfirmationSms } from "@/lib/services/twilio-sms";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
 import {
+  buildVapiToolCallsMessageFromBody,
   collectToolCallsFromVapiMessage,
   vapiMessageHasToolCalls,
 } from "@/lib/services/vapi-tool-call-payload";
@@ -36,6 +37,12 @@ interface ToolCall {
 }
 
 interface VapiWebhookBody {
+  /** Variante : toolCalls OpenAI uniquement à la racine du JSON. */
+  toolCalls?: Array<{
+    id: string;
+    type?: string;
+    function?: { name?: string; arguments?: string };
+  }>;
   message: {
     type?: string;
     call?: {
@@ -75,7 +82,7 @@ function isToolCallsPayload(body: VapiWebhookBody): boolean {
   if (t === "tool-calls" || t === "tool_calls") {
     return true;
   }
-  return vapiMessageHasToolCalls(body.message);
+  return vapiMessageHasToolCalls(buildVapiToolCallsMessageFromBody(body));
 }
 
 function extractCallerPhone(body: VapiWebhookBody): string | undefined {
@@ -390,15 +397,16 @@ async function processSubmitOrderToolCall(
 }
 
 async function handleToolCalls(body: VapiWebhookBody): Promise<{ results: Array<{ name: string; toolCallId: string; result: string }> }> {
-  const toolCalls = collectToolCallsFromVapiMessage(body.message);
+  const mergedMessage = buildVapiToolCallsMessageFromBody(body);
+  const toolCalls = collectToolCallsFromVapiMessage(mergedMessage);
 
   logger.info("Tool calls reçus", {
     count: toolCalls.length,
     tools: toolCalls.map((t) => t.name),
     sources: {
-      toolCallList: body.message.toolCallList?.length ?? 0,
-      toolWithToolCallList: body.message.toolWithToolCallList?.length ?? 0,
-      toolCallsOpenAI: body.message.toolCalls?.length ?? 0,
+      toolCallList: mergedMessage.toolCallList?.length ?? 0,
+      toolWithToolCallList: mergedMessage.toolWithToolCallList?.length ?? 0,
+      toolCallsOpenAI: mergedMessage.toolCalls?.length ?? 0,
     },
   });
 

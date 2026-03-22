@@ -31,7 +31,7 @@ C’est une **réponse HTTP non acceptée** par Vapi (souvent **401**, **403** o
 
 ### Format `toolCalls` (OpenAI) vs `toolCallList`
 
-Vapi peut envoyer les appels d’outils dans `message.toolCalls` avec `function.name` et `function.arguments` (string JSON), au lieu de `toolCallList`. Le webhook Yallo prend désormais en charge **les deux** formes.
+Vapi peut envoyer les appels d’outils dans `message.toolCalls` avec `function.name` et `function.arguments` (string JSON), en **parallèle** d’un `toolCallList` (parfois sans `name` sur l’entrée). Le webhook **fusionne** tout par `toolCallId` pour ne pas renvoyer « Tool non implémenté » alors que `submit_order` est bien présent dans `toolCalls`. `toolCalls` peut aussi apparaître à la **racine** du JSON ; ce cas est pris en charge.
 
 ### Dépannage temporaire (dev uniquement)
 
