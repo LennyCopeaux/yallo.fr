@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -210,9 +211,12 @@ export function MenuManager({ initialMenuData }: Readonly<MenuManagerProps>) {
               <div className="flex flex-wrap gap-4">
                 {imageItems.map((item, index) => (
                   <div key={item.id} className="relative group">
-                    <img
+                    <Image
                       src={item.data}
                       alt={`Menu page ${index + 1}`}
+                      width={96}
+                      height={96}
+                      unoptimized
                       className="w-24 h-24 object-cover rounded-lg border"
                     />
                     <button

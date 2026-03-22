@@ -13,6 +13,12 @@ import { DEFAULT_STATUS_SETTINGS } from "@/features/kitchen-status/constants";
 import { randomBytes } from "node:crypto";
 import { logger } from "@/lib/logger";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
+import {
+  createYalloDefaultStructuredOutputBatch,
+  getStructuredOutputIdsFromEnv,
+  joinStructuredOutputIds,
+  parseStructuredOutputIds,
+} from "@/lib/services/vapi-structured-outputs";
 
 const createUserSchema = z.object({
   email: z.string().email(),
@@ -386,6 +392,32 @@ export async function updateRestaurantGeneral(
   }
 }
 
+/**
+ * Assure la configuration Vapi (plan d’artefacts) requise pour la publication de l’agent.
+ * Ordre : `VAPI_STRUCTURED_OUTPUT_IDS` → colonne DB → création auto côté API Vapi.
+ */
+async function ensureRestaurantStructuredOutputIds(
+  restaurant: typeof restaurants.$inferSelect
+): Promise<string[]> {
+  const fromEnv = getStructuredOutputIdsFromEnv();
+  if (fromEnv.length > 0) {
+    return fromEnv;
+  }
+  const fromDb = parseStructuredOutputIds(restaurant.vapiStructuredOutputIds);
+  if (fromDb.length > 0) {
+    return fromDb;
+  }
+  const ids = await createYalloDefaultStructuredOutputBatch();
+  await db
+    .update(restaurants)
+    .set({
+      vapiStructuredOutputIds: joinStructuredOutputIds(ids),
+      updatedAt: new Date(),
+    })
+    .where(eq(restaurants.id, restaurant.id));
+  return ids;
+}
+
 export async function createVapiAssistant(id: string): Promise<ActionResult<{ assistantId: string }>> {
   "use server";
 
@@ -416,10 +448,12 @@ export async function createVapiAssistant(id: string): Promise<ActionResult<{ as
       };
     }
 
+    const structuredOutputIds = await ensureRestaurantStructuredOutputIds(restaurant);
+
     const { createVapiAssistant: createAssistant, importTwilioPhoneNumber } = await import("@/lib/services/vapi");
 
     // 1. Créer l'assistant Vapi
-    const assistant = await createAssistant(restaurant);
+    const assistant = await createAssistant(restaurant, structuredOutputIds);
 
     // 2. Importer le numéro Twilio dans Vapi et l'associer à l'assistant
     let vapiPhoneNumberId: string | null = null;
@@ -499,8 +533,10 @@ export async function updateVapiAssistant(id: string): Promise<ActionResult> {
       return { success: false, error: "Aucun assistant Vapi configuré pour ce restaurant" };
     }
 
-    const { updateVapiAssistant } = await import("@/lib/services/vapi");
-    await updateVapiAssistant(restaurant.vapiAssistantId, restaurant);
+    const structuredOutputIds = await ensureRestaurantStructuredOutputIds(restaurant);
+
+    const { updateVapiAssistant: patchAssistant } = await import("@/lib/services/vapi");
+    await patchAssistant(restaurant.vapiAssistantId, restaurant, structuredOutputIds);
 
     revalidatePath(`/admin/restaurants/${id}`);
     revalidatePath(`/dashboard`);

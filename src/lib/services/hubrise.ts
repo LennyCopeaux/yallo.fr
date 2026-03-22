@@ -110,3 +110,104 @@ export async function fetchHubriseCatalog(
     throw new HubriseError("Erreur inconnue lors de la récupération du catalogue HubRise");
   }
 }
+
+export interface HubriseVoiceOrderItem {
+  product_name: string;
+  price: string;
+  quantity: string;
+}
+
+export interface PushVoiceOrderToHubriseInput {
+  ref: string;
+  collectionCode: string;
+  customerName: string;
+  customerPhone?: string;
+  items: ReadonlyArray<{
+    product_name: string;
+    quantity: number;
+    unit_price: number;
+    options?: string;
+  }>;
+  expectedTimeIso?: string | null;
+  notes?: string | null;
+}
+
+/**
+ * Envoie une commande vocale Yallo vers HubRise (caisse / file de commandes).
+ * Utilise le token et la location configurés pour le restaurant.
+ */
+export async function pushVoiceOrderToHubrise(
+  accessToken: string,
+  locationId: string,
+  input: PushVoiceOrderToHubriseInput
+): Promise<void> {
+  if (!accessToken || !locationId) {
+    throw new HubriseError("Access token et location ID sont requis pour HubRise");
+  }
+
+  const items: HubriseVoiceOrderItem[] = input.items.map((item) => {
+    const label =
+      item.options !== undefined && item.options.length > 0
+        ? `${item.product_name} (${item.options})`
+        : item.product_name;
+    return {
+      product_name: label,
+      price: `${item.unit_price.toFixed(2)} EUR`,
+      quantity: String(item.quantity),
+    };
+  });
+
+  const body: Record<string, unknown> = {
+    ref: input.ref,
+    status: "new",
+    service_type: "collection",
+    channel: "yallo-voice",
+    collection_code: input.collectionCode,
+    items,
+    customer: {
+      ...(input.customerName.length > 0 ? { first_name: input.customerName } : {}),
+      ...(input.customerPhone !== undefined && input.customerPhone.length > 0
+        ? { phone: input.customerPhone }
+        : {}),
+    },
+  };
+
+  if (input.expectedTimeIso !== undefined && input.expectedTimeIso !== null) {
+    body.expected_time = input.expectedTimeIso;
+    body.asap = false;
+  }
+
+  if (input.notes !== undefined && input.notes !== null && input.notes.length > 0) {
+    body.customer_notes = input.notes;
+  }
+
+  const url = `https://api.hubrise.com/v1/locations/${encodeURIComponent(locationId)}/orders`;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "X-Access-Token": accessToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "Unknown error");
+      throw new HubriseError(
+        `Erreur HubRise lors de la création de commande (${response.status}): ${errorText}`,
+        response.status,
+        errorText
+      );
+    }
+  } catch (error) {
+    if (error instanceof HubriseError) {
+      throw error;
+    }
+    if (error instanceof Error) {
+      throw new HubriseError(`Erreur de connexion à HubRise: ${error.message}`, undefined, error);
+    }
+    throw new HubriseError("Erreur inconnue lors de l'envoi de commande HubRise");
+  }
+}

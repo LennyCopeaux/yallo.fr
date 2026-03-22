@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -53,11 +53,13 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
     },
   });
 
+  const twilioPhoneNumberValue = useWatch({ control: form.control, name: "twilioPhoneNumber" });
+
   const isDirty = form.formState.isDirty;
 
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
-    
+
     // Normalise le numéro Twilio au format E.164 avant l'envoi
     const normalizedTwilioNumber = data.twilioPhoneNumber
       ? normalizeFrenchPhoneNumber(data.twilioPhoneNumber) || data.twilioPhoneNumber
@@ -78,7 +80,7 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
     setIsLoading(false);
   }
 
-  const hasTwilioNumber = !!form.watch("twilioPhoneNumber");
+  const hasTwilioNumber = Boolean(twilioPhoneNumberValue?.trim());
 
   return (
     <div className="space-y-6">
@@ -93,8 +95,8 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
                 {hasTwilioNumber ? 'Ligne Twilio Active' : 'Ligne Twilio Non configurée'}
               </p>
               <p className="text-sm text-muted-foreground">
-                {hasTwilioNumber 
-                  ? `Numéro Twilio : ${form.watch("twilioPhoneNumber")}`
+                {hasTwilioNumber
+                  ? `Numéro Twilio : ${twilioPhoneNumberValue}`
                   : 'Configurez un numéro Twilio pour recevoir les appels via l\'IA'
                 }
               </p>

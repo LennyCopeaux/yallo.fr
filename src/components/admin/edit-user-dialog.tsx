@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,8 @@ export function EditUserDialog({ user, open, onOpenChange }: Readonly<EditUserDi
       role: user.role,
     },
   });
+
+  const roleValue = useWatch({ control: form.control, name: "role" });
 
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
@@ -134,7 +136,7 @@ export function EditUserDialog({ user, open, onOpenChange }: Readonly<EditUserDi
             <div className="space-y-2">
               <Label htmlFor="role">Rôle *</Label>
               <Select
-                value={form.watch("role")}
+                value={roleValue}
                 onValueChange={(value: "ADMIN" | "OWNER") => form.setValue("role", value)}
                 disabled={isLoading}
               >

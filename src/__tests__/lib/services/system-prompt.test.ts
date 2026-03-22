@@ -36,6 +36,7 @@ describe("generateSystemPrompt", () => {
     stripeCustomerId: null,
     billingStartDate: null,
     vapiAssistantId: null,
+    vapiStructuredOutputIds: null,
     vapiPhoneNumberId: null,
     systemPrompt: null,
     menuContext: null,
@@ -147,9 +148,10 @@ describe("generateSystemPrompt", () => {
     const prompt = await generateSystemPrompt(mockRestaurant);
 
     expect(prompt).toContain("Tu es Yallo");
-    expect(prompt).toContain("PRISE DE COMMANDE");
-    expect(prompt).toContain("TON ULTRA-ACTIF");
-    expect(prompt).toContain("VALIDATION");
+    expect(prompt).toContain("Ne liste pas");
+    expect(prompt).toContain("Quantités");
+    expect(prompt).toContain("Prénom");
+    expect(prompt).toContain("submit_order");
     expect(prompt).toContain("Menu");
     expect(prompt).toContain("Horaires");
   });
