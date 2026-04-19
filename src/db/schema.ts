@@ -60,7 +60,7 @@ export type MenuData = {
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   /** FK vers auth.users.id (Supabase Auth) */
-  authUserId: text("auth_user_id").unique().notNull(),
+  authUserId: text("auth_user_id").unique(),
   email: text("email").unique().notNull(),
   firstName: text("first_name"),
   lastName: text("last_name"),
