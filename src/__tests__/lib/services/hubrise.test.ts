@@ -63,8 +63,20 @@ describe("fetchHubriseCatalog", () => {
     );
   });
 
+  const listItem = (
+    id: string,
+    name: string,
+    created_at: string
+  ): { id: string; account_id: string; location_id: string | null; name: string; created_at: string } => ({
+    id,
+    account_id: "acc",
+    location_id: "loc",
+    name,
+    created_at,
+  });
+
   it("devrait récupérer le catalogue avec succès", async () => {
-    const catalogsList = [{ id: "catalog-123", name: "Test Menu" }];
+    const catalogsList = [listItem("catalog-123", "Menu principal", "2020-01-01T00:00:00Z")];
     const catalogData = {
       categories: [{ name: "Kebabs" }],
       products: [{ name: "Kebab Viande" }],
@@ -155,8 +167,52 @@ describe("fetchHubriseCatalog", () => {
     );
   });
 
+  it("devrait utiliser l’ID catalogue imposé sans appeler la liste", async () => {
+    const catalogData = { id: "1rbmp", data: { categories: [], products: [] } };
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(catalogData),
+    });
+
+    const result = await fetchHubriseCatalog("valid-token", "location-123", "1rbmp");
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://api.hubrise.com/v1/catalogs/1rbmp",
+      expect.objectContaining({ method: "GET" })
+    );
+    expect(result).toBe(JSON.stringify(catalogData, null, 2));
+  });
+
+  it("devrait préférer un catalogue non « test » quand plusieurs sont listés", async () => {
+    const catalogsList = [
+      listItem("kkqv", "test 1kkqv", "2026-04-02T00:00:00Z"),
+      listItem("1rbmp", "Menu Kebab La Medina", "2026-01-15T00:00:00Z"),
+    ];
+    const catalogData = { id: "1rbmp", data: { categories: [{ name: "Tacos" }], products: [] } };
+
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(catalogsList),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(catalogData),
+      });
+
+    const result = await fetchHubriseCatalog("valid-token", "location-123");
+
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
+      "https://api.hubrise.com/v1/catalogs/1rbmp",
+      expect.anything()
+    );
+    expect(result).toContain("Tacos");
+  });
+
   it("devrait lancer une erreur 404 si catalogue introuvable", async () => {
-    const catalogsList = [{ id: "catalog-123", name: "Test Menu" }];
+    const catalogsList = [listItem("catalog-123", "Menu principal", "2020-01-01T00:00:00Z")];
 
     mockFetch
       .mockResolvedValueOnce({

@@ -17,53 +17,84 @@ interface HubriseCatalogListItem {
   created_at: string;
 }
 
+/** Noms du type "test …" (catalogues d’essai) — évité en choix auto. */
+function looksLikeTestHubriseCatalogName(name: string): boolean {
+  return /^test(\s|$)/i.test(name.trim());
+}
+
+/** Plusieurs catalogues sur une location : préfère un nom autre que "test …", sinon le plus ancien. */
+function pickDefaultHubriseCatalogId(catalogs: HubriseCatalogListItem[]): string {
+  if (catalogs.length === 0) {
+    throw new HubriseError("Aucun catalogue trouvé pour cette location HubRise", 404);
+  }
+  if (catalogs.length === 1) {
+    return catalogs[0].id;
+  }
+  const nonTest = catalogs.filter((c) => !looksLikeTestHubriseCatalogName(c.name));
+  const pool = nonTest.length > 0 ? nonTest : catalogs;
+  const sorted = [...pool].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+  return sorted[0].id;
+}
+
 export async function fetchHubriseCatalog(
   accessToken: string,
-  locationId: string
+  locationId: string,
+  preferredCatalogId?: string | null
 ): Promise<string> {
   if (!accessToken || !locationId) {
     throw new HubriseError("Access token et location ID sont requis");
   }
 
+  const trimmedPreferred = preferredCatalogId?.trim() || null;
+
   try {
-    const catalogsListUrl = `https://api.hubrise.com/v1/location/catalogs`;
+    let catalogId: string;
 
-    const catalogsResponse = await fetch(catalogsListUrl, {
-      method: "GET",
-      headers: {
-        "X-Access-Token": accessToken,
-        "Content-Type": "application/json",
-      },
-    });
+    if (trimmedPreferred) {
+      catalogId = trimmedPreferred;
+    } else {
+      const catalogsListUrl = `https://api.hubrise.com/v1/location/catalogs`;
 
-    if (!catalogsResponse.ok) {
-      const errorText = await catalogsResponse.text().catch(() => "Unknown error");
-      
-      if (catalogsResponse.status === 401 || catalogsResponse.status === 403) {
+      const catalogsResponse = await fetch(catalogsListUrl, {
+        method: "GET",
+        headers: {
+          "X-Access-Token": accessToken,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!catalogsResponse.ok) {
+        const errorText = await catalogsResponse.text().catch(() => "Unknown error");
+
+        if (catalogsResponse.status === 401 || catalogsResponse.status === 403) {
+          throw new HubriseError(
+            "Token d'accès HubRise invalide ou expiré",
+            catalogsResponse.status,
+            errorText
+          );
+        }
+
         throw new HubriseError(
-          "Token d'accès HubRise invalide ou expiré",
+          `Erreur HubRise API lors de la récupération de la liste des catalogues (${catalogsResponse.status}): ${errorText}`,
           catalogsResponse.status,
           errorText
         );
       }
 
-      throw new HubriseError(
-        `Erreur HubRise API lors de la récupération de la liste des catalogues (${catalogsResponse.status}): ${errorText}`,
-        catalogsResponse.status,
-        errorText
-      );
+      const catalogsList: HubriseCatalogListItem[] = await catalogsResponse.json();
+
+      if (!catalogsList || catalogsList.length === 0) {
+        throw new HubriseError(
+          "Aucun catalogue trouvé pour cette location HubRise",
+          404
+        );
+      }
+
+      catalogId = pickDefaultHubriseCatalogId(catalogsList);
     }
 
-    const catalogsList: HubriseCatalogListItem[] = await catalogsResponse.json();
-    
-    if (!catalogsList || catalogsList.length === 0) {
-      throw new HubriseError(
-        "Aucun catalogue trouvé pour cette location HubRise",
-        404
-      );
-    }
-
-    const catalogId = catalogsList[0].id;
     const catalogUrl = `https://api.hubrise.com/v1/catalogs/${catalogId}`;
 
     const catalogResponse = await fetch(catalogUrl, {

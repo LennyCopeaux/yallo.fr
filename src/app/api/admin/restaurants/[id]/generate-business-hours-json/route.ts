@@ -2,17 +2,14 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth/auth";
+import { requireAdmin } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  await requireAdmin();
 
   const { id } = await params;
   

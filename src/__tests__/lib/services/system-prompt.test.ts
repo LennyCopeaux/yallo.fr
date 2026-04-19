@@ -45,6 +45,7 @@ describe("generateSystemPrompt", () => {
     businessHours: "Lundi-Vendredi: 10h-22h",
     hubriseLocationId: "test-location",
     hubriseAccessToken: "test-token",
+    hubriseCatalogId: null as string | null,
     currentStatus: "CALM" as const,
     statusSettings: null,
     createdAt: new Date(),
@@ -63,7 +64,7 @@ describe("generateSystemPrompt", () => {
 
     const prompt = await generateSystemPrompt(mockRestaurant);
 
-    expect(fetchHubriseCatalog).toHaveBeenCalledWith("test-token", "test-location");
+    expect(fetchHubriseCatalog).toHaveBeenCalledWith("test-token", "test-location", null);
     expect(prompt).toContain("Test Restaurant");
     expect(prompt).toContain("Lundi-Vendredi: 10h-22h");
     expect(prompt).toContain("+33123456789");
@@ -95,6 +96,7 @@ describe("generateSystemPrompt", () => {
       ...mockRestaurant,
       hubriseAccessToken: null as string | null,
       hubriseLocationId: null as string | null,
+      hubriseCatalogId: null as string | null,
     };
 
     const prompt = await generateSystemPrompt(restaurantWithoutHubrise);

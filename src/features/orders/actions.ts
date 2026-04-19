@@ -2,31 +2,28 @@
 
 import { db } from "@/db";
 import { orders, restaurants, type OrderStatus } from "@/db/schema";
-import { auth } from "@/lib/auth/auth";
+import { requireAuth, getAppUser } from "@/lib/auth";
 import { eq, desc, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function getUserRestaurant() {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const user = await getAppUser();
+  if (!user?.id) {
     return null;
   }
 
   const restaurant = await db.query.restaurants.findFirst({
-    where: eq(restaurants.ownerId, session.user.id),
+    where: eq(restaurants.ownerId, user.id),
   });
 
   return restaurant || null;
 }
 
 export async function getOrders() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new Error("Non autorisé");
-  }
+  const user = await requireAuth();
 
   const ownerRestaurant = await db.query.restaurants.findFirst({
-    where: eq(restaurants.ownerId, session.user.id),
+    where: eq(restaurants.ownerId, user.id),
   });
 
   if (!ownerRestaurant) return [];
@@ -39,13 +36,10 @@ export async function getOrders() {
 }
 
 export async function updateOrderStatus(orderId: string, newStatus: OrderStatus) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new Error("Non autorisé");
-  }
+  const user = await requireAuth();
 
   const ownerRestaurant = await db.query.restaurants.findFirst({
-    where: eq(restaurants.ownerId, session.user.id),
+    where: eq(restaurants.ownerId, user.id),
   });
   if (!ownerRestaurant) throw new Error("Restaurant non trouvé");
 

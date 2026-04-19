@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth/auth";
+import { getAppUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export default async function AdminLayout({
@@ -6,17 +6,13 @@ export default async function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
+  const user = await getAppUser();
 
-  if (!session?.user) {
+  if (!user) {
     redirect("/login");
   }
 
-  if (session.user.mustChangePassword === true) {
-    redirect("/update-password");
-  }
-
-  if (session.user.role !== "ADMIN") {
+  if (user.role !== "ADMIN") {
     redirect("/dashboard");
   }
 

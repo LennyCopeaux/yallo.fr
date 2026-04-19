@@ -13,6 +13,8 @@ interface OrdersGridProps {
   initialOrders: Order[];
 }
 
+const AUTO_REFRESH_INTERVAL_MS = 15_000;
+
 export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
   const [orders, setOrders] = useState(initialOrders);
   const [, startTransition] = useTransition();
@@ -44,6 +46,19 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
   const handleRefresh = () => {
     router.refresh();
   };
+
+  useEffect(() => {
+    // Vercel ne fournit pas de WebSocket natif sans service externe: on utilise un polling léger.
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        router.refresh();
+      }
+    }, AUTO_REFRESH_INTERVAL_MS);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [router]);
 
   // Afficher toutes les commandes (le filtrage est déjà fait par DashboardContent)
   // Mais on peut toujours séparer actives et terminées pour l'affichage

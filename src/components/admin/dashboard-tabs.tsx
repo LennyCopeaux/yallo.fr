@@ -30,7 +30,6 @@ type User = {
   firstName: string | null;
   lastName: string | null;
   role: "ADMIN" | "OWNER";
-  mustChangePassword: boolean;
   createdAt: Date | null;
 };
 
@@ -165,9 +164,9 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, default
           </div>
           <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
             <p className="text-xl sm:text-2xl font-bold text-amber-400">
-              {users.filter(u => u.mustChangePassword).length}
+              {users.filter(u => u.role === "OWNER").length}
             </p>
-            <p className="text-xs sm:text-sm text-muted-foreground">En attente</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Owners</p>
           </div>
         </div>
 

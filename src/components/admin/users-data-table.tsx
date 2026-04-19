@@ -38,9 +38,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, Trash2, Loader2, AlertCircle, Mail, KeyRound, Edit, Search } from "lucide-react";
+import { MoreHorizontal, Trash2, Loader2, KeyRound, Edit, Search } from "lucide-react";
 import { toast } from "sonner";
-import { deleteUser, resendWelcomeEmail, sendPasswordResetEmail } from "@/app/(admin)/admin/actions";
+import { deleteUser, sendPasswordResetEmail } from "@/app/(admin)/admin/actions";
 import { EditUserDialog } from "./edit-user-dialog";
 
 type User = {
@@ -49,7 +49,6 @@ type User = {
   firstName: string | null;
   lastName: string | null;
   role: "ADMIN" | "OWNER";
-  mustChangePassword: boolean;
   createdAt: Date | null;
 };
 
@@ -66,7 +65,6 @@ export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [resendingFor, setResendingFor] = useState<string | null>(null);
   const [resettingFor, setResettingFor] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
@@ -138,18 +136,6 @@ export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
       setUserToDelete(null);
     } else {
       toast.error(result.error || "Erreur lors de la suppression");
-    }
-  };
-
-  const handleResendEmail = async (userId: string) => {
-    setResendingFor(userId);
-    const result = await resendWelcomeEmail(userId);
-    setResendingFor(null);
-    
-    if (result.success) {
-      toast.success("Nouveaux identifiants envoyés par email");
-    } else {
-      toast.error(result.error || "Erreur lors de l'envoi");
     }
   };
 
@@ -233,12 +219,6 @@ export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
                         : user.email}
                     </div>
                     <div className="text-xs text-muted-foreground">{user.email}</div>
-                    {user.mustChangePassword && (
-                      <span className="flex items-center gap-1.5 text-amber-400 text-xs md:hidden mt-1">
-                        <AlertCircle className="w-3 h-3" />
-                        Changement MDP requis
-                      </span>
-                    )}
                   </div>
                 </TableCell>
                 <TableCell className="min-w-[100px]">
@@ -253,14 +233,7 @@ export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
                   </Badge>
                 </TableCell>
                 <TableCell className="hidden md:table-cell min-w-[160px]">
-                  {user.mustChangePassword ? (
-                    <span className="flex items-center gap-1.5 text-amber-400 text-sm">
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      Changement MDP requis
-                    </span>
-                  ) : (
-                    <span className="text-emerald-400 text-sm">Actif</span>
-                  )}
+                  <span className="text-emerald-400 text-sm">Actif</span>
                 </TableCell>
                 <TableCell className="text-muted-foreground hidden lg:table-cell min-w-[120px]">
                   {user.createdAt
@@ -289,31 +262,17 @@ export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
                         Modifier
                       </DropdownMenuItem>
                       <DropdownMenuSeparator className="bg-muted/50" />
-                      {user.mustChangePassword ? (
-                        <DropdownMenuItem
-                          onClick={() => handleResendEmail(user.id)}
-                          disabled={resendingFor === user.id}
-                        >
-                          {resendingFor === user.id ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          ) : (
-                            <Mail className="w-4 h-4 mr-2" />
-                          )}
-                          Renvoyer les identifiants
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem
-                          onClick={() => handleSendPasswordReset(user.id)}
-                          disabled={resettingFor === user.id}
-                        >
-                          {resettingFor === user.id ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          ) : (
-                            <KeyRound className="w-4 h-4 mr-2" />
-                          )}
-                          Envoyer réinitialisation MDP
-                        </DropdownMenuItem>
-                      )}
+                      <DropdownMenuItem
+                        onClick={() => handleSendPasswordReset(user.id)}
+                        disabled={resettingFor === user.id}
+                      >
+                        {resettingFor === user.id ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <KeyRound className="w-4 h-4 mr-2" />
+                        )}
+                        Envoyer réinitialisation MDP
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator className="bg-muted/50" />
                       <DropdownMenuItem
                         className="text-red-400 focus:text-red-400"
