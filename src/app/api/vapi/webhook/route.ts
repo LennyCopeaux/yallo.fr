@@ -438,7 +438,7 @@ export async function POST(request: Request) {
         {
           error: "Unauthorized",
           hint:
-            "Vercel: définir VAPI_WEBHOOK_SECRET. Vapi: même valeur sur le serveur du tool (secret ou credential X-Vapi-Secret / Bearer). Voir docs/VAPI_WEBHOOK.md",
+            "Vercel: définir VAPI_WEBHOOK_SECRET. Vapi: même valeur sur le serveur du tool (secret ou credential X-Vapi-Secret / Bearer). Voir docs/CAHIER_DES_CHARGES_V1.md (Annexe A — Webhook Vapi).",
         },
         { status: 401 }
       );
