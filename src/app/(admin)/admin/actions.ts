@@ -1,20 +1,21 @@
 "use server";
 
-import { auth } from "@/lib/auth/auth";
+import { randomBytes } from "node:crypto";
+import { requireAdmin } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/server";
 import { db } from "@/db";
 import { users, restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { sendWelcomeEmail, sendResetPasswordEmail } from "@/lib/mail";
 import { z } from "zod";
 import { cookies } from "next/headers";
 import { DEFAULT_STATUS_SETTINGS } from "@/features/kitchen-status/constants";
-import { randomBytes } from "node:crypto";
 import { logger } from "@/lib/logger";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
+import { sendWelcomeEmail } from "@/lib/mail";
 import {
   createYalloDefaultStructuredOutputBatch,
+  updateYalloStructuredOutputBatch,
   getStructuredOutputIdsFromEnv,
   joinStructuredOutputIds,
   parseStructuredOutputIds,
@@ -85,6 +86,7 @@ const updateRestaurantBillingSchema = z.object({
 const updateHubriseConfigSchema = z.object({
   hubriseLocationId: z.string().max(100).optional().nullable(),
   hubriseAccessToken: z.string().max(500).optional().nullable(),
+  hubriseCatalogId: z.string().max(50).optional().nullable(),
 });
 
 export type ActionResult<T = void> = {
@@ -93,37 +95,10 @@ export type ActionResult<T = void> = {
   data?: T;
 };
 
-
-function generateSecureString(length: number): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  const bytes = randomBytes(length);
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(bytes[i] % chars.length);
-  }
-  return result;
-}
-
-function generateTempPassword(): string {
-  return generateSecureString(12);
-}
-
-function generateResetToken(): string {
-  return generateSecureString(32);
-}
-
-async function requireAdmin() {
-  const session = await auth();
-  if (session?.user?.role !== "ADMIN") {
-    throw new Error("Non autorisé");
-  }
-  return session;
-}
-
 export async function createUser(formData: FormData): Promise<ActionResult> {
   try {
     await requireAdmin();
-    
+
     const parsed = createUserSchema.safeParse({
       email: formData.get("email"),
       firstName: formData.get("firstName") || undefined,
@@ -147,22 +122,36 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
       return { success: false, error: "Cet email est déjà utilisé" };
     }
 
-    const tempPassword = generateTempPassword();
-    const passwordHash = await bcrypt.hash(tempPassword, 10);
+    // Génère un mot de passe temporaire sécurisé
+    const tempPassword = randomBytes(12).toString("hex") + "Aa1!";
+
+    const supabaseAdmin = await createAdminClient();
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: { firstName: firstName || null, lastName: lastName || null, role, must_change_password: true },
+    });
+
+    if (authError || !authData.user) {
+      logger.error("Supabase createUser failed", authError ?? new Error("No user returned"));
+      return { success: false, error: authError?.message || "Erreur création compte auth" };
+    }
 
     await db.insert(users).values({
+      authUserId: authData.user.id,
       email,
-      passwordHash,
       firstName: firstName || null,
       lastName: lastName || null,
       role,
-      mustChangePassword: true,
     });
 
+    // Envoi de l'email de bienvenue avec le mot de passe temporaire
     try {
       await sendWelcomeEmail(email, tempPassword);
-    } catch (emailError) {
-      logger.error("Erreur envoi email (utilisateur créé)", emailError instanceof Error ? emailError : new Error(String(emailError)));
+    } catch (mailError) {
+      logger.error("Erreur envoi email de bienvenue", mailError instanceof Error ? mailError : new Error(String(mailError)));
+      // On ne bloque pas la création si l'email échoue
     }
 
     revalidatePath("/admin");
@@ -186,9 +175,8 @@ export async function resendWelcomeEmail(userId: string): Promise<ActionResult> 
       return { success: false, error: "ID utilisateur requis" };
     }
 
-    // Récupérer l'utilisateur
     const [user] = await db
-      .select({ email: users.email, mustChangePassword: users.mustChangePassword })
+      .select({ email: users.email })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
@@ -197,16 +185,16 @@ export async function resendWelcomeEmail(userId: string): Promise<ActionResult> 
       return { success: false, error: "Utilisateur non trouvé" };
     }
 
-    // Ne renvoyer que si l'utilisateur doit encore changer son mot de passe
-    if (!user.mustChangePassword) {
-      return { success: false, error: "Cet utilisateur a déjà changé son mot de passe" };
+    const supabaseAdmin = await createAdminClient();
+    const { error } = await supabaseAdmin.auth.admin.generateLink({
+      type: "magiclink",
+      email: user.email,
+    });
+
+    if (error) {
+      logger.error("Erreur génération lien magique", error);
+      return { success: false, error: "Erreur lors du renvoi de l'email" };
     }
-
-    const tempPassword = generateTempPassword();
-    const passwordHash = await bcrypt.hash(tempPassword, 10);
-
-    await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
-    await sendWelcomeEmail(user.email, tempPassword);
 
     return { success: true };
   } catch (error) {
@@ -241,6 +229,22 @@ export async function updateUser(
       return { success: false, error: "Aucune donnée à mettre à jour" };
     }
 
+    // If email changes, also update in Supabase Auth
+    if (updateData.email) {
+      const [targetUser] = await db
+        .select({ authUserId: users.authUserId })
+        .from(users)
+        .where(eq(users.id, id))
+        .limit(1);
+
+      if (targetUser) {
+        const supabaseAdmin = await createAdminClient();
+        await supabaseAdmin.auth.admin.updateUserById(targetUser.authUserId, {
+          email: updateData.email,
+        });
+      }
+    }
+
     await db.update(users).set(updateData).where(eq(users.id, id));
     revalidatePath("/admin");
     return { success: true };
@@ -262,10 +266,7 @@ export async function sendPasswordResetEmail(userId: string): Promise<ActionResu
     }
 
     const [user] = await db
-      .select({ 
-        email: users.email, 
-        mustChangePassword: users.mustChangePassword 
-      })
+      .select({ email: users.email })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
@@ -274,23 +275,16 @@ export async function sendPasswordResetEmail(userId: string): Promise<ActionResu
       return { success: false, error: "Utilisateur non trouvé" };
     }
 
-    if (user.mustChangePassword) {
-      return { success: false, error: "Cet utilisateur doit d'abord changer son mot de passe initial" };
+    const supabaseAdmin = await createAdminClient();
+    const { error } = await supabaseAdmin.auth.admin.generateLink({
+      type: "recovery",
+      email: user.email,
+    });
+
+    if (error) {
+      logger.error("Erreur génération lien reset", error);
+      return { success: false, error: "Erreur lors de l'envoi de l'email" };
     }
-
-    const resetToken = generateResetToken();
-    const resetTokenExpires = new Date();
-    resetTokenExpires.setHours(resetTokenExpires.getHours() + 1);
-
-    await db
-      .update(users)
-      .set({
-        resetToken,
-        resetTokenExpires,
-      })
-      .where(eq(users.id, userId));
-
-    await sendResetPasswordEmail(user.email, resetToken);
 
     return { success: true };
   } catch (error) {
@@ -301,14 +295,26 @@ export async function sendPasswordResetEmail(userId: string): Promise<ActionResu
 
 export async function deleteUser(id: string): Promise<ActionResult> {
   try {
-    const session = await requireAdmin();
+    const admin = await requireAdmin();
 
     if (!id) {
       return { success: false, error: "ID utilisateur requis" };
     }
 
-    if (session.user.id === id) {
+    if (admin.id === id) {
       return { success: false, error: "Vous ne pouvez pas vous supprimer vous-même" };
+    }
+
+    // Also delete from Supabase Auth
+    const [targetUser] = await db
+      .select({ authUserId: users.authUserId })
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+
+    if (targetUser) {
+      const supabaseAdmin = await createAdminClient();
+      await supabaseAdmin.auth.admin.deleteUser(targetUser.authUserId);
     }
 
     await db.delete(users).where(eq(users.id, id));
@@ -392,10 +398,6 @@ export async function updateRestaurantGeneral(
   }
 }
 
-/**
- * Assure la configuration Vapi (plan d’artefacts) requise pour la publication de l’agent.
- * Ordre : `VAPI_STRUCTURED_OUTPUT_IDS` → colonne DB → création auto côté API Vapi.
- */
 async function ensureRestaurantStructuredOutputIds(
   restaurant: typeof restaurants.$inferSelect
 ): Promise<string[]> {
@@ -421,10 +423,7 @@ async function ensureRestaurantStructuredOutputIds(
 export async function createVapiAssistant(id: string): Promise<ActionResult<{ assistantId: string }>> {
   "use server";
 
-  const session = await auth();
-  if (session?.user?.role !== "ADMIN") {
-    return { success: false, error: "Non autorisé" };
-  }
+  await requireAdmin();
 
   try {
     const [restaurant] = await db
@@ -452,10 +451,8 @@ export async function createVapiAssistant(id: string): Promise<ActionResult<{ as
 
     const { createVapiAssistant: createAssistant, importTwilioPhoneNumber } = await import("@/lib/services/vapi");
 
-    // 1. Créer l'assistant Vapi
     const assistant = await createAssistant(restaurant, structuredOutputIds);
 
-    // 2. Importer le numéro Twilio dans Vapi et l'associer à l'assistant
     let vapiPhoneNumberId: string | null = null;
     try {
       const phoneResult = await importTwilioPhoneNumber(
@@ -470,12 +467,11 @@ export async function createVapiAssistant(id: string): Promise<ActionResult<{ as
         phoneNumber: restaurant.twilioPhoneNumber,
       });
     } catch (phoneError) {
-      // L'assistant a été créé mais le numéro n'a pas pu être importé — on nettoie
       const { deleteVapiAssistant: cleanupAssistant } = await import("@/lib/services/vapi");
       try {
         await cleanupAssistant(assistant.id);
       } catch {
-        // Ignore — on ne peut rien faire de plus
+        // Ignore
       }
       const errorMessage = phoneError instanceof Error ? phoneError.message : String(phoneError);
       logger.error("Échec import numéro Twilio dans Vapi, assistant supprimé", new Error(errorMessage));
@@ -509,10 +505,7 @@ export async function createVapiAssistant(id: string): Promise<ActionResult<{ as
 export async function updateVapiAssistant(id: string): Promise<ActionResult> {
   "use server";
 
-  const session = await auth();
-  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "OWNER")) {
-    return { success: false, error: "Non autorisé" };
-  }
+  await requireAdmin();
 
   try {
     const [restaurant] = await db
@@ -523,10 +516,6 @@ export async function updateVapiAssistant(id: string): Promise<ActionResult> {
 
     if (!restaurant) {
       return { success: false, error: "Restaurant non trouvé" };
-    }
-
-    if (session.user.role === "OWNER" && restaurant.ownerId !== session.user.id) {
-      return { success: false, error: "Non autorisé" };
     }
 
     if (!restaurant.vapiAssistantId) {
@@ -564,19 +553,10 @@ async function deleteVapiPhoneNumberIfExists(restaurantId: string, phoneNumberId
   }
 }
 
-function canDeleteVapiAssistant(
-  session: { user: { id: string; role: string } } | null,
-  restaurant: { ownerId: string | null }
-): boolean {
-  if (!session?.user) return false;
-  if (session.user.role === "ADMIN") return true;
-  return session.user.role === "OWNER" && restaurant.ownerId === session.user.id;
-}
-
 export async function deleteVapiAssistant(id: string): Promise<ActionResult> {
   "use server";
 
-  const session = await auth();
+  await requireAdmin();
   const [restaurant] = await db
     .select()
     .from(restaurants)
@@ -585,10 +565,6 @@ export async function deleteVapiAssistant(id: string): Promise<ActionResult> {
 
   if (!restaurant) {
     return { success: false, error: "Restaurant non trouvé" };
-  }
-
-  if (!canDeleteVapiAssistant(session, restaurant)) {
-    return { success: false, error: "Non autorisé" };
   }
 
   if (!restaurant.vapiAssistantId) {
@@ -603,7 +579,7 @@ export async function deleteVapiAssistant(id: string): Promise<ActionResult> {
 
     await db
       .update(restaurants)
-      .set({ 
+      .set({
         vapiAssistantId: null,
         vapiPhoneNumberId: null,
         updatedAt: new Date(),
@@ -751,6 +727,9 @@ export async function updateHubriseConfig(
     if (parsed.data.hubriseAccessToken !== undefined) {
       updateData.hubriseAccessToken = parsed.data.hubriseAccessToken;
     }
+    if (parsed.data.hubriseCatalogId !== undefined) {
+      updateData.hubriseCatalogId = parsed.data.hubriseCatalogId;
+    }
 
     await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
     revalidatePath("/admin");
@@ -781,13 +760,12 @@ export async function deleteRestaurant(id: string): Promise<ActionResult> {
 
 export async function impersonateRestaurant(restaurantId: string): Promise<ActionResult<string>> {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     if (!restaurantId) {
       return { success: false, error: "ID restaurant requis" };
     }
 
-    // Récupère le restaurant et son owner
     const [restaurant] = await db
       .select({
         id: restaurants.id,
@@ -804,17 +782,16 @@ export async function impersonateRestaurant(restaurantId: string): Promise<Actio
     }
 
     const cookieStore = await cookies();
-    const session = await auth();
-    cookieStore.set("admin_impersonator_id", session!.user.id, {
+    cookieStore.set("admin_impersonator_id", admin.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 60 * 60,
     });
 
-    return { 
-      success: true, 
-      data: `/dashboard?impersonate=${restaurant.ownerId}` 
+    return {
+      success: true,
+      data: `/dashboard?impersonate=${restaurant.ownerId}`,
     };
   } catch (error) {
     logger.error("Erreur impersonation", error instanceof Error ? error : new Error(String(error)));
@@ -853,7 +830,7 @@ export async function toggleRestaurantStatus(
 
     await db
       .update(restaurants)
-      .set({ 
+      .set({
         isActive,
         status: isActive ? "active" : "suspended",
         updatedAt: new Date(),
@@ -865,6 +842,41 @@ export async function toggleRestaurantStatus(
   } catch (error) {
     logger.error("Erreur toggle statut restaurant", error instanceof Error ? error : new Error(String(error)));
     return { success: false, error: "Erreur lors de la mise à jour du statut" };
+  }
+}
+
+/**
+ * Met à jour les schemas des structured outputs Vapi existants pour un restaurant (corrige `required`, types, etc.).
+ * À appeler depuis l'admin après une modification des schemas dans le code.
+ */
+export async function syncVapiStructuredOutputs(restaurantId: string): Promise<ActionResult> {
+  "use server";
+
+  try {
+    await requireAdmin();
+
+    const [restaurant] = await db
+      .select()
+      .from(restaurants)
+      .where(eq(restaurants.id, restaurantId))
+      .limit(1);
+
+    if (!restaurant) {
+      return { success: false, error: "Restaurant non trouvé" };
+    }
+
+    const ids = parseStructuredOutputIds(restaurant.vapiStructuredOutputIds);
+    if (ids.length === 0) {
+      return { success: false, error: "Aucun structured output ID trouvé pour ce restaurant. Créez d'abord un assistant Vapi." };
+    }
+
+    await updateYalloStructuredOutputBatch(ids);
+
+    logger.info("Structured outputs Vapi mis à jour", { restaurantId, ids });
+    return { success: true };
+  } catch (error) {
+    logger.error("Erreur sync structured outputs Vapi", error instanceof Error ? error : new Error(String(error)));
+    return { success: false, error: error instanceof Error ? error.message : "Erreur lors de la synchronisation" };
   }
 }
 

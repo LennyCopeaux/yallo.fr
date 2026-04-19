@@ -23,6 +23,9 @@ type FormValues = z.infer<typeof formSchema>;
 type Restaurant = {
   id: string;
   stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  stripeSubscriptionStatus: string | null;
+  stripePriceId: string | null;
   billingStartDate?: string | null;
 };
 
@@ -137,6 +140,21 @@ export function BillingTab({ restaurant }: Readonly<BillingTabProps>) {
                 <p className="text-xs text-muted-foreground">
                   Format : cus_xxxxxxxxxxxxxx (depuis le dashboard Stripe)
                 </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Subscription ID</Label>
+                  <Input value={restaurant.stripeSubscriptionId ?? ""} disabled className="font-mono" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Statut abonnement</Label>
+                  <Input value={restaurant.stripeSubscriptionStatus ?? ""} disabled />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Price ID</Label>
+                  <Input value={restaurant.stripePriceId ?? ""} disabled className="font-mono" />
+                </div>
               </div>
             </div>
           </CardContent>

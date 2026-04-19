@@ -59,14 +59,12 @@ export type MenuData = {
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
+  /** FK vers auth.users.id (Supabase Auth) */
+  authUserId: text("auth_user_id").unique().notNull(),
   email: text("email").unique().notNull(),
-  passwordHash: text("password_hash").notNull(),
   firstName: text("first_name"),
   lastName: text("last_name"),
   role: text("role", { enum: userRoleEnum }).default("OWNER").notNull(),
-  mustChangePassword: boolean("must_change_password").default(false).notNull(),
-  resetToken: text("reset_token"),
-  resetTokenExpires: timestamp("reset_token_expires"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -85,6 +83,10 @@ export const restaurants = pgTable("restaurants", {
   plan: restaurantPlanPgEnum("plan").default("commission"),
   commissionRate: integer("commission_rate").default(5),
   stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  stripeSubscriptionStatus: text("stripe_subscription_status"),
+  stripePriceId: text("stripe_price_id"),
+  stripeCurrentPeriodEnd: timestamp("stripe_current_period_end"),
   billingStartDate: text("billing_start_date"),
   
   vapiAssistantId: text("vapi_assistant_id"),
@@ -102,6 +104,8 @@ export const restaurants = pgTable("restaurants", {
   
   hubriseLocationId: text("hubrise_location_id"),
   hubriseAccessToken: text("hubrise_access_token"),
+  /** ID catalogue HubRise (ex. 1rbmp). Si vide, choix auto parmi les catalogues de la location. */
+  hubriseCatalogId: text("hubrise_catalog_id"),
   
   currentStatus: kitchenStatusPgEnum("current_status").default("CALM").notNull(),
   statusSettings: jsonb("status_settings").$type<{

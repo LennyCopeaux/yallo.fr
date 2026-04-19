@@ -120,6 +120,20 @@
       "when": 1770305032955,
       "tag": "0016_melodic_sunset_bain",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1771008000000,
+      "tag": "0021_add_hubrise_catalog_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1771012800000,
+      "tag": "0022_add_stripe_subscription_fields",
+      "breakpoints": true
     }
   ]
 }
