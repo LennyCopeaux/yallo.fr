@@ -140,10 +140,9 @@ jobs:
         id: deploy
         run: |
           npm install -g vercel@latest
-          DEPLOY_URL=$(vercel --token=${{ secrets.VERCEL_TOKEN }} \
-            --scope=${{ secrets.VERCEL_ORG_ID }} \
-            --yes \
-            --prod 2>&1 | tail -1)
+          vercel pull --token=${{ secrets.VERCEL_TOKEN }} --environment=preview --yes
+          vercel build --token=${{ secrets.VERCEL_TOKEN }} --yes
+          DEPLOY_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | tail -1)
           echo "preview-url=$DEPLOY_URL" >> $GITHUB_OUTPUT
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
