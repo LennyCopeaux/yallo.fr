@@ -14,7 +14,7 @@ export function getStripeServerClient(): Stripe {
   if (!stripeClient) {
     // Le SDK Stripe reste côté serveur uniquement (aucune clé exposée au client).
     stripeClient = new Stripe(getStripeSecretKey(), {
-      apiVersion: "2025-03-31.basil",
+      apiVersion: "2026-03-25.dahlia",
       typescript: true,
     });
   }

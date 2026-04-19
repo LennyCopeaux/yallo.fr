@@ -9,7 +9,7 @@ function createEvent(event: Partial<Stripe.Event>): Stripe.Event {
   return {
     id: "evt_test",
     object: "event",
-    api_version: "2025-03-31.basil",
+    api_version: "2026-03-25.dahlia",
     created: 1_734_000_000,
     data: { object: {} },
     livemode: false,
