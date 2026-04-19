@@ -19,9 +19,12 @@ function makeRequest(
   });
 }
 
-function mockUser(role?: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mockUser(role?: string): any {
   return {
     id: "user-123",
+    aud: "authenticated",
+    created_at: new Date().toISOString(),
     app_metadata: { role },
     user_metadata: {},
   };
@@ -30,6 +33,8 @@ function mockUser(role?: string) {
 beforeEach(() => {
   vi.clearAllMocks();
   mockCreateClient.mockResolvedValue({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    supabase: {} as any,
     supabaseResponse: NextResponse.next(),
     user: null,
   });
@@ -83,6 +88,8 @@ describe("middleware", () => {
   describe("app domain - authenticated user (RESTAURANT role)", () => {
     beforeEach(() => {
       mockCreateClient.mockResolvedValue({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase: {} as any,
         supabaseResponse: NextResponse.next(),
         user: mockUser("RESTAURANT"),
       });
@@ -119,6 +126,8 @@ describe("middleware", () => {
   describe("app domain - authenticated ADMIN", () => {
     beforeEach(() => {
       mockCreateClient.mockResolvedValue({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supabase: {} as any,
         supabaseResponse: NextResponse.next(),
         user: mockUser("ADMIN"),
       });

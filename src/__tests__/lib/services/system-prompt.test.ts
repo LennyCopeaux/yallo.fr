@@ -48,6 +48,10 @@ describe("generateSystemPrompt", () => {
     hubriseCatalogId: null as string | null,
     currentStatus: "CALM" as const,
     statusSettings: null,
+    stripeSubscriptionId: null,
+    stripeSubscriptionStatus: null,
+    stripePriceId: null,
+    stripeCurrentPeriodEnd: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

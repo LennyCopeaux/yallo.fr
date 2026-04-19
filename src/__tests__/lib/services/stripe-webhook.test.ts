@@ -5,7 +5,8 @@ import {
   isRestaurantActiveFromStripeStatus,
 } from "@/lib/services/stripe-webhook";
 
-function createEvent(event: Partial<Stripe.Event>): Stripe.Event {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createEvent(event: any): Stripe.Event {
   return {
     id: "evt_test",
     object: "event",
@@ -17,7 +18,7 @@ function createEvent(event: Partial<Stripe.Event>): Stripe.Event {
     request: { id: null, idempotency_key: null },
     type: "customer.subscription.updated",
     ...event,
-  } as Stripe.Event;
+  } as unknown as Stripe.Event;
 }
 
 describe("extractStripeSubscriptionSyncPayload", () => {

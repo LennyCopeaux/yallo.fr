@@ -237,7 +237,7 @@ export async function updateUser(
         .where(eq(users.id, id))
         .limit(1);
 
-      if (targetUser) {
+      if (targetUser?.authUserId) {
         const supabaseAdmin = await createAdminClient();
         await supabaseAdmin.auth.admin.updateUserById(targetUser.authUserId, {
           email: updateData.email,
@@ -312,7 +312,7 @@ export async function deleteUser(id: string): Promise<ActionResult> {
       .where(eq(users.id, id))
       .limit(1);
 
-    if (targetUser) {
+    if (targetUser?.authUserId) {
       const supabaseAdmin = await createAdminClient();
       await supabaseAdmin.auth.admin.deleteUser(targetUser.authUserId);
     }
