@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { motion } from "motion/react";
-import { useSession } from "next-auth/react";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
@@ -14,23 +14,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Lock, Shield, Eye, EyeOff, AlertCircle, Clock } from "lucide-react";
-import { updatePassword, verifyResetToken } from "@/app/update-password/actions";
+import { Loader2, Lock, Shield, Eye, EyeOff } from "lucide-react";
+import { updatePassword } from "@/app/update-password/actions";
 import { toast } from "sonner";
+import type { User } from "@supabase/supabase-js";
 
 function UpdatePasswordFormContent() {
-  const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const resetToken = searchParams.get("token");
-  
+  const hasRecoveryToken = searchParams.get("type") === "recovery";
+
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isVerifyingToken, setIsVerifyingToken] = useState(!!resetToken);
-  const [isValidToken, setIsValidToken] = useState(false);
-  const [userEmail, setUserEmail] = useState<string>("");
   const isMountedRef = useRef(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -43,47 +42,18 @@ function UpdatePasswordFormContent() {
   }, []);
 
   useEffect(() => {
-    async function checkToken() {
-      if (!resetToken) {
-        setIsVerifyingToken(false);
-        return;
-      }
+    async function loadUser() {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+      setIsLoadingUser(false);
 
-      try {
-        const result = await verifyResetToken(resetToken);
-        if (result.valid && result.email) {
-          setIsValidToken(true);
-          setUserEmail(result.email);
-        } else {
-          setError(result.error || "Token invalide ou expiré");
-        }
-      } catch {
-        setError("Erreur lors de la vérification du token");
-      } finally {
-        setIsVerifyingToken(false);
+      if (!data.user && !hasRecoveryToken) {
+        router.replace("/login");
       }
     }
-
-    if (resetToken) {
-      checkToken();
-    }
-  }, [resetToken]);
-
-  useEffect(() => {
-    if (resetToken) return;
-    
-    if (!isMountedRef.current || status === "loading") return;
-    
-    if (!session) {
-      router.replace("/login");
-      return;
-    }
-
-    if (session.user.mustChangePassword === false) {
-      const redirectPath = session.user.role === "ADMIN" ? "/admin" : "/dashboard";
-      router.replace(redirectPath);
-    }
-  }, [session, status, router, resetToken]);
+    loadUser();
+  }, [router, hasRecoveryToken]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -106,10 +76,6 @@ function UpdatePasswordFormContent() {
       const formData = new FormData();
       formData.append("newPassword", newPassword);
       formData.append("confirmPassword", confirmPassword);
-
-      if (resetToken) {
-        formData.append("token", resetToken);
-      }
 
       toast.success("Mot de passe changé avec succès", {
         description: "Vous allez être redirigé...",
@@ -137,97 +103,7 @@ function UpdatePasswordFormContent() {
     }
   }
 
-  if (isVerifyingToken) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-        <Card className="w-full max-w-md mx-4 relative z-10 bg-card/50 border-border backdrop-blur-xl">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Vérification du token...</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (resetToken && !isValidToken) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-amber-400/10 blur-[120px]" />
-          <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-amber-400/5 blur-[100px]" />
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full max-w-md mx-4 relative z-10"
-        >
-          <Card className="bg-card/50 border-border backdrop-blur-xl">
-            <CardHeader className="text-center space-y-4 pb-4">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
-                className="flex justify-center"
-              >
-                <div className="w-20 h-20 rounded-full bg-amber-400/10 flex items-center justify-center">
-                  <motion.div
-                    animate={{
-                      rotate: [0, -10, 10, -10, 0],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      repeatDelay: 2,
-                      ease: "easeInOut",
-                    }}
-                  >
-                    <Clock className="w-10 h-10 text-amber-400" />
-                  </motion.div>
-                </div>
-              </motion.div>
-              <div className="space-y-2">
-                <CardTitle className="text-2xl font-bold text-foreground">
-                  Lien expiré
-                </CardTitle>
-                <CardDescription className="text-base">
-                  {error || "Ce lien de réinitialisation n'est plus valide."}
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 rounded-lg bg-amber-400/10 border border-amber-400/20">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                  <div className="space-y-1 text-sm">
-                    <p className="font-medium text-amber-400">Pourquoi ce lien a expiré ?</p>
-                    <p className="text-muted-foreground">
-                      Les liens de réinitialisation sont valides pendant 1 heure pour des raisons de sécurité. 
-                      Si vous avez besoin d&apos;un nouveau lien, contactez votre administrateur.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <Button
-                onClick={() => router.push("/login")}
-                className="w-full !bg-yellow-500 hover:!bg-yellow-600 !text-black"
-              >
-                Retour à la connexion
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-    );
-  }
-
-  const showSessionLoading = !resetToken && (status === "loading" || !session || session.user.mustChangePassword === false);
-  if (showSessionLoading) {
+  if (isLoadingUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -253,9 +129,9 @@ function UpdatePasswordFormContent() {
                 Changer votre mot de passe
               </CardTitle>
               <CardDescription className="text-muted-foreground text-base">
-                {resetToken 
-                  ? `Compte : ${userEmail}`
-                  : "Pour des raisons de sécurité, vous devez définir un nouveau mot de passe"
+                {user
+                  ? `Compte : ${user.email}`
+                  : "Définissez un nouveau mot de passe"
                 }
               </CardDescription>
             </div>
@@ -356,10 +232,10 @@ function UpdatePasswordFormContent() {
               </Button>
             </form>
             
-            {!resetToken && session && (
+            {user && (
               <div className="mt-6 text-center">
                 <p className="text-xs text-muted-foreground">
-                  Connecté en tant que : <span className="text-foreground font-medium">{session.user.email}</span>
+                  Connecté en tant que : <span className="text-foreground font-medium">{user.email}</span>
                 </p>
               </div>
             )}
