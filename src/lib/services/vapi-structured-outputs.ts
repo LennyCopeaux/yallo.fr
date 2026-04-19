@@ -18,11 +18,11 @@ const YALLO_STRUCTURED_OUTPUT_SPECS = [
           description: "Prénom ou nom donné par le client",
         },
         customer_phone: {
-          type: "string",
-          description: "Numéro du client (E.164 ou tel que mentionné)",
+          anyOf: [{ type: "string" }, { type: "null" }],
+          description: "Numéro du client (E.164 ou tel que mentionné), null si non mentionné",
         },
       },
-      required: ["customer_name"],
+      required: ["customer_name", "customer_phone"],
     },
   },
   {
@@ -36,11 +36,11 @@ const YALLO_STRUCTURED_OUTPUT_SPECS = [
           description: "Liste ou résumé des produits commandés avec options",
         },
         estimated_total_eur: {
-          type: "number",
-          description: "Total estimé en euros si mentionné",
+          anyOf: [{ type: "number" }, { type: "null" }],
+          description: "Total estimé en euros si mentionné, null si non précisé",
         },
       },
-      required: ["items_summary"],
+      required: ["items_summary", "estimated_total_eur"],
     },
   },
   {
@@ -50,15 +50,15 @@ const YALLO_STRUCTURED_OUTPUT_SPECS = [
       type: "object",
       properties: {
         pickup_time: {
-          type: "string",
-          description: "Heure de retrait (HH:MM) ou vide",
+          anyOf: [{ type: "string" }, { type: "null" }],
+          description: "Heure de retrait (HH:MM), null si non précisé",
         },
         asap: {
           type: "boolean",
           description: "True si le client veut le plus tôt possible",
         },
       },
-      required: ["asap"],
+      required: ["pickup_time", "asap"],
     },
   },
   {
@@ -173,7 +173,42 @@ export async function createYalloDefaultStructuredOutputBatch(): Promise<string[
   }
   return ids;
 }
+async function patchStructuredOutput(apiKey: string, id: string, spec: YalloStructuredOutputSpec): Promise<void> {
+  const response = await fetch(`${VAPI_API_URL}/structured-output/${id}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: spec.name,
+      type: "ai",
+      description: spec.description,
+      schema: spec.schema,
+    }),
+  });
 
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Erreur inconnue" }));
+    throw new Error(
+      typeof error.message === "string"
+        ? error.message
+        : `Erreur Vapi PATCH structured-output ${id}: ${response.status}`
+    );
+  }
+}
+
+/**
+ * Met à jour les schemas des structured outputs existants dans Vapi (corrige `required`, types, etc.).
+ * Les IDs doivent être dans le même ordre que YALLO_STRUCTURED_OUTPUT_SPECS.
+ */
+export async function updateYalloStructuredOutputBatch(ids: string[]): Promise<void> {
+  const apiKey = getApiKey();
+  const specs = YALLO_STRUCTURED_OUTPUT_SPECS;
+  for (let i = 0; i < Math.min(ids.length, specs.length); i++) {
+    await patchStructuredOutput(apiKey, ids[i], specs[i]);
+  }
+}
 export function joinStructuredOutputIds(ids: string[]): string {
   return ids.join(",");
 }
