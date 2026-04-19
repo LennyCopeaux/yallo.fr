@@ -29,9 +29,8 @@ describe("extractStripeSubscriptionSyncPayload", () => {
           id: "sub_123",
           customer: "cus_123",
           status: "active",
-          current_period_end: 1_734_111_111,
           items: {
-            data: [{ price: { id: "price_123" } }],
+            data: [{ price: { id: "price_123" }, current_period_end: 1_734_111_111 }],
           },
           metadata: {
             restaurantId: "550e8400-e29b-41d4-a716-446655440000",
