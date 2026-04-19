@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth/auth";
+import { getAppUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock } from "lucide-react";
@@ -7,17 +7,13 @@ import { getBusinessHours } from "@/features/hours/actions";
 import { HoursEditor } from "@/components/hours/hours-editor";
 
 export default async function HoursPage() {
-  const session = await auth();
+  const user = await getAppUser();
 
-  if (!session?.user) {
+  if (!user) {
     redirect("/login");
   }
 
-  if (session.user.mustChangePassword === true) {
-    redirect("/update-password");
-  }
-
-  if (session.user.role === "ADMIN") {
+  if (user.role === "ADMIN") {
     redirect("/admin");
   }
 

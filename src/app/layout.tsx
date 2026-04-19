@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Geist_Mono } from "next/font/google";
-import { AuthSessionProvider } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -159,10 +158,8 @@ export default function RootLayout({
         >
           Aller au contenu principal
         </a>
-        <AuthSessionProvider>
-          {children}
-          <Toaster richColors position="bottom-right" />
-        </AuthSessionProvider>
+        {children}
+        <Toaster richColors position="bottom-right" />
       </body>
     </html>
   );

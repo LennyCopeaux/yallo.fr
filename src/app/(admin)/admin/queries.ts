@@ -86,7 +86,6 @@ export async function getUsers() {
       firstName: users.firstName,
       lastName: users.lastName,
       role: users.role,
-      mustChangePassword: users.mustChangePassword,
       createdAt: users.createdAt,
     })
     .from(users)

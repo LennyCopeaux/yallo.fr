@@ -13,7 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { createClient } from "@/lib/supabase/client";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -22,7 +22,8 @@ const navigation = [
 ] as const;
 
 async function handleLogout(): Promise<void> {
-  await signOut({ redirect: false });
+  const supabase = createClient();
+  await supabase.auth.signOut();
   if (globalThis.window !== undefined) {
     globalThis.window.location.href = getAppUrl("/login");
   }

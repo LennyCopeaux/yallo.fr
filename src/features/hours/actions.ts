@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth/auth";
+import { requireAuth } from "@/lib/auth";
 import { db } from "@/db";
 import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -35,16 +35,15 @@ export type ActionResult = {
 };
 
 export async function getBusinessHours(): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user) return { success: false, error: "Non autorisé" };
-  if (session.user.role === "ADMIN") {
+  const user = await requireAuth();
+  if (user.role === "ADMIN") {
     return { success: false, error: "Un restaurant doit être spécifié pour les admins" };
   }
 
   const [ownerRestaurant] = await db
     .select({ businessHours: restaurants.businessHours })
     .from(restaurants)
-    .where(eq(restaurants.ownerId, session.user.id))
+    .where(eq(restaurants.ownerId, user.id))
     .limit(1);
 
   if (!ownerRestaurant) return { success: false, error: "Aucun restaurant trouvé" };
@@ -65,16 +64,15 @@ export async function getBusinessHours(): Promise<ActionResult> {
 }
 
 export async function updateBusinessHours(formData: FormData): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user) return { success: false, error: "Non autorisé" };
-  if (session.user.role === "ADMIN") {
+  const user = await requireAuth();
+  if (user.role === "ADMIN") {
     return { success: false, error: "Un restaurant doit être spécifié pour les admins" };
   }
 
   const [ownerRestaurant] = await db
     .select({ id: restaurants.id })
     .from(restaurants)
-    .where(eq(restaurants.ownerId, session.user.id))
+    .where(eq(restaurants.ownerId, user.id))
     .limit(1);
 
   if (!ownerRestaurant) return { success: false, error: "Aucun restaurant trouvé" };

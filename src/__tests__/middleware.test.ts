@@ -1,167 +1,154 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextRequest, NextResponse } from "next/server";
+import { middleware } from "../../middleware";
 
-// Mock the auth module
-vi.mock("@/lib/auth/auth", () => ({
-  auth: vi.fn(),
+vi.mock("@/lib/supabase/middleware", () => ({
+  createClient: vi.fn(),
 }));
 
-import { auth } from "@/lib/auth/auth";
+import { createClient } from "@/lib/supabase/middleware";
 
-interface MockSession {
-  user: {
-    id: string;
-    email: string;
-    role: string;
-    mustChangePassword?: boolean;
+const mockCreateClient = vi.mocked(createClient);
+
+function makeRequest(
+  pathname: string,
+  host = "app.localhost:3000"
+): NextRequest {
+  return new NextRequest(new URL(`http://${host}${pathname}`), {
+    headers: { host },
+  });
+}
+
+function mockUser(role?: string) {
+  return {
+    id: "user-123",
+    app_metadata: { role },
+    user_metadata: {},
   };
 }
 
-describe("Middleware", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockCreateClient.mockResolvedValue({
+    supabaseResponse: NextResponse.next(),
+    user: null,
   });
+});
 
-  describe("URL Building", () => {
-    it("should build correct app URL for localhost", () => {
-      const hostString = "localhost:3000";
-      const path = "/dashboard";
-      const port = hostString.match(/:(\d+)/)?.[1] || "3000";
-      const url = `http://app.localhost:${port}${path}`;
-
-      expect(url).toBe("http://app.localhost:3000/dashboard");
+describe("middleware", () => {
+  describe("non-app domain", () => {
+    it("passes through non-app routes on main domain", async () => {
+      const req = makeRequest("/", "yallo.fr");
+      const res = await middleware(req);
+      expect(res.status).not.toBe(307);
     });
 
-    it("should build correct app URL for production", () => {
-      const path = "/dashboard";
-      const url = `https://app.yallo.fr${path}`;
-
-      expect(url).toBe("https://app.yallo.fr/dashboard");
-    });
-
-    it("should build correct app URL for staging", () => {
-      const path = "/dashboard";
-      const url = `https://app.staging.yallo.fr${path}`;
-
-      expect(url).toBe("https://app.staging.yallo.fr/dashboard");
+    it("redirects app-only routes from main domain to app domain", async () => {
+      const req = makeRequest("/login", "yallo.fr");
+      const res = await middleware(req);
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toContain("/login");
     });
   });
 
-  describe("Domain Detection", () => {
-    it("should detect app domain from host", () => {
-      const hosts = [
-        { host: "app.localhost:3000", isApp: true },
-        { host: "app.yallo.fr", isApp: true },
-        { host: "app.staging.yallo.fr", isApp: true },
-        { host: "localhost:3000", isApp: false },
-        { host: "yallo.fr", isApp: false },
-        { host: "staging.yallo.fr", isApp: false },
-      ];
+  describe("app domain - unauthenticated", () => {
+    it("redirects root to /login when not logged in", async () => {
+      const req = makeRequest("/");
+      const res = await middleware(req);
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toContain("/login");
+    });
 
-      hosts.forEach(({ host, isApp }) => {
-        const isAppDomain = host.startsWith("app.");
-        expect(isAppDomain).toBe(isApp);
+    it("redirects protected dashboard to /login when not logged in", async () => {
+      const req = makeRequest("/dashboard");
+      const res = await middleware(req);
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toContain("/login");
+    });
+
+    it("redirects protected admin to /login when not logged in", async () => {
+      const req = makeRequest("/admin");
+      const res = await middleware(req);
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toContain("/login");
+    });
+
+    it("allows /login route when not logged in", async () => {
+      const req = makeRequest("/login");
+      const res = await middleware(req);
+      expect(res.status).not.toBe(307);
+    });
+  });
+
+  describe("app domain - authenticated user (RESTAURANT role)", () => {
+    beforeEach(() => {
+      mockCreateClient.mockResolvedValue({
+        supabaseResponse: NextResponse.next(),
+        user: mockUser("RESTAURANT"),
       });
     });
+
+    it("redirects root to /dashboard", async () => {
+      const req = makeRequest("/");
+      const res = await middleware(req);
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toContain("/dashboard");
+    });
+
+    it("redirects /login to /dashboard when already logged in", async () => {
+      const req = makeRequest("/login");
+      const res = await middleware(req);
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toContain("/dashboard");
+    });
+
+    it("redirects /admin routes to /dashboard for non-admin", async () => {
+      const req = makeRequest("/admin");
+      const res = await middleware(req);
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toContain("/dashboard");
+    });
+
+    it("allows /dashboard routes", async () => {
+      const req = makeRequest("/dashboard");
+      const res = await middleware(req);
+      expect(res.status).not.toBe(307);
+    });
   });
 
-  describe("Route Classification", () => {
-    it("should identify protected routes", () => {
-      const protectedRoutes = ["/dashboard", "/admin", "/dashboard/menu"];
-      const isProtectedRoute = (path: string) =>
-        path.startsWith("/dashboard") || path.startsWith("/admin");
-
-      protectedRoutes.forEach((route) => {
-        expect(isProtectedRoute(route)).toBe(true);
+  describe("app domain - authenticated ADMIN", () => {
+    beforeEach(() => {
+      mockCreateClient.mockResolvedValue({
+        supabaseResponse: NextResponse.next(),
+        user: mockUser("ADMIN"),
       });
     });
 
-    it("should identify public routes", () => {
-      const publicRoutes = ["/login", "/", "/contact"];
-      const isProtectedRoute = (path: string) =>
-        path.startsWith("/dashboard") || path.startsWith("/admin");
-
-      publicRoutes.forEach((route) => {
-        expect(isProtectedRoute(route)).toBe(false);
-      });
-    });
-  });
-
-  describe("Role-based Access", () => {
-    it("should allow ADMIN role to access /admin routes", () => {
-      const userRole = "ADMIN";
-      const path = "/admin";
-      const isAdminRoute = path.startsWith("/admin");
-      const hasAccess = isAdminRoute && userRole === "ADMIN";
-
-      expect(hasAccess).toBe(true);
+    it("redirects root to /admin for ADMIN role", async () => {
+      const req = makeRequest("/");
+      const res = await middleware(req);
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toContain("/admin");
     });
 
-    it("should deny OWNER role from /admin routes", () => {
-      const userRole = "OWNER" as "OWNER" | "ADMIN";
-      const path = "/admin";
-      const isAdminRoute = path.startsWith("/admin");
-      // TypeScript knows this will be false, but we test it explicitly
-      const hasAccess = isAdminRoute && (userRole === "ADMIN" as const);
-
-      expect(hasAccess).toBe(false);
+    it("redirects /login to /admin when ADMIN already logged in", async () => {
+      const req = makeRequest("/login");
+      const res = await middleware(req);
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toContain("/admin");
     });
 
-    it("should allow OWNER role to access /dashboard routes", () => {
-      const userRole = "OWNER";
-      const path = "/dashboard";
-      const isDashboardRoute = path.startsWith("/dashboard");
-      const hasAccess = isDashboardRoute && (userRole === "OWNER" || userRole === "ADMIN");
-
-      expect(hasAccess).toBe(true);
-    });
-  });
-
-  describe("Authentication State", () => {
-    it("should detect logged in user from session", async () => {
-      const mockSession: MockSession = {
-        user: { id: "user-1", email: "test@test.com", role: "OWNER" },
-      };
-      vi.mocked(auth).mockResolvedValue(mockSession as ReturnType<typeof auth> extends Promise<infer T> ? T : never);
-
-      const session = await auth();
-      const isLoggedIn = !!session?.user;
-
-      expect(isLoggedIn).toBe(true);
+    it("redirects /dashboard to /admin for ADMIN", async () => {
+      const req = makeRequest("/dashboard");
+      const res = await middleware(req);
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toContain("/admin");
     });
 
-    it("should detect logged out state from null session", async () => {
-      vi.mocked(auth).mockResolvedValue(null as unknown as Awaited<ReturnType<typeof auth>>);
-
-      const session = await auth();
-      const isLoggedIn = !!session?.user;
-
-      expect(isLoggedIn).toBe(false);
-    });
-  });
-
-  describe("Password Change Requirement", () => {
-    it("should detect when user must change password", async () => {
-      const mockSession: MockSession = {
-        user: { id: "user-1", email: "test@test.com", role: "OWNER", mustChangePassword: true },
-      };
-      vi.mocked(auth).mockResolvedValue(mockSession as ReturnType<typeof auth> extends Promise<infer T> ? T : never);
-
-      const session = await auth();
-      const mustChangePassword = Boolean(session?.user?.mustChangePassword);
-
-      expect(mustChangePassword).toBe(true);
-    });
-
-    it("should allow normal access when password change not required", async () => {
-      const mockSession: MockSession = {
-        user: { id: "user-1", email: "test@test.com", role: "OWNER", mustChangePassword: false },
-      };
-      vi.mocked(auth).mockResolvedValue(mockSession as ReturnType<typeof auth> extends Promise<infer T> ? T : never);
-
-      const session = await auth();
-      const mustChangePassword = Boolean(session?.user?.mustChangePassword);
-
-      expect(mustChangePassword).toBe(false);
+    it("allows /admin routes for ADMIN", async () => {
+      const req = makeRequest("/admin");
+      const res = await middleware(req);
+      expect(res.status).not.toBe(307);
     });
   });
 });

@@ -5,18 +5,15 @@ import { restaurants, MenuData } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { parseMenuFromBase64Images } from "@/lib/services/menu-parser";
-import { auth } from "@/lib/auth/auth";
+import { requireAuth } from "@/lib/auth";
 
 async function getRestaurantForOwner() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new Error("Non authentifié");
-  }
+  const user = await requireAuth();
 
   const [restaurant] = await db
     .select()
     .from(restaurants)
-    .where(eq(restaurants.ownerId, session.user.id));
+    .where(eq(restaurants.ownerId, user.id));
 
   if (!restaurant) {
     throw new Error("Restaurant non trouvé");

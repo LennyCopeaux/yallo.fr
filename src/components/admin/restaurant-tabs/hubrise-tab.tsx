@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 const formSchema = z.object({
   hubriseLocationId: z.string().max(100, "Location ID trop long").optional(),
   hubriseAccessToken: z.string().max(500, "Token trop long").optional(),
+  hubriseCatalogId: z.string().max(50, "ID catalogue trop long").optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -25,6 +26,7 @@ type Restaurant = {
   id: string;
   hubriseLocationId: string | null;
   hubriseAccessToken: string | null;
+  hubriseCatalogId: string | null;
 };
 
 interface HubriseTabProps {
@@ -40,6 +42,7 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
     defaultValues: {
       hubriseLocationId: restaurant.hubriseLocationId || "",
       hubriseAccessToken: restaurant.hubriseAccessToken || "",
+      hubriseCatalogId: restaurant.hubriseCatalogId || "",
     },
   });
 
@@ -51,6 +54,7 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
     const result = await updateHubriseConfig(restaurant.id, {
       hubriseLocationId: data.hubriseLocationId || null,
       hubriseAccessToken: data.hubriseAccessToken || null,
+      hubriseCatalogId: data.hubriseCatalogId?.trim() ? data.hubriseCatalogId.trim() : null,
     });
 
     if (result.success) {
@@ -139,6 +143,24 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
               )}
               <p className="text-xs text-muted-foreground">
                 Token d&apos;accès API HubRise. Générez-le dans votre compte HubRise sous &quot;API Access&quot;.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="hubriseCatalogId">ID catalogue HubRise (optionnel)</Label>
+              <Input
+                id="hubriseCatalogId"
+                {...form.register("hubriseCatalogId")}
+                disabled={isLoading}
+                placeholder="ex: 1rbmp"
+                className="bg-background/50 border-border focus:border-primary/50 font-mono"
+              />
+              {form.formState.errors.hubriseCatalogId && (
+                <p className="text-sm text-red-400">{form.formState.errors.hubriseCatalogId.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Si le point de vente a plusieurs cartes, indique l’ID du catalogue voulu (champ <code className="text-muted-foreground">id</code> dans
+                le JSON HubRise, ou colonne ID côté HubRise). Laisse vide pour choix auto (évite les catalogues dont le nom commence par « test »).
               </p>
             </div>
 

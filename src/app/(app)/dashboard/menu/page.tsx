@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth/auth";
+import { getAppUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -9,17 +9,13 @@ import { getUserRestaurant } from "@/features/orders/actions";
 import { HubRiseInfoCard } from "@/components/dashboard/hubrise-info-card";
 
 export default async function MenuPage() {
-  const session = await auth();
+  const user = await getAppUser();
 
-  if (!session?.user) {
+  if (!user) {
     redirect("/login");
   }
 
-  if (session.user.mustChangePassword === true) {
-    redirect("/update-password");
-  }
-
-  if (session.user.role === "ADMIN") {
+  if (user.role === "ADMIN") {
     redirect("/admin");
   }
 

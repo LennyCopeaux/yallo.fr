@@ -19,6 +19,9 @@ type Restaurant = {
   status: "active" | "suspended" | "onboarding";
   isActive: boolean | null;
   stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  stripeSubscriptionStatus: string | null;
+  stripePriceId: string | null;
   billingStartDate: string | null;
   vapiAssistantId: string | null;
   vapiPhoneNumberId: string | null;
@@ -28,6 +31,7 @@ type Restaurant = {
   businessHours: string | null;
   hubriseLocationId: string | null;
   hubriseAccessToken: string | null;
+  hubriseCatalogId: string | null;
   createdAt: Date | null;
   updatedAt: Date | null;
   ownerEmail: string;
