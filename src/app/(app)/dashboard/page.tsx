@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth/auth";
+import { getAppUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
@@ -7,20 +7,16 @@ import { getOrders, getUserRestaurant } from "@/features/orders/actions";
 import { UpdateAssistantButton } from "@/components/dashboard/update-assistant-button";
 import { getKitchenStatus, type StatusSettings } from "@/features/kitchen-status/actions";
 import { KitchenStatusControl } from "@/components/kitchen-status";
+import { SubscriptionButton } from "@/components/dashboard/subscription-button";
 
 export default async function DashboardPage() {
-  const session = await auth();
+  const user = await getAppUser();
 
-  if (!session?.user) {
+  if (!user) {
     redirect("/login");
   }
 
-  // Si l'utilisateur doit changer son mot de passe, redirige vers /update-password
-  if (session.user.mustChangePassword === true) {
-    redirect("/update-password");
-  }
-
-  if (session.user.role === "ADMIN") {
+  if (user.role === "ADMIN") {
     redirect("/admin");
   }
 
@@ -108,6 +104,20 @@ export default async function DashboardPage() {
         {/* Quick Actions - seulement si restaurant */}
         {restaurant && (
           <>
+            <Card className="bg-card border-border mb-8">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">Abonnement Yallo</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Activez ou régularisez votre abonnement mensuel sécurisé via Stripe.
+                    </p>
+                  </div>
+                  <SubscriptionButton subscriptionStatus={restaurant.stripeSubscriptionStatus} />
+                </div>
+              </CardContent>
+            </Card>
+
             {restaurant.vapiAssistantId && (
               <Card className="bg-card border-border mb-8">
                 <CardContent className="p-6">
