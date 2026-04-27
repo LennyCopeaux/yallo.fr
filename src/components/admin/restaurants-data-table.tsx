@@ -57,7 +57,7 @@ type Restaurant = {
   ownerId: string;
   status: "active" | "suspended" | "onboarding";
   isActive: boolean | null;
-  vapiAssistantId: string | null;
+  elevenLabsAgentId: string | null;
   twilioPhoneNumber: string | null;
   createdAt: Date | null;
   ownerEmail: string;
@@ -261,11 +261,11 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
                 <TableCell className="text-center min-w-[60px]">
                   <div 
                     className={`w-3 h-3 rounded-full mx-auto ${
-                      restaurant.vapiAssistantId 
+                      restaurant.elevenLabsAgentId 
                         ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' 
                         : 'bg-zinc-600'
                     }`}
-                    title={restaurant.vapiAssistantId ? "IA configurée" : "IA non configurée"}
+                    title={restaurant.elevenLabsAgentId ? "IA configurée" : "IA non configurée"}
                   />
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()} className="min-w-[44px]">
