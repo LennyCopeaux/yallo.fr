@@ -32,7 +32,7 @@ const DEFAULT_LLM_MODEL = "gpt-4o-mini";
 const DEFAULT_LLM_TEMPERATURE = 0.4;
 
 /** Voix ElevenLabs par défaut (Turbo v2.5). Surcharge via ELEVENLABS_VOICE_ID. */
-const DEFAULT_VOICE_ID = "dYjOkSQBPiH2igolJfeH";
+const DEFAULT_VOICE_ID = "WeAAwKYcS06VmXw086yZ";
 
 function getApiKey(): string {
   const apiKey = process.env.ELEVENLABS_API_KEY?.trim();
