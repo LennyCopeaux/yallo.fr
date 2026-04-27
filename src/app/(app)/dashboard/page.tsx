@@ -7,7 +7,6 @@ import { getOrders, getUserRestaurant } from "@/features/orders/actions";
 import { UpdateAssistantButton } from "@/components/dashboard/update-assistant-button";
 import { getKitchenStatus, type StatusSettings } from "@/features/kitchen-status/actions";
 import { KitchenStatusControl } from "@/components/kitchen-status";
-import { SubscriptionButton } from "@/components/dashboard/subscription-button";
 
 export default async function DashboardPage() {
   const user = await getAppUser();
@@ -104,20 +103,6 @@ export default async function DashboardPage() {
         {/* Quick Actions - seulement si restaurant */}
         {restaurant && (
           <>
-            <Card className="bg-card border-border mb-8">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-1">Abonnement Yallo</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Activez ou régularisez votre abonnement mensuel sécurisé via Stripe.
-                    </p>
-                  </div>
-                  <SubscriptionButton subscriptionStatus={restaurant.stripeSubscriptionStatus} />
-                </div>
-              </CardContent>
-            </Card>
-
             {restaurant.vapiAssistantId && (
               <Card className="bg-card border-border mb-8">
                 <CardContent className="p-6">
