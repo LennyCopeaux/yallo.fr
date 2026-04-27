@@ -303,12 +303,13 @@ export async function importTwilioPhoneNumber(
 ): Promise<{ phone_number_id: string }> {
   const apiKey = getApiKey();
   const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
+  const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
   const twilioApiKey = process.env.TWILIO_API_KEY;
   const twilioApiSecret = process.env.TWILIO_API_SECRET;
 
-  if (!twilioAccountSid || !twilioApiKey || !twilioApiSecret) {
+  if (!twilioAccountSid || !twilioAuthToken || !twilioApiKey || !twilioApiSecret) {
     throw new Error(
-      "Les identifiants Twilio (TWILIO_ACCOUNT_SID, TWILIO_API_KEY, TWILIO_API_SECRET) ne sont pas configurés"
+      "Les identifiants Twilio (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_API_KEY, TWILIO_API_SECRET) ne sont pas configurés"
     );
   }
 
@@ -330,6 +331,7 @@ export async function importTwilioPhoneNumber(
       label: `Yallo - ${phoneNumber}`,
       provider: "twilio",
       sid: twilioAccountSid,
+      token: twilioAuthToken,
       api_key_sid: twilioApiKey,
       api_key_secret: twilioApiSecret,
       agent_id: agentId,
