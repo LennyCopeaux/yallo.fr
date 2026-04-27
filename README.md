@@ -26,21 +26,6 @@ Après une commande vocale réussie, un SMS récap peut être envoyé au numéro
 - `TWILIO_ORDER_CONFIRMATION_SMS` : mettre `false` pour **désactiver** l’envoi (par défaut : activé si expéditeur + destinataire sont disponibles).
 - `TWILIO_SMS_FROM` : numéro E.164 expéditeur (sinon : numéro Twilio du restaurant `twilio_phone_number` en base).
 
-### Monitoring Sentry
-
-Sentry est branché côté client + serveur + edge (App Router).
-
-Variables minimales :
-
-- `NEXT_PUBLIC_SENTRY_DSN` (obligatoire pour recevoir les erreurs front)
-- `SENTRY_DSN` (optionnel, sinon fallback sur `NEXT_PUBLIC_SENTRY_DSN` côté serveur)
-- `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` (upload sourcemaps en build)
-
-Variables recommandées :
-
-- `SENTRY_ENVIRONMENT` / `NEXT_PUBLIC_SENTRY_ENVIRONMENT` (ex: `production`, `staging`)
-- `SENTRY_TRACES_SAMPLE_RATE` / `NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE` (ex: `0.1`)
-
 ## Développement
 
 ```bash

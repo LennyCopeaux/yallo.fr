@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Utensils,
   Clock,
+  CreditCard,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -19,6 +20,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Menu", href: "/dashboard/menu", icon: Utensils },
   { name: "Horaires", href: "/dashboard/hours", icon: Clock },
+  { name: "Abonnement", href: "/dashboard/billing", icon: CreditCard },
 ] as const;
 
 async function handleLogout(): Promise<void> {

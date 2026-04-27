@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/middleware";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 function buildAppUrl(pathname: string, currentHost: string): URL {
   if (process.env.NEXT_PUBLIC_APP_URL) {
@@ -52,9 +55,16 @@ export async function middleware(req: NextRequest) {
   const { supabaseResponse, user: authUser } = await createClient(req);
 
   const isLoggedIn = !!authUser;
-  const userRole =
-    (authUser?.app_metadata?.role as string | undefined) ||
-    (authUser?.user_metadata?.role as string | undefined);
+  let userRole: string | undefined;
+
+  if (authUser) {
+    const [appUser] = await db
+      .select({ role: users.role })
+      .from(users)
+      .where(eq(users.authUserId, authUser.id))
+      .limit(1);
+    userRole = appUser?.role;
+  }
 
   const isLoginPage = pathname === "/login";
   const isUpdatePasswordPage = pathname === "/update-password";

@@ -1,10 +1,6 @@
 import type { NextConfig } from "next";
-import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  turbopack: {
-    root: process.cwd(),
-  },
   experimental: {
     serverActions: {
       bodySizeLimit: "20mb",
@@ -53,21 +49,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-const sentryConfig = {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  silent: !process.env.CI,
-  widenClientFileUpload: true,
-  tunnelRoute: "/monitoring",
-  webpack: {
-    treeshake: {
-      removeDebugLogging: true,
-    },
-    automaticVercelMonitors: true,
-  },
-};
-
-const isDev = process.env.NODE_ENV === "development";
-
-export default isDev ? nextConfig : withSentryConfig(nextConfig, sentryConfig);
+export default nextConfig;

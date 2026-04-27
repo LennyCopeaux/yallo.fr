@@ -6,10 +6,7 @@ import { db } from "@/db";
 import { restaurants } from "@/db/schema";
 import { requireAuth } from "@/lib/auth";
 import { getStripeServerClient } from "@/lib/services/stripe";
-
-const DEFAULT_SUBSCRIPTION_AMOUNT_CENTS = 9900;
-const DEFAULT_SUBSCRIPTION_CURRENCY = "eur";
-const DEFAULT_SUBSCRIPTION_NAME = "Yallo - Abonnement Restaurant";
+import { SUBSCRIPTION_PLANS, type PlanId } from "./plans";
 
 export type BillingActionResult = {
   success: boolean;
@@ -43,12 +40,19 @@ async function getOwnerRestaurant(ownerId: string) {
   return restaurant ?? null;
 }
 
-export async function createStripeCheckoutSessionForRestaurant(): Promise<BillingActionResult> {
+export async function createStripeCheckoutSessionForRestaurant(
+  planId: PlanId = "essential"
+): Promise<BillingActionResult> {
   try {
     const user = await requireAuth();
     const restaurant = await getOwnerRestaurant(user.id);
     if (!restaurant) {
       return { success: false, error: "Aucun restaurant associé à ce compte." };
+    }
+
+    const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId);
+    if (!plan) {
+      return { success: false, error: "Plan non trouvé." };
     }
 
     const stripe = getStripeServerClient();
@@ -82,24 +86,27 @@ export async function createStripeCheckoutSessionForRestaurant(): Promise<Billin
       line_items: [
         {
           price_data: {
-            currency: DEFAULT_SUBSCRIPTION_CURRENCY,
-            unit_amount: DEFAULT_SUBSCRIPTION_AMOUNT_CENTS,
+            currency: "eur",
+            unit_amount: plan.amountCents,
             recurring: { interval: "month" },
             product_data: {
-              name: DEFAULT_SUBSCRIPTION_NAME,
+              name: `Yallo ${plan.name}`,
+              description: plan.description,
             },
           },
           quantity: 1,
         },
       ],
-      success_url: `${appUrl}/dashboard?billing=success`,
-      cancel_url: `${appUrl}/dashboard?billing=cancel`,
+      success_url: `${appUrl}/dashboard/billing?billing=success`,
+      cancel_url: `${appUrl}/dashboard/billing?billing=cancel`,
       metadata: {
         restaurantId: restaurant.id,
+        planId: plan.id,
       },
       subscription_data: {
         metadata: {
           restaurantId: restaurant.id,
+          planId: plan.id,
         },
       },
     });
@@ -121,3 +128,33 @@ export async function createStripeCheckoutSessionForRestaurant(): Promise<Billin
     };
   }
 }
+
+export async function createStripePortalSession(): Promise<BillingActionResult> {
+  try {
+    const user = await requireAuth();
+    const restaurant = await getOwnerRestaurant(user.id);
+    if (!restaurant) {
+      return { success: false, error: "Aucun restaurant associé à ce compte." };
+    }
+    if (!restaurant.stripeCustomerId) {
+      return { success: false, error: "Aucun abonnement Stripe actif." };
+    }
+
+    const stripe = getStripeServerClient();
+    const requestHeaders = await headers();
+    const appUrl = getBaseUrlFromHeaders(requestHeaders);
+
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: restaurant.stripeCustomerId,
+      return_url: `${appUrl}/dashboard/billing`,
+    });
+
+    return { success: true, data: { checkoutUrl: portalSession.url } };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur lors de l'ouverture du portail Stripe.",
+    };
+  }
+}
+
