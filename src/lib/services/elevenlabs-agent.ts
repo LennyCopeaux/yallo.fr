@@ -141,7 +141,7 @@ function buildSubmitOrderTool(webhookUrl?: string) {
     api_schema: {
       ...(webhookUrl ? { url: webhookUrl } : {}),
       method: "POST",
-      ...(secret ? { request_headers: [{ name: "x-elevenlabs-secret", value: secret }] } : {}),
+      ...(secret ? { request_headers: { "x-elevenlabs-secret": secret } } : {}),
       request_body_schema: requestBodySchema,
     },
   };
