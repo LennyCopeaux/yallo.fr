@@ -7,6 +7,24 @@ type Restaurant = typeof restaurants.$inferSelect;
 
 const ELEVENLABS_API_URL = "https://api.elevenlabs.io";
 
+/** Extrait un message d'erreur lisible depuis n'importe quelle réponse API. */
+function extractApiErrorMessage(errorBody: unknown, statusCode: number): string {
+  if (typeof errorBody === "string") return errorBody;
+  if (typeof errorBody === "object" && errorBody !== null) {
+    const obj = errorBody as Record<string, unknown>;
+    const detail = obj.detail;
+    if (typeof detail === "string") return detail;
+    if (Array.isArray(detail)) return JSON.stringify(detail);
+    if (typeof detail === "object" && detail !== null) {
+      const d = detail as Record<string, unknown>;
+      return typeof d.message === "string" ? d.message : JSON.stringify(detail);
+    }
+    if (typeof obj.message === "string") return obj.message;
+    return JSON.stringify(errorBody);
+  }
+  return `Erreur ElevenLabs API: ${statusCode}`;
+}
+
 /** Modèle LLM utilisé par l'agent ElevenLabs. */
 const DEFAULT_LLM_MODEL = "gpt-4o-mini";
 
@@ -229,16 +247,8 @@ export async function createElevenLabsAgent(restaurant: Restaurant): Promise<{ a
   });
 
   if (!response.ok) {
-    let errorMessage = `Erreur ElevenLabs API: ${response.status}`;
-    try {
-      const error = await response.json();
-      if (typeof error === 'object' && error !== null) {
-        errorMessage = error.detail || error.message || JSON.stringify(error);
-      }
-    } catch {
-      // Silently ignore JSON parse errors and use status-based message
-    }
-    throw new Error(errorMessage);
+    const body = await response.json().catch(() => null);
+    throw new Error(extractApiErrorMessage(body, response.status));
   }
 
   return await response.json();
@@ -262,16 +272,8 @@ export async function updateElevenLabsAgent(
   });
 
   if (!response.ok) {
-    let errorMessage = `Erreur ElevenLabs API: ${response.status}`;
-    try {
-      const error = await response.json();
-      if (typeof error === 'object' && error !== null) {
-        errorMessage = error.detail || error.message || JSON.stringify(error);
-      }
-    } catch {
-      // Silently ignore JSON parse errors and use status-based message
-    }
-    throw new Error(errorMessage);
+    const body = await response.json().catch(() => null);
+    throw new Error(extractApiErrorMessage(body, response.status));
   }
 }
 
@@ -286,16 +288,8 @@ export async function deleteElevenLabsAgent(agentId: string): Promise<void> {
   });
 
   if (!response.ok) {
-    let errorMessage = `Erreur ElevenLabs API: ${response.status}`;
-    try {
-      const error = await response.json();
-      if (typeof error === 'object' && error !== null) {
-        errorMessage = error.detail || error.message || JSON.stringify(error);
-      }
-    } catch {
-      // Silently ignore JSON parse errors and use status-based message
-    }
-    throw new Error(errorMessage);
+    const body = await response.json().catch(() => null);
+    throw new Error(extractApiErrorMessage(body, response.status));
   }
 }
 
@@ -343,17 +337,10 @@ export async function importTwilioPhoneNumber(
   });
 
   if (!response.ok) {
-    let errorMessage = `Erreur ElevenLabs API: ${response.status}`;
-    try {
-      const error = await response.json();
-      if (typeof error === 'object' && error !== null) {
-        errorMessage = error.detail || error.message || JSON.stringify(error);
-      }
-    } catch {
-      // Silently ignore JSON parse errors and use status-based message
-    }
-    logger.error("Erreur import numéro Twilio dans ElevenLabs", new Error(errorMessage));
-    throw new Error(errorMessage);
+    const body = await response.json().catch(() => null);
+    const msg = extractApiErrorMessage(body, response.status);
+    logger.error("Erreur import numéro Twilio dans ElevenLabs", new Error(msg));
+    throw new Error(msg);
   }
 
   return await response.json();
@@ -370,15 +357,7 @@ export async function deleteElevenLabsPhoneNumber(phoneNumberId: string): Promis
   });
 
   if (!response.ok) {
-    let errorMessage = `Erreur ElevenLabs API: ${response.status}`;
-    try {
-      const error = await response.json();
-      if (typeof error === 'object' && error !== null) {
-        errorMessage = error.detail || error.message || JSON.stringify(error);
-      }
-    } catch {
-      // Silently ignore JSON parse errors and use status-based message
-    }
-    throw new Error(errorMessage);
+    const body = await response.json().catch(() => null);
+    throw new Error(extractApiErrorMessage(body, response.status));
   }
 }
