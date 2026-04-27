@@ -14,7 +14,9 @@ const subscriptionPayloadSchema = z.object({
   subscriptionId: z.string().min(1, "subscriptionId is required"),
   subscriptionStatus: z.string().min(1, "subscriptionStatus is required"),
   priceId: z.string().nullable(),
+  planId: z.string().nullable(),
   currentPeriodEnd: z.date().nullable(),
+  startDate: z.date().nullable(),
   restaurantId: z.string().uuid().nullable(),
 });
 
@@ -66,7 +68,9 @@ function parseCheckoutSessionCompleted(
     subscriptionId: session.subscription,
     subscriptionStatus: "active",
     priceId: null,
+    planId: session.metadata?.planId ?? null,
     currentPeriodEnd: null,
+    startDate: new Date(),
     restaurantId,
   });
 }
@@ -87,9 +91,11 @@ function parseSubscriptionEvent(
     subscriptionId: subscription.id,
     subscriptionStatus: subscription.status,
     priceId: getPriceIdFromSubscription(subscription),
+    planId: subscription.metadata?.planId ?? null,
     currentPeriodEnd: getCurrentPeriodEndDate(
       getCurrentPeriodEndFromSubscription(subscription)
     ),
+    startDate: subscription.start_date ? new Date(subscription.start_date * 1000) : null,
     restaurantId,
   });
 }

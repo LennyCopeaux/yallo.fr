@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { restaurants } from "@/db/schema";
 import { logger } from "@/lib/logger";
@@ -48,14 +48,19 @@ export async function POST(request: Request) {
 
     const isActive = isRestaurantActiveFromStripeStatus(syncPayload.subscriptionStatus);
 
+    const startDateStr = syncPayload.startDate?.toISOString().split("T")[0] ?? new Date().toISOString().split("T")[0];
+
     await db
       .update(restaurants)
       .set({
         stripeCustomerId: syncPayload.customerId,
         stripeSubscriptionId: syncPayload.subscriptionId,
         stripeSubscriptionStatus: syncPayload.subscriptionStatus,
-        stripePriceId: syncPayload.priceId,
+        stripePriceId: syncPayload.planId ?? syncPayload.priceId,
         stripeCurrentPeriodEnd: syncPayload.currentPeriodEnd,
+        ...(isActive && {
+          billingStartDate: sql`COALESCE(${restaurants.billingStartDate}, ${startDateStr})`,
+        }),
         isActive,
         status: isActive ? "active" : "suspended",
         updatedAt: new Date(),
