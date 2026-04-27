@@ -13,13 +13,7 @@ import { DEFAULT_STATUS_SETTINGS } from "@/features/kitchen-status/constants";
 import { logger } from "@/lib/logger";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
 import { sendWelcomeEmail } from "@/lib/mail";
-import {
-  createYalloDefaultStructuredOutputBatch,
-  updateYalloStructuredOutputBatch,
-  getStructuredOutputIdsFromEnv,
-  joinStructuredOutputIds,
-  parseStructuredOutputIds,
-} from "@/lib/services/vapi-structured-outputs";
+
 
 const createUserSchema = z.object({
   email: z.string().email(),
@@ -50,7 +44,6 @@ const updateRestaurantGeneralSchema = z.object({
 });
 
 const updateRestaurantAISchema = z.object({
-  vapiAssistantId: z.string().max(100).optional().nullable(),
   systemPrompt: z.string().max(10000, "Prompt trop long").optional().nullable(),
   menuContext: z.string().max(50000, "Menu trop long").optional().nullable(),
 });
@@ -398,29 +391,7 @@ export async function updateRestaurantGeneral(
   }
 }
 
-async function ensureRestaurantStructuredOutputIds(
-  restaurant: typeof restaurants.$inferSelect
-): Promise<string[]> {
-  const fromEnv = getStructuredOutputIdsFromEnv();
-  if (fromEnv.length > 0) {
-    return fromEnv;
-  }
-  const fromDb = parseStructuredOutputIds(restaurant.vapiStructuredOutputIds);
-  if (fromDb.length > 0) {
-    return fromDb;
-  }
-  const ids = await createYalloDefaultStructuredOutputBatch();
-  await db
-    .update(restaurants)
-    .set({
-      vapiStructuredOutputIds: joinStructuredOutputIds(ids),
-      updatedAt: new Date(),
-    })
-    .where(eq(restaurants.id, restaurant.id));
-  return ids;
-}
-
-export async function createVapiAssistant(id: string): Promise<ActionResult<{ assistantId: string }>> {
+export async function createElevenLabsAgent(id: string): Promise<ActionResult<{ agentId: string }>> {
   "use server";
 
   await requireAdmin();
@@ -436,8 +407,8 @@ export async function createVapiAssistant(id: string): Promise<ActionResult<{ as
       return { success: false, error: "Restaurant non trouvé" };
     }
 
-    if (restaurant.vapiAssistantId) {
-      return { success: false, error: "Un assistant Vapi existe déjà pour ce restaurant" };
+    if (restaurant.elevenLabsAgentId) {
+      return { success: false, error: "Un agent ElevenLabs existe déjà pour ce restaurant" };
     }
 
     if (!restaurant.twilioPhoneNumber) {
@@ -447,62 +418,59 @@ export async function createVapiAssistant(id: string): Promise<ActionResult<{ as
       };
     }
 
-    const structuredOutputIds = await ensureRestaurantStructuredOutputIds(restaurant);
+    const { createElevenLabsAgent: createAgent, importTwilioPhoneNumber } = await import(
+      "@/lib/services/elevenlabs-agent"
+    );
 
-    const { createVapiAssistant: createAssistant, importTwilioPhoneNumber } = await import("@/lib/services/vapi");
+    const agent = await createAgent(restaurant);
 
-    const assistant = await createAssistant(restaurant, structuredOutputIds);
-
-    let vapiPhoneNumberId: string | null = null;
+    let elevenLabsPhoneNumberId: string | null = null;
     try {
-      const phoneResult = await importTwilioPhoneNumber(
-        restaurant.twilioPhoneNumber,
-        assistant.id
-      );
-      vapiPhoneNumberId = phoneResult.id;
-      logger.info("Numéro Twilio importé et lié à l'assistant Vapi", {
+      const phoneResult = await importTwilioPhoneNumber(restaurant.twilioPhoneNumber, agent.agent_id);
+      elevenLabsPhoneNumberId = phoneResult.phone_number_id;
+      logger.info("Numéro Twilio importé et lié à l'agent ElevenLabs", {
         restaurantId: id,
-        assistantId: assistant.id,
-        phoneNumberId: phoneResult.id,
+        agentId: agent.agent_id,
+        phoneNumberId: phoneResult.phone_number_id,
         phoneNumber: restaurant.twilioPhoneNumber,
       });
     } catch (phoneError) {
-      const { deleteVapiAssistant: cleanupAssistant } = await import("@/lib/services/vapi");
+      const { deleteElevenLabsAgent: cleanupAgent } = await import("@/lib/services/elevenlabs-agent");
       try {
-        await cleanupAssistant(assistant.id);
+        await cleanupAgent(agent.agent_id);
       } catch {
         // Ignore
       }
       const errorMessage = phoneError instanceof Error ? phoneError.message : String(phoneError);
-      logger.error("Échec import numéro Twilio dans Vapi, assistant supprimé", new Error(errorMessage));
+      logger.error("Échec import numéro Twilio dans ElevenLabs, agent supprimé", new Error(errorMessage));
       return {
         success: false,
-        error: `Impossible d'importer le numéro Twilio (${restaurant.twilioPhoneNumber}) dans Vapi : ${errorMessage}. Vérifiez que le numéro est bien actif sur Twilio et que les identifiants Twilio sont corrects.`,
+        error: `Impossible d'importer le numéro Twilio (${restaurant.twilioPhoneNumber}) dans ElevenLabs : ${errorMessage}. Vérifiez que le numéro est bien actif sur Twilio et que les identifiants Twilio sont corrects.`,
       };
     }
 
     await db
       .update(restaurants)
       .set({
-        vapiAssistantId: assistant.id,
-        vapiPhoneNumberId,
+        elevenLabsAgentId: agent.agent_id,
+        elevenLabsPhoneNumberId,
         updatedAt: new Date(),
       })
       .where(eq(restaurants.id, id));
 
     revalidatePath(`/admin/restaurants/${id}`);
 
-    return { success: true, data: { assistantId: assistant.id } };
+    return { success: true, data: { agentId: agent.agent_id } };
   } catch (error) {
-    logger.error("Erreur création assistant Vapi", error instanceof Error ? error : new Error(String(error)));
+    logger.error("Erreur création agent ElevenLabs", error instanceof Error ? error : new Error(String(error)));
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Erreur lors de la création de l'assistant",
+      error: error instanceof Error ? error.message : "Erreur lors de la création de l'agent",
     };
   }
 }
 
-export async function updateVapiAssistant(id: string): Promise<ActionResult> {
+export async function updateElevenLabsAgent(id: string): Promise<ActionResult> {
   "use server";
 
   await requireAdmin();
@@ -518,42 +486,43 @@ export async function updateVapiAssistant(id: string): Promise<ActionResult> {
       return { success: false, error: "Restaurant non trouvé" };
     }
 
-    if (!restaurant.vapiAssistantId) {
-      return { success: false, error: "Aucun assistant Vapi configuré pour ce restaurant" };
+    if (!restaurant.elevenLabsAgentId) {
+      return { success: false, error: "Aucun agent ElevenLabs configuré pour ce restaurant" };
     }
 
-    const structuredOutputIds = await ensureRestaurantStructuredOutputIds(restaurant);
-
-    const { updateVapiAssistant: patchAssistant } = await import("@/lib/services/vapi");
-    await patchAssistant(restaurant.vapiAssistantId, restaurant, structuredOutputIds);
+    const { updateElevenLabsAgent: patchAgent } = await import("@/lib/services/elevenlabs-agent");
+    await patchAgent(restaurant.elevenLabsAgentId, restaurant);
 
     revalidatePath(`/admin/restaurants/${id}`);
     revalidatePath(`/dashboard`);
 
     return { success: true };
   } catch (error) {
-    logger.error("Erreur mise à jour assistant Vapi", error instanceof Error ? error : new Error(String(error)));
+    logger.error("Erreur mise à jour agent ElevenLabs", error instanceof Error ? error : new Error(String(error)));
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Erreur lors de la mise à jour de l'assistant",
+      error: error instanceof Error ? error.message : "Erreur lors de la mise à jour de l'agent",
     };
   }
 }
 
-async function deleteVapiPhoneNumberIfExists(restaurantId: string, phoneNumberId: string | null): Promise<void> {
+async function deleteElevenLabsPhoneNumberIfExists(
+  restaurantId: string,
+  phoneNumberId: string | null
+): Promise<void> {
   if (!phoneNumberId) return;
   try {
-    const { deleteVapiPhoneNumber } = await import("@/lib/services/vapi");
-    await deleteVapiPhoneNumber(phoneNumberId);
+    const { deleteElevenLabsPhoneNumber } = await import("@/lib/services/elevenlabs-agent");
+    await deleteElevenLabsPhoneNumber(phoneNumberId);
   } catch (phoneError) {
-    logger.warn("Impossible de supprimer le numéro Vapi (on continue la suppression de l'assistant)", {
+    logger.warn("Impossible de supprimer le numéro ElevenLabs (on continue la suppression de l'agent)", {
       restaurantId,
       error: phoneError instanceof Error ? phoneError.message : String(phoneError),
     });
   }
 }
 
-export async function deleteVapiAssistant(id: string): Promise<ActionResult> {
+export async function deleteElevenLabsAgent(id: string): Promise<ActionResult> {
   "use server";
 
   await requireAdmin();
@@ -567,21 +536,21 @@ export async function deleteVapiAssistant(id: string): Promise<ActionResult> {
     return { success: false, error: "Restaurant non trouvé" };
   }
 
-  if (!restaurant.vapiAssistantId) {
-    return { success: false, error: "Aucun assistant Vapi configuré pour ce restaurant" };
+  if (!restaurant.elevenLabsAgentId) {
+    return { success: false, error: "Aucun agent ElevenLabs configuré pour ce restaurant" };
   }
 
   try {
-    await deleteVapiPhoneNumberIfExists(id, restaurant.vapiPhoneNumberId);
+    await deleteElevenLabsPhoneNumberIfExists(id, restaurant.elevenLabsPhoneNumberId);
 
-    const { deleteVapiAssistant: deleteAssistant } = await import("@/lib/services/vapi");
-    await deleteAssistant(restaurant.vapiAssistantId);
+    const { deleteElevenLabsAgent: deleteAgent } = await import("@/lib/services/elevenlabs-agent");
+    await deleteAgent(restaurant.elevenLabsAgentId);
 
     await db
       .update(restaurants)
       .set({
-        vapiAssistantId: null,
-        vapiPhoneNumberId: null,
+        elevenLabsAgentId: null,
+        elevenLabsPhoneNumberId: null,
         updatedAt: new Date(),
       })
       .where(eq(restaurants.id, id));
@@ -591,10 +560,10 @@ export async function deleteVapiAssistant(id: string): Promise<ActionResult> {
 
     return { success: true };
   } catch (error) {
-    logger.error("Erreur suppression assistant Vapi", error instanceof Error ? error : new Error(String(error)));
+    logger.error("Erreur suppression agent ElevenLabs", error instanceof Error ? error : new Error(String(error)));
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Erreur lors de la suppression de l'assistant",
+      error: error instanceof Error ? error.message : "Erreur lors de la suppression de l'agent",
     };
   }
 }
@@ -619,7 +588,6 @@ export async function updateRestaurantAI(
       updatedAt: new Date(),
     };
 
-    if (parsed.data.vapiAssistantId !== undefined) updateData.vapiAssistantId = parsed.data.vapiAssistantId;
     if (parsed.data.systemPrompt !== undefined) updateData.systemPrompt = parsed.data.systemPrompt;
     if (parsed.data.menuContext !== undefined) updateData.menuContext = parsed.data.menuContext;
 
@@ -845,38 +813,4 @@ export async function toggleRestaurantStatus(
   }
 }
 
-/**
- * Met à jour les schemas des structured outputs Vapi existants pour un restaurant (corrige `required`, types, etc.).
- * À appeler depuis l'admin après une modification des schemas dans le code.
- */
-export async function syncVapiStructuredOutputs(restaurantId: string): Promise<ActionResult> {
-  "use server";
-
-  try {
-    await requireAdmin();
-
-    const [restaurant] = await db
-      .select()
-      .from(restaurants)
-      .where(eq(restaurants.id, restaurantId))
-      .limit(1);
-
-    if (!restaurant) {
-      return { success: false, error: "Restaurant non trouvé" };
-    }
-
-    const ids = parseStructuredOutputIds(restaurant.vapiStructuredOutputIds);
-    if (ids.length === 0) {
-      return { success: false, error: "Aucun structured output ID trouvé pour ce restaurant. Créez d'abord un assistant Vapi." };
-    }
-
-    await updateYalloStructuredOutputBatch(ids);
-
-    logger.info("Structured outputs Vapi mis à jour", { restaurantId, ids });
-    return { success: true };
-  } catch (error) {
-    logger.error("Erreur sync structured outputs Vapi", error instanceof Error ? error : new Error(String(error)));
-    return { success: false, error: error instanceof Error ? error.message : "Erreur lors de la synchronisation" };
-  }
-}
 

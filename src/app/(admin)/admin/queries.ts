@@ -27,7 +27,7 @@ export async function getRestaurantsWithFilters(searchParams: RestaurantSearchPa
   }
 
   if (searchParams.hasAI === "true") {
-    conditions.push(sql`${restaurants.vapiAssistantId} IS NOT NULL`);
+    conditions.push(sql`${restaurants.elevenLabsAgentId} IS NOT NULL`);
   }
 
   if (searchParams.search) {
@@ -47,7 +47,7 @@ export async function getRestaurantsWithFilters(searchParams: RestaurantSearchPa
       ownerId: restaurants.ownerId,
       status: restaurants.status,
       isActive: restaurants.isActive,
-      vapiAssistantId: restaurants.vapiAssistantId,
+      elevenLabsAgentId: restaurants.elevenLabsAgentId,
       twilioPhoneNumber: restaurants.twilioPhoneNumber,
       createdAt: restaurants.createdAt,
       ownerEmail: users.email,
@@ -65,7 +65,7 @@ export async function getRestaurantsWithFilters(searchParams: RestaurantSearchPa
       restaurants.ownerId,
       restaurants.status,
       restaurants.isActive,
-      restaurants.vapiAssistantId,
+      restaurants.elevenLabsAgentId,
       restaurants.twilioPhoneNumber,
       restaurants.createdAt,
       users.email
