@@ -26,7 +26,7 @@ function extractApiErrorMessage(errorBody: unknown, statusCode: number): string 
 }
 
 /** Modèle LLM utilisé par l'agent ElevenLabs. */
-const DEFAULT_LLM_MODEL = "gpt-4o-mini";
+const DEFAULT_LLM_MODEL = "gemini-2.0-flash";
 
 /** Température LLM. */
 const DEFAULT_LLM_TEMPERATURE = 0.4;
