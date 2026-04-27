@@ -345,7 +345,27 @@ export async function importTwilioPhoneNumber(
     throw new Error(msg);
   }
 
-  return await response.json();
+  const data = await response.json();
+  const phoneNumberId: string = data.phone_number_id;
+
+  // ElevenLabs ignore agent_id à la création — on doit faire un PATCH séparé
+  const patchResponse = await fetch(`${ELEVENLABS_API_URL}/v1/convai/phone-numbers/${phoneNumberId}`, {
+    method: "PATCH",
+    headers: {
+      "xi-api-key": apiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ agent_id: agentId }),
+  });
+
+  if (!patchResponse.ok) {
+    const body = await patchResponse.json().catch(() => null);
+    const msg = extractApiErrorMessage(body, patchResponse.status);
+    logger.error("Erreur assignation agent au numéro Twilio", new Error(msg));
+    throw new Error(`Impossible d'assigner l'agent au numéro : ${msg}`);
+  }
+
+  return { phone_number_id: phoneNumberId };
 }
 
 export async function deleteElevenLabsPhoneNumber(phoneNumberId: string): Promise<void> {
