@@ -10,8 +10,11 @@ export default defineConfig({
     setupFiles: ["./src/__tests__/setup.ts"],
     include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     exclude: ["node_modules", ".next", "drizzle"],
+    env: {
+      DATABASE_URL: "postgresql://postgres@localhost/test",
+    },
     environmentMatchGlobs: [
-      // Testes que usam database/server features rodym em ambiente node
+      // Testes que usam database/server features rodem en ambiente node
       ["src/__tests__/features/**/*.test.ts", "node"],
       ["src/__tests__/app/**/*.test.ts", "node"],
     ],
