@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Bot, Brain, FileText, Sparkles, Code, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { createVapiAssistant, updateVapiAssistant, deleteVapiAssistant } from "@/app/(admin)/admin/restaurants/actions";
+import { createElevenLabsAgent, updateElevenLabsAgent, deleteElevenLabsAgent } from "@/app/(admin)/admin/restaurants/actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,8 +23,8 @@ import {
 
 type Restaurant = {
   id: string;
-  vapiAssistantId: string | null;
-  vapiPhoneNumberId: string | null;
+  elevenLabsAgentId: string | null;
+  elevenLabsPhoneNumberId: string | null;
   twilioPhoneNumber: string | null;
   systemPrompt: string | null;
   menuContext: string | null;
@@ -37,7 +37,7 @@ interface AITabProps {
 
 function getAIStatusText(
   isFullyOperational: boolean,
-  hasVapiId: boolean,
+  hasAgentId: boolean,
   hasPhoneLinked: boolean,
   hasTwilioNumber: boolean,
   twilioPhoneNumber: string | null
@@ -48,10 +48,10 @@ function getAIStatusText(
       description: `Agent IA actif sur le ${twilioPhoneNumber}`,
     };
   }
-  if (hasVapiId && !hasPhoneLinked) {
+  if (hasAgentId && !hasPhoneLinked) {
     return {
       title: "IA partiellement configurée",
-      description: "L'assistant existe mais aucun numéro de téléphone n'est lié",
+      description: "L'agent existe mais aucun numéro de téléphone n'est lié",
     };
   }
   if (!hasTwilioNumber) {
@@ -89,26 +89,26 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
     }
   }, [restaurant.businessHours]);
 
-  const hasVapiId = !!restaurant.vapiAssistantId;
-  const hasPhoneLinked = !!restaurant.vapiPhoneNumberId;
+  const hasAgentId = !!restaurant.elevenLabsAgentId;
+  const hasPhoneLinked = !!restaurant.elevenLabsPhoneNumberId;
   const hasTwilioNumber = !!restaurant.twilioPhoneNumber;
-  const isFullyOperational = hasVapiId && hasPhoneLinked;
+  const isFullyOperational = hasAgentId && hasPhoneLinked;
 
-  const statusText = getAIStatusText(isFullyOperational, hasVapiId, hasPhoneLinked, hasTwilioNumber, restaurant.twilioPhoneNumber);
+  const statusText = getAIStatusText(isFullyOperational, hasAgentId, hasPhoneLinked, hasTwilioNumber, restaurant.twilioPhoneNumber);
   const statusCardClassName = isFullyOperational ? "border-emerald-400/20 bg-emerald-400/5" : "border-amber-400/20 bg-amber-400/5";
 
   const handleCreateAssistant = async () => {
     setIsCreatingAssistant(true);
     try {
-      const result = await createVapiAssistant(restaurant.id);
+      const result = await createElevenLabsAgent(restaurant.id);
       if (result.success && result.data) {
         toast.success("Agent IA créé et numéro de téléphone lié avec succès");
         router.refresh();
       } else {
-        toast.error(result.error || "Erreur lors de la création de l'assistant");
+        toast.error(result.error || "Erreur lors de la création de l'agent");
       }
     } catch {
-      toast.error("Erreur lors de la création de l'assistant");
+      toast.error("Erreur lors de la création de l'agent");
     } finally {
       setIsCreatingAssistant(false);
     }
@@ -117,14 +117,14 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
   const handleUpdateAssistant = async () => {
     setIsUpdatingAssistant(true);
     try {
-      const result = await updateVapiAssistant(restaurant.id);
+      const result = await updateElevenLabsAgent(restaurant.id);
       if (result.success) {
-        toast.success("Assistant Vapi mis à jour avec succès");
+        toast.success("Agent ElevenLabs mis à jour avec succès");
       } else {
-        toast.error(result.error || "Erreur lors de la mise à jour de l'assistant");
+        toast.error(result.error || "Erreur lors de la mise à jour de l'agent");
       }
     } catch {
-      toast.error("Erreur lors de la mise à jour de l'assistant");
+      toast.error("Erreur lors de la mise à jour de l'agent");
     } finally {
       setIsUpdatingAssistant(false);
     }
@@ -134,7 +134,7 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
     setShowDeleteDialog(false);
     setIsDeletingAssistant(true);
     try {
-      const result = await deleteVapiAssistant(restaurant.id);
+      const result = await deleteElevenLabsAgent(restaurant.id);
       if (result.success) {
         toast.success("Agent IA supprimé avec succès");
         router.refresh();
@@ -223,11 +223,11 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
                 </p>
               </div>
             </div>
-            {hasVapiId && (
+            {hasAgentId && (
               <div className="flex items-center gap-4 ml-[52px] text-xs">
-                <span className={`flex items-center gap-1.5 ${hasVapiId ? 'text-emerald-400' : 'text-muted-foreground'}`}>
-                  <div className={`w-1.5 h-1.5 rounded-full ${hasVapiId ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
-                  Assistant
+                <span className={`flex items-center gap-1.5 ${hasAgentId ? 'text-emerald-400' : 'text-muted-foreground'}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${hasAgentId ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
+                  Agent
                 </span>
                 <span className={`flex items-center gap-1.5 ${hasPhoneLinked ? 'text-emerald-400' : 'text-red-400'}`}>
                   <div className={`w-1.5 h-1.5 rounded-full ${hasPhoneLinked ? 'bg-emerald-400' : 'bg-red-400'}`} />
@@ -244,44 +244,38 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bot className="w-5 h-5 text-primary" />
-              Assistant Vapi
+              Agent ElevenLabs
             </CardTitle>
             <CardDescription className="space-y-2">
               <span className="block">
-                L&apos;identifiant de l&apos;assistant Vapi qui gère les appels (voix ElevenLabs Turbo v2.5 —{" "}
+                L&apos;identifiant de l&apos;agent ElevenLabs Conversational AI qui gère les appels vocaux (voix ElevenLabs Turbo v2.5 —{" "}
                 <code className="font-mono text-xs">ELEVENLABS_VOICE_ID</code> optionnel).
               </span>
               <span className="block text-xs text-muted-foreground border-l-2 border-amber-500/40 pl-2">
                 <strong>Vercel / prod :</strong> définissez{" "}
-                <code className="font-mono rounded bg-muted px-0.5">VAPI_WEBHOOK_SECRET</code> (chaîne secrète, ex.{" "}
+                <code className="font-mono rounded bg-muted px-0.5">ELEVENLABS_WEBHOOK_SECRET</code> (chaîne secrète, ex.{" "}
                 <code className="font-mono">openssl rand -hex 32</code>
-                ) puis cliquez sur <strong>Mettre à jour l&apos;assistant</strong> pour que Vapi envoie ce secret au
-                webhook. Sans cela, les commandes vocales échouent (erreur « server rejected »). Optionnel :{" "}
+                ) puis cliquez sur <strong>Mettre à jour l&apos;agent</strong> pour que ElevenLabs envoie ce secret au
+                webhook. Sans cela, les commandes vocales échouent. Optionnel :{" "}
                 <code className="font-mono">NEXT_PUBLIC_APP_URL</code> en https vers votre app.
-              </span>
-              <span className="block text-xs text-muted-foreground border-l-2 border-primary/30 pl-2">
-                Dans le dashboard Vapi, le menu <strong>Tools</strong> peut proposer des outils workspace (
-                <code className="font-mono">api_request_tool</code>, etc.) : ce n&apos;est pas obligatoire. La prise de
-                commande utilise la fonction <code className="font-mono">submit_order</code> poussée par Yallo dans le
-                modèle ; ne la remplacez pas manuellement par un outil vide.
               </span>
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {hasVapiId && (
+              {hasAgentId && (
                 <div className="space-y-2">
-                  <Label htmlFor="vapiAssistantId">ID de l&apos;assistant Vapi</Label>
+                  <Label htmlFor="elevenLabsAgentId">ID de l&apos;agent ElevenLabs</Label>
                   <Input
-                    id="vapiAssistantId"
+                    id="elevenLabsAgentId"
                     readOnly
                     disabled
-                    value={restaurant.vapiAssistantId || ""}
+                    value={restaurant.elevenLabsAgentId || ""}
                     className="bg-muted/50 cursor-not-allowed font-mono"
                   />
                   {hasPhoneLinked && (
                     <p className="text-xs text-emerald-400">
-                      Numéro {restaurant.twilioPhoneNumber} lié à l&apos;assistant — les appels sont routés vers l&apos;IA
+                      Numéro {restaurant.twilioPhoneNumber} lié à l&apos;agent — les appels sont routés vers l&apos;IA
                     </p>
                   )}
                   {!hasPhoneLinked && (
@@ -291,14 +285,14 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
                   )}
                 </div>
               )}
-              {!hasVapiId && (
+              {!hasAgentId && (
                 <p className="text-sm text-muted-foreground">
                   {hasTwilioNumber
-                    ? `Le numéro ${restaurant.twilioPhoneNumber} sera automatiquement importé dans Vapi et lié à l'agent.`
-                    : 'Renseignez d\'abord le numéro Twilio dans l\'onglet Téléphonie, puis revenez ici pour créer l\'agent.'}
+                    ? `Le numéro ${restaurant.twilioPhoneNumber} sera automatiquement importé dans ElevenLabs et lié à l'agent.`
+                    : "Renseignez d'abord le numéro Twilio dans l'onglet Téléphonie, puis revenez ici pour créer l'agent."}
                 </p>
               )}
-              {!hasVapiId ? (
+              {!hasAgentId ? (
                 <Button
                   type="button"
                   variant="default"

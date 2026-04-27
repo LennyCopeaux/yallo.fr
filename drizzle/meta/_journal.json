@@ -134,6 +134,13 @@
       "when": 1771012800000,
       "tag": "0022_add_stripe_subscription_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1777500000000,
+      "tag": "0024_add_elevenlabs_agent",
+      "breakpoints": true
     }
   ]
 }

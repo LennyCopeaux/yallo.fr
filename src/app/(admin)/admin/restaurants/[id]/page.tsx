@@ -58,6 +58,8 @@ async function getRestaurant(id: string) {
       billingStartDate: restaurants.billingStartDate,
       vapiAssistantId: restaurants.vapiAssistantId,
       vapiPhoneNumberId: restaurants.vapiPhoneNumberId,
+      elevenLabsAgentId: restaurants.elevenLabsAgentId,
+      elevenLabsPhoneNumberId: restaurants.elevenLabsPhoneNumberId,
       systemPrompt: restaurants.systemPrompt,
       menuContext: restaurants.menuContext,
       twilioPhoneNumber: restaurants.twilioPhoneNumber,
@@ -115,19 +117,19 @@ export default async function RestaurantDetailPage({
               <span className="text-xs sm:text-sm break-all">{restaurant.ownerEmail}</span>
               <div className="hidden sm:flex items-center gap-2 shrink-0">
                 <div className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg ${
-                  restaurant.vapiAssistantId 
+                  restaurant.elevenLabsAgentId 
                     ? 'bg-emerald-400/10 border border-emerald-400/20' 
                     : 'bg-zinc-800/50 border border-border'
                 }`}>
                   <div className={`w-2 h-2 rounded-full shrink-0 ${
-                    restaurant.vapiAssistantId 
+                    restaurant.elevenLabsAgentId 
                       ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' 
                       : 'bg-zinc-600'
                   }`} />
                   <span className={`text-xs font-medium whitespace-nowrap ${
-                    restaurant.vapiAssistantId ? 'text-emerald-400' : 'text-muted-foreground'
+                    restaurant.elevenLabsAgentId ? 'text-emerald-400' : 'text-muted-foreground'
                   }`}>
-                    {restaurant.vapiAssistantId ? 'IA Active' : 'IA Non configurée'}
+                    {restaurant.elevenLabsAgentId ? 'IA Active' : 'IA Non configurée'}
                   </span>
                 </div>
               </div>
@@ -136,19 +138,19 @@ export default async function RestaurantDetailPage({
         </div>
         <div className="flex items-center gap-2 shrink-0 sm:hidden">
           <div className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg ${
-            restaurant.vapiAssistantId 
+            restaurant.elevenLabsAgentId 
               ? 'bg-emerald-400/10 border border-emerald-400/20' 
               : 'bg-zinc-800/50 border border-border'
           }`}>
             <div className={`w-2 h-2 rounded-full shrink-0 ${
-              restaurant.vapiAssistantId 
+              restaurant.elevenLabsAgentId 
                 ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' 
                 : 'bg-zinc-600'
             }`} />
             <span className={`text-xs font-medium whitespace-nowrap ${
-              restaurant.vapiAssistantId ? 'text-emerald-400' : 'text-muted-foreground'
+              restaurant.elevenLabsAgentId ? 'text-emerald-400' : 'text-muted-foreground'
             }`}>
-              {restaurant.vapiAssistantId ? 'IA Active' : 'IA Non configurée'}
+              {restaurant.elevenLabsAgentId ? 'IA Active' : 'IA Non configurée'}
             </span>
           </div>
         </div>

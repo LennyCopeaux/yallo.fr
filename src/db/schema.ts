@@ -92,8 +92,8 @@ export const restaurants = pgTable("restaurants", {
   vapiAssistantId: text("vapi_assistant_id"),
   /** IDs plan d’artefacts Vapi (séparés par virgule). */
   vapiStructuredOutputIds: text("vapi_structured_output_ids"),
-  vapiPhoneNumberId: text("vapi_phone_number_id"),
-  systemPrompt: text("system_prompt"),
+  vapiPhoneNumberId: text("vapi_phone_number_id"),  elevenLabsAgentId: text("elevenlabs_agent_id"),
+  elevenLabsPhoneNumberId: text("elevenlabs_phone_number_id"),  systemPrompt: text("system_prompt"),
   menuContext: text("menu_context"),
   
   // Nouveau champ: stockage document-oriented du menu complet

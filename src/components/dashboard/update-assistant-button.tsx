@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { updateVapiAssistant } from "@/app/(admin)/admin/restaurants/actions";
+import { updateElevenLabsAgent } from "@/app/(admin)/admin/restaurants/actions";
 
 interface UpdateAssistantButtonProps {
   restaurantId: string;
@@ -20,7 +20,7 @@ export function UpdateAssistantButton({ restaurantId }: Readonly<UpdateAssistant
       onClick={async () => {
         setIsUpdating(true);
         try {
-          const result = await updateVapiAssistant(restaurantId);
+          const result = await updateElevenLabsAgent(restaurantId);
           if (result.success) {
             toast.success("Assistant IA mis à jour avec succès");
           } else {

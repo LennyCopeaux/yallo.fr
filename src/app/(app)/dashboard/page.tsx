@@ -103,7 +103,7 @@ export default async function DashboardPage() {
         {/* Quick Actions - seulement si restaurant */}
         {restaurant && (
           <>
-            {restaurant.vapiAssistantId && (
+            {restaurant.elevenLabsAgentId && (
               <Card className="bg-card border-border mb-8">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
