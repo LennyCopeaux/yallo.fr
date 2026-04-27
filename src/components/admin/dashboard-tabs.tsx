@@ -17,7 +17,7 @@ type Restaurant = {
   ownerId: string;
   status: "active" | "suspended" | "onboarding";
   isActive: boolean | null;
-  vapiAssistantId: string | null;
+  elevenLabsAgentId: string | null;
   twilioPhoneNumber: string | null;
   createdAt: Date | null;
   ownerEmail: string;
@@ -119,7 +119,7 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, default
           </div>
           <div className="p-3 sm:p-4 rounded-xl border border-border bg-card/30">
             <p className="text-xl sm:text-2xl font-bold text-cyan-400">
-              {restaurants.filter(r => r.vapiAssistantId).length}
+              {restaurants.filter(r => r.elevenLabsAgentId).length}
             </p>
             <p className="text-xs sm:text-sm text-muted-foreground">IA Active</p>
           </div>
