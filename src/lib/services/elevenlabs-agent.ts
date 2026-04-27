@@ -81,68 +81,68 @@ function getWebhookSecret(): string | undefined {
 function buildSubmitOrderTool(webhookUrl?: string) {
   const secret = getWebhookSecret();
 
+  const requestBodySchema = {
+    type: "object",
+    properties: {
+      customer_name: {
+        type: "string",
+        description:
+          "Prénom ou nom tel que le client vient de le donner pour cette commande (pas d'invention, pas de confusion avec d'autres mots)",
+      },
+      customer_phone: {
+        type: "string",
+        description: "Numéro du client si connu (sinon vide ; le numéro d'appel peut être complété côté serveur)",
+      },
+      items: {
+        type: "array",
+        description: "La liste des articles commandés",
+        items: {
+          type: "object",
+          properties: {
+            product_name: {
+              type: "string",
+              description: "Le nom du produit commandé",
+            },
+            quantity: {
+              type: "number",
+              description:
+                "Quantité (entier ≥ 1). Si le client dit « une X » / « un X » sans chiffre, mettre 1",
+            },
+            unit_price: {
+              type: "number",
+              description: "Le prix unitaire en euros",
+            },
+            options: {
+              type: "string",
+              description: "Les options choisies (sauce, viande, cuisson, taille, etc.)",
+            },
+          },
+          required: ["product_name", "quantity", "unit_price"],
+        },
+      },
+      pickup_time: {
+        type: "string",
+        description: "L'heure de retrait souhaitée par le client (format HH:MM), ou vide si le client n'a pas précisé",
+      },
+      notes: {
+        type: "string",
+        description:
+          "Notes, allergènes, ou précisions (ex. sur place / à emporter / livraison si non couvert ailleurs)",
+      },
+    },
+    required: ["customer_name", "items"],
+  };
+
   return {
     type: "webhook",
     name: "submit_order",
     description:
       "Soumet la commande en fin d'appel uniquement : articles complets, mode (sur place / emporter / livraison) si pertinent, puis prénom obtenu. Ne pas appeler avant d'avoir le prénom demandé pour la commande.",
-    ...(webhookUrl
-      ? {
-          url: webhookUrl,
-          method: "POST",
-          headers: secret ? [{ name: "x-elevenlabs-secret", value: secret }] : [],
-        }
-      : {}),
-    input_schema: {
-      type: "object",
-      properties: {
-        customer_name: {
-          type: "string",
-          description:
-            "Prénom ou nom tel que le client vient de le donner pour cette commande (pas d'invention, pas de confusion avec d'autres mots)",
-        },
-        customer_phone: {
-          type: "string",
-          description: "Numéro du client si connu (sinon vide ; le numéro d'appel peut être complété côté serveur)",
-        },
-        items: {
-          type: "array",
-          description: "La liste des articles commandés",
-          items: {
-            type: "object",
-            properties: {
-              product_name: {
-                type: "string",
-                description: "Le nom du produit commandé",
-              },
-              quantity: {
-                type: "number",
-                description:
-                  "Quantité (entier ≥ 1). Si le client dit « une X » / « un X » sans chiffre, mettre 1",
-              },
-              unit_price: {
-                type: "number",
-                description: "Le prix unitaire en euros",
-              },
-              options: {
-                type: "string",
-                description: "Les options choisies (sauce, viande, cuisson, taille, etc.)",
-              },
-            },
-            required: ["product_name", "quantity", "unit_price"],
-          },
-        },
-        pickup_time: {
-          type: "string",
-          description: "L'heure de retrait souhaitée par le client (format HH:MM), ou vide si le client n'a pas précisé",
-        },
-        notes: {
-          type: "string",
-          description:
-            "Notes, allergènes, ou précisions (ex. sur place / à emporter / livraison si non couvert ailleurs)",
-        },
-      },
-      required: ["customer_name", "items"],
+    api_schema: {
+      ...(webhookUrl ? { url: webhookUrl } : {}),
+      method: "POST",
+      ...(secret ? { request_headers: [{ name: "x-elevenlabs-secret", value: secret }] } : {}),
+      request_body_schema: requestBodySchema,
     },
   };
 }
