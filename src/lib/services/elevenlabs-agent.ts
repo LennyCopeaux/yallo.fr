@@ -229,8 +229,16 @@ export async function createElevenLabsAgent(restaurant: Restaurant): Promise<{ a
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "Erreur inconnue" }));
-    throw new Error(error.detail || `Erreur ElevenLabs API: ${response.status}`);
+    let errorMessage = `Erreur ElevenLabs API: ${response.status}`;
+    try {
+      const error = await response.json();
+      if (typeof error === 'object' && error !== null) {
+        errorMessage = error.detail || error.message || JSON.stringify(error);
+      }
+    } catch {
+      // Silently ignore JSON parse errors and use status-based message
+    }
+    throw new Error(errorMessage);
   }
 
   return await response.json();
@@ -254,8 +262,16 @@ export async function updateElevenLabsAgent(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "Erreur inconnue" }));
-    throw new Error(error.detail || `Erreur ElevenLabs API: ${response.status}`);
+    let errorMessage = `Erreur ElevenLabs API: ${response.status}`;
+    try {
+      const error = await response.json();
+      if (typeof error === 'object' && error !== null) {
+        errorMessage = error.detail || error.message || JSON.stringify(error);
+      }
+    } catch {
+      // Silently ignore JSON parse errors and use status-based message
+    }
+    throw new Error(errorMessage);
   }
 }
 
@@ -270,8 +286,16 @@ export async function deleteElevenLabsAgent(agentId: string): Promise<void> {
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "Erreur inconnue" }));
-    throw new Error(error.detail || `Erreur ElevenLabs API: ${response.status}`);
+    let errorMessage = `Erreur ElevenLabs API: ${response.status}`;
+    try {
+      const error = await response.json();
+      if (typeof error === 'object' && error !== null) {
+        errorMessage = error.detail || error.message || JSON.stringify(error);
+      }
+    } catch {
+      // Silently ignore JSON parse errors and use status-based message
+    }
+    throw new Error(errorMessage);
   }
 }
 
@@ -319,9 +343,17 @@ export async function importTwilioPhoneNumber(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "Erreur inconnue" }));
-    logger.error("Erreur import numéro Twilio dans ElevenLabs", new Error(error.detail));
-    throw new Error(error.detail || `Erreur ElevenLabs API: ${response.status}`);
+    let errorMessage = `Erreur ElevenLabs API: ${response.status}`;
+    try {
+      const error = await response.json();
+      if (typeof error === 'object' && error !== null) {
+        errorMessage = error.detail || error.message || JSON.stringify(error);
+      }
+    } catch {
+      // Silently ignore JSON parse errors and use status-based message
+    }
+    logger.error("Erreur import numéro Twilio dans ElevenLabs", new Error(errorMessage));
+    throw new Error(errorMessage);
   }
 
   return await response.json();
@@ -338,7 +370,15 @@ export async function deleteElevenLabsPhoneNumber(phoneNumberId: string): Promis
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "Erreur inconnue" }));
-    throw new Error(error.detail || `Erreur ElevenLabs API: ${response.status}`);
+    let errorMessage = `Erreur ElevenLabs API: ${response.status}`;
+    try {
+      const error = await response.json();
+      if (typeof error === 'object' && error !== null) {
+        errorMessage = error.detail || error.message || JSON.stringify(error);
+      }
+    } catch {
+      // Silently ignore JSON parse errors and use status-based message
+    }
+    throw new Error(errorMessage);
   }
 }
