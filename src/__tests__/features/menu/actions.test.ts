@@ -1,3 +1,5 @@
+// @vitest-environment node
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getMenuData, saveMenuData, generateMenuFromImages, clearMenuData } from "@/features/menu/actions";
 import type { AppUser } from "@/lib/auth";

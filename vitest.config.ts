@@ -13,11 +13,6 @@ export default defineConfig({
     env: {
       DATABASE_URL: "postgresql://postgres@localhost/test",
     },
-    environmentMatchGlobs: [
-      // Testes que usam database/server features rodem en ambiente node
-      ["src/__tests__/features/**/*.test.ts", "node"],
-      ["src/__tests__/app/**/*.test.ts", "node"],
-    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html", "lcov"],
