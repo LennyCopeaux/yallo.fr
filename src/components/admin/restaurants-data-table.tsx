@@ -44,7 +44,6 @@ import {
   Search, 
   Eye, 
   Trash2,
-  UserCheck,
   Loader2
 } from "lucide-react";
 import { toast } from "sonner";
@@ -285,14 +284,6 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
                           <Eye className="w-4 h-4 mr-2" />
                           Voir détails
                         </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        disabled
-                        className="opacity-50 cursor-not-allowed"
-                      >
-                        <UserCheck className="w-4 h-4 mr-2" />
-                        <span className="line-through">Se connecter en tant que</span>
-                        <span className="ml-2 text-xs text-muted-foreground">(À venir)</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator className="bg-muted/50" />
                       <DropdownMenuItem
