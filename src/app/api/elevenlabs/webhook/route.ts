@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { pushVoiceOrderToHubrise } from "@/lib/services/hubrise";
-import { normalizeSubmitOrderPayload } from "@/lib/services/vapi-submit-order-args";
+import { normalizeSubmitOrderPayload } from "@/lib/services/submit-order-args";
 import { trySendOrderConfirmationSms } from "@/lib/services/twilio-sms";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
 

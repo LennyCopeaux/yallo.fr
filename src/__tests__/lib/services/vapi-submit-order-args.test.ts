@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalizeSubmitOrderPayload } from "@/lib/services/vapi-submit-order-args";
+import { normalizeSubmitOrderPayload } from "@/lib/services/submit-order-args";
 
 describe("normalizeSubmitOrderPayload", () => {
   it("returns null without customer_name", () => {
