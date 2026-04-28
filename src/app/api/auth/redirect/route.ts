@@ -34,14 +34,28 @@ export async function GET() {
   // Check if the user needs to change their temporary password
   const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  const redirectUrl =
+    authUser?.user_metadata?.must_change_password === true
+      ? buildAppUrl("/update-password", host)
+      : user.role === "ADMIN"
+        ? buildAppUrl("/admin", host)
+        : buildAppUrl("/dashboard", host);
+
+  const response = NextResponse.redirect(redirectUrl, 307);
+  response.cookies.set("userRole", user.role, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 7,
+    path: "/",
+  });
+
   if (authUser?.user_metadata?.must_change_password === true) {
-    return NextResponse.redirect(buildAppUrl("/update-password", host), 307);
+    return response;
   }
 
-  if (user.role === "ADMIN") {
-    return NextResponse.redirect(buildAppUrl("/admin", host), 307);
-  }
-
-  return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
+  return response;
 }
