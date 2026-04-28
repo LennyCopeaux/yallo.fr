@@ -11,42 +11,66 @@ function getOpenAIClient(): OpenAI {
 
 const MENU_EXTRACTION_PROMPT = `Rôle : Expert OCR et Architecte de Données.
 
-Mission : Convertir les images de ce menu en JSON. Tu dois extraire 100% des informations, y compris les icônes, les badges de prix, et les notes isolées.
+Mission : Convertir les images de ce menu en JSON. Tu dois extraire 100% des informations de manière STRUCTURÉE ET SÉPARÉE.
 
-CONSIGNES DE DÉTECTION CRITIQUES :
+RÈGLES CRITIQUES D'EXTRACTION :
 
-Icônes et Badges de prix : Surveille attentivement les bords des titres (ex: icônes de boisson avec "+1€"). Ce sont des formules "Menu". Note-les systématiquement dans la section notes_de_section de la catégorie concernée.
+1. IDENTIFIER LE TYPE DE PRODUIT :
+   - Lis le titre/entête du menu (ex: "COMPOSE TON TACOS", "PIZZAS", "BURGERS")
+   - Extrais le NOM du produit (ex: "Tacos", "Pizza", "Burger")
+   - Mentionne-le dans la catégorie principale ou dans les règles globales si pertinent
+   - L'IA DOIT savoir de quel type de produit on parle!
 
-Règles métier cachées : Si un supplément (ex: "+0.50€", "+1€") est écrit dans une bulle ou à côté d'un groupe de produits, il doit impérativement apparaître dans le JSON, soit lié au produit, soit dans les règles globales.
+2. ARTICLES SÉPARÉS : Chaque article doit être un objet distinct dans le tableau "articles".
+   - ❌ Interdit: "Poivre, Barbecue, Ketchup" dans un seul article
+   - ✅ Correct: "Poivre", "Barbecue", "Ketchup" dans 3 articles différents
 
-Lecture à 360° : Ne néglige aucun texte, même écrit en très petit en bas de page ou sur les côtés (ex: "Frites à part", "À emporter").
+3. VARIANTES DE TAILLE/QUANTITÉ SEULEMENT :
+   - "Simple (1 viande)", "Double (2 viandes)" = VARIANTES (articles séparés avec prix distincts)
+   - Couleurs/Teintes (Classique, Rose, Verte) = COSMÉTIQUE (ignorées, pas d'articles séparés)
+   - Si couleurs = option client, ajoute dans notes_de_section
+
+4. OPTIONS AVEC SUPPLÉMENTS :
+   - "+0.90€" ou "+" après un groupe = chaque article du groupe coûte ce supplément
+   - Mets le supplément dans le "prix" avec le "+" (ex: "+0.90")
+   - Les articles sans "+" marqué gardent tarifs vides
 
 STRUCTURE JSON ATTENDUE :
 
 {
-  "etablissement": "Nom si visible",
   "donnees_menu": [
     {
-      "categorie": "Nom de la section",
-      "notes_de_section": ["Ex: +1€ pour la boisson (vu sur l'icône)", "Ex: Pain au choix"],
+      "categorie": "Taille & Quantité",
+      "notes_de_section": ["Tacos avec votre choix de viande, base et garnitures"],
       "articles": [
-        {
-          "nom": "Nom exact",
-          "description": "Ingrédients ou détails",
-          "tarifs": [
-            { "label": "Format (Standard, XL, Verre, etc.)", "prix": "0.00" }
-          ]
-        }
+        { "nom": "Tacos Simple (1 viande)", "tarifs": [{"prix": "6.90", "label": ""}], "description": "" },
+        { "nom": "Tacos Double (2 viandes)", "tarifs": [{"prix": "8.90", "label": ""}], "description": "" },
+        { "nom": "Tacos Triple (3 viandes)", "tarifs": [{"prix": "10.90", "label": ""}], "description": "" }
+      ]
+    },
+    {
+      "categorie": "Sauce",
+      "notes_de_section": [],
+      "articles": [
+        { "nom": "Poivre", "tarifs": [], "description": "" },
+        { "nom": "Barbecue", "tarifs": [], "description": "" },
+        { "nom": "Ketchup", "tarifs": [], "description": "" }
       ]
     }
   ],
-  "regles_globales": ["Toutes les notes générales ou hors-catégorie"],
-  "offres_et_formules": ["Détails des menus complets ou promotions groupées"]
+  "option_lists": [],
+  "etablissement": "Nom du restaurant",
+  "regles_globales": ["Type de produit: Tacos"],
+  "offres_et_formules": [],
+  "categories": []
 }
-  
-FORMAT DES PRIX : Uniquement des nombres en format string (ex: "7.50"), sans symbole monétaire.
 
-Retourne UNIQUEMENT le JSON.`;
+INSTRUCTIONS FINALES :
+- Mentionne explicitement le TYPE DE PRODUIT (Tacos, Pizza, etc.)
+- Chaque article DISTINCT dans son propre objet
+- Jamais d'articles fusionnés par virgules
+- Ignore les couleurs cosmétiques, traite les tailles comme articles séparés
+- Retourne UNIQUEMENT le JSON valide`;
 
 export async function parseMenuFromImages(imageUrls: string[]): Promise<MenuData> {
   if (imageUrls.length === 0) {
@@ -87,17 +111,17 @@ export async function parseMenuFromImages(imageUrls: string[]): Promise<MenuData
   });
 
   const content = response.choices[0]?.message?.content;
-  
+
   if (!content) {
     throw new Error("No response from OpenAI");
   }
 
   const parsedMenu = JSON.parse(content) as MenuData;
-  
+
   if (!parsedMenu.categories) {
     parsedMenu.categories = [];
   }
-  
+
   if (!parsedMenu.option_lists) {
     parsedMenu.option_lists = [];
   }
