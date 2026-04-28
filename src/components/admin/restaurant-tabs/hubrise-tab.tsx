@@ -13,7 +13,6 @@ import { Loader2, Save, Link2, Key, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { updateHubriseConfig } from "@/app/(admin)/admin/restaurants/actions";
 import { cn } from "@/lib/utils";
-import { AdminStatusBadge } from "@/components/admin/status-badge";
 
 const formSchema = z.object({
   hubriseLocationId: z.string().max(100, "Location ID trop long").optional(),
@@ -51,7 +50,7 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
 
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
-
+    
     const result = await updateHubriseConfig(restaurant.id, {
       hubriseLocationId: data.hubriseLocationId || null,
       hubriseAccessToken: data.hubriseAccessToken || null,
@@ -73,30 +72,22 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
 
   return (
     <div className="space-y-6 pb-20 md:pb-6">
-      <Card className="border-border bg-card/30">
-        <CardHeader>
-          <CardTitle>État de la connexion HubRise</CardTitle>
-          <CardDescription>
-            Vérification de la configuration d&apos;accès HubRise pour ce restaurant.
-          </CardDescription>
-        </CardHeader>
+      <Card className={`border ${hasConfig ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-amber-400/20 bg-amber-400/5'}`}>
         <CardContent className="p-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-                Statut
-              </p>
-              {hasConfig ? (
-                <AdminStatusBadge tone="active" label="Configuré" />
-              ) : (
-                <AdminStatusBadge tone="warning" label="Non configuré" />
-              )}
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-lg ${hasConfig ? 'bg-emerald-400/10' : 'bg-amber-400/10'} flex items-center justify-center`}>
+              <Link2 className={`w-5 h-5 ${hasConfig ? 'text-emerald-400' : 'text-amber-400'}`} />
             </div>
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-                Location ID
+            <div>
+              <p className={`font-medium ${hasConfig ? 'text-emerald-400' : 'text-amber-400'}`}>
+                {hasConfig ? 'HubRise Connecté' : 'HubRise Non configuré'}
               </p>
-              <p className="font-medium">{restaurant.hubriseLocationId || "—"}</p>
+              <p className="text-sm text-muted-foreground">
+                {hasConfig 
+                  ? 'Le menu et les commandes seront synchronisés avec HubRise'
+                  : 'Configurez vos identifiants HubRise pour activer la synchronisation'
+                }
+              </p>
             </div>
           </div>
         </CardContent>
@@ -109,8 +100,7 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
             Configuration HubRise
           </CardTitle>
           <CardDescription>
-            Connectez votre restaurant à HubRise pour synchroniser automatiquement le menu et les
-            commandes
+            Connectez votre restaurant à HubRise pour synchroniser automatiquement le menu et les commandes
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -128,13 +118,10 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
                 <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               </div>
               {form.formState.errors.hubriseLocationId && (
-                <p className="text-sm text-red-400">
-                  {form.formState.errors.hubriseLocationId.message}
-                </p>
+                <p className="text-sm text-red-400">{form.formState.errors.hubriseLocationId.message}</p>
               )}
               <p className="text-xs text-muted-foreground">
-                ID du point de vente HubRise. Trouvez-le dans votre compte HubRise sous
-                &quot;Locations&quot;.
+                ID du point de vente HubRise. Trouvez-le dans votre compte HubRise sous &quot;Locations&quot;.
               </p>
             </div>
 
@@ -152,13 +139,10 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
                 <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               </div>
               {form.formState.errors.hubriseAccessToken && (
-                <p className="text-sm text-red-400">
-                  {form.formState.errors.hubriseAccessToken.message}
-                </p>
+                <p className="text-sm text-red-400">{form.formState.errors.hubriseAccessToken.message}</p>
               )}
               <p className="text-xs text-muted-foreground">
-                Token d&apos;accès API HubRise. Générez-le dans votre compte HubRise sous &quot;API
-                Access&quot;.
+                Token d&apos;accès API HubRise. Générez-le dans votre compte HubRise sous &quot;API Access&quot;.
               </p>
             </div>
 
@@ -172,15 +156,11 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
                 className="bg-background/50 border-border focus:border-primary/50 font-mono"
               />
               {form.formState.errors.hubriseCatalogId && (
-                <p className="text-sm text-red-400">
-                  {form.formState.errors.hubriseCatalogId.message}
-                </p>
+                <p className="text-sm text-red-400">{form.formState.errors.hubriseCatalogId.message}</p>
               )}
               <p className="text-xs text-muted-foreground">
-                Si le point de vente a plusieurs cartes, indique l’ID du catalogue voulu (champ{" "}
-                <code className="text-muted-foreground">id</code> dans le JSON HubRise, ou colonne
-                ID côté HubRise). Laisse vide pour choix auto (évite les catalogues dont le nom
-                commence par « test »).
+                Si le point de vente a plusieurs cartes, indique l’ID du catalogue voulu (champ <code className="text-muted-foreground">id</code> dans
+                le JSON HubRise, ou colonne ID côté HubRise). Laisse vide pour choix auto (évite les catalogues dont le nom commence par « test »).
               </p>
             </div>
 
@@ -189,8 +169,7 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
               <div className="space-y-1 text-sm">
                 <p className="font-medium text-blue-400">Mode Hybride</p>
                 <p className="text-muted-foreground">
-                  Une fois connecté à HubRise, le menu et les commandes seront synchronisés
-                  automatiquement.
+                  Une fois connecté à HubRise, le menu et les commandes seront synchronisés automatiquement. 
                 </p>
               </div>
             </div>
