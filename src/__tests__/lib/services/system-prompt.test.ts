@@ -38,6 +38,8 @@ describe("generateSystemPrompt", () => {
     vapiAssistantId: null,
     vapiStructuredOutputIds: null,
     vapiPhoneNumberId: null,
+    elevenLabsAgentId: null,
+    elevenLabsPhoneNumberId: null,
     systemPrompt: null,
     menuContext: null,
     menuData: null,

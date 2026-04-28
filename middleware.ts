@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/middleware";
-import { db } from "@/db";
-import { users } from "@/db/schema";
-import { eq } from "drizzle-orm";
 
 function buildAppUrl(pathname: string, currentHost: string): URL {
   if (process.env.NEXT_PUBLIC_APP_URL) {
@@ -27,91 +24,83 @@ function buildAppUrl(pathname: string, currentHost: string): URL {
 
 function isAppOnlyRoute(pathname: string): boolean {
   const appOnlyRoutes = ["/login", "/dashboard", "/admin", "/update-password"];
-  return appOnlyRoutes.some(route =>
-    pathname === route || pathname.startsWith(`${route}/`)
-  );
+  return appOnlyRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
 
 function isAllowedRoute(pathname: string): boolean {
   const allowedRoutes = ["/login", "/update-password", "/dashboard", "/admin", "/api"];
-  return allowedRoutes.some(route =>
-    pathname === route || pathname.startsWith(`${route}/`)
-  );
+  return allowedRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
 
 export async function middleware(req: NextRequest) {
-  const { nextUrl } = req;
-  const pathname = nextUrl.pathname;
-  const host = req.headers.get("host") || "";
-  const isAppDomain = host.startsWith("app.");
+  try {
+    const { nextUrl } = req;
+    const pathname = nextUrl.pathname;
+    const host = req.headers.get("host") || "";
+    const isAppDomain = host.startsWith("app.");
 
-  if (!isAppDomain) {
-    if (isAppOnlyRoute(pathname)) {
-      return NextResponse.redirect(buildAppUrl(pathname, host), 307);
+    if (!isAppDomain) {
+      if (isAppOnlyRoute(pathname)) {
+        return NextResponse.redirect(buildAppUrl(pathname, host), 307);
+      }
+      return NextResponse.next();
     }
-    return NextResponse.next();
-  }
 
-  const { supabaseResponse, user: authUser } = await createClient(req);
+    const { supabaseResponse, user: authUser } = await createClient(req);
 
-  const isLoggedIn = !!authUser;
-  let userRole: string | undefined;
+    const isLoggedIn = !!authUser;
+    const userRole = req.cookies.get("userRole")?.value;
 
-  if (authUser) {
-    const [appUser] = await db
-      .select({ role: users.role })
-      .from(users)
-      .where(eq(users.authUserId, authUser.id))
-      .limit(1);
-    userRole = appUser?.role;
-  }
+    const isLoginPage = pathname === "/login";
+    const isUpdatePasswordPage = pathname === "/update-password";
+    const isDashboardRoute = pathname.startsWith("/dashboard");
+    const isAdminRoute = pathname.startsWith("/admin");
+    const isProtectedRoute = isDashboardRoute || isAdminRoute;
+    const isApiRoute = pathname.startsWith("/api");
+    const isRootRoute = pathname === "/";
 
-  const isLoginPage = pathname === "/login";
-  const isUpdatePasswordPage = pathname === "/update-password";
-  const isDashboardRoute = pathname.startsWith("/dashboard");
-  const isAdminRoute = pathname.startsWith("/admin");
-  const isProtectedRoute = isDashboardRoute || isAdminRoute;
-  const isApiRoute = pathname.startsWith("/api");
-  const isRootRoute = pathname === "/";
+    if (isRootRoute) {
+      if (!isLoggedIn) {
+        return NextResponse.redirect(buildAppUrl("/login", host), 307);
+      }
+      if (userRole === "ADMIN") {
+        return NextResponse.redirect(buildAppUrl("/admin", host), 307);
+      }
+      return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
+    }
 
-  if (isRootRoute) {
-    if (!isLoggedIn) {
+    if (!isAllowedRoute(pathname) && !isApiRoute) {
+      return new NextResponse("Not Found", { status: 404 });
+    }
+
+    if (isProtectedRoute && !isLoggedIn) {
       return NextResponse.redirect(buildAppUrl("/login", host), 307);
     }
-    if (userRole === "ADMIN") {
+
+    if (isLoginPage && isLoggedIn) {
+      if (userRole === "ADMIN") {
+        return NextResponse.redirect(buildAppUrl("/admin", host), 307);
+      }
+      return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
+    }
+
+    if (isAdminRoute && isLoggedIn && userRole !== "ADMIN") {
+      return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
+    }
+
+    if (isDashboardRoute && isLoggedIn && userRole === "ADMIN") {
       return NextResponse.redirect(buildAppUrl("/admin", host), 307);
     }
-    return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
-  }
 
-  if (!isAllowedRoute(pathname) && !isApiRoute) {
-    return new NextResponse("Not Found", { status: 404 });
-  }
-
-  if (isProtectedRoute && !isLoggedIn) {
-    return NextResponse.redirect(buildAppUrl("/login", host), 307);
-  }
-
-  if (isLoginPage && isLoggedIn) {
-    if (userRole === "ADMIN") {
-      return NextResponse.redirect(buildAppUrl("/admin", host), 307);
+    if (isUpdatePasswordPage && !isLoggedIn) {
+      return NextResponse.redirect(buildAppUrl("/login", host), 307);
     }
-    return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
-  }
 
-  if (isAdminRoute && isLoggedIn && userRole !== "ADMIN") {
-    return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
+    return supabaseResponse;
+  } catch (error) {
+    console.error("Middleware error:", error);
+    return NextResponse.next();
   }
-
-  if (isDashboardRoute && isLoggedIn && userRole === "ADMIN") {
-    return NextResponse.redirect(buildAppUrl("/admin", host), 307);
-  }
-
-  if (isUpdatePasswordPage && !isLoggedIn) {
-    return NextResponse.redirect(buildAppUrl("/login", host), 307);
-  }
-
-  return supabaseResponse;
 }
 
 export const config = {

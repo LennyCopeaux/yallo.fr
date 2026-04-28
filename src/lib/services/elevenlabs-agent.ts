@@ -26,13 +26,16 @@ function extractApiErrorMessage(errorBody: unknown, statusCode: number): string 
 }
 
 /** Modèle LLM utilisé par l'agent ElevenLabs. */
-const DEFAULT_LLM_MODEL = "gemini-2.0-flash";
+const DEFAULT_LLM_MODEL = "gpt-4.1-nano-2025-04-14";
 
 /** Température LLM. */
 const DEFAULT_LLM_TEMPERATURE = 0.4;
 
 /** Voix ElevenLabs par défaut (Turbo v2.5). Surcharge via ELEVENLABS_VOICE_ID. */
 const DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
+
+/** Modèle TTS ElevenLabs (eleven_turbo_v2_5, eleven_multilingual_v2, eleven_v3, etc.). Surcharge via ELEVENLABS_TTS_MODEL. */
+const DEFAULT_TTS_MODEL = "eleven_turbo_v2_5";
 
 function getApiKey(): string {
   const apiKey = process.env.ELEVENLABS_API_KEY?.trim();
@@ -91,7 +94,8 @@ function buildSubmitOrderTool(webhookUrl?: string) {
       },
       customer_phone: {
         type: "string",
-        description: "Numéro du client si connu (sinon vide ; le numéro d'appel peut être complété côté serveur)",
+        description:
+          "Numéro du client si connu (sinon vide ; le numéro d'appel peut être complété côté serveur)",
       },
       items: {
         type: "array",
@@ -122,7 +126,8 @@ function buildSubmitOrderTool(webhookUrl?: string) {
       },
       pickup_time: {
         type: "string",
-        description: "L'heure de retrait souhaitée par le client (format HH:MM), ou vide si le client n'a pas précisé",
+        description:
+          "L'heure de retrait souhaitée par le client (format HH:MM), ou vide si le client n'a pas précisé",
       },
       notes: {
         type: "string",
@@ -184,7 +189,8 @@ function buildDataCollection() {
     },
     outcome: {
       type: "string",
-      description: "Résultat principal de l'appel : order_placed, abandoned, transferred, error, ou unknown",
+      description:
+        "Résultat principal de l'appel : order_placed, abandoned, transferred, error, ou unknown",
     },
     short_summary: {
       type: "string",
@@ -201,7 +207,10 @@ function buildAgentConfig(restaurant: Restaurant, systemPrompt: string) {
   const webhookUrl = getWebhookUrl();
   const voiceId = process.env.ELEVENLABS_VOICE_ID?.trim() || DEFAULT_VOICE_ID;
   const llmModel = process.env.ELEVENLABS_LLM_MODEL?.trim() || DEFAULT_LLM_MODEL;
-  const llmTemperature = Number.parseFloat(process.env.ELEVENLABS_LLM_TEMPERATURE?.trim() ?? "") || DEFAULT_LLM_TEMPERATURE;
+  const llmTemperature =
+    Number.parseFloat(process.env.ELEVENLABS_LLM_TEMPERATURE?.trim() ?? "") ||
+    DEFAULT_LLM_TEMPERATURE;
+  const ttsModel = process.env.ELEVENLABS_TTS_MODEL?.trim() || DEFAULT_TTS_MODEL;
 
   return {
     name: `Yallo - ${restaurant.name}`,
@@ -222,7 +231,7 @@ function buildAgentConfig(restaurant: Restaurant, systemPrompt: string) {
       },
       tts: {
         voice_id: voiceId,
-        model_id: "eleven_turbo_v2_5",
+        model_id: ttsModel,
         optimize_streaming_latency: 3,
       },
     },
@@ -349,14 +358,17 @@ export async function importTwilioPhoneNumber(
   const phoneNumberId: string = data.phone_number_id;
 
   // ElevenLabs ignore agent_id à la création — on doit faire un PATCH séparé
-  const patchResponse = await fetch(`${ELEVENLABS_API_URL}/v1/convai/phone-numbers/${phoneNumberId}`, {
-    method: "PATCH",
-    headers: {
-      "xi-api-key": apiKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ agent_id: agentId }),
-  });
+  const patchResponse = await fetch(
+    `${ELEVENLABS_API_URL}/v1/convai/phone-numbers/${phoneNumberId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "xi-api-key": apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ agent_id: agentId }),
+    }
+  );
 
   if (!patchResponse.ok) {
     const body = await patchResponse.json().catch(() => null);

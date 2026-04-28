@@ -1,7 +1,7 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, getAppUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/server";
 import { db } from "@/db";
 import { users, restaurants } from "@/db/schema";
@@ -13,7 +13,6 @@ import { DEFAULT_STATUS_SETTINGS } from "@/features/kitchen-status/constants";
 import { logger } from "@/lib/logger";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
 import { sendWelcomeEmail } from "@/lib/mail";
-
 
 const createUserSchema = z.object({
   email: z.string().email(),
@@ -63,7 +62,8 @@ const updateRestaurantTelephonySchema = z.object({
           {
             code: "custom",
             path: ["twilioPhoneNumber"],
-            message: "Format invalide. Utilisez le format +33XXXXXXXXX (ex: +33939035299) ou 0XXXXXXXXX (ex: 0939035299)",
+            message:
+              "Format invalide. Utilisez le format +33XXXXXXXXX (ex: +33939035299) ou 0XXXXXXXXX (ex: 0939035299)",
           },
         ]);
       }
@@ -123,7 +123,12 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
       email,
       password: tempPassword,
       email_confirm: true,
-      user_metadata: { firstName: firstName || null, lastName: lastName || null, role, must_change_password: true },
+      user_metadata: {
+        firstName: firstName || null,
+        lastName: lastName || null,
+        role,
+        must_change_password: true,
+      },
     });
 
     if (authError || !authData.user) {
@@ -143,14 +148,20 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
     try {
       await sendWelcomeEmail(email, tempPassword);
     } catch (mailError) {
-      logger.error("Erreur envoi email de bienvenue", mailError instanceof Error ? mailError : new Error(String(mailError)));
+      logger.error(
+        "Erreur envoi email de bienvenue",
+        mailError instanceof Error ? mailError : new Error(String(mailError))
+      );
       // On ne bloque pas la création si l'email échoue
     }
 
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    logger.error("Erreur création utilisateur", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur création utilisateur",
+      error instanceof Error ? error : new Error(String(error))
+    );
     if (error instanceof Error) {
       if (error.message.includes("users_email_unique")) {
         return { success: false, error: "Cet email est déjà utilisé" };
@@ -212,7 +223,12 @@ export async function updateUser(
       return { success: false, error: parsed.error.issues[0]?.message || "Données invalides" };
     }
 
-    const updateData: Partial<{ email: string; firstName: string | null; lastName: string | null; role: "ADMIN" | "OWNER" }> = {};
+    const updateData: Partial<{
+      email: string;
+      firstName: string | null;
+      lastName: string | null;
+      role: "ADMIN" | "OWNER";
+    }> = {};
     if (parsed.data.email !== undefined) updateData.email = parsed.data.email;
     if (parsed.data.firstName !== undefined) updateData.firstName = parsed.data.firstName;
     if (parsed.data.lastName !== undefined) updateData.lastName = parsed.data.lastName;
@@ -242,7 +258,10 @@ export async function updateUser(
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    logger.error("Erreur mise à jour utilisateur", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur mise à jour utilisateur",
+      error instanceof Error ? error : new Error(String(error))
+    );
     if (error instanceof Error && error.message.includes("users_email_unique")) {
       return { success: false, error: "Cet email est déjà utilisé" };
     }
@@ -281,7 +300,10 @@ export async function sendPasswordResetEmail(userId: string): Promise<ActionResu
 
     return { success: true };
   } catch (error) {
-    logger.error("Erreur envoi email réinitialisation", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur envoi email réinitialisation",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return { success: false, error: "Erreur lors de l'envoi de l'email" };
   }
 }
@@ -314,7 +336,10 @@ export async function deleteUser(id: string): Promise<ActionResult> {
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    logger.error("Erreur suppression utilisateur", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur suppression utilisateur",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return { success: false, error: "Erreur lors de la suppression" };
   }
 }
@@ -348,7 +373,10 @@ export async function createRestaurant(formData: FormData): Promise<ActionResult
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    logger.error("Erreur création restaurant", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur création restaurant",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return { success: false, error: "Erreur lors de la création" };
   }
 }
@@ -386,25 +414,33 @@ export async function updateRestaurantGeneral(
     revalidatePath(`/admin/restaurants/${id}`);
     return { success: true };
   } catch (error) {
-    logger.error("Erreur mise à jour restaurant", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur mise à jour restaurant",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
 
-export async function createElevenLabsAgent(id: string): Promise<ActionResult<{ agentId: string }>> {
+export async function createElevenLabsAgent(
+  id: string
+): Promise<ActionResult<{ agentId: string }>> {
   "use server";
 
-  await requireAdmin();
+  const user = await getAppUser();
+  if (!user || (user.role !== "ADMIN" && user.role !== "OWNER")) {
+    return { success: false, error: "Non autorisé" };
+  }
 
   try {
-    const [restaurant] = await db
-      .select()
-      .from(restaurants)
-      .where(eq(restaurants.id, id))
-      .limit(1);
+    const [restaurant] = await db.select().from(restaurants).where(eq(restaurants.id, id)).limit(1);
 
     if (!restaurant) {
       return { success: false, error: "Restaurant non trouvé" };
+    }
+
+    if (user.role === "OWNER" && restaurant.ownerId !== user.id) {
+      return { success: false, error: "Non autorisé" };
     }
 
     if (restaurant.elevenLabsAgentId) {
@@ -414,19 +450,22 @@ export async function createElevenLabsAgent(id: string): Promise<ActionResult<{ 
     if (!restaurant.twilioPhoneNumber) {
       return {
         success: false,
-        error: "Veuillez d'abord renseigner le numéro Twilio dans l'onglet Téléphonie avant de créer l'agent IA",
+        error:
+          "Veuillez d'abord renseigner le numéro Twilio dans l'onglet Téléphonie avant de créer l'agent IA",
       };
     }
 
-    const { createElevenLabsAgent: createAgent, importTwilioPhoneNumber } = await import(
-      "@/lib/services/elevenlabs-agent"
-    );
+    const { createElevenLabsAgent: createAgent, importTwilioPhoneNumber } =
+      await import("@/lib/services/elevenlabs-agent");
 
     const agent = await createAgent(restaurant);
 
     let elevenLabsPhoneNumberId: string | null = null;
     try {
-      const phoneResult = await importTwilioPhoneNumber(restaurant.twilioPhoneNumber, agent.agent_id);
+      const phoneResult = await importTwilioPhoneNumber(
+        restaurant.twilioPhoneNumber,
+        agent.agent_id
+      );
       elevenLabsPhoneNumberId = phoneResult.phone_number_id;
       logger.info("Numéro Twilio importé et lié à l'agent ElevenLabs", {
         restaurantId: id,
@@ -435,14 +474,18 @@ export async function createElevenLabsAgent(id: string): Promise<ActionResult<{ 
         phoneNumber: restaurant.twilioPhoneNumber,
       });
     } catch (phoneError) {
-      const { deleteElevenLabsAgent: cleanupAgent } = await import("@/lib/services/elevenlabs-agent");
+      const { deleteElevenLabsAgent: cleanupAgent } =
+        await import("@/lib/services/elevenlabs-agent");
       try {
         await cleanupAgent(agent.agent_id);
       } catch {
         // Ignore
       }
       const errorMessage = phoneError instanceof Error ? phoneError.message : String(phoneError);
-      logger.error("Échec import numéro Twilio dans ElevenLabs, agent supprimé", new Error(errorMessage));
+      logger.error(
+        "Échec import numéro Twilio dans ElevenLabs, agent supprimé",
+        new Error(errorMessage)
+      );
       return {
         success: false,
         error: `Impossible d'importer le numéro Twilio (${restaurant.twilioPhoneNumber}) dans ElevenLabs : ${errorMessage}. Vérifiez que le numéro est bien actif sur Twilio et que les identifiants Twilio sont corrects.`,
@@ -462,7 +505,10 @@ export async function createElevenLabsAgent(id: string): Promise<ActionResult<{ 
 
     return { success: true, data: { agentId: agent.agent_id } };
   } catch (error) {
-    logger.error("Erreur création agent ElevenLabs", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur création agent ElevenLabs",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur lors de la création de l'agent",
@@ -473,17 +519,20 @@ export async function createElevenLabsAgent(id: string): Promise<ActionResult<{ 
 export async function updateElevenLabsAgent(id: string): Promise<ActionResult> {
   "use server";
 
-  await requireAdmin();
+  const user = await getAppUser();
+  if (!user || (user.role !== "ADMIN" && user.role !== "OWNER")) {
+    return { success: false, error: "Non autorisé" };
+  }
 
   try {
-    const [restaurant] = await db
-      .select()
-      .from(restaurants)
-      .where(eq(restaurants.id, id))
-      .limit(1);
+    const [restaurant] = await db.select().from(restaurants).where(eq(restaurants.id, id)).limit(1);
 
     if (!restaurant) {
       return { success: false, error: "Restaurant non trouvé" };
+    }
+
+    if (user.role === "OWNER" && restaurant.ownerId !== user.id) {
+      return { success: false, error: "Non autorisé" };
     }
 
     if (!restaurant.elevenLabsAgentId) {
@@ -498,7 +547,10 @@ export async function updateElevenLabsAgent(id: string): Promise<ActionResult> {
 
     return { success: true };
   } catch (error) {
-    logger.error("Erreur mise à jour agent ElevenLabs", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur mise à jour agent ElevenLabs",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur lors de la mise à jour de l'agent",
@@ -515,25 +567,32 @@ async function deleteElevenLabsPhoneNumberIfExists(
     const { deleteElevenLabsPhoneNumber } = await import("@/lib/services/elevenlabs-agent");
     await deleteElevenLabsPhoneNumber(phoneNumberId);
   } catch (phoneError) {
-    logger.warn("Impossible de supprimer le numéro ElevenLabs (on continue la suppression de l'agent)", {
-      restaurantId,
-      error: phoneError instanceof Error ? phoneError.message : String(phoneError),
-    });
+    logger.warn(
+      "Impossible de supprimer le numéro ElevenLabs (on continue la suppression de l'agent)",
+      {
+        restaurantId,
+        error: phoneError instanceof Error ? phoneError.message : String(phoneError),
+      }
+    );
   }
 }
 
 export async function deleteElevenLabsAgent(id: string): Promise<ActionResult> {
   "use server";
 
-  await requireAdmin();
-  const [restaurant] = await db
-    .select()
-    .from(restaurants)
-    .where(eq(restaurants.id, id))
-    .limit(1);
+  const user = await getAppUser();
+  if (!user || (user.role !== "ADMIN" && user.role !== "OWNER")) {
+    return { success: false, error: "Non autorisé" };
+  }
+
+  const [restaurant] = await db.select().from(restaurants).where(eq(restaurants.id, id)).limit(1);
 
   if (!restaurant) {
     return { success: false, error: "Restaurant non trouvé" };
+  }
+
+  if (user.role === "OWNER" && restaurant.ownerId !== user.id) {
+    return { success: false, error: "Non autorisé" };
   }
 
   if (!restaurant.elevenLabsAgentId) {
@@ -560,7 +619,10 @@ export async function deleteElevenLabsAgent(id: string): Promise<ActionResult> {
 
     return { success: true };
   } catch (error) {
-    logger.error("Erreur suppression agent ElevenLabs", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur suppression agent ElevenLabs",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur lors de la suppression de l'agent",
@@ -596,7 +658,10 @@ export async function updateRestaurantAI(
     revalidatePath(`/admin/restaurants/${id}`);
     return { success: true };
   } catch (error) {
-    logger.error("Erreur mise à jour IA restaurant", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur mise à jour IA restaurant",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
@@ -622,14 +687,18 @@ export async function updateRestaurantTelephony(
     };
 
     if (parsed.data.phoneNumber !== undefined) updateData.phoneNumber = parsed.data.phoneNumber;
-    if (parsed.data.twilioPhoneNumber !== undefined) updateData.twilioPhoneNumber = parsed.data.twilioPhoneNumber;
+    if (parsed.data.twilioPhoneNumber !== undefined)
+      updateData.twilioPhoneNumber = parsed.data.twilioPhoneNumber;
 
     await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
     revalidatePath("/admin");
     revalidatePath(`/admin/restaurants/${id}`);
     return { success: true };
   } catch (error) {
-    logger.error("Erreur mise à jour téléphonie restaurant", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur mise à jour téléphonie restaurant",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
@@ -654,7 +723,8 @@ export async function updateRestaurantBilling(
       updatedAt: new Date(),
     };
 
-    if (parsed.data.stripeCustomerId !== undefined) updateData.stripeCustomerId = parsed.data.stripeCustomerId;
+    if (parsed.data.stripeCustomerId !== undefined)
+      updateData.stripeCustomerId = parsed.data.stripeCustomerId;
     if (parsed.data.billingStartDate !== undefined) {
       updateData.billingStartDate = parsed.data.billingStartDate;
     }
@@ -664,7 +734,10 @@ export async function updateRestaurantBilling(
     revalidatePath(`/admin/restaurants/${id}`);
     return { success: true };
   } catch (error) {
-    logger.error("Erreur mise à jour facturation restaurant", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur mise à jour facturation restaurant",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
@@ -704,7 +777,10 @@ export async function updateHubriseConfig(
     revalidatePath(`/admin/restaurants/${id}`);
     return { success: true };
   } catch (error) {
-    logger.error("Erreur mise à jour configuration HubRise", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur mise à jour configuration HubRise",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
@@ -721,7 +797,10 @@ export async function deleteRestaurant(id: string): Promise<ActionResult> {
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    logger.error("Erreur suppression restaurant", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur suppression restaurant",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return { success: false, error: "Erreur lors de la suppression" };
   }
 }
@@ -780,15 +859,15 @@ export async function stopImpersonation(): Promise<ActionResult<string>> {
 
     return { success: true, data: "/admin" };
   } catch (error) {
-    logger.error("Erreur arrêt impersonation", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur arrêt impersonation",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return { success: false, error: "Erreur lors de l'arrêt de l'impersonation" };
   }
 }
 
-export async function toggleRestaurantStatus(
-  id: string,
-  isActive: boolean
-): Promise<ActionResult> {
+export async function toggleRestaurantStatus(id: string, isActive: boolean): Promise<ActionResult> {
   try {
     await requireAdmin();
 
@@ -808,9 +887,10 @@ export async function toggleRestaurantStatus(
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    logger.error("Erreur toggle statut restaurant", error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Erreur toggle statut restaurant",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return { success: false, error: "Erreur lors de la mise à jour du statut" };
   }
 }
-
-
