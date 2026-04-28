@@ -12,6 +12,7 @@ import { Loader2, Save, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { updateRestaurantTelephony } from "@/app/(admin)/admin/restaurants/actions";
 import { cn, normalizeFrenchPhoneNumber } from "@/lib/utils";
+import { AdminStatusBadge } from "@/components/admin/status-badge";
 
 const formSchema = z.object({
   phoneNumber: z.string().min(10, "Numéro invalide"),
@@ -24,7 +25,8 @@ const formSchema = z.object({
         return normalizeFrenchPhoneNumber(val) !== null;
       },
       {
-        message: "Format invalide. Utilisez le format +33XXXXXXXXX (ex: +33939035299) ou 0XXXXXXXXX (ex: 0939035299)",
+        message:
+          "Format invalide. Utilisez le format +33XXXXXXXXX (ex: +33939035299) ou 0XXXXXXXXX (ex: 0939035299)",
       }
     ),
 });
@@ -40,7 +42,6 @@ type Restaurant = {
 interface TelephonyTabProps {
   readonly restaurant: Restaurant;
 }
-
 
 export function TelephonyTab({ restaurant }: TelephonyTabProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +65,7 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
     const normalizedTwilioNumber = data.twilioPhoneNumber
       ? normalizeFrenchPhoneNumber(data.twilioPhoneNumber) || data.twilioPhoneNumber
       : null;
-    
+
     const result = await updateRestaurantTelephony(restaurant.id, {
       phoneNumber: data.phoneNumber,
       twilioPhoneNumber: normalizedTwilioNumber,
@@ -84,22 +85,30 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
 
   return (
     <div className="space-y-6">
-      <Card className={`border ${hasTwilioNumber ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-amber-400/20 bg-amber-400/5'}`}>
+      <Card className="border-border bg-card/30">
+        <CardHeader>
+          <CardTitle>État de la ligne Twilio</CardTitle>
+          <CardDescription>
+            Statut de disponibilité de la ligne téléphonique liée à l&apos;IA.
+          </CardDescription>
+        </CardHeader>
         <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg ${hasTwilioNumber ? 'bg-emerald-400/10' : 'bg-amber-400/10'} flex items-center justify-center`}>
-              <Phone className={`w-5 h-5 ${hasTwilioNumber ? 'text-emerald-400' : 'text-amber-400'}`} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                Statut
+              </p>
+              {hasTwilioNumber ? (
+                <AdminStatusBadge tone="active" label="Actif" />
+              ) : (
+                <AdminStatusBadge tone="warning" label="Non configuré" />
+              )}
             </div>
-            <div>
-              <p className={`font-medium ${hasTwilioNumber ? 'text-emerald-400' : 'text-amber-400'}`}>
-                {hasTwilioNumber ? 'Ligne Twilio Active' : 'Ligne Twilio Non configurée'}
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                Numéro Twilio
               </p>
-              <p className="text-sm text-muted-foreground">
-                {hasTwilioNumber
-                  ? `Numéro Twilio : ${twilioPhoneNumberValue}`
-                  : 'Configurez un numéro Twilio pour recevoir les appels via l\'IA'
-                }
-              </p>
+              <p className="font-medium">{twilioPhoneNumberValue?.trim() || "—"}</p>
             </div>
           </div>
         </CardContent>
@@ -112,9 +121,7 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
               <Phone className="w-5 h-5 text-primary" />
               Numéros de téléphone
             </CardTitle>
-            <CardDescription>
-              Configuration des numéros de téléphone du restaurant
-            </CardDescription>
+            <CardDescription>Configuration des numéros de téléphone du restaurant</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
@@ -144,10 +151,13 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
                 className="bg-background/50 border-border focus:border-primary/50 font-mono"
               />
               {form.formState.errors.twilioPhoneNumber && (
-                <p className="text-sm text-red-400">{form.formState.errors.twilioPhoneNumber.message}</p>
+                <p className="text-sm text-red-400">
+                  {form.formState.errors.twilioPhoneNumber.message}
+                </p>
               )}
               <p className="text-xs text-muted-foreground">
-                Numéro acheté sur Twilio pour recevoir les appels de l&apos;IA. Format accepté : 0939035299 ou +33939035299 (sera automatiquement converti en +33XXXXXXXXX)
+                Numéro acheté sur Twilio pour recevoir les appels de l&apos;IA. Format accepté :
+                0939035299 ou +33939035299 (sera automatiquement converti en +33XXXXXXXXX)
               </p>
             </div>
           </CardContent>
