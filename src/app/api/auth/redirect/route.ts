@@ -60,7 +60,7 @@ export async function GET() {
     return NextResponse.json(
       {
         error: "Authentication redirect failed",
-        details: process.env.NODE_ENV === "development" ? String(error) : undefined,
+        details: process.env.VERCEL_ENV !== "production" ? String(error) : undefined,
       },
       { status: 500 }
     );
