@@ -213,27 +213,44 @@ function verifyWebhookSecret(request: Request): boolean {
   }
 
   const secret = process.env.ELEVENLABS_WEBHOOK_SECRET?.trim();
+  const vercelEnv = process.env.VERCEL_ENV?.trim();
+  const isStrictProduction = vercelEnv === "production";
 
   if (!secret) {
-    if (process.env.NODE_ENV === "production") {
+    if (isStrictProduction) {
       logger.error(
-        "ELEVENLABS_WEBHOOK_SECRET manquant en production — le webhook renvoie 401"
+        "ELEVENLABS_WEBHOOK_SECRET manquant en production Vercel — le webhook renvoie 401",
+        new Error("missing_webhook_secret"),
+        { vercelEnv, nodeEnv: process.env.NODE_ENV }
       );
       return false;
     }
-    logger.warn("ELEVENLABS_WEBHOOK_SECRET non défini - webhook accepté (dev uniquement)");
+    logger.warn(
+      "ELEVENLABS_WEBHOOK_SECRET non défini - webhook accepté hors production Vercel",
+      { vercelEnv, nodeEnv: process.env.NODE_ENV }
+    );
     return true;
   }
 
   const incoming = request.headers.get("x-elevenlabs-secret")?.trim();
   if (!incoming) {
-    logger.warn("Webhook ElevenLabs : header x-elevenlabs-secret absent");
+    logger.warn("Webhook ElevenLabs : header x-elevenlabs-secret absent", {
+      vercelEnv,
+      nodeEnv: process.env.NODE_ENV,
+    });
     return false;
   }
 
   const ok = incoming === secret;
   if (!ok) {
-    logger.warn("Webhook ElevenLabs : secret reçu ne correspond pas à ELEVENLABS_WEBHOOK_SECRET");
+    logger.warn("Webhook ElevenLabs : secret reçu ne correspond pas à ELEVENLABS_WEBHOOK_SECRET", {
+      vercelEnv,
+      nodeEnv: process.env.NODE_ENV,
+      expectedLength: secret.length,
+      incomingLength: incoming.length,
+      expectedPrefix: secret.slice(0, 6),
+      incomingPrefix: incoming.slice(0, 6),
+    });
   }
   return ok;
 }
