@@ -9,7 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Bot, Brain, FileText, Sparkles, Code, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { createElevenLabsAgent, updateElevenLabsAgent, deleteElevenLabsAgent } from "@/app/(admin)/admin/restaurants/actions";
+import {
+  createElevenLabsAgent,
+  updateElevenLabsAgent,
+  deleteElevenLabsAgent,
+} from "@/app/(admin)/admin/restaurants/actions";
+import { AdminStatusBadge } from "@/components/admin/status-badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,35 +40,23 @@ interface AITabProps {
   restaurant: Restaurant;
 }
 
-function getAIStatusText(
-  isFullyOperational: boolean,
-  hasAgentId: boolean,
-  hasPhoneLinked: boolean,
-  hasTwilioNumber: boolean,
-  twilioPhoneNumber: string | null
-): { title: string; description: string } {
-  if (isFullyOperational) {
-    return {
-      title: "IA Opérationnelle",
-      description: `Agent IA actif sur le ${twilioPhoneNumber}`,
-    };
-  }
-  if (hasAgentId && !hasPhoneLinked) {
-    return {
-      title: "IA partiellement configurée",
-      description: "L'agent existe mais aucun numéro de téléphone n'est lié",
-    };
-  }
-  if (!hasTwilioNumber) {
-    return {
-      title: "IA Non configurée",
-      description: "Renseignez d'abord le numéro Twilio dans l'onglet Téléphonie",
-    };
-  }
-  return {
-    title: "IA Non configurée",
-    description: "Créez l'agent IA pour activer la prise de commande vocale",
-  };
+function ElevenLabsIcon() {
+  return (
+    <svg
+      className="w-5 h-5 text-primary"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M8 4v16" />
+      <path d="M12 4v16" />
+      <path d="M16 4v16" />
+    </svg>
+  );
 }
 
 export function AITab({ restaurant }: Readonly<AITabProps>) {
@@ -93,9 +86,6 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
   const hasPhoneLinked = !!restaurant.elevenLabsPhoneNumberId;
   const hasTwilioNumber = !!restaurant.twilioPhoneNumber;
   const isFullyOperational = hasAgentId && hasPhoneLinked;
-
-  const statusText = getAIStatusText(isFullyOperational, hasAgentId, hasPhoneLinked, hasTwilioNumber, restaurant.twilioPhoneNumber);
-  const statusCardClassName = isFullyOperational ? "border-emerald-400/20 bg-emerald-400/5" : "border-amber-400/20 bg-amber-400/5";
 
   const handleCreateAssistant = async () => {
     setIsCreatingAssistant(true);
@@ -151,7 +141,9 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
   const handleGeneratePrompt = async () => {
     setIsGeneratingPrompt(true);
     try {
-      const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-system-prompt`);
+      const response = await fetch(
+        `/api/admin/restaurants/${restaurant.id}/generate-system-prompt`
+      );
       if (!response.ok) throw new Error("Erreur lors de la génération");
       const data = await response.json();
       setSystemPrompt(data.systemPrompt);
@@ -186,7 +178,9 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
   const handleGenerateHoursJson = async () => {
     setIsGeneratingHoursJson(true);
     try {
-      const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-business-hours-json`);
+      const response = await fetch(
+        `/api/admin/restaurants/${restaurant.id}/generate-business-hours-json`
+      );
       if (!response.ok) {
         throw new Error("Erreur lors de la génération");
       }
@@ -207,56 +201,32 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
 
   return (
     <div className="space-y-6">
-      <Card className={`border ${statusCardClassName}`}>
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg ${isFullyOperational ? "bg-emerald-400/10" : "bg-amber-400/10"} flex items-center justify-center`}>
-                <Bot className={`w-5 h-5 ${isFullyOperational ? "text-emerald-400" : "text-amber-400"}`} />
-              </div>
-              <div>
-                <p className={`font-medium ${isFullyOperational ? "text-emerald-400" : "text-amber-400"}`}>
-                  {statusText.title}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {statusText.description}
-                </p>
-              </div>
-            </div>
-            {hasAgentId && (
-              <div className="flex items-center gap-4 ml-[52px] text-xs">
-                <span className={`flex items-center gap-1.5 ${hasAgentId ? 'text-emerald-400' : 'text-muted-foreground'}`}>
-                  <div className={`w-1.5 h-1.5 rounded-full ${hasAgentId ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
-                  Agent
-                </span>
-                <span className={`flex items-center gap-1.5 ${hasPhoneLinked ? 'text-emerald-400' : 'text-red-400'}`}>
-                  <div className={`w-1.5 h-1.5 rounded-full ${hasPhoneLinked ? 'bg-emerald-400' : 'bg-red-400'}`} />
-                  {hasPhoneLinked ? `Numéro lié (${restaurant.twilioPhoneNumber})` : 'Numéro non lié'}
-                </span>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="space-y-6">
         <Card className="border-border bg-card/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="w-5 h-5 text-primary" />
-              Agent ElevenLabs
-            </CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className="flex items-center gap-2">
+                <ElevenLabsIcon />
+                Agent ElevenLabs
+              </CardTitle>
+              {isFullyOperational ? (
+                <AdminStatusBadge tone="active" label="Actif" />
+              ) : (
+                <AdminStatusBadge tone="warning" label="Non configuré" />
+              )}
+            </div>
             <CardDescription className="space-y-2">
               <span className="block">
-                L&apos;identifiant de l&apos;agent ElevenLabs Conversational AI qui gère les appels vocaux (voix ElevenLabs Turbo v2.5 —{" "}
+                L&apos;identifiant de l&apos;agent ElevenLabs Conversational AI qui gère les appels
+                vocaux (voix ElevenLabs Turbo v2.5 —{" "}
                 <code className="font-mono text-xs">ELEVENLABS_VOICE_ID</code> optionnel).
               </span>
               <span className="block text-xs text-muted-foreground border-l-2 border-amber-500/40 pl-2">
                 <strong>Vercel / prod :</strong> définissez{" "}
-                <code className="font-mono rounded bg-muted px-0.5">ELEVENLABS_WEBHOOK_SECRET</code> (chaîne secrète, ex.{" "}
-                <code className="font-mono">openssl rand -hex 32</code>
-                ) puis cliquez sur <strong>Mettre à jour l&apos;agent</strong> pour que ElevenLabs envoie ce secret au
-                webhook. Sans cela, les commandes vocales échouent. Optionnel :{" "}
+                <code className="font-mono rounded bg-muted px-0.5">ELEVENLABS_WEBHOOK_SECRET</code>{" "}
+                (chaîne secrète, ex. <code className="font-mono">openssl rand -hex 32</code>) puis
+                cliquez sur <strong>Mettre à jour l&apos;agent</strong> pour que ElevenLabs envoie
+                ce secret au webhook. Sans cela, les commandes vocales échouent. Optionnel :{" "}
                 <code className="font-mono">NEXT_PUBLIC_APP_URL</code> en https vers votre app.
               </span>
             </CardDescription>
@@ -275,12 +245,14 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
                   />
                   {hasPhoneLinked && (
                     <p className="text-xs text-emerald-400">
-                      Numéro {restaurant.twilioPhoneNumber} lié à l&apos;agent — les appels sont routés vers l&apos;IA
+                      Numéro {restaurant.twilioPhoneNumber} lié à l&apos;agent — les appels sont
+                      routés vers l&apos;IA
                     </p>
                   )}
                   {!hasPhoneLinked && (
                     <p className="text-xs text-red-400">
-                      Aucun numéro lié — supprimez l&apos;agent et recréez-le après avoir configuré le numéro Twilio
+                      Aucun numéro lié — supprimez l&apos;agent et recréez-le après avoir configuré
+                      le numéro Twilio
                     </p>
                   )}
                 </div>
@@ -357,7 +329,8 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
                   Prompt Système
                 </CardTitle>
                 <CardDescription>
-                  Instructions personnalisées pour l&apos;IA de ce restaurant (surcharge le prompt par défaut)
+                  Instructions personnalisées pour l&apos;IA de ce restaurant (surcharge le prompt
+                  par défaut)
                 </CardDescription>
               </div>
               <Button
@@ -420,7 +393,8 @@ Règles importantes :
                   Contexte Menu
                 </CardTitle>
                 <CardDescription>
-                  Le menu du restaurant au format texte ou JSON. L&apos;IA utilisera ces informations pour comprendre les produits.
+                  Le menu du restaurant au format texte ou JSON. L&apos;IA utilisera ces
+                  informations pour comprendre les produits.
                 </CardDescription>
               </div>
               <Button
@@ -446,14 +420,14 @@ Règles importantes :
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-                <Label htmlFor="menuContext">Données du menu</Label>
-                <Textarea
-                  id="menuContext"
-                  readOnly
-                  disabled
-                  value={menuContext}
-                  rows={12}
-                  placeholder={`{
+              <Label htmlFor="menuContext">Données du menu</Label>
+              <Textarea
+                id="menuContext"
+                readOnly
+                disabled
+                value={menuContext}
+                rows={12}
+                placeholder={`{
   "categories": [
     {
       "name": "Kebabs",
@@ -471,11 +445,11 @@ Règles importantes :
     }
   ]
 }`}
-                  className="bg-muted/50 cursor-not-allowed font-mono text-sm resize-y min-h-[300px]"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {menuContext.length} / 50 000 caractères (lecture seule)
-                </p>
+                className="bg-muted/50 cursor-not-allowed font-mono text-sm resize-y min-h-[300px]"
+              />
+              <p className="text-xs text-muted-foreground">
+                {menuContext.length} / 50 000 caractères (lecture seule)
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -489,7 +463,8 @@ Règles importantes :
                   Horaires d&apos;ouverture
                 </CardTitle>
                 <CardDescription>
-                  Configuration des horaires au format JSON (utilisés par l&apos;IA pour informer les clients)
+                  Configuration des horaires au format JSON (utilisés par l&apos;IA pour informer
+                  les clients)
                 </CardDescription>
               </div>
               <Button
@@ -532,7 +507,8 @@ Règles importantes :
                 className="bg-muted/50 cursor-not-allowed font-mono text-sm resize-y min-h-[250px]"
               />
               <p className="text-xs text-muted-foreground">
-                Format JSON avec les jours de la semaine et les horaires d&apos;ouverture/fermeture (lecture seule)
+                Format JSON avec les jours de la semaine et les horaires d&apos;ouverture/fermeture
+                (lecture seule)
               </p>
             </div>
           </CardContent>

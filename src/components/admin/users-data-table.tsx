@@ -42,6 +42,7 @@ import { MoreHorizontal, Trash2, Loader2, KeyRound, Edit, Search } from "lucide-
 import { toast } from "sonner";
 import { deleteUser, sendPasswordResetEmail } from "@/app/(admin)/admin/actions";
 import { EditUserDialog } from "./edit-user-dialog";
+import { AdminStatusBadge } from "@/components/admin/status-badge";
 
 type User = {
   id: string;
@@ -111,25 +112,26 @@ export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
 
   const searchTerm = searchParams.get("search")?.toLowerCase() || "";
   const roleFilter = searchParams.get("role") || "all";
-  
+
   const filteredData = data.filter((user) => {
-    const matchesSearch = !searchTerm || 
+    const matchesSearch =
+      !searchTerm ||
       user.email.toLowerCase().includes(searchTerm) ||
       user.firstName?.toLowerCase().includes(searchTerm) ||
       user.lastName?.toLowerCase().includes(searchTerm);
-    
+
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    
+
     return matchesSearch && matchesRole;
   });
 
   const handleDelete = async () => {
     if (!userToDelete) return;
-    
+
     setIsDeleting(true);
     const result = await deleteUser(userToDelete.id);
     setIsDeleting(false);
-    
+
     if (result.success) {
       toast.success("Utilisateur supprimé");
       setDeleteDialogOpen(false);
@@ -143,7 +145,7 @@ export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
     setResettingFor(userId);
     const result = await sendPasswordResetEmail(userId);
     setResettingFor(null);
-    
+
     if (result.success) {
       toast.success("Email de réinitialisation envoyé");
     } else {
@@ -174,10 +176,7 @@ export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
             <Search className="w-4 h-4" />
           </Button>
         </div>
-        <Select
-          value={roleFilter}
-          onValueChange={(value) => updateFilters("role", value)}
-        >
+        <Select value={roleFilter} onValueChange={(value) => updateFilters("role", value)}>
           <SelectTrigger className="w-full sm:w-[180px] bg-background/50 border-border h-10">
             <SelectValue placeholder="Rôle" />
           </SelectTrigger>
@@ -192,106 +191,112 @@ export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
       <div className="border border-border rounded-xl bg-card/20 overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
-          <TableHeader>
-            <TableRow className="border-border hover:bg-transparent">
-              <TableHead className="text-muted-foreground font-medium">Utilisateur</TableHead>
-              <TableHead className="text-muted-foreground font-medium">Rôle</TableHead>
-              <TableHead className="text-muted-foreground font-medium hidden md:table-cell">Statut</TableHead>
-              <TableHead className="text-muted-foreground font-medium hidden lg:table-cell">Inscription</TableHead>
-              <TableHead className="w-[70px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  Aucun utilisateur trouvé
-                </TableCell>
+            <TableHeader>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground font-medium">Utilisateur</TableHead>
+                <TableHead className="text-muted-foreground font-medium">Rôle</TableHead>
+                <TableHead className="text-muted-foreground font-medium hidden md:table-cell">
+                  Statut
+                </TableHead>
+                <TableHead className="text-muted-foreground font-medium hidden lg:table-cell">
+                  Inscription
+                </TableHead>
+                <TableHead className="w-[70px]"></TableHead>
               </TableRow>
-            ) : (
-              filteredData.map((user) => (
-              <TableRow key={user.id} className="border-border hover:bg-primary/[0.02]">
-                <TableCell className="min-w-[180px]">
-                  <div>
-                    <div className="font-medium text-sm sm:text-base">
-                      {user.firstName || user.lastName
-                        ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
-                        : user.email}
-                    </div>
-                    <div className="text-xs text-muted-foreground">{user.email}</div>
-                  </div>
-                </TableCell>
-                <TableCell className="min-w-[100px]">
-                  <Badge
-                    className={
-                      user.role === "ADMIN"
-                        ? "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/15"
-                        : "bg-primary/10 text-primary border-primary/20 hover:bg-primary/15"
-                    }
-                  >
-                    {user.role}
-                  </Badge>
-                </TableCell>
-                <TableCell className="hidden md:table-cell min-w-[160px]">
-                  <span className="text-emerald-400 text-sm">Actif</span>
-                </TableCell>
-                <TableCell className="text-muted-foreground hidden lg:table-cell min-w-[120px]">
-                  {user.createdAt
-                    ? new Date(user.createdAt).toLocaleDateString("fr-FR", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "-"}
-                </TableCell>
-                <TableCell className="min-w-[44px]">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
-                        <MoreHorizontal className="w-4 h-4" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-card border-border">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator className="bg-muted/50" />
-                      <DropdownMenuItem
-                        onClick={() => setEditingUser(user)}
+            </TableHeader>
+            <TableBody>
+              {filteredData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    Aucun utilisateur trouvé
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredData.map((user) => (
+                  <TableRow key={user.id} className="border-border hover:bg-primary/[0.02]">
+                    <TableCell className="min-w-[180px]">
+                      <div>
+                        <div className="font-medium text-sm sm:text-base">
+                          {user.firstName || user.lastName
+                            ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
+                            : user.email}
+                        </div>
+                        <div className="text-xs text-muted-foreground">{user.email}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="min-w-[100px]">
+                      <Badge
+                        className={
+                          user.role === "ADMIN"
+                            ? "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/15"
+                            : "bg-primary/10 text-primary border-primary/20 hover:bg-primary/15"
+                        }
                       >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Modifier
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-muted/50" />
-                      <DropdownMenuItem
-                        onClick={() => handleSendPasswordReset(user.id)}
-                        disabled={resettingFor === user.id}
-                      >
-                        {resettingFor === user.id ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <KeyRound className="w-4 h-4 mr-2" />
-                        )}
-                        Envoyer réinitialisation MDP
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-muted/50" />
-                      <DropdownMenuItem
-                        className="text-red-400 focus:text-red-400"
-                        onClick={() => {
-                          setUserToDelete(user);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Supprimer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+                        {user.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell min-w-[160px]">
+                      <AdminStatusBadge tone="active" label="Actif" />
+                    </TableCell>
+                    <TableCell className="text-muted-foreground hidden lg:table-cell min-w-[120px]">
+                      {user.createdAt
+                        ? new Date(user.createdAt).toLocaleDateString("fr-FR", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "-"}
+                    </TableCell>
+                    <TableCell className="min-w-[44px]">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                            <span className="sr-only">Actions</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-card border-border">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator className="bg-muted/50" />
+                          <DropdownMenuItem onClick={() => setEditingUser(user)}>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Modifier
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="bg-muted/50" />
+                          <DropdownMenuItem
+                            onClick={() => handleSendPasswordReset(user.id)}
+                            disabled={resettingFor === user.id}
+                          >
+                            {resettingFor === user.id ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <KeyRound className="w-4 h-4 mr-2" />
+                            )}
+                            Envoyer réinitialisation MDP
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="bg-muted/50" />
+                          <DropdownMenuItem
+                            className="text-red-400 focus:text-red-400"
+                            onClick={() => {
+                              setUserToDelete(user);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
 
@@ -308,8 +313,8 @@ export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer l&apos;utilisateur ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer <strong>{userToDelete?.email}</strong> ?
-              Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer <strong>{userToDelete?.email}</strong> ? Cette
+              action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
