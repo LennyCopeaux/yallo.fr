@@ -226,7 +226,7 @@ function buildAgentConfig(restaurant: Restaurant, systemPrompt: string) {
         language: "fr",
       },
       asr: {
-        quality: "medium",
+        quality: "high",
         user_input_audio_format: "pcm_16000",
       },
       tts: {
