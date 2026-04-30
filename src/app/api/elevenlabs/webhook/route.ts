@@ -274,11 +274,27 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as ElevenLabsWebhookBody;
 
-    // ElevenLabs ConvAI server tools envoient les paramètres directement à la racine
-    // avec les métadonnées dans body.system
-    const agentId = body.system?.agent_id ?? "";
-    const callerPhone = body.system?.caller_id ?? undefined;
-    const conversationId = body.system?.conversation_id ?? "";
+    // Log du body brut pour diagnostiquer la structure réelle envoyée par ElevenLabs
+    logger.info("Webhook ElevenLabs body brut", {
+      bodyKeys: Object.keys(body),
+      systemKeys: body.system ? Object.keys(body.system) : null,
+      agentIdRoot: (body as Record<string, unknown>).agent_id,
+      agentIdSystem: body.system?.agent_id,
+    });
+
+    // ElevenLabs peut mettre agent_id à la racine ou dans system selon la version
+    const agentId =
+      (body as Record<string, unknown>).agent_id as string |undefined ??
+      body.system?.agent_id ??
+      "";
+    const callerPhone =
+      (body as Record<string, unknown>).caller_id as string | undefined ??
+      body.system?.caller_id ??
+      undefined;
+    const conversationId =
+      (body as Record<string, unknown>).conversation_id as string | undefined ??
+      body.system?.conversation_id ??
+      "";
 
     logger.info("Webhook ElevenLabs reçu", {
       agentId,
