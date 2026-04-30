@@ -25,19 +25,24 @@ interface SubmitOrderArgs {
   notes?: string;
 }
 
-interface ElevenLabsWebhookBody {
-  agent_id: string;
-  conversation_id?: string;
-  caller_id?: string;
-  tool_name?: string;
-  tool_call_id?: string;
-  parameters?: Record<string, unknown>;
-  /** ElevenLabs wraps tool calls in this shape for server tools */
-  tool_calls?: Array<{
-    tool_call_id: string;
-    tool_name: string;
-    parameters: Record<string, unknown>;
-  }>;
+/**
+ * Format réel envoyé par ElevenLabs Conversational AI pour les server tools (webhooks).
+ * Les paramètres définis dans l'outil sont à la racine, les métadonnées dans `system`.
+ * https://elevenlabs.io/docs/conversational-ai/customization/tools/server-tools
+ */
+interface ElevenLabsWebhookBody extends Record<string, unknown> {
+  system?: {
+    agent_id?: string;
+    caller_id?: string;
+    conversation_id?: string;
+    called_number?: string;
+  };
+  // Paramètres du tool submit_order (à la racine)
+  customer_name?: string;
+  customer_phone?: string;
+  items?: unknown;
+  pickup_time?: string;
+  notes?: string;
 }
 
 function generateOrderNumber(): string {
@@ -263,86 +268,53 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as ElevenLabsWebhookBody;
 
+    // ElevenLabs ConvAI server tools envoient les paramètres directement à la racine
+    // avec les métadonnées dans body.system
+    const agentId = body.system?.agent_id ?? "";
+    const callerPhone = body.system?.caller_id ?? undefined;
+    const conversationId = body.system?.conversation_id ?? "";
+
     logger.info("Webhook ElevenLabs reçu", {
-      agentId: body.agent_id,
-      conversationId: body.conversation_id,
-      toolName: body.tool_name,
+      agentId,
+      conversationId,
+      hasCustomerName: !!body.customer_name,
     });
 
-    // ElevenLabs peut envoyer soit un seul tool_call à la racine,
-    // soit un tableau tool_calls
-    const toolCalls: Array<{ tool_call_id: string; tool_name: string; parameters: Record<string, unknown> }> = [];
-
-    if (body.tool_calls && body.tool_calls.length > 0) {
-      toolCalls.push(...body.tool_calls);
-    } else if (body.tool_name && body.tool_call_id) {
-      toolCalls.push({
-        tool_call_id: body.tool_call_id,
-        tool_name: body.tool_name,
-        parameters: body.parameters ?? {},
+    if (!body.customer_name && !body.items) {
+      logger.warn("Webhook ElevenLabs : payload sans paramètres submit_order reconnus", {
+        bodyKeys: Object.keys(body),
       });
-    }
-
-    if (toolCalls.length === 0) {
-      logger.info("Webhook ElevenLabs : pas de tool call à traiter");
       return NextResponse.json({ received: true }, { status: 200 });
     }
 
-    const results = [];
+    // Extraire les paramètres submit_order depuis la racine du body
+    const rawParams: Record<string, unknown> = {
+      customer_name: body.customer_name,
+      customer_phone: body.customer_phone,
+      items: body.items,
+      pickup_time: body.pickup_time,
+      notes: body.notes,
+    };
 
-    for (const toolCall of toolCalls) {
-      if (toolCall.tool_name === "submit_order") {
-        try {
-          const normalized = normalizeSubmitOrderPayload(toolCall.parameters);
-          if (!normalized) {
-            results.push({
-              type: "tool_result",
-              tool_call_id: toolCall.tool_call_id,
-              tool_result: JSON.stringify({
-                success: false,
-                message:
-                  "Données de commande invalides : prénom/nom client et au moins un article avec libellé sont requis.",
-              }),
-            });
-            continue;
-          }
-
-          logger.info("Traitement submit_order ElevenLabs", {
-            agentId: body.agent_id,
-            toolCallId: toolCall.tool_call_id,
-          });
-
-          const result = await handleSubmitOrder(body.agent_id, normalized, {
-            callerPhone: body.caller_id,
-          });
-
-          results.push({
-            type: "tool_result",
-            tool_call_id: toolCall.tool_call_id,
-            tool_result: result,
-          });
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          logger.error("Erreur submit_order ElevenLabs", new Error(errorMessage), {
-            toolCallId: toolCall.tool_call_id,
-          });
-          results.push({
-            type: "tool_result",
-            tool_call_id: toolCall.tool_call_id,
-            tool_result: JSON.stringify({ success: false, message: `Erreur : ${errorMessage}` }),
-          });
-        }
-      } else {
-        logger.warn("Tool call ElevenLabs non géré", { name: toolCall.tool_name });
-        results.push({
-          type: "tool_result",
-          tool_call_id: toolCall.tool_call_id,
-          tool_result: JSON.stringify({ success: false, message: "Tool non implémenté" }),
-        });
-      }
+    const normalized = normalizeSubmitOrderPayload(rawParams);
+    if (!normalized) {
+      logger.warn("Webhook ElevenLabs : données commande invalides", { rawParams });
+      return NextResponse.json({
+        success: false,
+        message: "Données de commande invalides : prénom/nom client et au moins un article avec libellé sont requis.",
+      }, { status: 200 });
     }
 
-    return NextResponse.json({ results }, { status: 200 });
+    logger.info("Traitement submit_order ElevenLabs", { agentId, conversationId });
+
+    try {
+      const result = await handleSubmitOrder(agentId, normalized, { callerPhone });
+      return NextResponse.json(JSON.parse(result), { status: 200 });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error("Erreur submit_order ElevenLabs", new Error(errorMessage), { agentId });
+      return NextResponse.json({ success: false, message: `Erreur : ${errorMessage}` }, { status: 200 });
+    }
   } catch (error) {
     logger.error(
       "Erreur webhook ElevenLabs",
