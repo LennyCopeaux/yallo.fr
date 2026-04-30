@@ -68,31 +68,21 @@ function parsePickupTime(pickupTimeStr?: string): Date | null {
   return pickup;
 }
 
-async function findRestaurantByAgentId(agentId: string) {
+async function handleSubmitOrder(
+  restaurantId: string,
+  args: SubmitOrderArgs,
+): Promise<string> {
   const [restaurant] = await db
     .select()
     .from(restaurants)
-    .where(eq(restaurants.elevenLabsAgentId, agentId))
+    .where(eq(restaurants.id, restaurantId))
     .limit(1);
-  return restaurant;
-}
 
-async function handleSubmitOrder(
-  agentId: string,
-  args: SubmitOrderArgs,
-  options?: Readonly<{ callerPhone?: string }>
-): Promise<string> {
-  const restaurant = await findRestaurantByAgentId(agentId);
   if (!restaurant) {
-    // Log de diagnostic: affiche l'agent_id reçu et les agents en DB
-    const allRestaurants = await db.select({ name: restaurants.name, elevenLabsAgentId: restaurants.elevenLabsAgentId }).from(restaurants);
     logger.error(
-      "Restaurant introuvable pour l'agent ElevenLabs",
-      new Error(`agentId reçu: ${agentId}`),
-      {
-        receivedAgentId: agentId,
-        agentsInDb: allRestaurants.map(r => ({ name: r.name, id: r.elevenLabsAgentId })),
-      }
+      "Restaurant introuvable",
+      new Error(`restaurantId: ${restaurantId}`),
+      { restaurantId }
     );
     throw new Error("Restaurant introuvable");
   }
@@ -131,7 +121,6 @@ async function handleSubmitOrder(
 
   const mergedCustomerPhone =
     (args.customer_phone?.trim() && normalizeFrenchPhoneNumber(args.customer_phone.trim())) ||
-    (options?.callerPhone?.trim() && normalizeFrenchPhoneNumber(options.callerPhone.trim())) ||
     null;
 
   const [createdOrder] = await db
@@ -192,7 +181,7 @@ async function handleSubmitOrder(
 
   if (process.env.TWILIO_ORDER_CONFIRMATION_SMS !== "false") {
     const fromRaw = process.env.TWILIO_SMS_FROM?.trim() || restaurant.twilioPhoneNumber?.trim();
-    const toRaw = args.customer_phone?.trim() || options?.callerPhone?.trim();
+    const toRaw = args.customer_phone?.trim();
     if (fromRaw && toRaw) {
       await trySendOrderConfirmationSms({
         toRaw,
@@ -274,33 +263,20 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as ElevenLabsWebhookBody;
 
-    // Log du body brut pour diagnostiquer la structure réelle envoyée par ElevenLabs
-    logger.info("Webhook ElevenLabs body brut", {
-      bodyKeys: Object.keys(body),
-      systemKeys: body.system ? Object.keys(body.system) : null,
-      agentIdRoot: (body as Record<string, unknown>).agent_id,
-      agentIdSystem: body.system?.agent_id,
-    });
-
-    // ElevenLabs peut mettre agent_id à la racine ou dans system selon la version
-    const agentId =
-      (body as Record<string, unknown>).agent_id as string |undefined ??
-      body.system?.agent_id ??
-      "";
-    const callerPhone =
-      (body as Record<string, unknown>).caller_id as string | undefined ??
-      body.system?.caller_id ??
-      undefined;
-    const conversationId =
-      (body as Record<string, unknown>).conversation_id as string | undefined ??
-      body.system?.conversation_id ??
-      "";
+    // ElevenLabs n'envoie que les paramètres du tool dans le body (pas d'agent_id).
+    // Le restaurantId est embarqué dans l'URL : /api/elevenlabs/webhook?rid=<restaurantId>
+    const url = new URL(request.url);
+    const restaurantId = url.searchParams.get("rid") ?? "";
 
     logger.info("Webhook ElevenLabs reçu", {
-      agentId,
-      conversationId,
+      restaurantId,
       hasCustomerName: !!body.customer_name,
     });
+
+    if (!restaurantId) {
+      logger.error("Webhook ElevenLabs : paramètre rid manquant dans l'URL", new Error("missing_rid"));
+      return NextResponse.json({ success: false, message: "Configuration incorrecte : rid manquant. Mettez à jour l'agent depuis le dashboard." }, { status: 200 });
+    }
 
     if (!body.customer_name && !body.items) {
       logger.warn("Webhook ElevenLabs : payload sans paramètres submit_order reconnus", {
@@ -309,7 +285,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true }, { status: 200 });
     }
 
-    // Extraire les paramètres submit_order depuis la racine du body
     const rawParams: Record<string, unknown> = {
       customer_name: body.customer_name,
       customer_phone: body.customer_phone,
@@ -327,14 +302,14 @@ export async function POST(request: Request) {
       }, { status: 200 });
     }
 
-    logger.info("Traitement submit_order ElevenLabs", { agentId, conversationId });
+    logger.info("Traitement submit_order ElevenLabs", { restaurantId });
 
     try {
-      const result = await handleSubmitOrder(agentId, normalized, { callerPhone });
+      const result = await handleSubmitOrder(restaurantId, normalized);
       return NextResponse.json(JSON.parse(result), { status: 200 });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      logger.error("Erreur submit_order ElevenLabs", new Error(errorMessage), { agentId });
+      logger.error("Erreur submit_order ElevenLabs", new Error(errorMessage), { restaurantId });
       return NextResponse.json({ success: false, message: `Erreur : ${errorMessage}` }, { status: 200 });
     }
   } catch (error) {

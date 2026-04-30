@@ -62,12 +62,12 @@ function getWebhookBaseUrl(): string | undefined {
   return undefined;
 }
 
-function getWebhookUrl(): string | undefined {
+function getWebhookUrl(restaurantId: string): string | undefined {
   const base = getWebhookBaseUrl();
   if (!base) return undefined;
   const isLocalHttp = base.startsWith("http://") && process.env.NODE_ENV !== "production";
   if (base.startsWith("https://") || isLocalHttp) {
-    return `${base}/api/elevenlabs/webhook`;
+    return `${base}/api/elevenlabs/webhook?rid=${restaurantId}`;
   }
   return undefined;
 }
@@ -81,7 +81,8 @@ function getWebhookSecret(): string | undefined {
  * Construit la définition du tool submit_order pour ElevenLabs Conversational AI.
  * https://elevenlabs.io/docs/conversational-ai/customization/tools/server-tools
  */
-function buildSubmitOrderTool(webhookUrl?: string) {
+function buildSubmitOrderTool(webhookUrl?: string, restaurantId?: string) {
+  void restaurantId; // inclus dans l'URL, pas besoin dans le body
   const secret = getWebhookSecret();
 
   const requestBodySchema = {
@@ -204,7 +205,7 @@ function buildDataCollection() {
 }
 
 function buildAgentConfig(restaurant: Restaurant, systemPrompt: string) {
-  const webhookUrl = getWebhookUrl();
+  const webhookUrl = getWebhookUrl(restaurant.id);
   const voiceId = process.env.ELEVENLABS_VOICE_ID?.trim() || DEFAULT_VOICE_ID;
   const llmModel = process.env.ELEVENLABS_LLM_MODEL?.trim() || DEFAULT_LLM_MODEL;
   const llmTemperature =
