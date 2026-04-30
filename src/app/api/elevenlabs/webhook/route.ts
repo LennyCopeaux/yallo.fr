@@ -84,9 +84,15 @@ async function handleSubmitOrder(
 ): Promise<string> {
   const restaurant = await findRestaurantByAgentId(agentId);
   if (!restaurant) {
+    // Log de diagnostic: affiche l'agent_id reçu et les agents en DB
+    const allRestaurants = await db.select({ name: restaurants.name, elevenLabsAgentId: restaurants.elevenLabsAgentId }).from(restaurants);
     logger.error(
       "Restaurant introuvable pour l'agent ElevenLabs",
-      new Error(`agentId: ${agentId}`)
+      new Error(`agentId reçu: ${agentId}`),
+      {
+        receivedAgentId: agentId,
+        agentsInDb: allRestaurants.map(r => ({ name: r.name, id: r.elevenLabsAgentId })),
+      }
     );
     throw new Error("Restaurant introuvable");
   }
