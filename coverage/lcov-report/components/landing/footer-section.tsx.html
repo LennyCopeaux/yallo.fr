@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>9/10</span>
+                <span class='fraction'>6/8</span>
             </div>
         
             
@@ -316,8 +316,8 @@ import Link from "next/link";
 export function FooterSection() {
   const handleLoginClick = (e: React.MouseEvent) =&gt; {
     e.preventDefault();
-    const hostname = globalThis.window !== undefined ? globalThis.window.location.hostname : <span class="branch-1 cbranch-no" title="branch not covered" >"";</span>
-    const port = globalThis.window !== undefined &amp;&amp; globalThis.window.location.port ? globalThis.window.location.port : "3000";
+    const hostname = globalThis.window?.location?.hostname ?? <span class="branch-1 cbranch-no" title="branch not covered" >"";</span>
+    const port = globalThis.window?.location?.port ?? <span class="branch-1 cbranch-no" title="branch not covered" >"3000";</span>
     
     let appUrl: string;
     if (hostname.includes("localhost")) {
@@ -340,22 +340,22 @@ export function FooterSection() {
             &lt;h4 className="font-semibold text-foreground mb-4"&gt;Produit&lt;/h4&gt;
             &lt;ul className="space-y-3"&gt;
               &lt;li&gt;
-                &lt;Link href="/#how-it-works" className="text-muted-foreground hover:text-primary transition-colors text-sm"&gt;
+                &lt;Link href="/#how-it-works" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer"&gt;
                   Comment ça marche
                 &lt;/Link&gt;
               &lt;/li&gt;
               &lt;li&gt;
-                &lt;Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors text-sm"&gt;
+                &lt;Link href="/#features" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer"&gt;
                   Fonctionnalités
                 &lt;/Link&gt;
               &lt;/li&gt;
               &lt;li&gt;
-                &lt;Link href="/#pricing" className="text-muted-foreground hover:text-primary transition-colors text-sm"&gt;
+                &lt;Link href="/#pricing" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer"&gt;
                   Tarification
                 &lt;/Link&gt;
               &lt;/li&gt;
               &lt;li&gt;
-                &lt;Link href="/#faq" className="text-muted-foreground hover:text-primary transition-colors text-sm"&gt;
+                &lt;Link href="/#faq" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer"&gt;
                   FAQ
                 &lt;/Link&gt;
               &lt;/li&gt;
@@ -365,7 +365,7 @@ export function FooterSection() {
             &lt;h4 className="font-semibold text-foreground mb-4"&gt;Légal&lt;/h4&gt;
             &lt;ul className="space-y-3"&gt;
               &lt;li&gt;
-                &lt;Link href="/legal" className="text-muted-foreground hover:text-primary transition-colors text-sm"&gt;
+                &lt;Link href="/legal" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer"&gt;
                   Mentions légales
                 &lt;/Link&gt;
               &lt;/li&gt;
@@ -375,12 +375,12 @@ export function FooterSection() {
             &lt;h4 className="font-semibold text-foreground mb-4"&gt;Contact&lt;/h4&gt;
             &lt;ul className="space-y-3"&gt;
               &lt;li&gt;
-                &lt;Link href="/contact?subject=support" className="text-muted-foreground hover:text-primary transition-colors text-sm"&gt;
+                &lt;Link href="/contact?subject=support" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer"&gt;
                   Support Technique
                 &lt;/Link&gt;
               &lt;/li&gt;
               &lt;li&gt;
-                &lt;Link href="/contact?subject=autre" className="text-muted-foreground hover:text-primary transition-colors text-sm"&gt;
+                &lt;Link href="/contact?subject=autre" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer"&gt;
                   Devenir Partenaire
                 &lt;/Link&gt;
               &lt;/li&gt;
@@ -393,13 +393,13 @@ export function FooterSection() {
                 &lt;button 
                   type="button"
                   onClick={handleLoginClick}
-                  className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                  className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer"
                 &gt;
                   Connexion
                 &lt;/button&gt;
               &lt;/li&gt;
               &lt;li&gt;
-                &lt;Link href="/guide" className="text-muted-foreground hover:text-primary transition-colors text-sm"&gt;
+                &lt;Link href="/guide" className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer"&gt;
                   Guide de démarrage
                 &lt;/Link&gt;
               &lt;/li&gt;
@@ -439,7 +439,7 @@ export function FooterSection() {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-05T15:34:09.746Z
+                at 2026-05-20T08:53:07.607Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
