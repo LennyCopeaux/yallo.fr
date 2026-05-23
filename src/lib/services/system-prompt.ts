@@ -51,7 +51,15 @@ function getKitchenStatusInstruction(restaurant: Restaurant): string {
 
 /**
  * Prompt système pour l’assistant téléphonique (restauration, menu variable).
- */
+ */function getCallForwardingInstruction(restaurant: Restaurant): string {
+  if (!restaurant.callForwardingEnabled || !restaurant.forwardingPhoneNumber) return "";
+
+  return `\n\nTransfert d'appel :
+- Si le client demande explicitement à parler à un responsable, au patron, au gérant ou à un humain, tu peux utiliser l'outil transfer_call pour transférer l'appel vers le restaurant.
+- Utilise transfer_call UNIQUEMENT si le client le demande clairement. Ne propose pas cette option de toi-même.
+- Avant de transférer, dis simplement : « Je vous mets en relation avec l'équipe, un instant. »
+- Le numéro de transfert est déjà configuré, tu n'as pas à le mentionner au client.`;
+}
 export async function generateSystemPrompt(restaurant: Restaurant): Promise<string> {
   const menuStructure = await getMenuStructure(restaurant);
 
@@ -98,7 +106,5 @@ ${JSON.stringify(menuStructure)}
 
 Horaires :
 ${restaurant.businessHours || "Non configuré"}
-${getKitchenStatusInstruction(restaurant)}
-
-Numéro du restaurant (transfert ou info) : ${restaurant.phoneNumber}`;
+${getKitchenStatusInstruction(restaurant)}${getCallForwardingInstruction(restaurant)}`;
 }

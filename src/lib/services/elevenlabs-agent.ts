@@ -154,6 +154,23 @@ function buildSubmitOrderTool(webhookUrl?: string, restaurantId?: string) {
 }
 
 /**
+ * Construit le tool ElevenLabs natif de transfert d'appel vers le numéro du restaurateur.
+ * https://elevenlabs.io/docs/conversational-ai/customization/tools/system-tools
+ */
+function buildTransferCallTool(forwardingPhoneNumber: string) {
+  return {
+    type: "system",
+    name: "transfer_call",
+    description:
+      "Transfère l'appel vers un humain (gérant ou équipe du restaurant) si le client le demande explicitement. Ne pas utiliser sans demande claire du client.",
+    params: {
+      system_tool_type: "transfer_call",
+      phone_number: forwardingPhoneNumber,
+    },
+  };
+}
+
+/**
  * Construit la data collection ElevenLabs (équivalent des structured outputs VAPI).
  * Les données sont extraites post-appel par ElevenLabs automatiquement.
  * https://elevenlabs.io/docs/conversational-ai/customization/data-collection
@@ -213,6 +230,16 @@ function buildAgentConfig(restaurant: Restaurant, systemPrompt: string) {
     DEFAULT_LLM_TEMPERATURE;
   const ttsModel = process.env.ELEVENLABS_TTS_MODEL?.trim() || DEFAULT_TTS_MODEL;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tools: any[] = [buildSubmitOrderTool(webhookUrl)];
+
+  if (
+    restaurant.callForwardingEnabled &&
+    restaurant.forwardingPhoneNumber?.trim()
+  ) {
+    tools.push(buildTransferCallTool(restaurant.forwardingPhoneNumber.trim()));
+  }
+
   return {
     name: `Yallo - ${restaurant.name}`,
     conversation_config: {
@@ -221,7 +248,7 @@ function buildAgentConfig(restaurant: Restaurant, systemPrompt: string) {
           prompt: systemPrompt,
           llm: llmModel,
           temperature: llmTemperature,
-          tools: [buildSubmitOrderTool(webhookUrl)],
+          tools: tools,
         },
         first_message: `Bonjour ici ${restaurant.name}, je vous écoute`,
         language: "fr",

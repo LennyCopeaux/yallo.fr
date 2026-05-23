@@ -44,6 +44,8 @@ describe("generateSystemPrompt", () => {
     menuContext: null,
     menuData: null,
     twilioPhoneNumber: null,
+    forwardingPhoneNumber: null,
+    callForwardingEnabled: false,
     businessHours: "Lundi-Vendredi: 10h-22h",
     hubriseLocationId: "test-location",
     hubriseAccessToken: "test-token",

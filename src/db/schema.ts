@@ -100,6 +100,12 @@ export const restaurants = pgTable("restaurants", {
   menuData: jsonb("menu_data").$type<MenuData>(),
   
   twilioPhoneNumber: text("twilio_phone_number"),
+  
+  /** Numéro de téléphone du restaurateur vers lequel rediriger l'appel si demandé. */
+  forwardingPhoneNumber: text("forwarding_phone_number"),
+  /** Si true, l'agent peut transférer l'appel vers forwardingPhoneNumber sur demande du client. */
+  callForwardingEnabled: boolean("call_forwarding_enabled").default(false).notNull(),
+  
   businessHours: text("business_hours"),
   
   hubriseLocationId: text("hubrise_location_id"),

@@ -7,16 +7,28 @@ export function cn(...inputs: ClassValue[]) {
 
 export function getAppUrl(path: string = ""): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  
-  const isLocalhost = 
-    (globalThis.window?.location?.hostname?.includes("localhost")) ||
-    (typeof process !== "undefined" && process.env.NODE_ENV === "development");
-  
-  if (isLocalhost) {
-    const port = globalThis.window?.location?.port ?? "3000";
-    return `http://app.localhost:${port}${normalizedPath}`;
+
+  if (typeof globalThis.window !== "undefined") {
+    const hostname = globalThis.window.location.hostname;
+    const port = globalThis.window.location.port;
+
+    if (hostname.includes("localhost")) {
+      return `http://app.localhost:${port || "3000"}${normalizedPath}`;
+    }
+    if (hostname.includes("staging")) {
+      return `https://app.staging.yallo.fr${normalizedPath}`;
+    }
+    return `https://app.yallo.fr${normalizedPath}`;
   }
-  
+
+  // Server-side fallback
+  const isLocalhost =
+    typeof process !== "undefined" && process.env.NODE_ENV === "development";
+
+  if (isLocalhost) {
+    return `http://app.localhost:3000${normalizedPath}`;
+  }
+
   return `https://app.yallo.fr${normalizedPath}`;
 }
 

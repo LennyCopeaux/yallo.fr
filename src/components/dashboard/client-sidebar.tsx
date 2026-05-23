@@ -13,6 +13,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Settings,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -20,6 +21,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Menu", href: "/dashboard/menu", icon: Utensils },
   { name: "Horaires", href: "/dashboard/hours", icon: Clock },
+  { name: "Paramètres", href: "/dashboard/settings", icon: Settings },
   { name: "Abonnement", href: "/dashboard/billing", icon: CreditCard },
 ] as const;
 
