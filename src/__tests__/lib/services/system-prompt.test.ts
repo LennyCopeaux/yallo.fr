@@ -56,7 +56,7 @@ describe("generateSystemPrompt", () => {
     stripeSubscriptionStatus: null,
     stripePriceId: null,
     stripeCurrentPeriodEnd: null,
-    elevenLabsVoiceId: null,
+    voiceId: null,
     upsellEnabled: false,
     smsConfirmationEnabled: false,
     autoRushThreshold: null,

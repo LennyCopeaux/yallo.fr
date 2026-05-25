@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { DEFAULT_STATUS_SETTINGS } from "./constants";
-import { updateElevenLabsAgent } from "@/lib/services/elevenlabs-agent";
+import { updateVapiAssistant } from "@/lib/services/vapi-agent";
 
 const statusSettingsSchema = z.object({
   CALM: z.union([
@@ -66,14 +66,14 @@ export async function updateKitchenStatus(status: KitchenStatus) {
     .set({ currentStatus: status, updatedAt: new Date() })
     .where(eq(restaurants.id, ownerRestaurant.id));
 
-  if (ownerRestaurant.elevenLabsAgentId) {
+  if (ownerRestaurant.vapiAssistantId) {
     try {
-      await updateElevenLabsAgent(ownerRestaurant.elevenLabsAgentId, {
+      await updateVapiAssistant(ownerRestaurant.vapiAssistantId, {
         ...ownerRestaurant,
         currentStatus: status,
       });
     } catch (err) {
-      console.error("Erreur sync agent ElevenLabs après mise à jour statut cuisine :", err);
+      console.error("Erreur sync assistant VAPI après mise à jour statut cuisine :", err);
     }
   }
 
@@ -99,14 +99,14 @@ export async function updateStatusSettings(settings: StatusSettings) {
     .set({ statusSettings: mergedSettings, updatedAt: new Date() })
     .where(eq(restaurants.id, ownerRestaurant.id));
 
-  if (ownerRestaurant.elevenLabsAgentId) {
+  if (ownerRestaurant.vapiAssistantId) {
     try {
-      await updateElevenLabsAgent(ownerRestaurant.elevenLabsAgentId, {
+      await updateVapiAssistant(ownerRestaurant.vapiAssistantId, {
         ...ownerRestaurant,
         statusSettings: mergedSettings,
       });
     } catch (err) {
-      console.error("Erreur sync agent ElevenLabs après mise à jour paramètres cuisine :", err);
+      console.error("Erreur sync assistant VAPI après mise à jour paramètres cuisine :", err);
     }
   }
 

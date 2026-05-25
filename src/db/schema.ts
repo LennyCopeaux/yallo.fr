@@ -121,8 +121,8 @@ export const restaurants = pgTable("restaurants", {
     STOP?: { message?: string };
   }>(),
 
-  /** ID de voix ElevenLabs choisi par le restaurateur (null = voix par défaut). */
-  elevenLabsVoiceId: text("elevenlabs_voice_id"),
+  /** ID de voix (ElevenLabs via VAPI) choisi par le restaurateur (null = voix par défaut). */
+  voiceId: text("voice_id"),
   /** Si true, l'agent propose des upsells automatiques en fin de commande. */
   upsellEnabled: boolean("upsell_enabled").default(false).notNull(),
   /** Si true, un SMS de confirmation est envoyé au client après commande. */

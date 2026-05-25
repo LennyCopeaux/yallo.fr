@@ -417,7 +417,7 @@ export async function updateRestaurantGeneral(
   }
 }
 
-export async function createElevenLabsAgent(
+export async function createVapiAgent(
   id: string
 ): Promise<ActionResult<{ agentId: string }>> {
   "use server";
@@ -438,80 +438,80 @@ export async function createElevenLabsAgent(
       return { success: false, error: "Non autorisé" };
     }
 
-    if (restaurant.elevenLabsAgentId) {
-      return { success: false, error: "Un agent ElevenLabs existe déjà pour ce restaurant" };
+    if (restaurant.vapiAssistantId) {
+      return { success: false, error: "Un assistant VAPI existe déjà pour ce restaurant" };
     }
 
     if (!restaurant.twilioPhoneNumber) {
       return {
         success: false,
         error:
-          "Veuillez d'abord renseigner le numéro Twilio dans l'onglet Téléphonie avant de créer l'agent IA",
+          "Veuillez d'abord renseigner le numéro Twilio dans l'onglet Téléphonie avant de créer l'assistant IA",
       };
     }
 
-    const { createElevenLabsAgent: createAgent, importTwilioPhoneNumber } =
-      await import("@/lib/services/elevenlabs-agent");
+    const { createVapiAssistant, importTwilioPhoneNumber } =
+      await import("@/lib/services/vapi-agent");
 
-    const agent = await createAgent(restaurant);
+    const assistant = await createVapiAssistant(restaurant);
 
-    let elevenLabsPhoneNumberId: string | null = null;
+    let vapiPhoneNumberId: string | null = null;
     try {
       const phoneResult = await importTwilioPhoneNumber(
         restaurant.twilioPhoneNumber,
-        agent.agent_id
+        assistant.id
       );
-      elevenLabsPhoneNumberId = phoneResult.phone_number_id;
-      logger.info("Numéro Twilio importé et lié à l'agent ElevenLabs", {
+      vapiPhoneNumberId = phoneResult.phone_number_id;
+      logger.info("Numéro Twilio importé et lié à l'assistant VAPI", {
         restaurantId: id,
-        agentId: agent.agent_id,
+        assistantId: assistant.id,
         phoneNumberId: phoneResult.phone_number_id,
         phoneNumber: restaurant.twilioPhoneNumber,
       });
     } catch (phoneError) {
-      const { deleteElevenLabsAgent: cleanupAgent } =
-        await import("@/lib/services/elevenlabs-agent");
+      const { deleteVapiAssistant: cleanupAssistant } =
+        await import("@/lib/services/vapi-agent");
       try {
-        await cleanupAgent(agent.agent_id);
+        await cleanupAssistant(assistant.id);
       } catch {
         // Ignore
       }
       const errorMessage = phoneError instanceof Error ? phoneError.message : String(phoneError);
       logger.error(
-        "Échec import numéro Twilio dans ElevenLabs, agent supprimé",
+        "Échec import numéro Twilio dans VAPI, assistant supprimé",
         new Error(errorMessage)
       );
       return {
         success: false,
-        error: `Impossible d'importer le numéro Twilio (${restaurant.twilioPhoneNumber}) dans ElevenLabs : ${errorMessage}. Vérifiez que le numéro est bien actif sur Twilio et que les identifiants Twilio sont corrects.`,
+        error: `Impossible d'importer le numéro Twilio (${restaurant.twilioPhoneNumber}) dans VAPI : ${errorMessage}. Vérifiez que le numéro est bien actif sur Twilio et que les identifiants Twilio sont corrects.`,
       };
     }
 
     await db
       .update(restaurants)
       .set({
-        elevenLabsAgentId: agent.agent_id,
-        elevenLabsPhoneNumberId,
+        vapiAssistantId: assistant.id,
+        vapiPhoneNumberId,
         updatedAt: new Date(),
       })
       .where(eq(restaurants.id, id));
 
     revalidatePath(`/admin/restaurants/${id}`);
 
-    return { success: true, data: { agentId: agent.agent_id } };
+    return { success: true, data: { agentId: assistant.id } };
   } catch (error) {
     logger.error(
-      "Erreur création agent ElevenLabs",
+      "Erreur création assistant VAPI",
       error instanceof Error ? error : new Error(String(error))
     );
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Erreur lors de la création de l'agent",
+      error: error instanceof Error ? error.message : "Erreur lors de la création de l'assistant",
     };
   }
 }
 
-export async function updateElevenLabsAgent(id: string): Promise<ActionResult> {
+export async function updateVapiAgent(id: string): Promise<ActionResult> {
   "use server";
 
   const user = await getAppUser();
@@ -530,12 +530,12 @@ export async function updateElevenLabsAgent(id: string): Promise<ActionResult> {
       return { success: false, error: "Non autorisé" };
     }
 
-    if (!restaurant.elevenLabsAgentId) {
-      return { success: false, error: "Aucun agent ElevenLabs configuré pour ce restaurant" };
+    if (!restaurant.vapiAssistantId) {
+      return { success: false, error: "Aucun assistant VAPI configuré pour ce restaurant" };
     }
 
-    const { updateElevenLabsAgent: patchAgent } = await import("@/lib/services/elevenlabs-agent");
-    await patchAgent(restaurant.elevenLabsAgentId, restaurant);
+    const { updateVapiAssistant } = await import("@/lib/services/vapi-agent");
+    await updateVapiAssistant(restaurant.vapiAssistantId, restaurant);
 
     revalidatePath(`/admin/restaurants/${id}`);
     revalidatePath(`/dashboard`);
@@ -543,27 +543,27 @@ export async function updateElevenLabsAgent(id: string): Promise<ActionResult> {
     return { success: true };
   } catch (error) {
     logger.error(
-      "Erreur mise à jour agent ElevenLabs",
+      "Erreur mise à jour assistant VAPI",
       error instanceof Error ? error : new Error(String(error))
     );
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Erreur lors de la mise à jour de l'agent",
+      error: error instanceof Error ? error.message : "Erreur lors de la mise à jour de l'assistant",
     };
   }
 }
 
-async function deleteElevenLabsPhoneNumberIfExists(
+async function deleteVapiPhoneNumberIfExists(
   restaurantId: string,
   phoneNumberId: string | null
 ): Promise<void> {
   if (!phoneNumberId) return;
   try {
-    const { deleteElevenLabsPhoneNumber } = await import("@/lib/services/elevenlabs-agent");
-    await deleteElevenLabsPhoneNumber(phoneNumberId);
+    const { deleteVapiPhoneNumber } = await import("@/lib/services/vapi-agent");
+    await deleteVapiPhoneNumber(phoneNumberId);
   } catch (phoneError) {
     logger.warn(
-      "Impossible de supprimer le numéro ElevenLabs (on continue la suppression de l'agent)",
+      "Impossible de supprimer le numéro VAPI (on continue la suppression de l'assistant)",
       {
         restaurantId,
         error: phoneError instanceof Error ? phoneError.message : String(phoneError),
@@ -572,7 +572,7 @@ async function deleteElevenLabsPhoneNumberIfExists(
   }
 }
 
-export async function deleteElevenLabsAgent(id: string): Promise<ActionResult> {
+export async function deleteVapiAgent(id: string): Promise<ActionResult> {
   "use server";
 
   const user = await getAppUser();
@@ -590,21 +590,21 @@ export async function deleteElevenLabsAgent(id: string): Promise<ActionResult> {
     return { success: false, error: "Non autorisé" };
   }
 
-  if (!restaurant.elevenLabsAgentId) {
-    return { success: false, error: "Aucun agent ElevenLabs configuré pour ce restaurant" };
+  if (!restaurant.vapiAssistantId) {
+    return { success: false, error: "Aucun assistant VAPI configuré pour ce restaurant" };
   }
 
   try {
-    await deleteElevenLabsPhoneNumberIfExists(id, restaurant.elevenLabsPhoneNumberId);
+    await deleteVapiPhoneNumberIfExists(id, restaurant.vapiPhoneNumberId);
 
-    const { deleteElevenLabsAgent: deleteAgent } = await import("@/lib/services/elevenlabs-agent");
-    await deleteAgent(restaurant.elevenLabsAgentId);
+    const { deleteVapiAssistant } = await import("@/lib/services/vapi-agent");
+    await deleteVapiAssistant(restaurant.vapiAssistantId);
 
     await db
       .update(restaurants)
       .set({
-        elevenLabsAgentId: null,
-        elevenLabsPhoneNumberId: null,
+        vapiAssistantId: null,
+        vapiPhoneNumberId: null,
         updatedAt: new Date(),
       })
       .where(eq(restaurants.id, id));
@@ -615,12 +615,12 @@ export async function deleteElevenLabsAgent(id: string): Promise<ActionResult> {
     return { success: true };
   } catch (error) {
     logger.error(
-      "Erreur suppression agent ElevenLabs",
+      "Erreur suppression assistant VAPI",
       error instanceof Error ? error : new Error(String(error))
     );
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Erreur lors de la suppression de l'agent",
+      error: error instanceof Error ? error.message : "Erreur lors de la suppression de l'assistant",
     };
   }
 }

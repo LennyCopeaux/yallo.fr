@@ -10,9 +10,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Bot, Brain, FileText, Sparkles, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import {
-  createElevenLabsAgent,
-  updateElevenLabsAgent,
-  deleteElevenLabsAgent,
+  createVapiAgent,
+  updateVapiAgent,
+  deleteVapiAgent,
 } from "@/app/(admin)/admin/restaurants/actions";
 import { AdminStatusBadge } from "@/components/admin/status-badge";
 import {
@@ -28,8 +28,8 @@ import {
 
 type Restaurant = {
   id: string;
-  elevenLabsAgentId: string | null;
-  elevenLabsPhoneNumberId: string | null;
+  vapiAssistantId: string | null;
+  vapiPhoneNumberId: string | null;
   twilioPhoneNumber: string | null;
   systemPrompt: string | null;
   menuContext: string | null;
@@ -97,23 +97,23 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
       .catch(() => {});
   }, [restaurant.id]);
 
-  const hasAgentId = !!restaurant.elevenLabsAgentId;
-  const hasPhoneLinked = !!restaurant.elevenLabsPhoneNumberId;
+  const hasAgentId = !!restaurant.vapiAssistantId;
+  const hasPhoneLinked = !!restaurant.vapiPhoneNumberId;
   const hasTwilioNumber = !!restaurant.twilioPhoneNumber;
   const isFullyOperational = hasAgentId && hasPhoneLinked;
 
   const handleCreateAssistant = async () => {
     setIsCreatingAssistant(true);
     try {
-      const result = await createElevenLabsAgent(restaurant.id);
+      const result = await createVapiAgent(restaurant.id);
       if (result.success && result.data) {
-        toast.success("Agent IA créé et numéro de téléphone lié avec succès");
+        toast.success("Assistant VAPI créé et numéro de téléphone lié avec succès");
         router.refresh();
       } else {
-        toast.error(result.error || "Erreur lors de la création de l'agent");
+        toast.error(result.error || "Erreur lors de la création de l'assistant");
       }
     } catch {
-      toast.error("Erreur lors de la création de l'agent");
+      toast.error("Erreur lors de la création de l'assistant");
     } finally {
       setIsCreatingAssistant(false);
     }
@@ -122,14 +122,14 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
   const handleUpdateAssistant = async () => {
     setIsUpdatingAssistant(true);
     try {
-      const result = await updateElevenLabsAgent(restaurant.id);
+      const result = await updateVapiAgent(restaurant.id);
       if (result.success) {
-        toast.success("Agent ElevenLabs mis à jour avec succès");
+        toast.success("Assistant VAPI mis à jour avec succès");
       } else {
-        toast.error(result.error || "Erreur lors de la mise à jour de l'agent");
+        toast.error(result.error || "Erreur lors de la mise à jour de l'assistant");
       }
     } catch {
-      toast.error("Erreur lors de la mise à jour de l'agent");
+      toast.error("Erreur lors de la mise à jour de l'assistant");
     } finally {
       setIsUpdatingAssistant(false);
     }
@@ -139,15 +139,15 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
     setShowDeleteDialog(false);
     setIsDeletingAssistant(true);
     try {
-      const result = await deleteElevenLabsAgent(restaurant.id);
+      const result = await deleteVapiAgent(restaurant.id);
       if (result.success) {
-        toast.success("Agent IA supprimé avec succès");
+        toast.success("Assistant VAPI supprimé avec succès");
         router.refresh();
       } else {
-        toast.error(result.error || "Erreur lors de la suppression de l'agent");
+        toast.error(result.error || "Erreur lors de la suppression de l'assistant");
       }
     } catch {
-      toast.error("Erreur lors de la suppression de l'agent");
+      toast.error("Erreur lors de la suppression de l'assistant");
     } finally {
       setIsDeletingAssistant(false);
     }
@@ -189,12 +189,12 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
             <div className="space-y-4">
               {hasAgentId && (
                 <div className="space-y-2">
-                  <Label htmlFor="elevenLabsAgentId">ID de l&apos;agent ElevenLabs</Label>
+                  <Label htmlFor="vapiAssistantId">ID de l&apos;assistant VAPI</Label>
                   <Input
-                    id="elevenLabsAgentId"
+                    id="vapiAssistantId"
                     readOnly
                     disabled
-                    value={restaurant.elevenLabsAgentId || ""}
+                    value={restaurant.vapiAssistantId || ""}
                     className="bg-muted/50 cursor-not-allowed font-mono"
                   />
                   {hasPhoneLinked && (

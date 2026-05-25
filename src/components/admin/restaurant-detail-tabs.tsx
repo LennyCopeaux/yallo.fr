@@ -25,8 +25,6 @@ type Restaurant = {
   billingStartDate: string | null;
   vapiAssistantId: string | null;
   vapiPhoneNumberId: string | null;
-  elevenLabsAgentId: string | null;
-  elevenLabsPhoneNumberId: string | null;
   systemPrompt: string | null;
   menuContext: string | null;
   twilioPhoneNumber: string | null;

@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { parseMenuFromBase64Images } from "@/lib/services/menu-parser";
 import { requireAuth } from "@/lib/auth";
-import { updateElevenLabsAgent } from "@/lib/services/elevenlabs-agent";
+import { updateVapiAssistant } from "@/lib/services/vapi-agent";
 
 async function getRestaurantForOwner() {
   const user = await requireAuth();
@@ -40,14 +40,14 @@ export async function saveMenuData(menuData: MenuData): Promise<{ success: boole
       })
       .where(eq(restaurants.id, restaurant.id));
 
-    if (restaurant.elevenLabsAgentId) {
+    if (restaurant.vapiAssistantId) {
       try {
-        await updateElevenLabsAgent(restaurant.elevenLabsAgentId, {
+        await updateVapiAssistant(restaurant.vapiAssistantId, {
           ...restaurant,
           menuData,
         });
       } catch (err) {
-        console.error("Erreur sync agent ElevenLabs après mise à jour menu :", err);
+        console.error("Erreur sync assistant VAPI après mise à jour menu :", err);
       }
     }
 
@@ -94,14 +94,14 @@ export async function clearMenuData(): Promise<{ success: boolean; error?: strin
       })
       .where(eq(restaurants.id, restaurant.id));
 
-    if (restaurant.elevenLabsAgentId) {
+    if (restaurant.vapiAssistantId) {
       try {
-        await updateElevenLabsAgent(restaurant.elevenLabsAgentId, {
+        await updateVapiAssistant(restaurant.vapiAssistantId, {
           ...restaurant,
           menuData: null,
         });
       } catch (err) {
-        console.error("Erreur sync agent ElevenLabs après suppression menu :", err);
+        console.error("Erreur sync assistant VAPI après suppression menu :", err);
       }
     }
 

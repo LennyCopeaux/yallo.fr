@@ -233,7 +233,7 @@ function buildDataCollection() {
 
 function buildAgentConfig(restaurant: Restaurant, systemPrompt: string) {
   const webhookUrl = getWebhookUrl(restaurant.id);
-  const voiceId = restaurant.elevenLabsVoiceId?.trim() || process.env.ELEVENLABS_VOICE_ID?.trim() || DEFAULT_VOICE_ID;
+  const voiceId = restaurant.voiceId?.trim() || process.env.ELEVENLABS_VOICE_ID?.trim() || DEFAULT_VOICE_ID;
   const llmModel = process.env.ELEVENLABS_LLM_MODEL?.trim() || DEFAULT_LLM_MODEL;
   const llmTemperature =
     Number.parseFloat(process.env.ELEVENLABS_LLM_TEMPERATURE?.trim() ?? "") ||

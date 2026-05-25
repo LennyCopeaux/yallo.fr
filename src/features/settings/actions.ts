@@ -6,7 +6,7 @@ import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { updateElevenLabsAgent } from "@/lib/services/elevenlabs-agent";
+import { updateVapiAssistant } from "@/lib/services/vapi-agent";
 import { toFrenchLocalPhoneNumber } from "@/lib/utils";
 
 export type ActionResult = {
@@ -98,17 +98,17 @@ export async function updateCallForwardingSettings(
     .where(eq(restaurants.id, ownerRestaurant.id));
 
   // Sync agent if it exists
-  if (ownerRestaurant.elevenLabsAgentId) {
+  if (ownerRestaurant.vapiAssistantId) {
     try {
       const updatedRestaurant = {
         ...ownerRestaurant,
         phoneNumber: localRestaurantPhone,
         callForwardingEnabled,
       };
-      await updateElevenLabsAgent(ownerRestaurant.elevenLabsAgentId, updatedRestaurant);
+      await updateVapiAssistant(ownerRestaurant.vapiAssistantId, updatedRestaurant);
     } catch (err) {
       // Don't fail the save — agent sync is best-effort
-      console.error("Erreur sync agent ElevenLabs après mise à jour forwarding :", err);
+      console.error("Erreur sync assistant VAPI après mise à jour forwarding :", err);
     }
   }
 
@@ -119,7 +119,7 @@ export async function updateCallForwardingSettings(
 // ─── Assistant behaviour settings ────────────────────────────────────────────
 
 export type AssistantSettings = {
-  elevenLabsVoiceId: string | null;
+  voiceId: string | null;
   upsellEnabled: boolean;
   smsConfirmationEnabled: boolean;
   autoRushThreshold: number | null;
@@ -133,7 +133,7 @@ export async function getAssistantSettings(): Promise<ActionResult> {
 
   const [ownerRestaurant] = await db
     .select({
-      elevenLabsVoiceId: restaurants.elevenLabsVoiceId,
+      voiceId: restaurants.voiceId,
       upsellEnabled: restaurants.upsellEnabled,
       smsConfirmationEnabled: restaurants.smsConfirmationEnabled,
       autoRushThreshold: restaurants.autoRushThreshold,
@@ -147,7 +147,7 @@ export async function getAssistantSettings(): Promise<ActionResult> {
   return {
     success: true,
     data: {
-      elevenLabsVoiceId: ownerRestaurant.elevenLabsVoiceId ?? null,
+      voiceId: ownerRestaurant.voiceId ?? null,
       upsellEnabled: ownerRestaurant.upsellEnabled,
       smsConfirmationEnabled: ownerRestaurant.smsConfirmationEnabled,
       autoRushThreshold: ownerRestaurant.autoRushThreshold ?? null,
@@ -180,17 +180,17 @@ export async function updateVoiceId(
 
   await db
     .update(restaurants)
-    .set({ elevenLabsVoiceId: parsed.data.voiceId, updatedAt: new Date() })
+    .set({ voiceId: parsed.data.voiceId, updatedAt: new Date() })
     .where(eq(restaurants.id, ownerRestaurant.id));
 
-  if (ownerRestaurant.elevenLabsAgentId) {
+  if (ownerRestaurant.vapiAssistantId) {
     try {
-      await updateElevenLabsAgent(ownerRestaurant.elevenLabsAgentId, {
+      await updateVapiAssistant(ownerRestaurant.vapiAssistantId, {
         ...ownerRestaurant,
-        elevenLabsVoiceId: parsed.data.voiceId,
+        voiceId: parsed.data.voiceId,
       });
     } catch (err) {
-      console.error("Erreur sync agent ElevenLabs après mise à jour voix :", err);
+      console.error("Erreur sync assistant VAPI après mise à jour voix :", err);
     }
   }
 
@@ -233,16 +233,16 @@ export async function updateAssistantBehaviour(
     })
     .where(eq(restaurants.id, ownerRestaurant.id));
 
-  if (ownerRestaurant.elevenLabsAgentId) {
+  if (ownerRestaurant.vapiAssistantId) {
     try {
-      await updateElevenLabsAgent(ownerRestaurant.elevenLabsAgentId, {
+      await updateVapiAssistant(ownerRestaurant.vapiAssistantId, {
         ...ownerRestaurant,
         upsellEnabled: parsed.data.upsellEnabled,
         smsConfirmationEnabled: parsed.data.smsConfirmationEnabled,
         autoRushThreshold: parsed.data.autoRushThreshold,
       });
     } catch (err) {
-      console.error("Erreur sync agent ElevenLabs après mise à jour comportement :", err);
+      console.error("Erreur sync assistant VAPI après mise à jour comportement :", err);
     }
   }
 

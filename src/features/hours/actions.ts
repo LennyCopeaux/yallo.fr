@@ -6,7 +6,7 @@ import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { updateElevenLabsAgent } from "@/lib/services/elevenlabs-agent";
+import { updateVapiAssistant } from "@/lib/services/vapi-agent";
 
 const timeSlotSchema = z.object({
   open: z.string(),
@@ -92,14 +92,14 @@ export async function updateBusinessHours(formData: FormData): Promise<ActionRes
       .set({ businessHours: JSON.stringify(validatedHours), updatedAt: new Date() })
       .where(eq(restaurants.id, ownerRestaurant.id));
 
-    if (ownerRestaurant.elevenLabsAgentId) {
+    if (ownerRestaurant.vapiAssistantId) {
       try {
-        await updateElevenLabsAgent(ownerRestaurant.elevenLabsAgentId, {
+        await updateVapiAssistant(ownerRestaurant.vapiAssistantId, {
           ...ownerRestaurant,
           businessHours: JSON.stringify(validatedHours),
         });
       } catch (err) {
-        console.error("Erreur sync agent ElevenLabs après mise à jour horaires :", err);
+        console.error("Erreur sync assistant VAPI après mise à jour horaires :", err);
       }
     }
 

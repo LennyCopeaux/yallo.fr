@@ -148,7 +148,7 @@ export default async function SettingsPage() {
           <div className="space-y-5">
             {voices.length > 0 && assistantSettings && (
               <VoicePickerCard
-                initialVoiceId={assistantSettings.elevenLabsVoiceId}
+                initialVoiceId={assistantSettings.voiceId}
                 voices={voices}
               />
             )}
