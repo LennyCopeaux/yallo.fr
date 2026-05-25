@@ -17,6 +17,7 @@ export async function GET(
     const [restaurant] = await db
       .select({
         menuData: restaurants.menuData,
+        menuContext: restaurants.menuContext,
         hubriseAccessToken: restaurants.hubriseAccessToken,
         hubriseLocationId: restaurants.hubriseLocationId,
         hubriseCatalogId: restaurants.hubriseCatalogId,
@@ -36,19 +37,6 @@ export async function GET(
           restaurant.hubriseLocationId,
           restaurant.hubriseCatalogId
         );
-        const parsedHubrise = JSON.parse(hubriseMenuJson) as Record<string, unknown>;
-        // HubRise renvoie le catalogue sous `data` (categories, products, option_lists…), pas à la racine.
-        const data =
-          parsedHubrise.data !== undefined && typeof parsedHubrise.data === "object" && parsedHubrise.data !== null
-            ? (parsedHubrise.data as Record<string, unknown>)
-            : parsedHubrise;
-        const categories = data.categories;
-        const products = data.products;
-        const hasCategories = Array.isArray(categories) && categories.length > 0;
-        const hasProducts = Array.isArray(products) && products.length > 0;
-        if (!hasCategories && !hasProducts) {
-          return NextResponse.json({ menuJson: "Menu non configuré" });
-        }
         return NextResponse.json({ menuJson: hubriseMenuJson });
       } catch (error) {
         logger.warn("Erreur récupération menu HubRise, fallback sur menuData", {
@@ -58,13 +46,17 @@ export async function GET(
       }
     }
 
-    if (!restaurant.menuData?.categories?.length) {
-      return NextResponse.json({ menuJson: "Menu non configuré" });
+    if (restaurant.menuData) {
+      return NextResponse.json({ 
+        menuJson: JSON.stringify(restaurant.menuData, null, 2) 
+      });
     }
 
-    return NextResponse.json({ 
-      menuJson: JSON.stringify(restaurant.menuData, null, 2) 
-    });
+    if (restaurant.menuContext) {
+      return NextResponse.json({ menuJson: restaurant.menuContext });
+    }
+
+    return NextResponse.json({ menuJson: "Menu non configuré" });
   } catch (error) {
     logger.error("Erreur génération JSON menu", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(

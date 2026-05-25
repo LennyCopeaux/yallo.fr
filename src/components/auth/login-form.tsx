@@ -55,7 +55,7 @@ export function LoginForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-      <DotPatternSubtle className="z-0" />
+      <DotPatternSubtle className="z-0" patternId="login-dot-pattern" />
 
       <div className="w-full max-w-md mx-4 relative z-10">
         <Card className="bg-card/50 border-border backdrop-blur-xl">

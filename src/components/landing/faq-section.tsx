@@ -95,18 +95,33 @@ export function FaqSection() {
           <div className="w-full space-y-3 mb-6">
             <Accordion type="single" collapsible className="w-full">
               {faqItems.map((item, i) => (
-                <AccordionItem
-                  key={`faq-${item.q.slice(0, 30)}-${i}`}
-                  value={`item-${i}`}
-                  className={`border border-border rounded-xl px-5 data-[state=open]:border-primary/30 data-[state=open]:bg-primary/5 transition-all duration-300 ${i === faqItems.length - 1 ? 'mb-0' : 'mb-3'}`}
-                >
-                  <AccordionTrigger className="text-left text-foreground hover:no-underline hover:text-primary transition-colors py-5 text-base">
-                    {item.q}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground pb-5 leading-relaxed">
-                    {item.a}
-                  </AccordionContent>
-                </AccordionItem>
+                (() => {
+                  const triggerId = `faq-trigger-${i}`;
+                  const contentId = `faq-content-${i}`;
+
+                  return (
+                    <AccordionItem
+                      key={`faq-${item.q.slice(0, 30)}-${i}`}
+                      value={`item-${i}`}
+                      className={`border border-border rounded-xl px-5 data-[state=open]:border-primary/30 data-[state=open]:bg-primary/5 transition-all duration-300 ${i === faqItems.length - 1 ? 'mb-0' : 'mb-3'}`}
+                    >
+                      <AccordionTrigger
+                        id={triggerId}
+                        aria-controls={contentId}
+                        className="text-left text-foreground hover:no-underline hover:text-primary transition-colors py-5 text-base"
+                      >
+                        {item.q}
+                      </AccordionTrigger>
+                      <AccordionContent
+                        id={contentId}
+                        aria-labelledby={triggerId}
+                        className="text-muted-foreground pb-5 leading-relaxed"
+                      >
+                        {item.a}
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })()
               ))}
             </Accordion>
           </div>

@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { parseMenuFromBase64Images } from "@/lib/services/menu-parser";
 import { requireAuth } from "@/lib/auth";
+import { updateElevenLabsAgent } from "@/lib/services/elevenlabs-agent";
 
 async function getRestaurantForOwner() {
   const user = await requireAuth();
@@ -38,6 +39,17 @@ export async function saveMenuData(menuData: MenuData): Promise<{ success: boole
         updatedAt: new Date(),
       })
       .where(eq(restaurants.id, restaurant.id));
+
+    if (restaurant.elevenLabsAgentId) {
+      try {
+        await updateElevenLabsAgent(restaurant.elevenLabsAgentId, {
+          ...restaurant,
+          menuData,
+        });
+      } catch (err) {
+        console.error("Erreur sync agent ElevenLabs après mise à jour menu :", err);
+      }
+    }
 
     revalidatePath("/dashboard/menu");
     revalidatePath("/dashboard");
@@ -81,6 +93,17 @@ export async function clearMenuData(): Promise<{ success: boolean; error?: strin
         updatedAt: new Date(),
       })
       .where(eq(restaurants.id, restaurant.id));
+
+    if (restaurant.elevenLabsAgentId) {
+      try {
+        await updateElevenLabsAgent(restaurant.elevenLabsAgentId, {
+          ...restaurant,
+          menuData: null,
+        });
+      } catch (err) {
+        console.error("Erreur sync agent ElevenLabs après suppression menu :", err);
+      }
+    }
 
     revalidatePath("/dashboard/menu");
     revalidatePath("/dashboard");

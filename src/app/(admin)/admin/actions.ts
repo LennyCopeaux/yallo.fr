@@ -11,7 +11,7 @@ import { z } from "zod";
 import { cookies } from "next/headers";
 import { DEFAULT_STATUS_SETTINGS } from "@/features/kitchen-status/constants";
 import { logger } from "@/lib/logger";
-import { normalizeFrenchPhoneNumber } from "@/lib/utils";
+import { normalizeFrenchPhoneNumber, toFrenchLocalPhoneNumber } from "@/lib/utils";
 import { sendWelcomeEmail } from "@/lib/mail";
 
 const createUserSchema = z.object({
@@ -54,21 +54,16 @@ const updateRestaurantTelephonySchema = z.object({
     .max(20)
     .optional()
     .nullable()
-    .transform((val) => {
-      if (!val) return null;
-      const normalized = normalizeFrenchPhoneNumber(val);
-      if (!normalized) {
-        throw new z.ZodError([
-          {
-            code: "custom",
-            path: ["twilioPhoneNumber"],
-            message:
-              "Format invalide. Utilisez le format +33XXXXXXXXX (ex: +33939035299) ou 0XXXXXXXXX (ex: 0939035299)",
-          },
-        ]);
+    .refine(
+      (val) => {
+        if (!val) return true;
+        return normalizeFrenchPhoneNumber(val) !== null;
+      },
+      {
+        message:
+          "Format invalide. Utilisez le format 0XXXXXXXXX (ex: 0939035299) ou +33XXXXXXXXX (ex: +33939035299)",
       }
-      return normalized;
-    }),
+    ),
 });
 
 const updateRestaurantBillingSchema = z.object({
@@ -686,9 +681,31 @@ export async function updateRestaurantTelephony(
       updatedAt: new Date(),
     };
 
-    if (parsed.data.phoneNumber !== undefined) updateData.phoneNumber = parsed.data.phoneNumber;
-    if (parsed.data.twilioPhoneNumber !== undefined)
-      updateData.twilioPhoneNumber = parsed.data.twilioPhoneNumber;
+    if (parsed.data.phoneNumber !== undefined) {
+      const localPhone = toFrenchLocalPhoneNumber(parsed.data.phoneNumber);
+      if (!localPhone) {
+        return {
+          success: false,
+          error: "Numéro principal invalide. Utilisez 0XXXXXXXXX ou +33XXXXXXXXX.",
+        };
+      }
+      updateData.phoneNumber = localPhone;
+    }
+
+    if (parsed.data.twilioPhoneNumber !== undefined) {
+      if (!parsed.data.twilioPhoneNumber) {
+        updateData.twilioPhoneNumber = null;
+      } else {
+        const localTwilioPhone = toFrenchLocalPhoneNumber(parsed.data.twilioPhoneNumber);
+        if (!localTwilioPhone) {
+          return {
+            success: false,
+            error: "Numéro Twilio invalide. Utilisez 0XXXXXXXXX ou +33XXXXXXXXX.",
+          };
+        }
+        updateData.twilioPhoneNumber = localTwilioPhone;
+      }
+    }
 
     await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
     revalidatePath("/admin");

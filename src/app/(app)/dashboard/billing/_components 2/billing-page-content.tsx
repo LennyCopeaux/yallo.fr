@@ -73,19 +73,6 @@ export function BillingPageContent({ restaurant, plans }: Readonly<BillingPageCo
     });
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
-    try {
-      return new Date(dateString).toLocaleDateString("fr-FR", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
   return (
     <div className="space-y-8">
       {/* Sélection de plan */}

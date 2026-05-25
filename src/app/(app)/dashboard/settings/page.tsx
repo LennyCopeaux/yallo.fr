@@ -2,11 +2,15 @@ import { getAppUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Settings, AlertTriangle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Settings } from "lucide-react";
 import Link from "next/link";
-import { getCallForwardingSettings } from "@/features/settings/actions";
+import { getCallForwardingSettings, getAssistantSettings, listElevenLabsVoices } from "@/features/settings/actions";
 import { CallForwardingCard } from "@/components/settings/call-forwarding-card";
-import type { CallForwardingSettings } from "@/features/settings/actions";
+import { VoicePickerCard } from "@/components/settings/voice-picker-card";
+import { AssistantBehaviourCard } from "@/components/settings/assistant-behaviour-card";
+import { KitchenStatusControl } from "@/components/kitchen-status";
+import { getKitchenStatus, type StatusSettings } from "@/features/kitchen-status/actions";
+import type { CallForwardingSettings, AssistantSettings, ElevenLabsVoice } from "@/features/settings/actions";
 
 export default async function SettingsPage() {
   const user = await getAppUser();
@@ -19,7 +23,12 @@ export default async function SettingsPage() {
     redirect("/admin");
   }
 
-  const settingsResult = await getCallForwardingSettings();
+  const [settingsResult, kitchenStatus, assistantResult, voicesResult] = await Promise.all([
+    getCallForwardingSettings(),
+    getKitchenStatus(),
+    getAssistantSettings(),
+    listElevenLabsVoices(),
+  ]);
 
   if (!settingsResult.success) {
     const isNoRestaurant = settingsResult.error === "Aucun restaurant trouvé";
@@ -75,6 +84,8 @@ export default async function SettingsPage() {
   }
 
   const settings = settingsResult.data as CallForwardingSettings;
+  const assistantSettings = (assistantResult.success ? assistantResult.data : null) as AssistantSettings | null;
+  const voices = (voicesResult.success ? voicesResult.data : []) as ElevenLabsVoice[];
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -104,16 +115,51 @@ export default async function SettingsPage() {
         </div>
       </div>
 
-      {/* Sections */}
-      <div className="space-y-6">
-        {/* Call forwarding section */}
-        <div>
+      <div className="space-y-10">
+
+        {/* ── Charge cuisine ── */}
+        <section>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
+            Charge cuisine
+          </h2>
+          {kitchenStatus ? (
+            <KitchenStatusControl
+              currentStatus={kitchenStatus.currentStatus}
+              statusSettings={kitchenStatus.statusSettings as StatusSettings | null}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground px-1">Données indisponibles.</p>
+          )}
+        </section>
+
+        {/* ── Gestion des appels ── */}
+        <section>
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
             Gestion des appels
           </h2>
           <CallForwardingCard initialData={settings} />
-        </div>
+        </section>
+
+        {/* ── Comportement de l'assistant ── */}
+        <section>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
+            Comportement de l&apos;assistant
+          </h2>
+          <div className="space-y-5">
+            {voices.length > 0 && assistantSettings && (
+              <VoicePickerCard
+                initialVoiceId={assistantSettings.elevenLabsVoiceId}
+                voices={voices}
+              />
+            )}
+            {assistantSettings && (
+              <AssistantBehaviourCard initialData={assistantSettings} />
+            )}
+          </div>
+        </section>
+
       </div>
     </div>
   );
 }
+

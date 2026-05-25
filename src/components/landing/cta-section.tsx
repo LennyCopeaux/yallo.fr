@@ -9,7 +9,7 @@ import Link from "next/link";
 export function CtaSection() {
   return (
     <section className="relative border-t border-border overflow-hidden">
-      <DotPatternHero className="z-0" />
+      <DotPatternHero className="z-0" patternId="marketing-cta-dot-pattern" />
       
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
         <motion.div

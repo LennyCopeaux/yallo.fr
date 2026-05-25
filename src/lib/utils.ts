@@ -97,3 +97,13 @@ export function normalizeFrenchPhoneNumber(phoneNumber: string | null | undefine
   // Si aucun pattern reconnu, retourne null
   return null;
 }
+
+/**
+ * Convertit un numéro FR valide vers le format local stocké en base (0XXXXXXXXX).
+ * Retourne null si le format n'est pas reconnu.
+ */
+export function toFrenchLocalPhoneNumber(phoneNumber: string | null | undefined): string | null {
+  const e164 = normalizeFrenchPhoneNumber(phoneNumber);
+  if (!e164 || !e164.startsWith("+33") || e164.length < 12) return null;
+  return `0${e164.slice(3)}`;
+}

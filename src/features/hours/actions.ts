@@ -6,6 +6,7 @@ import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { updateElevenLabsAgent } from "@/lib/services/elevenlabs-agent";
 
 const timeSlotSchema = z.object({
   open: z.string(),
@@ -70,7 +71,7 @@ export async function updateBusinessHours(formData: FormData): Promise<ActionRes
   }
 
   const [ownerRestaurant] = await db
-    .select({ id: restaurants.id })
+    .select()
     .from(restaurants)
     .where(eq(restaurants.ownerId, user.id))
     .limit(1);
@@ -88,8 +89,19 @@ export async function updateBusinessHours(formData: FormData): Promise<ActionRes
 
     await db
       .update(restaurants)
-      .set({ businessHours: JSON.stringify(validatedHours) })
+      .set({ businessHours: JSON.stringify(validatedHours), updatedAt: new Date() })
       .where(eq(restaurants.id, ownerRestaurant.id));
+
+    if (ownerRestaurant.elevenLabsAgentId) {
+      try {
+        await updateElevenLabsAgent(ownerRestaurant.elevenLabsAgentId, {
+          ...ownerRestaurant,
+          businessHours: JSON.stringify(validatedHours),
+        });
+      } catch (err) {
+        console.error("Erreur sync agent ElevenLabs après mise à jour horaires :", err);
+      }
+    }
 
     revalidatePath("/dashboard/hours");
     revalidatePath("/dashboard");

@@ -120,6 +120,15 @@ export const restaurants = pgTable("restaurants", {
     RUSH?: { fixed: number } | { min: number; max: number };
     STOP?: { message?: string };
   }>(),
+
+  /** ID de voix ElevenLabs choisi par le restaurateur (null = voix par défaut). */
+  elevenLabsVoiceId: text("elevenlabs_voice_id"),
+  /** Si true, l'agent propose des upsells automatiques en fin de commande. */
+  upsellEnabled: boolean("upsell_enabled").default(false).notNull(),
+  /** Si true, un SMS de confirmation est envoyé au client après commande. */
+  smsConfirmationEnabled: boolean("sms_confirmation_enabled").default(false).notNull(),
+  /** Seuil de commandes en attente pour basculer automatiquement en mode RUSH (null = désactivé). */
+  autoRushThreshold: integer("auto_rush_threshold"),
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
