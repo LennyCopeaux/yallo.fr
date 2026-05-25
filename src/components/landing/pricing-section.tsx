@@ -25,7 +25,21 @@ import {
 import Autoplay from "embla-carousel-autoplay";
 import Link from "next/link";
 
-const PLANS = [
+type Plan = {
+  name: string;
+  subtitle: string;
+  monthlyPrice: number;
+  callRate: string;
+  popular: boolean;
+  popularLabel?: string;
+  kicker?: string;
+  ctaLabel: string;
+  contactSubject: string;
+  included: string[];
+  excluded: string[];
+};
+
+const PLANS: Plan[] = [
   {
     name: "Essentiel",
     subtitle: "Pour les petits établissements qui veulent tester sans risque",

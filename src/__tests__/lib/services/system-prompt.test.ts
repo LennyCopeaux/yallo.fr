@@ -56,6 +56,10 @@ describe("generateSystemPrompt", () => {
     stripeSubscriptionStatus: null,
     stripePriceId: null,
     stripeCurrentPeriodEnd: null,
+    elevenLabsVoiceId: null,
+    upsellEnabled: false,
+    smsConfirmationEnabled: false,
+    autoRushThreshold: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -139,7 +143,7 @@ describe("generateSystemPrompt", () => {
 
     const prompt = await generateSystemPrompt(restaurantWithForwarding);
 
-    expect(prompt).toContain("transfer_call");
+    expect(prompt).toContain("transfer_to_number");
     expect(prompt).toContain("Transfert d'appel");
   });
 
