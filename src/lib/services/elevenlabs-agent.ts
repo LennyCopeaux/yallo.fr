@@ -157,15 +157,25 @@ function buildSubmitOrderTool(webhookUrl?: string, restaurantId?: string) {
  * Construit le tool ElevenLabs natif de transfert d'appel vers le numéro du restaurateur.
  * https://elevenlabs.io/docs/conversational-ai/customization/tools/system-tools
  */
-function buildTransferCallTool(forwardingPhoneNumber: string) {
+function buildTransferCallTool(phoneNumber: string) {
   return {
     type: "system",
-    name: "transfer_call",
+    name: "transfer_to_number",
     description:
       "Transfère l'appel vers un humain (gérant ou équipe du restaurant) si le client le demande explicitement. Ne pas utiliser sans demande claire du client.",
     params: {
-      system_tool_type: "transfer_call",
-      phone_number: forwardingPhoneNumber,
+      system_tool_type: "transfer_to_number",
+      transfers: [
+        {
+          transfer_destination: {
+            type: "phone",
+            phone_number: phoneNumber,
+          },
+          condition:
+            "Si le client demande explicitement à parler à un responsable, au patron, au gérant ou à un humain.",
+          transfer_type: "conference",
+        },
+      ],
     },
   };
 }
@@ -223,7 +233,7 @@ function buildDataCollection() {
 
 function buildAgentConfig(restaurant: Restaurant, systemPrompt: string) {
   const webhookUrl = getWebhookUrl(restaurant.id);
-  const voiceId = process.env.ELEVENLABS_VOICE_ID?.trim() || DEFAULT_VOICE_ID;
+  const voiceId = restaurant.elevenLabsVoiceId?.trim() || process.env.ELEVENLABS_VOICE_ID?.trim() || DEFAULT_VOICE_ID;
   const llmModel = process.env.ELEVENLABS_LLM_MODEL?.trim() || DEFAULT_LLM_MODEL;
   const llmTemperature =
     Number.parseFloat(process.env.ELEVENLABS_LLM_TEMPERATURE?.trim() ?? "") ||
@@ -235,9 +245,12 @@ function buildAgentConfig(restaurant: Restaurant, systemPrompt: string) {
 
   if (
     restaurant.callForwardingEnabled &&
-    restaurant.forwardingPhoneNumber?.trim()
+    restaurant.phoneNumber?.trim()
   ) {
-    tools.push(buildTransferCallTool(restaurant.forwardingPhoneNumber.trim()));
+    const transferPhoneNumber = normalizeFrenchPhoneNumber(restaurant.phoneNumber.trim());
+    if (transferPhoneNumber) {
+      tools.push(buildTransferCallTool(transferPhoneNumber));
+    }
   }
 
   return {
