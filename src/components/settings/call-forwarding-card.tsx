@@ -20,7 +20,7 @@ export function CallForwardingCard({ initialData }: CallForwardingCardProps) {
     initialData.callForwardingEnabled
   );
   const [forwardingNumber, setForwardingNumber] = useState(
-    initialData.forwardingPhoneNumber ?? ""
+    initialData.restaurantPhoneNumber
   );
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export function CallForwardingCard({ initialData }: CallForwardingCardProps) {
 
   const isDirty =
     forwardingEnabled !== initialData.callForwardingEnabled ||
-    (forwardingNumber || "") !== (initialData.forwardingPhoneNumber ?? "");
+    forwardingNumber !== initialData.restaurantPhoneNumber;
 
   function handleSave() {
     setSuccessMessage(null);
@@ -37,7 +37,7 @@ export function CallForwardingCard({ initialData }: CallForwardingCardProps) {
     startTransition(async () => {
       const result = await updateCallForwardingSettings({
         callForwardingEnabled: forwardingEnabled,
-        forwardingPhoneNumber: forwardingNumber || undefined,
+        restaurantPhoneNumber: forwardingNumber,
       });
 
       if (result.success) {
@@ -95,12 +95,12 @@ export function CallForwardingCard({ initialData }: CallForwardingCardProps) {
         {/* Forwarding number */}
         <div className="space-y-2">
           <Label htmlFor="forwarding-number" className="text-sm font-medium">
-            Votre numéro de redirection
+            Numéro principal du restaurant (redirection)
           </Label>
           <Input
             id="forwarding-number"
             type="tel"
-            placeholder="+33 6 12 34 56 78"
+            placeholder="0612345678"
             value={forwardingNumber}
             onChange={(e) => {
               setForwardingNumber(e.target.value);
@@ -111,7 +111,7 @@ export function CallForwardingCard({ initialData }: CallForwardingCardProps) {
             disabled={isPending}
           />
           <p className="text-xs text-muted-foreground">
-            Numéro vers lequel l&apos;appel sera transféré (format +33XXXXXXXXX ou 0XXXXXXXXX).
+            C&apos;est ce numéro qui sera utilisé pour le transfert d&apos;appel.
           </p>
         </div>
 
