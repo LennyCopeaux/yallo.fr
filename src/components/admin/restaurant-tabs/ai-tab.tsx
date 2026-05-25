@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Bot, Brain, FileText, Sparkles, Code, Trash2, Clock } from "lucide-react";
+import { Loader2, Bot, Brain, FileText, Sparkles, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import {
   createElevenLabsAgent,
@@ -61,9 +61,6 @@ function ElevenLabsIcon() {
 
 export function AITab({ restaurant }: Readonly<AITabProps>) {
   const router = useRouter();
-  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
-  const [isGeneratingMenuJson, setIsGeneratingMenuJson] = useState(false);
-  const [isGeneratingHoursJson, setIsGeneratingHoursJson] = useState(false);
   const [isCreatingAssistant, setIsCreatingAssistant] = useState(false);
   const [isUpdatingAssistant, setIsUpdatingAssistant] = useState(false);
   const [isDeletingAssistant, setIsDeletingAssistant] = useState(false);
@@ -81,6 +78,24 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
       }
     }
   }, [restaurant.businessHours]);
+
+  useEffect(() => {
+    fetch(`/api/admin/restaurants/${restaurant.id}/generate-system-prompt`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((data: { systemPrompt: string }) => setSystemPrompt(data.systemPrompt))
+      .catch(() => {});
+  }, [restaurant.id]);
+
+  useEffect(() => {
+    fetch(`/api/admin/restaurants/${restaurant.id}/generate-menu-json`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((data: { menuJson: string }) => {
+        if (data.menuJson && data.menuJson !== "Menu non configuré") {
+          setMenuContext(data.menuJson);
+        }
+      })
+      .catch(() => {});
+  }, [restaurant.id]);
 
   const hasAgentId = !!restaurant.elevenLabsAgentId;
   const hasPhoneLinked = !!restaurant.elevenLabsPhoneNumberId;
@@ -135,67 +150,6 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
       toast.error("Erreur lors de la suppression de l'agent");
     } finally {
       setIsDeletingAssistant(false);
-    }
-  };
-
-  const handleGeneratePrompt = async () => {
-    setIsGeneratingPrompt(true);
-    try {
-      const response = await fetch(
-        `/api/admin/restaurants/${restaurant.id}/generate-system-prompt`
-      );
-      if (!response.ok) throw new Error("Erreur lors de la génération");
-      const data = await response.json();
-      setSystemPrompt(data.systemPrompt);
-      toast.success("Prompt système généré");
-    } catch {
-      toast.error("Erreur lors de la génération du prompt");
-    } finally {
-      setIsGeneratingPrompt(false);
-    }
-  };
-
-  const handleGenerateMenuJson = async () => {
-    setIsGeneratingMenuJson(true);
-    try {
-      const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-menu-json`);
-      if (!response.ok) throw new Error("Erreur lors de la génération");
-      const data = await response.json();
-      if (data.menuJson === "Menu non configuré") {
-        setMenuContext("Menu non configuré");
-        toast.info("Aucun menu configuré pour ce restaurant");
-      } else {
-        setMenuContext(data.menuJson);
-        toast.success("JSON menu généré");
-      }
-    } catch {
-      toast.error("Erreur lors de la génération du JSON");
-    } finally {
-      setIsGeneratingMenuJson(false);
-    }
-  };
-
-  const handleGenerateHoursJson = async () => {
-    setIsGeneratingHoursJson(true);
-    try {
-      const response = await fetch(
-        `/api/admin/restaurants/${restaurant.id}/generate-business-hours-json`
-      );
-      if (!response.ok) {
-        throw new Error("Erreur lors de la génération");
-      }
-      const data = await response.json();
-      if (data.businessHoursJson === "Horaires d'ouverture non configurée") {
-        setBusinessHoursJson("Horaires d'ouverture non configurée");
-        toast.info("Aucun horaire configuré pour ce restaurant");
-      } else {
-        setBusinessHoursJson(data.businessHoursJson);
-        toast.success("JSON horaires généré");
-      }
-    } catch {
-      toast.error("Erreur lors de la génération du JSON");
-    } finally {
-      setIsGeneratingHoursJson(false);
     }
   };
 
@@ -322,37 +276,14 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
 
         <Card className="border-border bg-card/30">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="w-5 h-5 text-purple-400" />
-                  Prompt Système
-                </CardTitle>
-                <CardDescription>
-                  Instructions personnalisées pour l&apos;IA de ce restaurant (surcharge le prompt
-                  par défaut)
-                </CardDescription>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isGeneratingPrompt}
-                onClick={handleGeneratePrompt}
-              >
-                {isGeneratingPrompt ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Génération...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Générer le Prompt System
-                  </>
-                )}
-              </Button>
-            </div>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-purple-400" />
+              Prompt Système
+            </CardTitle>
+            <CardDescription>
+              Instructions personnalisées pour l&apos;IA de ce restaurant (surcharge le prompt
+              par défaut)
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -397,25 +328,6 @@ Règles importantes :
                   informations pour comprendre les produits.
                 </CardDescription>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isGeneratingMenuJson}
-                onClick={handleGenerateMenuJson}
-              >
-                {isGeneratingMenuJson ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Génération...
-                  </>
-                ) : (
-                  <>
-                    <Code className="w-4 h-4 mr-2" />
-                    Générer JSON Menu
-                  </>
-                )}
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -467,25 +379,6 @@ Règles importantes :
                   les clients)
                 </CardDescription>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isGeneratingHoursJson}
-                onClick={handleGenerateHoursJson}
-              >
-                {isGeneratingHoursJson ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Génération...
-                  </>
-                ) : (
-                  <>
-                    <Code className="w-4 h-4 mr-2" />
-                    Générer JSON Horaires
-                  </>
-                )}
-              </Button>
             </div>
           </CardHeader>
           <CardContent>

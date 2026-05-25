@@ -26,7 +26,7 @@ const formSchema = z.object({
       },
       {
         message:
-          "Format invalide. Utilisez le format +33XXXXXXXXX (ex: +33939035299) ou 0XXXXXXXXX (ex: 0939035299)",
+          "Format invalide. Utilisez le format 0XXXXXXXXX (ex: 0939035299)",
       }
     ),
 });
@@ -61,19 +61,14 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
 
-    // Normalise le numéro Twilio au format E.164 avant l'envoi
-    const normalizedTwilioNumber = data.twilioPhoneNumber
-      ? normalizeFrenchPhoneNumber(data.twilioPhoneNumber) || data.twilioPhoneNumber
-      : null;
-
     const result = await updateRestaurantTelephony(restaurant.id, {
       phoneNumber: data.phoneNumber,
-      twilioPhoneNumber: normalizedTwilioNumber,
+      twilioPhoneNumber: data.twilioPhoneNumber || null,
     });
 
     if (result.success) {
       toast.success("Configuration téléphonie mise à jour");
-      form.reset(data); // Reset form state après succès
+      form.reset(data);
     } else {
       toast.error(result.error || "Erreur lors de la mise à jour");
     }
@@ -125,7 +120,7 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
                 id="twilioPhoneNumber"
                 {...form.register("twilioPhoneNumber")}
                 disabled={isLoading}
-                placeholder="0939035299 ou +33939035299"
+                placeholder="0939035299"
                 className="bg-background/50 border-border focus:border-primary/50 font-mono"
               />
               {form.formState.errors.twilioPhoneNumber && (
@@ -134,8 +129,7 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                Numéro acheté sur Twilio pour recevoir les appels de l&apos;IA. Format accepté :
-                0939035299 ou +33939035299 (sera automatiquement converti en +33XXXXXXXXX)
+                Numéro acheté sur Twilio pour recevoir les appels de l&apos;IA.
               </p>
             </div>
           </CardContent>
