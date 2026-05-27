@@ -2,9 +2,17 @@
 
 import { db } from "@/db";
 import { callLogs } from "@/db/schema";
-import { eq, and, gte, sum, count } from "drizzle-orm";
+import { eq, and, gte, lte, sum, count } from "drizzle-orm";
 import { getUserOrganization } from "@/lib/auth";
 import { SUBSCRIPTION_PLANS } from "@/features/billing/plans";
+
+export type DateRangeFilter =
+  | "billing_period"
+  | "last_7_days"
+  | "last_30_days"
+  | "current_month"
+  | "previous_month"
+  | "all_time";
 
 export type CallUsage = {
   minutesUsed: number;
@@ -18,12 +26,52 @@ export type CallUsage = {
   periodStart: Date;
   /** Date de fin de la période (remise à zéro) */
   periodEnd: Date | null;
+  /** Filtre appliqué */
+  rangeFilter: DateRangeFilter;
 };
 
+function resolveDateRange(
+  filter: DateRangeFilter,
+  billingPeriodStart: Date,
+  billingPeriodEnd: Date | null
+): { from: Date; to: Date | null } {
+  const now = new Date();
+  switch (filter) {
+    case "last_7_days": {
+      const from = new Date(now);
+      from.setDate(now.getDate() - 6);
+      from.setHours(0, 0, 0, 0);
+      return { from, to: null };
+    }
+    case "last_30_days": {
+      const from = new Date(now);
+      from.setDate(now.getDate() - 29);
+      from.setHours(0, 0, 0, 0);
+      return { from, to: null };
+    }
+    case "current_month": {
+      const from = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { from, to: null };
+    }
+    case "previous_month": {
+      const from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const to = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+      return { from, to };
+    }
+    case "all_time":
+      return { from: new Date(0), to: null };
+    case "billing_period":
+    default:
+      return { from: billingPeriodStart, to: billingPeriodEnd };
+  }
+}
+
 /**
- * Calcule la consommation d'appels IA pour la période de facturation en cours.
+ * Calcule la consommation d'appels IA pour la période sélectionnée.
  */
-export async function getCallUsageForCurrentPeriod(): Promise<
+export async function getCallUsageForCurrentPeriod(
+  rangeFilter: DateRangeFilter = "billing_period"
+): Promise<
   { success: true; data: CallUsage } | { success: false; error: string }
 > {
   const org = await getUserOrganization();
@@ -31,22 +79,29 @@ export async function getCallUsageForCurrentPeriod(): Promise<
     return { success: false, error: "Aucune organisation trouvée." };
   }
 
-  // Période de facturation : depuis le début du cycle mensuel en cours
+  // Période de facturation par défaut
   const now = new Date();
-  let periodStart: Date;
+  let billingPeriodStart: Date;
 
   if (org.billingStartDate) {
     const startDate = new Date(org.billingStartDate);
-    periodStart = new Date(startDate);
-    periodStart.setFullYear(now.getFullYear(), now.getMonth());
-    if (periodStart > now) {
-      periodStart.setMonth(periodStart.getMonth() - 1);
+    billingPeriodStart = new Date(startDate);
+    billingPeriodStart.setFullYear(now.getFullYear(), now.getMonth());
+    if (billingPeriodStart > now) {
+      billingPeriodStart.setMonth(billingPeriodStart.getMonth() - 1);
     }
   } else {
-    periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    billingPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1);
   }
 
-  const periodEnd = org.stripeCurrentPeriodEnd ?? null;
+  const billingPeriodEnd = org.stripeCurrentPeriodEnd ?? null;
+  const { from, to } = resolveDateRange(rangeFilter, billingPeriodStart, billingPeriodEnd);
+
+  const conditions = [
+    eq(callLogs.organizationId, org.id),
+    gte(callLogs.createdAt, from),
+    ...(to ? [lte(callLogs.createdAt, to)] : []),
+  ];
 
   const [result] = await db
     .select({
@@ -54,22 +109,15 @@ export async function getCallUsageForCurrentPeriod(): Promise<
       callCount: count(callLogs.id),
     })
     .from(callLogs)
-    .where(
-      and(
-        eq(callLogs.organizationId, org.id),
-        gte(callLogs.createdAt, periodStart)
-      )
-    );
+    .where(and(...conditions));
 
   const totalSeconds = Number(result?.totalSeconds ?? 0);
   const callCount = result?.callCount ?? 0;
-  // Arrondi au-dessus à la minute (convention opérateurs télécom)
   const minutesUsed = totalSeconds > 0 ? Math.ceil(totalSeconds / 60) : 0;
 
-  // Trouver le tarif du plan actif via stripePriceId stocké dans les métadonnées
-  // Le planId est dans org mais sous forme de priceId Stripe — on cherche par correspondance
-  // TODO: stocker explicitement le planId dans organizations lors du prochain refacto Stripe
-  const activePlan = SUBSCRIPTION_PLANS[0]; // fallback Essentiel par défaut
+  // Trouver le tarif du plan actif via stripePriceId (contient le planId ou le priceId Stripe)
+  const activePlan =
+    SUBSCRIPTION_PLANS.find((p) => p.id === org.stripePriceId) ?? SUBSCRIPTION_PLANS[0];
   const callRateCentsPerMinute = activePlan.callRateCentsPerMinute;
   const estimatedCostCents = minutesUsed * callRateCentsPerMinute;
 
@@ -80,8 +128,10 @@ export async function getCallUsageForCurrentPeriod(): Promise<
       callCount,
       estimatedCostCents,
       callRateCentsPerMinute,
-      periodStart,
-      periodEnd,
+      periodStart: from,
+      periodEnd: to,
+      rangeFilter,
     },
   };
 }
+

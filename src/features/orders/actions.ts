@@ -1,9 +1,9 @@
 "use server";
 
 import { db } from "@/db";
-import { orderItems, orders, type OrderStatus } from "@/db/schema";
+import { callLogs, orderItems, orders, type OrderStatus } from "@/db/schema";
 import { requireAuth, getAccessibleRestaurant } from "@/lib/auth";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, avg, count, gte, lte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 function generateOrderNumber(): string {
@@ -89,4 +89,80 @@ export async function simulateSubmitOrder() {
   revalidatePath("/admin");
 
   return { success: true, orderId: createdOrder.id };
+}
+
+export type DateRangeFilter =
+  | "last_7_days"
+  | "last_30_days"
+  | "current_month"
+  | "previous_month"
+  | "all_time";
+
+export type RestaurantCallStats = {
+  totalCallsAllTime: number;
+  avgDurationSeconds: number | null;
+};
+
+function resolveDateRangeForRestaurant(filter: DateRangeFilter): { from: Date; to: Date | null } {
+  const now = new Date();
+  switch (filter) {
+    case "last_7_days": {
+      const from = new Date(now);
+      from.setDate(now.getDate() - 6);
+      from.setHours(0, 0, 0, 0);
+      return { from, to: null };
+    }
+    case "last_30_days": {
+      const from = new Date(now);
+      from.setDate(now.getDate() - 29);
+      from.setHours(0, 0, 0, 0);
+      return { from, to: null };
+    }
+    case "current_month": {
+      const from = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { from, to: null };
+    }
+    case "previous_month": {
+      const from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const to = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+      return { from, to };
+    }
+    case "all_time":
+    default:
+      return { from: new Date(0), to: null };
+  }
+}
+
+/**
+ * Retourne les statistiques d'appels IA pour le restaurant courant.
+ */
+export async function getRestaurantCallStats(
+  rangeFilter: DateRangeFilter = "all_time"
+): Promise<RestaurantCallStats> {
+  const restaurant = await getAccessibleRestaurant();
+  if (!restaurant) {
+    return { totalCallsAllTime: 0, avgDurationSeconds: null };
+  }
+
+  const { from, to } = resolveDateRangeForRestaurant(rangeFilter);
+
+  const conditions = [
+    eq(callLogs.restaurantId, restaurant.id),
+    gte(callLogs.createdAt, from),
+    ...(to ? [lte(callLogs.createdAt, to)] : []),
+  ];
+
+  const [result] = await db
+    .select({
+      totalCalls: count(callLogs.id),
+      avgSeconds: avg(callLogs.durationSeconds),
+    })
+    .from(callLogs)
+    .where(and(...conditions));
+
+  const avgRaw = result?.avgSeconds ? Number(result.avgSeconds) : null;
+  return {
+    totalCallsAllTime: result?.totalCalls ?? 0,
+    avgDurationSeconds: avgRaw !== null && avgRaw > 0 ? Math.round(avgRaw) : null,
+  };
 }

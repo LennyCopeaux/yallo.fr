@@ -242,6 +242,7 @@ export function OrgDashboard({ user, org, stats, plans, usage }: Readonly<OrgDas
         {activeTab === "billing" && (
           <div>
             {usage && <UsageSection usage={usage} />}
+            <div className="mt-12">
             <BillingPageContent
               restaurant={{
                 stripeSubscriptionStatus: org.stripeSubscriptionStatus,
@@ -251,7 +252,9 @@ export function OrgDashboard({ user, org, stats, plans, usage }: Readonly<OrgDas
               }}
               restaurantCount={stats.restaurants.length}
               plans={plans}
+              orgId={org.id}
             />
+            </div>
           </div>
         )}
       </div>

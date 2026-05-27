@@ -262,7 +262,7 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
                   <Button
                     type="button"
                     variant="destructive"
-                    disabled={isDeletingAssistant}
+                    disabled={isUpdatingAssistant || isDeletingAssistant}
                     className="!bg-destructive !text-destructive-foreground hover:!bg-destructive/90"
                     onClick={() => setShowDeleteDialog(true)}
                   >

@@ -6,7 +6,7 @@ import { logger } from "@/lib/logger";
 import { pushVoiceOrderToHubrise } from "@/lib/services/hubrise";
 import { normalizeSubmitOrderPayload } from "@/lib/services/submit-order-args";
 import { trySendOrderConfirmationSms } from "@/lib/services/twilio-sms";
-import { updateVapiAssistant } from "@/lib/services/vapi-agent";
+import { updateVapiAssistant, buildAssistantPayloadForCall } from "@/lib/services/vapi-agent";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -250,9 +250,15 @@ async function handleSubmitOrder(
         orderNumber,
         lines: itemsForDb.map((item) => {
           const lineEuros = (item.totalPrice / 100).toFixed(2);
-          return `${item.productName} x${item.quantity} — ${lineEuros} €`;
+          const optionsSuffix = item.options ? ` (${item.options})` : "";
+          return `${item.productName}${optionsSuffix} x${item.quantity} — ${lineEuros} €`;
         }),
         totalEuros: (totalAmount / 100).toFixed(2),
+        customerName: args.customer_name || null,
+        pickupTime: pickupTime
+          ? pickupTime.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+          : null,
+        notes: args.notes || null,
       });
     }
   }
@@ -409,6 +415,37 @@ export async function POST(request: Request) {
         },
         { status: 200 }
       );
+    }
+
+    // assistant-request : VAPI demande la config de l'assistant en début d'appel (approche dynamique)
+    // On génère le prompt avec l'heure actuelle pour permettre la détection des horaires en temps réel
+    if (message?.type === "assistant-request" && restaurantId) {
+      try {
+        const [restaurant] = await db
+          .select()
+          .from(restaurants)
+          .where(eq(restaurants.id, restaurantId))
+          .limit(1);
+
+        if (!restaurant) {
+          logger.error("Webhook VAPI assistant-request : restaurant introuvable", new Error(restaurantId));
+          return NextResponse.json({ error: "Restaurant introuvable" }, { status: 404 });
+        }
+
+        const assistantConfig = await buildAssistantPayloadForCall(restaurant);
+        logger.info("Webhook VAPI assistant-request traité", {
+          restaurantId,
+          hasBusinessHours: Boolean(restaurant.businessHours),
+        });
+        return NextResponse.json({ assistant: assistantConfig });
+      } catch (err) {
+        logger.error(
+          "Erreur assistant-request VAPI",
+          err instanceof Error ? err : new Error(String(err)),
+          { restaurantId }
+        );
+        return NextResponse.json({ error: "Erreur interne" }, { status: 500 });
+      }
     }
 
     // Traiter la fin d'appel (end-of-call-report)

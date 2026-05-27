@@ -258,7 +258,7 @@ function buildAssistantConfig(restaurant: Restaurant, systemPrompt: string) {
       model: "nova-3",
       language: "fr",
     },
-    firstMessage: `Bonjour ici ${restaurant.name}, je vous écoute`,
+    firstMessage: restaurant.welcomeMessage ?? `Bonjour ici ${restaurant.name}, je vous écoute`,
     analysisPlan: buildAnalysisPlan(),
     // Server URL au niveau assistant pour recevoir end-of-call-report (stats d'appels)
     ...(webhookUrl
@@ -270,6 +270,15 @@ function buildAssistantConfig(restaurant: Restaurant, systemPrompt: string) {
         }
       : {}),
   };
+}
+
+/**
+ * Génère la config complète de l'assistant avec le prompt à jour (incluant l'heure actuelle).
+ * Utilisé pour répondre aux messages `assistant-request` de VAPI (appel en temps réel).
+ */
+export async function buildAssistantPayloadForCall(restaurant: Restaurant) {
+  const systemPrompt = await generateSystemPrompt(restaurant, { includeCurrentTime: true });
+  return buildAssistantConfig(restaurant, systemPrompt);
 }
 
 export async function createVapiAssistant(restaurant: Restaurant): Promise<{ id: string }> {
@@ -349,7 +358,7 @@ export async function deleteVapiAssistant(assistantId: string): Promise<void> {
  */
 export async function importTwilioPhoneNumber(
   phoneNumber: string,
-  assistantId: string
+  restaurantId: string
 ): Promise<{ phone_number_id: string }> {
   const apiKey = getApiKey();
   const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -368,6 +377,9 @@ export async function importTwilioPhoneNumber(
     );
   }
 
+  const webhookUrl = getWebhookUrl(restaurantId);
+  const webhookSecret = getWebhookSecret();
+
   const response = await fetch(`${VAPI_API_URL}/phone-number`, {
     method: "POST",
     headers: {
@@ -379,8 +391,15 @@ export async function importTwilioPhoneNumber(
       number: normalizedNumber,
       twilioAccountSid,
       twilioAuthToken,
-      assistantId,
       name: `Yallo - ${phoneNumber}`,
+      ...(webhookUrl
+        ? {
+            server: {
+              url: webhookUrl,
+              ...(webhookSecret ? { secret: webhookSecret } : {}),
+            },
+          }
+        : {}),
     }),
   });
 
@@ -395,6 +414,46 @@ export async function importTwilioPhoneNumber(
 
   const data = await response.json() as { id: string };
   return { phone_number_id: data.id };
+}
+
+/**
+ * Met à jour un numéro de téléphone VAPI existant pour utiliser un serverUrl dynamique
+ * (assistant-request) plutôt qu'un assistantId statique.
+ */
+export async function updateVapiPhoneNumberServer(
+  phoneNumberId: string,
+  restaurantId: string
+): Promise<void> {
+  const apiKey = getApiKey();
+  const webhookUrl = getWebhookUrl(restaurantId);
+  const webhookSecret = getWebhookSecret();
+
+  if (!webhookUrl) {
+    throw new Error("Impossible de construire le webhook URL (NEXT_PUBLIC_APP_URL non configuré)");
+  }
+
+  const response = await fetch(`${VAPI_API_URL}/phone-number/${phoneNumberId}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      assistantId: null,
+      server: {
+        url: webhookUrl,
+        ...(webhookSecret ? { secret: webhookSecret } : {}),
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const message = typeof body === "object" && body !== null
+      ? ((body as Record<string, unknown>).message as string | undefined) ?? JSON.stringify(body)
+      : `Erreur VAPI API: ${response.status}`;
+    throw new Error(message);
+  }
 }
 
 export async function deleteVapiPhoneNumber(phoneNumberId: string): Promise<void> {

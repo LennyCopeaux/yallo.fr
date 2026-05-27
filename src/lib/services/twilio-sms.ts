@@ -38,17 +38,39 @@ export async function sendTwilioSms(sms: Readonly<{ toE164: string; fromE164: st
 }
 
 /**
- * Construit le texte du récap SMS (court).
+ * Construit le texte du récap SMS.
  */
 export function buildOrderConfirmationSmsBody(params: Readonly<{
   restaurantName: string;
   orderNumber: string;
   lines: string[];
   totalEuros: string;
+  customerName?: string | null;
+  pickupTime?: string | null;
+  notes?: string | null;
 }>): string {
-  const header = `${params.restaurantName} — ${params.orderNumber}`;
-  const detail = params.lines.join("\n");
-  return `${header}\n${detail}\nTotal : ${params.totalEuros} €\nMerci !`;
+  const separator = "──────────────";
+  const header = `✅ Commande confirmée\n${separator}`;
+  const restaurant = `📍 ${params.restaurantName}`;
+  const ref = `🔖 Commande n° ${params.orderNumber}`;
+  const detail = params.lines.map((l) => `  • ${l}`).join("\n");
+  const total = `💶 Total : ${params.totalEuros} €`;
+
+  const parts: string[] = [header, restaurant, ref, separator, detail, separator, total];
+
+  if (params.pickupTime) {
+    parts.push(`⏰ Retrait : ${params.pickupTime}`);
+  }
+  if (params.customerName) {
+    parts.push(`👤 Au nom de : ${params.customerName}`);
+  }
+  if (params.notes) {
+    parts.push(`📝 Note : ${params.notes}`);
+  }
+
+  parts.push(`\nMerci de votre commande ! 🙏`);
+
+  return parts.join("\n");
 }
 
 /**
@@ -61,6 +83,9 @@ export async function trySendOrderConfirmationSms(options: Readonly<{
   orderNumber: string;
   lines: string[];
   totalEuros: string;
+  customerName?: string | null;
+  pickupTime?: string | null;
+  notes?: string | null;
 }>): Promise<void> {
   if (!options.toRaw?.trim() || !options.fromRaw?.trim()) {
     return;
@@ -81,6 +106,9 @@ export async function trySendOrderConfirmationSms(options: Readonly<{
     orderNumber: options.orderNumber,
     lines: options.lines,
     totalEuros: options.totalEuros,
+    customerName: options.customerName,
+    pickupTime: options.pickupTime,
+    notes: options.notes,
   });
 
   try {

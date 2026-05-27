@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Sparkles, MessageSquare, Zap, Save, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Sparkles, MessageSquare, Zap, Save, CheckCircle2, XCircle, Loader2, Mic } from "lucide-react";
 import { updateAssistantBehaviour } from "@/features/settings/actions";
 import type { AssistantSettings } from "@/features/settings/actions";
 
@@ -25,14 +26,18 @@ export function AssistantBehaviourCard({ initialData }: AssistantBehaviourCardPr
   const [autoRushThreshold, setAutoRushThreshold] = useState(
     String(initialData.autoRushThreshold ?? 10)
   );
+  const [welcomeMessage, setWelcomeMessage] = useState(initialData.welcomeMessage ?? "");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const currentWelcome = welcomeMessage.trim() || null;
+
   const isDirty =
     upsellEnabled !== initialData.upsellEnabled ||
     smsConfirmationEnabled !== initialData.smsConfirmationEnabled ||
-    (autoRushEnabled ? Number(autoRushThreshold) : null) !== initialData.autoRushThreshold;
+    (autoRushEnabled ? Number(autoRushThreshold) : null) !== initialData.autoRushThreshold ||
+    currentWelcome !== initialData.welcomeMessage;
 
   function handleSave() {
     const threshold = autoRushEnabled ? parseInt(autoRushThreshold, 10) : null;
@@ -49,6 +54,7 @@ export function AssistantBehaviourCard({ initialData }: AssistantBehaviourCardPr
         upsellEnabled,
         smsConfirmationEnabled,
         autoRushThreshold: threshold,
+        welcomeMessage: currentWelcome,
       });
 
       if (result.success) {
@@ -76,6 +82,36 @@ export function AssistantBehaviourCard({ initialData }: AssistantBehaviourCardPr
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {/* Message d'accueil personnalisé */}
+        <div className="p-4 rounded-xl bg-muted/50 border border-border space-y-3">
+          <div className="flex items-start gap-3">
+            <Mic className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <div className="space-y-0.5">
+              <Label className="text-sm font-medium" htmlFor="welcome-message">
+                Message d&apos;accueil personnalisé
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Texte que l&apos;IA dira au tout début de chaque appel. Laissez vide pour utiliser la formule par défaut.
+              </p>
+            </div>
+          </div>
+          <Textarea
+            id="welcome-message"
+            placeholder="Ex : Bonjour et bienvenue chez Burger King Pessac, je suis Yallo votre assistant vocal…"
+            value={welcomeMessage}
+            maxLength={300}
+            rows={3}
+            onChange={(e) => {
+              setWelcomeMessage(e.target.value);
+              setSuccessMessage(null);
+              setErrorMessage(null);
+            }}
+            disabled={isPending}
+            className="resize-none text-sm"
+          />
+          <p className="text-xs text-muted-foreground text-right">{welcomeMessage.length}/300</p>
+        </div>
+
         {/* Upsell automatique */}
         <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-muted/50 border border-border">
           <div className="flex items-start gap-3">

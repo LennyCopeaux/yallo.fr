@@ -150,6 +150,8 @@ export const restaurants = pgTable("restaurants", {
   smsConfirmationEnabled: boolean("sms_confirmation_enabled").default(false).notNull(),
   /** Seuil de commandes en attente pour basculer automatiquement en mode RUSH (null = désactivé). */
   autoRushThreshold: integer("auto_rush_threshold"),
+  /** Texte personnalisé que l'IA dit en tout début d'appel (null = formule par défaut). */
+  welcomeMessage: text("welcome_message"),
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
