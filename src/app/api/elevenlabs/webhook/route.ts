@@ -190,9 +190,15 @@ async function handleSubmitOrder(
         orderNumber,
         lines: itemsForDb.map((item) => {
           const lineEuros = (item.totalPrice / 100).toFixed(2);
-          return `${item.productName} x${item.quantity} — ${lineEuros} €`;
+          const optionsSuffix = item.options ? ` (${item.options})` : "";
+          return `${item.productName}${optionsSuffix} x${item.quantity} — ${lineEuros} €`;
         }),
         totalEuros: (totalAmount / 100).toFixed(2),
+        customerName: args.customer_name || null,
+        pickupTime: pickupTime
+          ? pickupTime.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+          : null,
+        notes: args.notes || null,
       });
     }
   }
