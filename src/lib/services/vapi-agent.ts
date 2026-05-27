@@ -112,7 +112,7 @@ function buildSubmitOrderTool(webhookUrl?: string) {
           pickup_time: {
             type: "string",
             description:
-              "L'heure de retrait souhaitée par le client (format HH:MM), ou vide si le client n'a pas précisé",
+              "L'heure de retrait souhaitée par le client (format HH:MM), obligatoire",
           },
           notes: {
             type: "string",
@@ -120,7 +120,7 @@ function buildSubmitOrderTool(webhookUrl?: string) {
               "Notes, allergènes, ou précisions (ex. sur place / à emporter / livraison si non couvert ailleurs)",
           },
         },
-        required: ["customer_name", "items"],
+        required: ["customer_name", "items", "pickup_time"],
       },
     },
     ...(webhookUrl
@@ -249,10 +249,12 @@ function buildAssistantConfig(restaurant: Restaurant, systemPrompt: string) {
       provider: "11labs",
       voiceId,
       model: "eleven_turbo_v2_5",
+      speed: 1.1,
       stability: 0.5,
       similarityBoost: 0.75,
       optimizeStreamingLatency: 3,
     },
+    backgroundSound: "off",
     transcriber: {
       provider: "deepgram",
       model: "nova-3",
