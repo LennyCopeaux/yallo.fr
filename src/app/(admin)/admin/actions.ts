@@ -484,7 +484,7 @@ export async function createVapiAgent(
     try {
       const phoneResult = await importTwilioPhoneNumber(
         restaurant.twilioPhoneNumber,
-        assistant.id
+        restaurant.id
       );
       vapiPhoneNumberId = phoneResult.phone_number_id;
       logger.info("Numéro Twilio importé et lié à l'assistant VAPI", {
@@ -559,7 +559,14 @@ export async function updateVapiAgent(id: string): Promise<ActionResult> {
       return { success: false, error: "Aucun assistant VAPI configuré pour ce restaurant" };
     }
 
-    const { updateVapiAssistant } = await import("@/lib/services/vapi-agent");
+    const { updateVapiAssistant, updateVapiPhoneNumberServer } = await import("@/lib/services/vapi-agent");
+
+    // Assure que les numéros historiques utilisent le mode dynamique (assistant-request).
+    // Pour les nouveaux assistants, c'est déjà configuré à la création.
+    if (restaurant.vapiPhoneNumberId) {
+      await updateVapiPhoneNumberServer(restaurant.vapiPhoneNumberId, restaurant.id);
+    }
+
     await updateVapiAssistant(restaurant.vapiAssistantId, restaurant);
 
     revalidatePath(`/admin/restaurants/${id}`);
@@ -574,6 +581,48 @@ export async function updateVapiAgent(id: string): Promise<ActionResult> {
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur lors de la mise à jour de l'assistant",
+    };
+  }
+}
+
+/**
+ * Migration : bascule le numéro VAPI d'un restaurant de l'approche `assistantId` statique
+ * vers `serverUrl` dynamique (assistant-request à chaque appel).
+ * Cela permet d'injecter l'heure réelle dans le prompt au moment de l'appel.
+ */
+export async function migrateVapiPhoneNumberToServerUrl(id: string): Promise<ActionResult> {
+  "use server";
+
+  const user = await getAppUser();
+  if (!user || user.role !== "ADMIN") {
+    return { success: false, error: "Non autorisé" };
+  }
+
+  try {
+    const [restaurant] = await db.select().from(restaurants).where(eq(restaurants.id, id)).limit(1);
+
+    if (!restaurant) {
+      return { success: false, error: "Restaurant non trouvé" };
+    }
+
+    if (!restaurant.vapiPhoneNumberId) {
+      return { success: false, error: "Aucun numéro VAPI configuré pour ce restaurant" };
+    }
+
+    const { updateVapiPhoneNumberServer } = await import("@/lib/services/vapi-agent");
+    await updateVapiPhoneNumberServer(restaurant.vapiPhoneNumberId, restaurant.id);
+
+    revalidatePath(`/admin/restaurants/${id}`);
+
+    return { success: true };
+  } catch (error) {
+    logger.error(
+      "Erreur migration numéro VAPI vers serverUrl",
+      error instanceof Error ? error : new Error(String(error))
+    );
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur lors de la migration",
     };
   }
 }
