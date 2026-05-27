@@ -70,6 +70,43 @@ function parsePickupTime(pickupTimeStr?: string): Date | null {
   return pickup;
 }
 
+function getCurrentWaitCeilMinutes(
+  status: "CALM" | "NORMAL" | "RUSH" | "STOP",
+  statusSettings: typeof restaurants.$inferSelect["statusSettings"]
+): number {
+  if (!statusSettings) return 15;
+  const setting = statusSettings[status];
+  if (!setting) return 15;
+
+  if ("fixed" in setting && typeof setting.fixed === "number") {
+    return Math.max(0, Math.ceil(setting.fixed));
+  }
+
+  if ("max" in setting && typeof setting.max === "number") {
+    return Math.max(0, Math.ceil(setting.max));
+  }
+
+  return 15;
+}
+
+function roundUpToNextTenMinutes(date: Date): Date {
+  const rounded = new Date(date);
+  rounded.setSeconds(0, 0);
+  const minutes = rounded.getMinutes();
+  const remainder = minutes % 10;
+  if (remainder !== 0) {
+    rounded.setMinutes(minutes + (10 - remainder));
+  }
+  return rounded;
+}
+
+function formatFrenchHour(date: Date): string {
+  return date.toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 interface OrderItem {
   product_name: string;
   quantity: number;
@@ -126,6 +163,33 @@ async function handleSubmitOrder(
     });
   }
 
+  if (!args.pickup_time?.trim()) {
+    return JSON.stringify({
+      success: false,
+      message:
+        "Merci d'indiquer une heure de retrait souhaitée (HH:MM) avant de finaliser la commande.",
+    });
+  }
+
+  const pickupTime = parsePickupTime(args.pickup_time);
+  if (!pickupTime) {
+    return JSON.stringify({
+      success: false,
+      message: "Format d'heure invalide. Merci d'indiquer l'heure de retrait au format HH:MM.",
+    });
+  }
+
+  const waitMinutes = getCurrentWaitCeilMinutes(restaurant.currentStatus, restaurant.statusSettings);
+  const earliestReadyAt = roundUpToNextTenMinutes(new Date(Date.now() + waitMinutes * 60 * 1000));
+
+  if (pickupTime.getTime() < earliestReadyAt.getTime()) {
+    return JSON.stringify({
+      success: false,
+      message: `Le délai est trop court avec la charge actuelle en cuisine. Propose une heure de retrait à partir de ${formatFrenchHour(earliestReadyAt)}.`,
+      earliest_pickup_time: formatFrenchHour(earliestReadyAt),
+    });
+  }
+
   const orderNumber = generateOrderNumber();
 
   const itemsForDb = args.items.map((item) => {
@@ -142,7 +206,6 @@ async function handleSubmitOrder(
   });
 
   const totalAmount = itemsForDb.reduce((sum, item) => sum + item.totalPrice, 0);
-  const pickupTime = parsePickupTime(args.pickup_time);
 
   const mergedCustomerPhone =
     (args.customer_phone?.trim() && normalizeFrenchPhoneNumber(args.customer_phone.trim())) ||
