@@ -5,20 +5,15 @@ import { restaurants, MenuData } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { parseMenuFromBase64Images } from "@/lib/services/menu-parser";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, getAccessibleRestaurant } from "@/lib/auth";
 import { updateVapiAssistant } from "@/lib/services/vapi-agent";
 
 async function getRestaurantForOwner() {
   const user = await requireAuth();
+  if (user.role === "EMPLOYEE") throw new Error("Accès non autorisé");
 
-  const [restaurant] = await db
-    .select()
-    .from(restaurants)
-    .where(eq(restaurants.ownerId, user.id));
-
-  if (!restaurant) {
-    throw new Error("Restaurant non trouvé");
-  }
+  const restaurant = await getAccessibleRestaurant();
+  if (!restaurant) throw new Error("Restaurant non trouvé");
 
   return restaurant;
 }

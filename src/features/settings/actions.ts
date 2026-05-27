@@ -1,6 +1,6 @@
 "use server";
 
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, getAccessibleRestaurant } from "@/lib/auth";
 import { db } from "@/db";
 import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -26,25 +26,19 @@ export async function getCallForwardingSettings(): Promise<ActionResult> {
   if (user.role === "ADMIN") {
     return { success: false, error: "Un restaurant doit être spécifié pour les admins" };
   }
+  if (user.role === "EMPLOYEE") {
+    return { success: false, error: "Accès non autorisé" };
+  }
 
-  const [ownerRestaurant] = await db
-    .select({
-      twilioPhoneNumber: restaurants.twilioPhoneNumber,
-      phoneNumber: restaurants.phoneNumber,
-      callForwardingEnabled: restaurants.callForwardingEnabled,
-    })
-    .from(restaurants)
-    .where(eq(restaurants.ownerId, user.id))
-    .limit(1);
-
-  if (!ownerRestaurant) return { success: false, error: "Aucun restaurant trouvé" };
+  const restaurant = await getAccessibleRestaurant();
+  if (!restaurant) return { success: false, error: "Aucun restaurant trouvé" };
 
   return {
     success: true,
     data: {
-      twilioPhoneNumber: ownerRestaurant.twilioPhoneNumber ?? null,
-      restaurantPhoneNumber: ownerRestaurant.phoneNumber,
-      callForwardingEnabled: ownerRestaurant.callForwardingEnabled,
+      twilioPhoneNumber: restaurant.twilioPhoneNumber ?? null,
+      restaurantPhoneNumber: restaurant.phoneNumber,
+      callForwardingEnabled: restaurant.callForwardingEnabled,
     } satisfies CallForwardingSettings,
   };
 }
@@ -64,6 +58,9 @@ export async function updateCallForwardingSettings(
   if (user.role === "ADMIN") {
     return { success: false, error: "Un restaurant doit être spécifié pour les admins" };
   }
+  if (user.role === "EMPLOYEE") {
+    return { success: false, error: "Accès non autorisé" };
+  }
 
   const parsed = updateCallForwardingSchema.safeParse(input);
   if (!parsed.success) {
@@ -80,13 +77,8 @@ export async function updateCallForwardingSettings(
     };
   }
 
-  const [ownerRestaurant] = await db
-    .select()
-    .from(restaurants)
-    .where(eq(restaurants.ownerId, user.id))
-    .limit(1);
-
-  if (!ownerRestaurant) return { success: false, error: "Aucun restaurant trouvé" };
+  const restaurant = await getAccessibleRestaurant();
+  if (!restaurant) return { success: false, error: "Aucun restaurant trouvé" };
 
   await db
     .update(restaurants)
@@ -95,17 +87,17 @@ export async function updateCallForwardingSettings(
       callForwardingEnabled,
       updatedAt: new Date(),
     })
-    .where(eq(restaurants.id, ownerRestaurant.id));
+    .where(eq(restaurants.id, restaurant.id));
 
   // Sync agent if it exists
-  if (ownerRestaurant.vapiAssistantId) {
+  if (restaurant.vapiAssistantId) {
     try {
       const updatedRestaurant = {
-        ...ownerRestaurant,
+        ...restaurant,
         phoneNumber: localRestaurantPhone,
         callForwardingEnabled,
       };
-      await updateVapiAssistant(ownerRestaurant.vapiAssistantId, updatedRestaurant);
+      await updateVapiAssistant(restaurant.vapiAssistantId, updatedRestaurant);
     } catch (err) {
       // Don't fail the save — agent sync is best-effort
       console.error("Erreur sync assistant VAPI après mise à jour forwarding :", err);
@@ -130,27 +122,20 @@ export async function getAssistantSettings(): Promise<ActionResult> {
   if (user.role === "ADMIN") {
     return { success: false, error: "Un restaurant doit être spécifié pour les admins" };
   }
+  if (user.role === "EMPLOYEE") {
+    return { success: false, error: "Accès non autorisé" };
+  }
 
-  const [ownerRestaurant] = await db
-    .select({
-      voiceId: restaurants.voiceId,
-      upsellEnabled: restaurants.upsellEnabled,
-      smsConfirmationEnabled: restaurants.smsConfirmationEnabled,
-      autoRushThreshold: restaurants.autoRushThreshold,
-    })
-    .from(restaurants)
-    .where(eq(restaurants.ownerId, user.id))
-    .limit(1);
-
-  if (!ownerRestaurant) return { success: false, error: "Aucun restaurant trouvé" };
+  const restaurant = await getAccessibleRestaurant();
+  if (!restaurant) return { success: false, error: "Aucun restaurant trouvé" };
 
   return {
     success: true,
     data: {
-      voiceId: ownerRestaurant.voiceId ?? null,
-      upsellEnabled: ownerRestaurant.upsellEnabled,
-      smsConfirmationEnabled: ownerRestaurant.smsConfirmationEnabled,
-      autoRushThreshold: ownerRestaurant.autoRushThreshold ?? null,
+      voiceId: restaurant.voiceId ?? null,
+      upsellEnabled: restaurant.upsellEnabled,
+      smsConfirmationEnabled: restaurant.smsConfirmationEnabled,
+      autoRushThreshold: restaurant.autoRushThreshold ?? null,
     } satisfies AssistantSettings,
   };
 }
@@ -166,27 +151,25 @@ export async function updateVoiceId(
   if (user.role === "ADMIN") {
     return { success: false, error: "Un restaurant doit être spécifié pour les admins" };
   }
+  if (user.role === "EMPLOYEE") {
+    return { success: false, error: "Accès non autorisé" };
+  }
 
   const parsed = updateVoiceSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: "Données invalides" };
 
-  const [ownerRestaurant] = await db
-    .select()
-    .from(restaurants)
-    .where(eq(restaurants.ownerId, user.id))
-    .limit(1);
-
-  if (!ownerRestaurant) return { success: false, error: "Aucun restaurant trouvé" };
+  const restaurant = await getAccessibleRestaurant();
+  if (!restaurant) return { success: false, error: "Aucun restaurant trouvé" };
 
   await db
     .update(restaurants)
     .set({ voiceId: parsed.data.voiceId, updatedAt: new Date() })
-    .where(eq(restaurants.id, ownerRestaurant.id));
+    .where(eq(restaurants.id, restaurant.id));
 
-  if (ownerRestaurant.vapiAssistantId) {
+  if (restaurant.vapiAssistantId) {
     try {
-      await updateVapiAssistant(ownerRestaurant.vapiAssistantId, {
-        ...ownerRestaurant,
+      await updateVapiAssistant(restaurant.vapiAssistantId, {
+        ...restaurant,
         voiceId: parsed.data.voiceId,
       });
     } catch (err) {
@@ -211,17 +194,15 @@ export async function updateAssistantBehaviour(
   if (user.role === "ADMIN") {
     return { success: false, error: "Un restaurant doit être spécifié pour les admins" };
   }
+  if (user.role === "EMPLOYEE") {
+    return { success: false, error: "Accès non autorisé" };
+  }
 
   const parsed = updateAssistantBehaviourSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: "Données invalides" };
 
-  const [ownerRestaurant] = await db
-    .select()
-    .from(restaurants)
-    .where(eq(restaurants.ownerId, user.id))
-    .limit(1);
-
-  if (!ownerRestaurant) return { success: false, error: "Aucun restaurant trouvé" };
+  const restaurant = await getAccessibleRestaurant();
+  if (!restaurant) return { success: false, error: "Aucun restaurant trouvé" };
 
   await db
     .update(restaurants)
@@ -231,12 +212,12 @@ export async function updateAssistantBehaviour(
       autoRushThreshold: parsed.data.autoRushThreshold,
       updatedAt: new Date(),
     })
-    .where(eq(restaurants.id, ownerRestaurant.id));
+    .where(eq(restaurants.id, restaurant.id));
 
-  if (ownerRestaurant.vapiAssistantId) {
+  if (restaurant.vapiAssistantId) {
     try {
-      await updateVapiAssistant(ownerRestaurant.vapiAssistantId, {
-        ...ownerRestaurant,
+      await updateVapiAssistant(restaurant.vapiAssistantId, {
+        ...restaurant,
         upsellEnabled: parsed.data.upsellEnabled,
         smsConfirmationEnabled: parsed.data.smsConfirmationEnabled,
         autoRushThreshold: parsed.data.autoRushThreshold,
@@ -271,6 +252,9 @@ export async function listElevenLabsVoices(): Promise<ActionResult> {
   const user = await requireAuth();
   if (user.role === "ADMIN") {
     return { success: false, error: "Réservé aux restaurateurs" };
+  }
+  if (user.role === "EMPLOYEE") {
+    return { success: false, error: "Accès non autorisé" };
   }
 
   const apiKey = process.env.ELEVENLABS_API_KEY?.trim();
