@@ -4,8 +4,8 @@ import { randomBytes } from "node:crypto";
 import { requireAdmin, getAppUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { users, restaurants } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { users, restaurants, organizations, organizationMembers, restaurantMembers } from "@/db/schema";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { cookies } from "next/headers";
@@ -18,21 +18,22 @@ const createUserSchema = z.object({
   email: z.string().email(),
   firstName: z.string().max(100).optional(),
   lastName: z.string().max(100).optional(),
-  role: z.enum(["ADMIN", "OWNER"]),
+  role: z.enum(["ADMIN", "OWNER", "EMPLOYEE"]),
 });
 
 const updateUserSchema = z.object({
   email: z.string().email().optional(),
   firstName: z.string().max(100).optional().nullable(),
   lastName: z.string().max(100).optional().nullable(),
-  role: z.enum(["ADMIN", "OWNER"]).optional(),
+  role: z.enum(["ADMIN", "OWNER", "EMPLOYEE"]).optional(),
 });
 
 const createRestaurantSchema = z.object({
   name: z.string().min(2, "Nom trop court").max(100, "Nom trop long"),
   phoneNumber: z.string().min(10, "Numéro invalide"),
-  ownerId: z.string().uuid("ID propriétaire invalide"),
+  ownerIds: z.array(z.string().uuid()).min(1, "Au moins un propriétaire requis"),
   address: z.string().optional(),
+  organizationId: z.string().uuid().optional().nullable(),
 });
 
 const updateRestaurantGeneralSchema = z.object({
@@ -40,6 +41,7 @@ const updateRestaurantGeneralSchema = z.object({
   address: z.string().max(500, "Adresse trop longue").optional().nullable(),
   ownerId: z.string().uuid("ID propriétaire invalide").optional(),
   status: z.enum(["active", "suspended", "onboarding"]).optional(),
+  organizationId: z.string().uuid().optional().nullable(),
 });
 
 const updateRestaurantAISchema = z.object({
@@ -74,7 +76,6 @@ const updateRestaurantBillingSchema = z.object({
 const updateHubriseConfigSchema = z.object({
   hubriseLocationId: z.string().max(100).optional().nullable(),
   hubriseAccessToken: z.string().max(500).optional().nullable(),
-  hubriseCatalogId: z.string().max(50).optional().nullable(),
 });
 
 export type ActionResult<T = void> = {
@@ -222,7 +223,7 @@ export async function updateUser(
       email: string;
       firstName: string | null;
       lastName: string | null;
-      role: "ADMIN" | "OWNER";
+      role: "ADMIN" | "OWNER" | "EMPLOYEE";
     }> = {};
     if (parsed.data.email !== undefined) updateData.email = parsed.data.email;
     if (parsed.data.firstName !== undefined) updateData.firstName = parsed.data.firstName;
@@ -343,27 +344,50 @@ export async function createRestaurant(formData: FormData): Promise<ActionResult
   try {
     await requireAdmin();
 
+    const ownerIdsRaw = formData.get("ownerIds");
+    const ownerIds = ownerIdsRaw
+      ? String(ownerIdsRaw).split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+
     const parsed = createRestaurantSchema.safeParse({
       name: formData.get("name"),
       phoneNumber: formData.get("phoneNumber"),
-      ownerId: formData.get("ownerId"),
+      ownerIds,
       address: formData.get("address") || undefined,
+      organizationId: formData.get("organizationId") || undefined,
     });
 
     if (!parsed.success) {
       return { success: false, error: parsed.error.issues[0]?.message || "Données invalides" };
     }
 
-    const { name, phoneNumber, ownerId, address } = parsed.data;
+    const { name, phoneNumber, ownerIds: parsedOwnerIds, address, organizationId } = parsed.data;
 
-    await db.insert(restaurants).values({
+    const [newRestaurant] = await db.insert(restaurants).values({
       name,
       phoneNumber,
-      ownerId,
+      ownerId: parsedOwnerIds[0],
       address: address || null,
+      organizationId: organizationId || null,
       status: "onboarding",
       statusSettings: DEFAULT_STATUS_SETTINGS,
-    });
+    }).returning({ id: restaurants.id });
+
+    if (newRestaurant) {
+      const userRoles = await db
+        .select({ id: users.id, role: users.role })
+        .from(users)
+        .where(inArray(users.id, parsedOwnerIds));
+      const roleMap = Object.fromEntries(userRoles.map((u) => [u.id, u.role]));
+
+      await db.insert(restaurantMembers).values(
+        parsedOwnerIds.map((userId) => ({
+          restaurantId: newRestaurant.id,
+          userId,
+          role: (roleMap[userId] === "OWNER" ? "owner" : "member") as "owner" | "member",
+        }))
+      ).onConflictDoNothing();
+    }
 
     revalidatePath("/admin");
     return { success: true };
@@ -399,6 +423,7 @@ export async function updateRestaurantGeneral(
     if (parsed.data.name !== undefined) updateData.name = parsed.data.name;
     if (parsed.data.address !== undefined) updateData.address = parsed.data.address;
     if (parsed.data.ownerId !== undefined) updateData.ownerId = parsed.data.ownerId;
+    if (parsed.data.organizationId !== undefined) updateData.organizationId = parsed.data.organizationId;
     if (parsed.data.status !== undefined) {
       updateData.status = parsed.data.status;
       updateData.isActive = parsed.data.status === "active";
@@ -785,10 +810,6 @@ export async function updateHubriseConfig(
     if (parsed.data.hubriseAccessToken !== undefined) {
       updateData.hubriseAccessToken = parsed.data.hubriseAccessToken;
     }
-    if (parsed.data.hubriseCatalogId !== undefined) {
-      updateData.hubriseCatalogId = parsed.data.hubriseCatalogId;
-    }
-
     await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
     revalidatePath("/admin");
     revalidatePath(`/admin/restaurants/${id}`);
@@ -909,5 +930,302 @@ export async function toggleRestaurantStatus(id: string, isActive: boolean): Pro
       error instanceof Error ? error : new Error(String(error))
     );
     return { success: false, error: "Erreur lors de la mise à jour du statut" };
+  }
+}
+
+// ─── Organisations ──────────────────────────────────────────────────────────
+
+const createOrganizationSchema = z.object({
+  name: z.string().min(2, "Nom trop court").max(100, "Nom trop long"),
+  ownerIds: z.array(z.string().uuid()).min(1, "Au moins un propriétaire requis"),
+});
+
+export async function createOrganization(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    const ownerIdsRaw = formData.get("ownerIds");
+    const ownerIds = ownerIdsRaw
+      ? String(ownerIdsRaw).split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+
+    const parsed = createOrganizationSchema.safeParse({
+      name: formData.get("name"),
+      ownerIds,
+    });
+
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message ?? "Données invalides" };
+    }
+
+    const [newOrg] = await db.insert(organizations).values({
+      name: parsed.data.name,
+      ownerId: parsed.data.ownerIds[0],
+      isActive: true,
+    }).returning({ id: organizations.id });
+
+    if (newOrg) {
+      const userRoles = await db
+        .select({ id: users.id, role: users.role })
+        .from(users)
+        .where(inArray(users.id, parsed.data.ownerIds));
+      const roleMap = Object.fromEntries(userRoles.map((u) => [u.id, u.role]));
+
+      await db.insert(organizationMembers).values(
+        parsed.data.ownerIds.map((userId) => ({
+          organizationId: newOrg.id,
+          userId,
+          role: (roleMap[userId] === "OWNER" ? "owner" : "member") as "owner" | "member",
+        }))
+      ).onConflictDoNothing();
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/organizations");
+    return { success: true };
+  } catch (error) {
+    logger.error("Erreur création organisation", error instanceof Error ? error : new Error(String(error)));
+    return { success: false, error: "Erreur lors de la création de l'organisation" };
+  }
+}
+
+export async function updateOrganization(
+  id: string,
+  data: { name?: string; ownerId?: string; status?: string }
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+
+    if (data.name !== undefined) {
+      const trimmed = data.name.trim();
+      if (trimmed.length < 2 || trimmed.length > 100) {
+        return { success: false, error: "Nom invalide (2-100 caractères)" };
+      }
+      updates.name = trimmed;
+    }
+
+    if (data.ownerId !== undefined) {
+      updates.ownerId = data.ownerId;
+    }
+
+    if (data.status !== undefined) {
+      updates.status = data.status;
+      updates.isActive = data.status === "active";
+    }
+
+    await db.update(organizations).set(updates).where(eq(organizations.id, id));
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/organizations");
+    revalidatePath(`/admin/organizations/${id}`);
+    return { success: true };
+  } catch (error) {
+    logger.error("Erreur update organisation", error instanceof Error ? error : new Error(String(error)));
+    return { success: false, error: "Erreur lors de la mise à jour" };
+  }
+}
+
+export async function updateOrganizationBilling(
+  id: string,
+  data: { stripeCustomerId?: string; billingStartDate?: string }
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (data.stripeCustomerId !== undefined) updates.stripeCustomerId = data.stripeCustomerId || null;
+    if (data.billingStartDate !== undefined) updates.billingStartDate = data.billingStartDate || null;
+    await db.update(organizations).set(updates).where(eq(organizations.id, id));
+    revalidatePath("/admin/organizations");
+    revalidatePath(`/admin/organizations/${id}`);
+    return { success: true };
+  } catch (error) {
+    logger.error("Erreur update billing organisation", error instanceof Error ? error : new Error(String(error)));
+    return { success: false, error: "Erreur lors de la mise à jour" };
+  }
+}
+
+export async function deleteOrganization(id: string): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    if (!id) return { success: false, error: "ID requis" };
+
+    // Détacher tous les restaurants de l'organisation avant suppression
+    await db
+      .update(restaurants)
+      .set({ organizationId: null })
+      .where(eq(restaurants.organizationId, id));
+
+    await db.delete(organizations).where(eq(organizations.id, id));
+
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    logger.error("Erreur suppression organisation", error instanceof Error ? error : new Error(String(error)));
+    return { success: false, error: "Erreur lors de la suppression" };
+  }
+}
+
+export async function setRestaurantOrganization(
+  restaurantId: string,
+  organizationId: string | null
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+
+    if (!restaurantId) return { success: false, error: "ID restaurant requis" };
+
+    await db
+      .update(restaurants)
+      .set({ organizationId })
+      .where(eq(restaurants.id, restaurantId));
+
+    // Auto-add all existing org members to this restaurant (skip already-existing memberships)
+    if (organizationId) {
+      const orgMembersList = await db
+        .select({ userId: organizationMembers.userId, role: organizationMembers.role })
+        .from(organizationMembers)
+        .where(eq(organizationMembers.organizationId, organizationId));
+
+      if (orgMembersList.length > 0) {
+        await db.insert(restaurantMembers).values(
+          orgMembersList.map((m) => ({
+            restaurantId,
+            userId: m.userId,
+            role: m.role,
+          }))
+        ).onConflictDoNothing();
+      }
+    }
+
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    logger.error("Erreur attach/detach restaurant", error instanceof Error ? error : new Error(String(error)));
+    return { success: false, error: "Erreur lors de la mise à jour" };
+  }
+}
+
+// ─── Members management ──────────────────────────────────────────────────────
+
+export async function addOrganizationMember(orgId: string, userId: string): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    if (!orgId || !userId) return { success: false, error: "IDs requis" };
+
+    const [user] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
+    const memberRole: "owner" | "member" = user?.role === "OWNER" ? "owner" : "member";
+
+    await db.insert(organizationMembers).values({
+      organizationId: orgId,
+      userId,
+      role: memberRole,
+    }).onConflictDoNothing();
+
+    // Auto-add user to all restaurants in the org (skip already-existing memberships)
+    const orgRestaurants = await db
+      .select({ id: restaurants.id })
+      .from(restaurants)
+      .where(eq(restaurants.organizationId, orgId));
+
+    if (orgRestaurants.length > 0) {
+      await db.insert(restaurantMembers).values(
+        orgRestaurants.map((r) => ({
+          restaurantId: r.id,
+          userId,
+          role: memberRole,
+        }))
+      ).onConflictDoNothing();
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/organizations");
+    return { success: true };
+  } catch (error) {
+    logger.error("Erreur ajout membre org", error instanceof Error ? error : new Error(String(error)));
+    return { success: false, error: "Erreur lors de l'ajout du membre" };
+  }
+}
+
+export async function removeOrganizationMember(orgId: string, userId: string): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    if (!orgId || !userId) return { success: false, error: "IDs requis" };
+
+    const count = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(organizationMembers)
+      .where(eq(organizationMembers.organizationId, orgId));
+    if (Number(count[0]?.count ?? 0) <= 1) {
+      return { success: false, error: "Impossible de retirer le dernier membre" };
+    }
+
+    await db.delete(organizationMembers).where(
+      and(
+        eq(organizationMembers.organizationId, orgId),
+        eq(organizationMembers.userId, userId)
+      )
+    );
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/organizations");
+    return { success: true };
+  } catch (error) {
+    logger.error("Erreur retrait membre org", error instanceof Error ? error : new Error(String(error)));
+    return { success: false, error: "Erreur lors du retrait" };
+  }
+}
+
+export async function addRestaurantMember(restaurantId: string, userId: string): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    if (!restaurantId || !userId) return { success: false, error: "IDs requis" };
+
+    const [user] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
+    const memberRole: "owner" | "member" = user?.role === "OWNER" ? "owner" : "member";
+
+    await db.insert(restaurantMembers).values({
+      restaurantId,
+      userId,
+      role: memberRole,
+    }).onConflictDoNothing();
+
+    revalidatePath("/admin");
+    revalidatePath(`/admin/restaurants/${restaurantId}`);
+    return { success: true };
+  } catch (error) {
+    logger.error("Erreur ajout membre restaurant", error instanceof Error ? error : new Error(String(error)));
+    return { success: false, error: "Erreur lors de l'ajout" };
+  }
+}
+
+export async function removeRestaurantMember(restaurantId: string, userId: string): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    if (!restaurantId || !userId) return { success: false, error: "IDs requis" };
+
+    const count = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(restaurantMembers)
+      .where(eq(restaurantMembers.restaurantId, restaurantId));
+    if (Number(count[0]?.count ?? 0) <= 1) {
+      return { success: false, error: "Impossible de retirer le dernier membre" };
+    }
+
+    await db.delete(restaurantMembers).where(
+      and(
+        eq(restaurantMembers.restaurantId, restaurantId),
+        eq(restaurantMembers.userId, userId)
+      )
+    );
+
+    revalidatePath("/admin");
+    revalidatePath(`/admin/restaurants/${restaurantId}`);
+    return { success: true };
+  } catch (error) {
+    logger.error("Erreur retrait membre restaurant", error instanceof Error ? error : new Error(String(error)));
+    return { success: false, error: "Erreur lors du retrait" };
   }
 }
