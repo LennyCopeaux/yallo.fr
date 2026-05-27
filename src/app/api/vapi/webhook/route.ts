@@ -13,8 +13,14 @@ export const runtime = "nodejs";
 
 interface ToolCall {
   id: string;
-  name: string;
-  arguments: Record<string, unknown>;
+  /** Format direct (ancien VAPI) */
+  name?: string;
+  /** Format OpenAI-compatible (VAPI actuel) */
+  function?: {
+    name: string;
+    arguments: string | Record<string, unknown>;
+  };
+  arguments?: Record<string, unknown>;
 }
 
 /**
@@ -432,14 +438,23 @@ export async function POST(request: Request) {
 
     logger.info("Webhook VAPI tool-calls reçu", {
       restaurantId,
-      tools: toolCallList.map((t) => t.name),
+      tools: toolCallList.map((t) => t.name ?? t.function?.name),
     });
 
     const results: Array<{ toolCallId: string; result: string }> = [];
 
     for (const toolCall of toolCallList) {
-      if (toolCall.name === "submit_order") {
-        const normalized = normalizeSubmitOrderPayload(toolCall.arguments);
+      // VAPI envoie soit name+arguments à la racine (ancien format),
+      // soit function.name + function.arguments (format OpenAI-compatible actuel)
+      const toolName = toolCall.name ?? toolCall.function?.name;
+      const rawArgs = toolCall.arguments ?? toolCall.function?.arguments;
+      const toolArgs: Record<string, unknown> =
+        typeof rawArgs === "string"
+          ? (JSON.parse(rawArgs) as Record<string, unknown>)
+          : (rawArgs ?? {});
+
+      if (toolName === "submit_order") {
+        const normalized = normalizeSubmitOrderPayload(toolArgs);
         if (!normalized) {
           logger.warn("Webhook VAPI : données commande invalides", { args: toolCall.arguments });
           results.push({
@@ -473,7 +488,7 @@ export async function POST(request: Request) {
         // Tool inconnu — répondre pour éviter que VAPI bloque
         results.push({
           toolCallId: toolCall.id,
-          result: JSON.stringify({ success: false, message: `Tool inconnu : ${toolCall.name}` }),
+          result: JSON.stringify({ success: false, message: `Tool inconnu : ${toolName}` }),
         });
       }
     }
