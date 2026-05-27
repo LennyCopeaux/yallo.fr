@@ -23,7 +23,7 @@ export function CtaSection() {
             Prêt à automatiser vos commandes ?
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground mb-10">
-            Rejoignez les centaines de restaurants qui ont déjà automatisé leur prise de commande.
+            Découvrez une prise de commande plus rapide, plus fluide et plus simple à gérer au quotidien.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/contact?subject=installation" className="cursor-pointer">
@@ -39,7 +39,7 @@ export function CtaSection() {
             </Link>
           </div>
           <p className="text-sm text-muted-foreground mt-6">
-            Pas de carte bancaire • Intégration en moins de 24h
+            Intégration en moins de 24h
           </p>
         </motion.div>
       </div>

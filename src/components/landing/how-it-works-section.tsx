@@ -43,10 +43,10 @@ export function HowItWorksSection() {
               Fini la tonalité &apos;Occupé&apos;
             </h3>
             <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-              1 client ou 10 clients appellent en même temps ? Yallo gère des appels illimités en simultané. Ne perdez plus jamais une commande parce que vous étiez déjà au téléphone.
+              1 client ou plusieurs appellent en même temps ? Yallo gère des appels en simultané. Ne perdez plus jamais une commande parce que vous étiez déjà au téléphone.
             </p>
             <div className="flex flex-wrap gap-3">
-              {["Appels illimités", "Réponse immédiate", "Zéro attente"].map((tag) => (
+              {["Appels simultanés", "Réponse immédiate", "Zéro attente"].map((tag) => (
                 <span key={tag} className="text-sm px-3 py-1 rounded-full bg-muted/50 text-muted-foreground border border-border">
                   {tag}
                 </span>
@@ -156,7 +156,7 @@ export function HowItWorksSection() {
             </h3>
             <p className="text-muted-foreground text-lg leading-relaxed mb-6">
               Notre IA comprend le client, gère les demandes spéciales et suggère 
-              intelligemment des extras. Elle parle naturellement, sans accent robotique.
+              intelligemment des extras si vous le souhaitez. Elle parle naturellement, sans accent robotique.
             </p>
             <div className="flex flex-wrap gap-3">
               {["Compréhension vocale", "Upsell intelligent", "Multilingue"].map((tag) => (
@@ -187,10 +187,10 @@ export function HowItWorksSection() {
               Transmission instantanée en cuisine
             </h3>
             <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-              Dès que le client raccroche, le bon de commande s&apos;imprime automatiquement ou s&apos;affiche sur votre écran cuisine. Zéro ressaisie, zéro erreur. Vos chefs lancent la cuisson immédiatement.
+              Dès que le client raccroche, le bon de commande arrive sur votre dashboard ou bien votre logiciel de caisse. Zéro ressaisie, zéro erreur. Vos chefs lancent la cuisson immédiatement.
             </p>
             <div className="flex flex-wrap gap-3">
-              {["Impression automatique", "Zéro ressaisie", "Prêt à cuisiner"].map((tag) => (
+              {["Commandes automatiques", "Zéro ressaisie", "Prêt à cuisiner"].map((tag) => (
                 <span key={tag} className="text-sm px-3 py-1 rounded-full bg-muted/50 text-muted-foreground border border-border">
                   {tag}
                 </span>

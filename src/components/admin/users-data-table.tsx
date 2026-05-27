@@ -49,7 +49,7 @@ type User = {
   email: string;
   firstName: string | null;
   lastName: string | null;
-  role: "ADMIN" | "OWNER";
+  role: "ADMIN" | "OWNER" | "EMPLOYEE";
   createdAt: Date | null;
 };
 
@@ -183,8 +183,7 @@ export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
           <SelectContent className="bg-card border-border">
             <SelectItem value="all">Tous les rôles</SelectItem>
             <SelectItem value="ADMIN">Admin</SelectItem>
-            <SelectItem value="OWNER">Owner</SelectItem>
-          </SelectContent>
+            <SelectItem value="OWNER">Owner</SelectItem>            <SelectItem value="EMPLOYEE">Employee</SelectItem>          </SelectContent>
         </Select>
       </div>
 
@@ -229,6 +228,8 @@ export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
                         className={
                           user.role === "ADMIN"
                             ? "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/15"
+                            : user.role === "EMPLOYEE"
+                            ? "bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/15"
                             : "bg-primary/10 text-primary border-primary/20 hover:bg-primary/15"
                         }
                       >

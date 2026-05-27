@@ -35,7 +35,7 @@ const DEFAULT_LLM_TEMPERATURE = 0.4;
 const DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
 
 /** Modèle TTS ElevenLabs (eleven_turbo_v2_5, eleven_multilingual_v2, eleven_v3, etc.). Surcharge via ELEVENLABS_TTS_MODEL. */
-const DEFAULT_TTS_MODEL = "eleven_turbo_v2_5";
+const DEFAULT_TTS_MODEL = "eleven_multilingual_v2";
 
 function getApiKey(): string {
   const apiKey = process.env.ELEVENLABS_API_KEY?.trim();

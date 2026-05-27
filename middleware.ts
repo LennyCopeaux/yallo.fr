@@ -28,7 +28,7 @@ function isAppOnlyRoute(pathname: string): boolean {
 }
 
 function isAllowedRoute(pathname: string): boolean {
-  const allowedRoutes = ["/login", "/update-password", "/dashboard", "/admin", "/api"];
+  const allowedRoutes = ["/login", "/update-password", "/dashboard", "/admin", "/api", "/org"];
   return allowedRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
 
@@ -54,8 +54,9 @@ export async function middleware(req: NextRequest) {
     const isLoginPage = pathname === "/login";
     const isUpdatePasswordPage = pathname === "/update-password";
     const isDashboardRoute = pathname.startsWith("/dashboard");
+    const isOrgRoute = pathname.startsWith("/org");
     const isAdminRoute = pathname.startsWith("/admin");
-    const isProtectedRoute = isDashboardRoute || isAdminRoute;
+    const isProtectedRoute = isDashboardRoute || isAdminRoute || isOrgRoute;
     const isApiRoute = pathname.startsWith("/api");
     const isRootRoute = pathname === "/";
 
@@ -66,7 +67,10 @@ export async function middleware(req: NextRequest) {
       if (userRole === "ADMIN") {
         return NextResponse.redirect(buildAppUrl("/admin", host), 307);
       }
-      return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
+      if (userRole === "EMPLOYEE") {
+        return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
+      }
+      return NextResponse.redirect(buildAppUrl("/org", host), 307);
     }
 
     if (!isAllowedRoute(pathname) && !isApiRoute) {
@@ -81,14 +85,22 @@ export async function middleware(req: NextRequest) {
       if (userRole === "ADMIN") {
         return NextResponse.redirect(buildAppUrl("/admin", host), 307);
       }
-      return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
+      if (userRole === "EMPLOYEE") {
+        return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
+      }
+      return NextResponse.redirect(buildAppUrl("/org", host), 307);
     }
 
     if (isAdminRoute && isLoggedIn && userRole !== "ADMIN") {
+      return NextResponse.redirect(buildAppUrl("/org", host), 307);
+    }
+
+    // EMPLOYEE users cannot access /org routes
+    if (isOrgRoute && isLoggedIn && userRole === "EMPLOYEE") {
       return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
     }
 
-    if (isDashboardRoute && isLoggedIn && userRole === "ADMIN") {
+    if ((isDashboardRoute || isOrgRoute) && isLoggedIn && userRole === "ADMIN") {
       return NextResponse.redirect(buildAppUrl("/admin", host), 307);
     }
 

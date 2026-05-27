@@ -1,6 +1,5 @@
-import { getAppUser } from "@/lib/auth";
+import { getAppUser, getUserOrganization } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getUserRestaurant } from "@/features/orders/actions";
 import { SUBSCRIPTION_PLANS } from "@/features/billing/plans";
 import { BillingPageContent } from "./_components/billing-page-content";
 import { AlertTriangle } from "lucide-react";
@@ -17,9 +16,8 @@ export default async function BillingPage() {
     redirect("/admin");
   }
 
-  const restaurant = await getUserRestaurant();
-
-  if (!restaurant) {
+  const org = await getUserOrganization();
+  if (!org) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold mb-8">Abonnement</h1>
@@ -57,11 +55,12 @@ export default async function BillingPage() {
       </div>
       <BillingPageContent
         restaurant={{
-          stripeSubscriptionStatus: restaurant.stripeSubscriptionStatus,
-          stripePriceId: restaurant.stripePriceId,
-          billingStartDate: restaurant.billingStartDate,
-          stripeCustomerId: restaurant.stripeCustomerId,
+          stripeSubscriptionStatus: org.stripeSubscriptionStatus,
+          stripePriceId: org.stripePriceId,
+          billingStartDate: org.billingStartDate,
+          stripeCustomerId: org.stripeCustomerId,
         }}
+        restaurantCount={org.restaurants.length}
         plans={SUBSCRIPTION_PLANS}
       />
     </div>

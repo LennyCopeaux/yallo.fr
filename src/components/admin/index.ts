@@ -1,7 +1,9 @@
+export { AddOrganizationDialog } from "./add-organization-dialog";
 export { AddRestaurantDialog } from "./add-restaurant-dialog";
 export { AddUserDialog } from "./add-user-dialog";
 export { DashboardTabs } from "./dashboard-tabs";
 export { EditUserDialog } from "./edit-user-dialog";
+export { OrganizationsDataTable } from "./organizations-data-table";
 export { RestaurantDetailTabs } from "./restaurant-detail-tabs";
 export { RestaurantsDataTable } from "./restaurants-data-table";
 export { UsersDataTable } from "./users-data-table";

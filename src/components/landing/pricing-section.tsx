@@ -39,6 +39,19 @@ type Plan = {
   excluded: string[];
 };
 
+function normalizeFeature(feature: string): string {
+  return feature.trim().toLowerCase();
+}
+
+function getIncrementalFeatures(plan: Plan, previousPlan?: Plan): string[] {
+  if (!previousPlan) {
+    return plan.included;
+  }
+
+  const previousSet = new Set(previousPlan.included.map((feature) => normalizeFeature(feature)));
+  return plan.included.filter((feature) => !previousSet.has(normalizeFeature(feature)));
+}
+
 const PLANS: Plan[] = [
   {
     name: "Essentiel",
@@ -50,18 +63,15 @@ const PLANS: Plan[] = [
     contactSubject: "plan-essentiel",
     included: [
       "1 numéro de téléphone dédié",
+      "2 appels simultanés max",
       "IA vocale 24h/24, 7j/7",
       "Dashboard tablette",
       "Gestion des commandes en temps réel",
       "Menu illimité",
       "Mise à jour instantanée",
-      "3 appels simultanés max",
       "Support email",
     ],
-    excluded: [
-      "Connexion logiciel de caisse",
-      "Support prioritaire",
-    ],
+    excluded: [],
   },
   {
     name: "Pro",
@@ -73,14 +83,19 @@ const PLANS: Plan[] = [
     ctaLabel: "Démarrer",
     contactSubject: "plan-pro",
     included: [
-      "2 numéros dédiés",
-      "Sépare commandes & renseignements",
+      "1 numéro de téléphone dédié",
+      "4 appels simultanés max",
+      "IA vocale 24h/24, 7j/7",
+      "Dashboard tablette",
+      "Gestion des commandes en temps réel",
+      "Menu illimité",
+      "Mise à jour instantanée",
+      "Support email",
       "Connexion logiciel de caisse",
-      "Lightspeed, Zelty, Addition...",
-      "6 appels simultanés max",
+      "Sépare commandes & renseignements",
       "Analytics & historique des appels",
       "Rapports hebdomadaires par email",
-      "Support prioritaire",
+      "Support email prioritaire",
       "Réponse sous 4h en semaine",
     ],
     excluded: [],
@@ -91,11 +106,23 @@ const PLANS: Plan[] = [
     monthlyPrice: 199,
     callRate: "0,15€ / minute d'appel",
     popular: false,
-    ctaLabel: "Nous contacter",
-    contactSubject: "business",
+    ctaLabel: "Commencer",
+    contactSubject: "plan-business",
     included: [
-      "Numéros illimités",
+      "1 numéro de téléphone dédié par restaurant",
       "10 appels simultanés max",
+      "Connexion logiciel de caisse",
+      "IA vocale 24h/24, 7j/7",
+      "Dashboard tablette",
+      "Gestion des commandes en temps réel",
+      "Menu illimité",
+      "Mise à jour instantanée",
+      "Support email",
+      "Sépare commandes & renseignements",
+      "Analytics & historique des appels",
+      "Rapports hebdomadaires par email",
+      "Support prioritaire",
+      "Réponse sous 4h en semaine",
       "Transfert vers humain",
       "Bascule vers un employé si besoin",
       "Personnalisation avancée de l'IA",
@@ -124,7 +151,11 @@ export function PricingSection() {
     });
   }, [api]);
 
-  const renderPlanCard = (plan: typeof PLANS[0]) => (
+  const renderPlanCard = (plan: typeof PLANS[0], index: number) => {
+    const previousPlan = index > 0 ? PLANS[index - 1] : undefined;
+    const incrementalFeatures = getIncrementalFeatures(plan, previousPlan);
+
+    return (
     <Card
       className={`relative overflow-hidden h-full flex flex-col transition-all bg-card ${
         plan.popular
@@ -162,30 +193,20 @@ export function PricingSection() {
           <p className="text-xs text-muted-foreground mt-1">+ {plan.callRate}</p>
         </div>
 
-        <div className="mb-6 pb-4 border-b border-border/50">
-          <p className="text-sm font-semibold text-foreground">Inclus</p>
-        </div>
+        <div className="space-y-3 mb-6 pt-1 flex-1">
+          {previousPlan && (
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary/90">
+              Tout pareil que {previousPlan.name} +
+            </p>
+          )}
 
-        <div className="space-y-3 mb-4 flex-1">
-          {plan.included.map((feature) => (
-            <div key={feature} className="flex items-center gap-2 text-sm">
+          {incrementalFeatures.map((feature) => (
+            <div key={`${plan.name}-${feature}`} className="flex items-center gap-2 text-sm">
               <Check className="w-4 h-4 text-emerald-500 shrink-0" />
               <span className="text-muted-foreground">{feature}</span>
             </div>
           ))}
         </div>
-
-        {plan.excluded.length > 0 && (
-          <div className="space-y-3 mb-6 border-t border-border/40 pt-4">
-            <p className="text-sm font-semibold text-foreground">Non inclus</p>
-            {plan.excluded.map((feature) => (
-              <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground/80">
-                <span className="inline-block w-4 h-4 shrink-0 text-center leading-4">-</span>
-                <span>{feature}</span>
-              </div>
-            ))}
-          </div>
-        )}
 
         <Link href={`/contact?subject=${plan.contactSubject}`} className="mt-auto cursor-pointer">
           <Button
@@ -202,7 +223,8 @@ export function PricingSection() {
         </Link>
       </CardContent>
     </Card>
-  );
+    );
+  };
 
   return (
     <section
@@ -246,7 +268,7 @@ export function PricingSection() {
             transition={{ duration: 0.6, ease: "easeOut", delay: index * 0.1 }}
             className="relative"
           >
-            {renderPlanCard(plan)}
+            {renderPlanCard(plan, index)}
           </motion.div>
         ))}
       </div>
@@ -259,9 +281,9 @@ export function PricingSection() {
           className="w-full"
         >
           <CarouselContent className="-ml-2">
-            {PLANS.map((plan) => (
+            {PLANS.map((plan, index) => (
               <CarouselItem key={plan.name} className="pl-2 basis-full">
-                {renderPlanCard(plan)}
+                {renderPlanCard(plan, index)}
               </CarouselItem>
             ))}
           </CarouselContent>

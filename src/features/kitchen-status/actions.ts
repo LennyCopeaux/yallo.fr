@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { restaurants, type KitchenStatus } from "@/db/schema";
-import { requireAuth, getAppUser } from "@/lib/auth";
+import { requireAuth, getAccessibleRestaurant } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -28,14 +28,7 @@ const statusSettingsSchema = z.object({
 export type StatusSettings = z.infer<typeof statusSettingsSchema>;
 
 export async function getKitchenStatus() {
-  const user = await getAppUser();
-  if (!user?.id) return null;
-
-  const ownerRestaurant = await db.query.restaurants.findFirst({
-    where: eq(restaurants.ownerId, user.id),
-    columns: { id: true, currentStatus: true, statusSettings: true },
-  });
-
+  const ownerRestaurant = await getAccessibleRestaurant();
   if (!ownerRestaurant) return null;
 
   if (!ownerRestaurant.statusSettings) {
@@ -51,14 +44,12 @@ export async function getKitchenStatus() {
 }
 
 export async function updateKitchenStatus(status: KitchenStatus) {
-  const user = await requireAuth();
+  await requireAuth();
 
   const isValidStatus = ["CALM", "NORMAL", "RUSH", "STOP"].includes(status);
   if (!isValidStatus) throw new Error("Statut invalide");
 
-  const ownerRestaurant = await db.query.restaurants.findFirst({
-    where: eq(restaurants.ownerId, user.id),
-  });
+  const ownerRestaurant = await getAccessibleRestaurant();
   if (!ownerRestaurant) throw new Error("Restaurant non trouvé");
 
   await db
@@ -82,13 +73,11 @@ export async function updateKitchenStatus(status: KitchenStatus) {
 }
 
 export async function updateStatusSettings(settings: StatusSettings) {
-  const user = await requireAuth();
+  await requireAuth();
 
   const validatedSettings = statusSettingsSchema.parse(settings);
 
-  const ownerRestaurant = await db.query.restaurants.findFirst({
-    where: eq(restaurants.ownerId, user.id),
-  });
+  const ownerRestaurant = await getAccessibleRestaurant();
   if (!ownerRestaurant) throw new Error("Restaurant non trouvé");
 
   const existingSettings = (ownerRestaurant.statusSettings as StatusSettings) || {};

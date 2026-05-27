@@ -9,8 +9,7 @@ async function getMenuStructure(restaurant: Restaurant): Promise<unknown> {
     try {
       const menuJson = await fetchHubriseCatalog(
         restaurant.hubriseAccessToken,
-        restaurant.hubriseLocationId,
-        restaurant.hubriseCatalogId
+        restaurant.hubriseLocationId
       );
       return JSON.parse(menuJson);
     } catch (error) {

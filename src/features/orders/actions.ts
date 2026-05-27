@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/db";
-import { orderItems, orders, restaurants, type OrderStatus } from "@/db/schema";
-import { requireAuth, getAppUser } from "@/lib/auth";
+import { orderItems, orders, type OrderStatus } from "@/db/schema";
+import { requireAuth, getAccessibleRestaurant } from "@/lib/auth";
 import { eq, desc, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -15,25 +15,11 @@ function generateOrderNumber(): string {
 }
 
 export async function getUserRestaurant() {
-  const user = await getAppUser();
-  if (!user?.id) {
-    return null;
-  }
-
-  const restaurant = await db.query.restaurants.findFirst({
-    where: eq(restaurants.ownerId, user.id),
-  });
-
-  return restaurant || null;
+  return getAccessibleRestaurant();
 }
 
 export async function getOrders() {
-  const user = await requireAuth();
-
-  const ownerRestaurant = await db.query.restaurants.findFirst({
-    where: eq(restaurants.ownerId, user.id),
-  });
-
+  const ownerRestaurant = await getAccessibleRestaurant();
   if (!ownerRestaurant) return [];
 
   return db.query.orders.findMany({
@@ -44,11 +30,9 @@ export async function getOrders() {
 }
 
 export async function updateOrderStatus(orderId: string, newStatus: OrderStatus) {
-  const user = await requireAuth();
+  await requireAuth();
 
-  const ownerRestaurant = await db.query.restaurants.findFirst({
-    where: eq(restaurants.ownerId, user.id),
-  });
+  const ownerRestaurant = await getAccessibleRestaurant();
   if (!ownerRestaurant) throw new Error("Restaurant non trouvé");
 
   const targetOrder = await db.query.orders.findFirst({
@@ -66,11 +50,9 @@ export async function updateOrderStatus(orderId: string, newStatus: OrderStatus)
 }
 
 export async function simulateSubmitOrder() {
-  const user = await requireAuth();
+  await requireAuth();
 
-  const ownerRestaurant = await db.query.restaurants.findFirst({
-    where: eq(restaurants.ownerId, user.id),
-  });
+  const ownerRestaurant = await getAccessibleRestaurant();
 
   if (!ownerRestaurant) {
     throw new Error("Restaurant non trouvé");

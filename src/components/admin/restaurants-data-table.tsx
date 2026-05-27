@@ -55,6 +55,7 @@ type Restaurant = {
   twilioPhoneNumber: string | null;
   createdAt: Date | null;
   ownerEmail: string;
+  owners: string[];
   ordersCount: number;
 };
 
@@ -208,7 +209,7 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
                 <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="text-muted-foreground font-medium">Restaurant</TableHead>
                   <TableHead className="text-muted-foreground font-medium hidden md:table-cell">
-                    Propriétaire
+                    Membres
                   </TableHead>
                   <TableHead className="text-muted-foreground font-medium">Statut</TableHead>
                   <TableHead className="text-muted-foreground font-medium text-center">
@@ -230,13 +231,31 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
                     <TableCell className="min-w-[150px]">
                       <div>
                         <div className="font-medium text-sm sm:text-base">{restaurant.name}</div>
-                        <div className="text-xs text-muted-foreground md:hidden mt-1">
-                          {restaurant.ownerEmail}
+                        <div className="md:hidden mt-1 flex flex-col gap-0.5">
+                          {restaurant.owners.length === 0 ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : (
+                            restaurant.owners.map((ownerEmail) => (
+                              <span key={ownerEmail} className="text-xs text-muted-foreground break-all">
+                                {ownerEmail}
+                              </span>
+                            ))
+                          )}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground min-w-[180px]">
-                      {restaurant.ownerEmail}
+                      <div className="flex flex-col gap-0.5">
+                        {restaurant.owners.length === 0 ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : (
+                          restaurant.owners.map((ownerEmail) => (
+                            <span key={ownerEmail} className="text-sm text-muted-foreground break-all">
+                              {ownerEmail}
+                            </span>
+                          ))
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="min-w-[100px]">
                       {getStatusBadge(restaurant.status)}

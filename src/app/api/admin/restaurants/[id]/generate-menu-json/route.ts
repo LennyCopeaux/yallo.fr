@@ -20,7 +20,6 @@ export async function GET(
         menuContext: restaurants.menuContext,
         hubriseAccessToken: restaurants.hubriseAccessToken,
         hubriseLocationId: restaurants.hubriseLocationId,
-        hubriseCatalogId: restaurants.hubriseCatalogId,
       })
       .from(restaurants)
       .where(eq(restaurants.id, id))
@@ -34,8 +33,7 @@ export async function GET(
       try {
         const hubriseMenuJson = await fetchHubriseCatalog(
           restaurant.hubriseAccessToken,
-          restaurant.hubriseLocationId,
-          restaurant.hubriseCatalogId
+          restaurant.hubriseLocationId
         );
         return NextResponse.json({ menuJson: hubriseMenuJson });
       } catch (error) {

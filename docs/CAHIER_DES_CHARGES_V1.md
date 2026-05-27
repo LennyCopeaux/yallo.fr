@@ -1,8 +1,8 @@
 # Cahier des Charges – Yallo V2
 
-> Dernière mise à jour : 25 mai 2026
+> Dernière mise à jour : 26 mai 2026
 > Branche de référence : `develop`
-> Version logicielle : `0.2.0`
+> Version logicielle : `0.3.0`
 
 ---
 
@@ -42,7 +42,8 @@
 | Styling | Tailwind CSS 4 + shadcn/ui (Radix UI) |
 | Animations | Motion 12.23 (motion/react) |
 | Formulaires | React Hook Form 7.67 + Zod 4.1 |
-| Voice AI | **ElevenLabs** Conversational AI — LLM `gpt-4.1-nano`, TTS `eleven_turbo_v2_5` |
+| Voice AI (appels réels) | **VAPI** — assistant IA vocal pour la prise de commande téléphonique |
+| Voice AI (preview UI) | **ElevenLabs** — aperçu voix dans les paramètres du dashboard uniquement |
 | Téléphonie | Twilio (provisioning numéros + SMS de confirmation) |
 | Email | Resend 6.5 + React Email |
 | AI Menu | OpenAI 6.17 (GPT-4o Vision, parsing menu depuis photos) |
@@ -51,7 +52,7 @@
 | Tests | Vitest 4 + Testing Library |
 | CI/CD | GitHub Actions (lint + tests + build) → Vercel + SonarCloud |
 
-> ⚠️ **Note migration :** Vapi (ancienne stack Voice AI) et NextAuth sont encore présents comme dépendances mais ne sont plus utilisés en production. Les champs `vapiAssistantId`, `vapiStructuredOutputIds`, `vapiPhoneNumberId` sont conservés en base pour compatibilité mais ignorés.
+> ℹ️ **Architecture Voice AI :** VAPI gère tous les appels téléphoniques réels. ElevenLabs est conservé uniquement pour la fonctionnalité de **prévisualisation de voix** dans l'interface paramètres du dashboard. NextAuth est conservé comme dépendance legacy (à retirer). Les champs `vapiAssistantId`, `vapiStructuredOutputIds`, `vapiPhoneNumberId` sont utilisés par VAPI.
 
 ---
 
@@ -83,71 +84,110 @@
 | Horaires d'ouverture | ✅ Complet | Par jour, créneaux simples ou midi/soir, timezone |
 | **Paramètres** | ✅ **NOUVEAU** | Transfert d'appel + voix assistant + upsell auto + SMS confirmation + auto-RUSH (seuil) |
 | Navigation | ✅ Complet | Sidebar rétractable : Dashboard, Menu, Horaires, Paramètres, Abonnement |
-| Mise à jour assistant | ✅ Complet | Synchronisation ElevenLabs automatique après modifications (menu, horaires, charge cuisine, paramètres) |
-| Abonnement | ✅ Complet | Gestion Stripe, statut abonnement, portail client |
+| Mise à jour assistant | ✅ Complet | Synchronisation VAPI automatique après modifications (menu, horaires, charge cuisine, paramètres) |
+| Abonnement | ✅ Complet | Gestion Stripe au niveau organisation, statut abonnement, portail client |
+| **Usage appels** | ✅ **NOUVEAU** | Minutes consommées, coût estimé, nombre d'appels, remise à zéro — lié à la période Stripe |
 
 ### 3.3 Panel Admin ✅
 
 | Fonctionnalité | Statut | Détails |
 |---------------|--------|---------|
-| Dashboard | ✅ Complet | Onglets Restaurants / Utilisateurs / Owners, KPIs |
+| Dashboard | ✅ Complet | Onglets Organisations / Restaurants / Utilisateurs, KPIs |
 | CRUD Restaurants | ✅ Complet | Création, édition, suppression, filtres, recherche, pagination |
-| CRUD Utilisateurs | ✅ Complet | Création, édition, suppression, envoi welcome/reset email |
+| CRUD Utilisateurs | ✅ Complet | Création (rôles ADMIN/OWNER/EMPLOYEE), édition, suppression, envoi welcome/reset email |
+| **CRUD Rôles** | ✅ **NOUVEAU** | Gestion des rôles personnalisés (nom + description). Rôles système ADMIN/OWNER/EMPLOYEE protégés en lecture seule |
 | Détail Restaurant | ✅ Complet | Onglets : Général, IA & Menu, Téléphonie, Facturation, HubRise |
 | Configuration IA | ✅ Complet | Création/mise à jour/suppression agent ElevenLabs, prompt système |
 | Configuration Téléphonie | ✅ Complet | Import numéro Twilio dans ElevenLabs + assignation à l'agent |
 | Configuration HubRise | ✅ Complet | Location ID + Access Token + Catalog ID |
 | Génération menu JSON | ✅ Complet | Endpoint admin pour parser les images via OpenAI |
-| Navigation | ✅ Complet | Sidebar admin avec détection staging/localhost |
+| Navigation | ✅ Complet | Sidebar admin : Dashboard + Rôles (sidebar simplifiée) |
 
 ### 3.4 Auth ✅
 
 | Fonctionnalité | Statut | Détails |
 |---------------|--------|---------|
-| Login | ✅ Complet | Email/password via Supabase Auth, rôles ADMIN/OWNER |
+| Login | ✅ Complet | Email/password via Supabase Auth, rôles ADMIN/OWNER/EMPLOYEE |
 | Changement mot de passe | ✅ Complet | Flow Supabase update-password |
-| Middleware | ✅ Complet | Routage par sous-domaine, protection par rôle, redirections |
+| Middleware | ✅ Complet | Routage par sous-domaine, protection par rôle : ADMIN → /admin, EMPLOYEE → /dashboard, OWNER → /org |
 | Mapping utilisateur | ✅ Complet | `authUserId` lie Supabase Auth → table `users` locale |
 | Déconnexion | ✅ Corrigé | Détection staging/localhost, redirige vers le bon domaine |
+| **Contrôle d'accès EMPLOYEE** | ✅ **NOUVEAU** | EMPLOYEE : accès commandes + statut cuisine uniquement. Menu, Horaires, Paramètres, /org bloqués. |
 
 ### 3.5 Intégrations
 
 | Service | Statut | Détails |
 |---------|--------|---------|
-| **ElevenLabs** | ✅ Fonctionnel | CRUD agent, prompt dynamique, tool `submit_order` (webhook), tool `transfer_to_number` (système, conditionnel), sync auto depuis dashboard restaurateur |
+| **ElevenLabs** | ✅ Fonctionnel | Prévisualisation voix uniquement (CRUD agent, sync auto depuis paramètres) |
+| **VAPI** | ✅ Fonctionnel | Appels téléphoniques réels : tool `submit_order` + `end-of-call-report` (enregistrement call_logs) |
 | **Twilio** | ✅ Fonctionnel | Import numéro dans ElevenLabs + SMS de confirmation commande au client |
 | **HubRise** | ✅ Fonctionnel | Lecture catalogue (fallback menu) + push commandes vers caisse |
 | **OpenAI** | ✅ Fonctionnel | Parsing menu depuis photos (GPT-4o Vision) |
 | **Resend** | ✅ Fonctionnel | Welcome email, reset password, formulaire contact |
 | **Stripe** | ✅ Fonctionnel | Webhooks abonnements (checkout.session.completed, subscription.updated/deleted) |
 
-### 3.6 Flux de commande vocale ✅ (OPÉRATIONNEL)
+### 3.6 Flux de commande vocale ✅ (OPÉRATIONNEL — VAPI)
 
 ```
-Client appelle → Numéro Twilio → ElevenLabs Conversational AI
-                                        ↓
-                          GPT-4.1-nano traite la conversation
-                          (menu injecté dans le prompt système)
-                                        ↓
-                    Si client veut parler à un humain (optionnel)
-                          → transfer_call → numéro restaurateur
-                                        ↓
-                    Fin de commande → tool submit_order
-                          → POST /api/elevenlabs/webhook
-                                        ↓
-                    Création commande en BDD (orders + order_items)
-                                        ↓
-                    SMS confirmation → client (Twilio)
-                          ↓                    ↓
-                  Dashboard restaurant     HubRise (si configuré)
-                  (commande visible)        (push vers caisse)
+Client appelle → Numéro Twilio → VAPI (assistant IA vocal)
+                                         ↓
+                           Prompt système dynamique :
+                           - Menu (menuData JSON ou HubRise catalog)
+                           - Horaires d'ouverture
+                           - Statut cuisine (CALM/RUSH/STOP)
+                           - Instructions transfert (si activé)
+                                         ↓
+                           LLM gère la conversation vocale
+                                         ↓
+                    ┌────────────────────┴─────────────────────┐
+                    │                                           │
+              Client demande              Client finalise
+              à parler au patron          sa commande
+                    │                                           │
+              transfer_call               submit_order
+              (VAPI built-in)         → POST /api/vapi/webhook?rid=<id>
+                    │                           │
+              Transfert vers                Commande BDD
+              numéro du restaurateur        (orders + order_items)
+                                            │           │
+                                      SMS client    HubRise push
+                                      (Twilio)      (si configuré)
+                                                         │
+                                      Fin d'appel → end-of-call-report
+                                      → POST /api/vapi/webhook?rid=<id>
+                                                         │
+                                               INSERT call_logs
+                                               (durée, statut, callId)
 ```
 
 ### 3.7 Tests
 
-- **191 tests** dans 24 fichiers (Vitest 4)
-- Scope : services (ElevenLabs, HubRise, Twilio, Stripe, menu parser, system prompt), features (orders, hours, kitchen-status, menu), utils, validators, composants
+- **213 tests** dans 28 fichiers (Vitest 4)
+- Scope : services (ElevenLabs, VAPI, HubRise, Twilio, Stripe, menu parser, system prompt), features (orders, hours, kitchen-status, menu, billing usage, restaurant switch), utils, validators, composants, API webhooks
 - Pipeline CI : lint → tests → build sur chaque push `develop`
+
+### 3.8 Organisations (multi-restaurants)
+
+| Élément | Statut | Détails |
+|---------|--------|----------|
+| Table `organizations` | ✅ Complet | Propriétaire, liens Stripe, restaurants liés |
+| FK `organizationId` sur `restaurants` | ✅ Complet | Chaque restaurant appartient à une organisation |
+| `getUserOrganization()` | ✅ Complet | Retourne l'org avec ses restaurants en une requête |
+| Stripe au niveau org | ✅ Complet | Checkout + webhook → mise à jour `organizations` + propagation aux `restaurants` |
+| Sélecteur de restaurant (sidebar) | ✅ Complet | Affiché si l'org a >1 restaurant, cookie `yallo_restaurant_id` |
+| `switchRestaurant()` server action | ✅ Complet | Sécurisé : valide l'appartenance via `restaurant_members` avant de poser le cookie |
+| **Tables membres** | ✅ **NOUVEAU** | `organization_members` (orgId, userId, role) + `restaurant_members` (restaurantId, userId, role) |
+| **Accès restaurant EMPLOYEE** | ✅ **NOUVEAU** | `getAccessibleRestaurant()` / `getAccessibleRestaurantForUser()` — résoud le restaurant actif via `restaurant_members` (support OWNER + EMPLOYEE) |
+
+### 3.9 Facturation à la minute (call_logs)
+
+| Élément | Statut | Détails |
+|---------|--------|----------|
+| Table `call_logs` | ✅ Complet | Par appel : restaurantId, organizationId, provider, durée, statut |
+| VAPI `end-of-call-report` | ✅ Complet | Webhook qui insère dans `call_logs` (idempotent via `onConflictDoNothing`) |
+| `getCallUsageForCurrentPeriod()` | ✅ Complet | Agrège minutes + coût pour la période de facturation Stripe en cours |
+| Page Abonnement (usage) | ✅ Complet | 4 cartes : Minutes consommées, Coût estimé, Appels traités, Remise à zéro |
+| Tarif par plan | ✅ Complet | 19 cts/min (Essentiel), 17 cts/min (Pro), 15 cts/min (Business) |
 
 ---
 
@@ -167,8 +207,8 @@ Client appelle → Numéro Twilio → ElevenLabs Conversational AI
 **Actuellement :** La page `/demo` affiche `0000000000`.
 
 **À faire :**
-- Configurer un numéro ElevenLabs/Twilio de démo réel
-- Ou intégrer le widget web ElevenLabs pour tester depuis le navigateur
+- Configurer un numéro VAPI/Twilio de démo réel
+- Ou intégrer le widget web VAPI pour tester depuis le navigateur
 
 #### 4.1.3 Formulaire de contact – Sujets tarifaires
 **Actuellement :** Les liens pricing utilisent des slugs (`plan-starter`, `plan-essential`, etc.) que le formulaire de contact ne reconnaît pas.
@@ -200,14 +240,13 @@ Client appelle → Numéro Twilio → ElevenLabs Conversational AI
 
 **À faire :**
 - Remplacer par les vraies données d'immatriculation
-- Créer la page `/confidentialite` (lien présent mais cible inexistante)
 
-#### 4.2.4 Nettoyage champs Vapi obsolètes
-**Actuellement :** `vapiAssistantId`, `vapiStructuredOutputIds`, `vapiPhoneNumberId` existent encore en DB et dans le schéma.
+#### 4.2.4 Planification tarifaire — stripePriceId → plan mapping
+**Actuellement :** `getCallUsageForCurrentPeriod()` utilise un fallback hardcodé sur le tarif Essentiel (19 cts/min).
 
 **À faire :**
-- Migration de suppression de ces colonnes (après confirmation aucun restaurant actif en Vapi)
-- Retirer NextAuth des dépendances package.json
+- Stocker le `planId` dans `organizations.metadata` lors du checkout Stripe
+- Mapper `stripePriceId` → plan pour calculer le bon tarif à la minute
 
 ### 4.3 🟡 SOUHAITABLE
 
@@ -232,11 +271,13 @@ Client appelle → Numéro Twilio → ElevenLabs Conversational AI
 - Augmenter la couverture sur les actions critiques (settings, billing)
 - Objectif ≥ 40% pour le Quality Gate
 
-#### 4.3.4 FAQ – Cohérence tarifaire
-**Actuellement :** La FAQ mentionne des taux de commission fixes alors que les plans sont en BDD.
+#### 4.3.4 Multi-site — filtrage données par restaurant sélectionné
+**Actuellement :** La sidebar affiche le sélecteur de restaurant (cookie `yallo_restaurant_id`). Les commandes et KPIs respectent déjà la sélection via `getUserRestaurant()`.
 
-**À faire :**
-- Rendre la FAQ dynamique ou aligner les chiffres
+**À faire (si org avec >1 restaurants) :**
+- Vue agrégée "Tous les sites" pour les KPIs du dashboard
+- Filtrage des exports / analytics par restaurant
+- Vérifier que toutes les pages dashboard respectent bien le cookie de sélection
 
 ### 4.4 🔵 POST-V1 – Améliorations futures
 
@@ -246,8 +287,10 @@ Client appelle → Numéro Twilio → ElevenLabs Conversational AI
 | **Tableau de bord analytique** | Graphiques avancés, historique commandes, export CSV |
 | **Notifications push PWA** | Push notifications pour nouvelles commandes |
 | **Mode hors-ligne** | Cache des commandes en cours si perte de connexion |
-| **Upsell intelligent** | Aller au-delà de l'upsell actuel (déjà en place) avec suggestions contextuelles basées sur l'historique, panier et statut cuisine |
+| **Upsell intelligent** | Suggestions contextuelles basées sur l'historique, panier et statut cuisine |
 | **Multi-langue** | Support anglais pour l'agent vocal et le dashboard |
+| **Webhook entrant HubRise** | Réception d'événements HubRise (ex : changement statut commande) |
+| **Analytics appels** | Graphique minutes/jour, taux de no-answer, durée moyenne par restaurant |
 | **Webhook entrant HubRise** | Réception d'événements HubRise (ex : changement statut commande) |
 
 ---
@@ -261,11 +304,52 @@ users
 ├── email (text, unique, not null)
 ├── firstName (text, nullable)
 ├── lastName (text, nullable)
-├── role (ADMIN | OWNER, default OWNER)
+├── role (ADMIN | OWNER | EMPLOYEE, default OWNER)
 └── createdAt (timestamp)
+
+organization_members                  ← NOUVEAU (contrôle d'accès)
+├── id (uuid, PK)
+├── organizationId (uuid, FK → organizations)
+├── userId (uuid, FK → users)
+├── role (owner | member, default member)
+└── UNIQUE (organizationId, userId)
+
+restaurant_members                    ← NOUVEAU (contrôle d'accès)
+├── id (uuid, PK)
+├── restaurantId (uuid, FK → restaurants)
+├── userId (uuid, FK → users)
+├── role (owner | member, default member)
+└── UNIQUE (restaurantId, userId)
+
+roles                                 ← NOUVEAU (référentiel rôles)
+├── id (uuid, PK)
+├── name (text, unique, not null)   ← ADMIN / OWNER / EMPLOYEE + rôles custom
+├── description (text, nullable)
+└── createdAt (timestamp)
+
+Note : La protection des rôles système (ADMIN/OWNER/EMPLOYEE) est assurée
+       par validation côté serveur sur le nom — pas de colonne is_system.
+
+organizations                         ← NOUVEAU (multi-restaurants)
+├── id (uuid, PK)
+├── name (text, not null)
+├── ownerId (uuid, FK → users)
+│
+├── -- Stripe (facturation au niveau organisation) --
+├── stripeCustomerId (text, nullable)
+├── stripeSubscriptionId (text, nullable)
+├── stripeSubscriptionStatus (text, nullable)
+├── stripePriceId (text, nullable)
+├── stripeCurrentPeriodEnd (timestamp, nullable)
+├── billingStartDate (text, nullable)
+│
+├── isActive (boolean, default true)
+├── createdAt (timestamp)
+└── updatedAt (timestamp)
 
 restaurants
 ├── id (uuid, PK)
+├── organizationId (uuid, FK → organizations) ← NOUVEAU
 ├── name (text, not null)
 ├── address (text, nullable)
 ├── phoneNumber (text, not null)  ← numéro de contact public du restaurant
@@ -275,25 +359,17 @@ restaurants
 ├── plan (fixed | commission, default commission)
 ├── commissionRate (integer, default 5)
 │
-├── -- Stripe --
-├── stripeCustomerId (text, nullable)
-├── stripeSubscriptionId (text, nullable)
-├── stripeSubscriptionStatus (text, nullable)
-├── stripePriceId (text, nullable)
-├── stripeCurrentPeriodEnd (timestamp, nullable)
-├── billingStartDate (text, nullable)
-│
-├── -- ElevenLabs (actif) --
+├── -- ElevenLabs (preview voix uniquement) --
 ├── elevenLabsAgentId (text, nullable)
 ├── elevenLabsPhoneNumberId (text, nullable)
 │
-├── -- Vapi (déprécié, à supprimer) --
+├── -- VAPI (appels réels) --
 ├── vapiAssistantId (text, nullable)
 ├── vapiStructuredOutputIds (text, nullable)
 ├── vapiPhoneNumberId (text, nullable)
 │
 ├── -- Téléphonie --
-├── twilioPhoneNumber (text, nullable)        ← numéro Twilio importé dans ElevenLabs
+├── twilioPhoneNumber (text, nullable)        ← numéro Twilio dans VAPI
 ├── forwardingPhoneNumber (text, nullable)    ← numéro du restaurateur pour transfert
 ├── callForwardingEnabled (boolean, default false)
 │
@@ -314,6 +390,20 @@ restaurants
 │
 ├── createdAt (timestamp)
 └── updatedAt (timestamp)
+
+call_logs                             ← NOUVEAU (facturation à la minute)
+├── id (uuid, PK)
+├── restaurantId (uuid, FK → restaurants)
+├── organizationId (uuid, FK → organizations)
+├── externalCallId (text, not null)  ← call.id depuis VAPI
+├── provider (vapi | elevenlabs)
+├── durationSeconds (integer, nullable)
+├── startedAt (timestamp, nullable)
+├── endedAt (timestamp, nullable)
+├── status (completed | failed | no-answer, default completed)
+├── createdAt (timestamp)
+│
+└── UNIQUE INDEX (externalCallId, provider)  ← idempotence webhook
 
 orders
 ├── id (uuid, PK)

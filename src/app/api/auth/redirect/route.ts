@@ -43,7 +43,7 @@ export async function GET() {
         ? buildAppUrl("/update-password", host)
         : user.role === "ADMIN"
           ? buildAppUrl("/admin", host)
-          : buildAppUrl("/dashboard", host);
+          : buildAppUrl("/org", host);
 
     const response = NextResponse.redirect(redirectUrl, 307);
     response.cookies.set("userRole", user.role, {

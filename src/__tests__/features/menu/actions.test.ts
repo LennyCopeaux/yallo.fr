@@ -5,9 +5,11 @@ import { getMenuData, saveMenuData, generateMenuFromImages, clearMenuData } from
 import type { AppUser } from "@/lib/auth";
 
 const mockRequireAuth = vi.fn<() => Promise<AppUser>>();
+const mockGetAccessibleRestaurant = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   requireAuth: () => mockRequireAuth(),
+  getAccessibleRestaurant: () => mockGetAccessibleRestaurant(),
 }));
 
 vi.mock("@/db", () => ({
@@ -68,11 +70,7 @@ describe("menu actions", () => {
 
     it("should throw error when no restaurant found", async () => {
       mockRequireAuth.mockResolvedValue(mockOwner);
-      vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([]),
-        }),
-      } as unknown as ReturnType<typeof db.select>);
+      mockGetAccessibleRestaurant.mockResolvedValue(null);
 
       await expect(getMenuData()).rejects.toThrow("Restaurant non trouvé");
     });
@@ -83,11 +81,7 @@ describe("menu actions", () => {
         option_lists: [],
       };
       mockRequireAuth.mockResolvedValue(mockOwner);
-      vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ menuData: mockMenuData }]),
-        }),
-      } as unknown as ReturnType<typeof db.select>);
+      mockGetAccessibleRestaurant.mockResolvedValue({ id: "rest-1", menuData: mockMenuData, vapiAssistantId: null });
 
       const result = await getMenuData();
 
@@ -96,11 +90,7 @@ describe("menu actions", () => {
 
     it("should return null when menuData is not set", async () => {
       mockRequireAuth.mockResolvedValue(mockOwner);
-      vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ menuData: null }]),
-        }),
-      } as unknown as ReturnType<typeof db.select>);
+      mockGetAccessibleRestaurant.mockResolvedValue({ id: "rest-1", menuData: null, vapiAssistantId: null });
 
       const result = await getMenuData();
 

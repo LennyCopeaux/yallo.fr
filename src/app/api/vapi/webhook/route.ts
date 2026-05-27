@@ -1,11 +1,12 @@
 import { db } from "@/db";
-import { orders, orderItems, restaurants } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { orders, orderItems, restaurants, callLogs } from "@/db/schema";
+import { eq, and, inArray, count } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { pushVoiceOrderToHubrise } from "@/lib/services/hubrise";
 import { normalizeSubmitOrderPayload } from "@/lib/services/submit-order-args";
 import { trySendOrderConfirmationSms } from "@/lib/services/twilio-sms";
+import { updateVapiAssistant } from "@/lib/services/vapi-agent";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -23,8 +24,15 @@ interface ToolCall {
 interface VapiWebhookBody {
   message?: {
     type: string;
+    /** Présent pour type=tool-calls */
     toolCallList?: ToolCall[];
+    /** Présent pour type=end-of-call-report */
+    durationSeconds?: number;
+    endedReason?: string;
     call?: {
+      id?: string;
+      startedAt?: string;
+      endedAt?: string;
       customer?: {
         number?: string;
       };
@@ -181,7 +189,51 @@ async function handleSubmitOrder(
     totalAmount,
   });
 
-  if (process.env.TWILIO_ORDER_CONFIRMATION_SMS !== "false") {
+  if (
+    restaurant.autoRushThreshold !== null &&
+    restaurant.autoRushThreshold !== undefined &&
+    restaurant.currentStatus !== "RUSH"
+  ) {
+    try {
+      const [{ value: activeOrderCount }] = await db
+        .select({ value: count() })
+        .from(orders)
+        .where(
+          and(
+            eq(orders.restaurantId, restaurant.id),
+            inArray(orders.status, ["NEW", "PREPARING"])
+          )
+        );
+
+      if (activeOrderCount >= restaurant.autoRushThreshold) {
+        await db
+          .update(restaurants)
+          .set({ currentStatus: "RUSH", updatedAt: new Date() })
+          .where(eq(restaurants.id, restaurant.id));
+
+        if (restaurant.vapiAssistantId) {
+          await updateVapiAssistant(restaurant.vapiAssistantId, {
+            ...restaurant,
+            currentStatus: "RUSH",
+          });
+        }
+
+        logger.info("Passage automatique en RUSH", {
+          restaurantId: restaurant.id,
+          activeOrderCount,
+          threshold: restaurant.autoRushThreshold,
+        });
+      }
+    } catch (rushErr) {
+      logger.error(
+        "Erreur lors du calcul auto-rush",
+        rushErr instanceof Error ? rushErr : new Error(String(rushErr)),
+        { restaurantId: restaurant.id }
+      );
+    }
+  }
+
+  if (restaurant.smsConfirmationEnabled && process.env.TWILIO_ORDER_CONFIRMATION_SMS !== "false") {
     const fromRaw = process.env.TWILIO_SMS_FROM?.trim() || restaurant.twilioPhoneNumber?.trim();
     const toRaw = args.customer_phone?.trim();
     if (fromRaw && toRaw) {
@@ -203,6 +255,78 @@ async function handleSubmitOrder(
     success: true,
     order_number: orderNumber,
     message: `La commande ${orderNumber} a été enregistrée avec succès.`,
+  });
+}
+
+/**
+ * Enregistre un appel terminé dans call_logs.
+ * Appelé sur réception d'un message de type "end-of-call-report" depuis VAPI.
+ */
+async function handleEndOfCall(
+  restaurantId: string,
+  message: NonNullable<VapiWebhookBody["message"]>
+): Promise<void> {
+  const callId = message.call?.id;
+  const durationSeconds = message.durationSeconds;
+
+  if (!callId) {
+    logger.warn("Webhook VAPI end-of-call-report : call.id manquant", { restaurantId });
+    return;
+  }
+
+  if (typeof durationSeconds !== "number" || durationSeconds < 0) {
+    logger.warn("Webhook VAPI end-of-call-report : durationSeconds invalide", {
+      restaurantId,
+      callId,
+      durationSeconds,
+    });
+    return;
+  }
+
+  const [restaurant] = await db
+    .select({ id: restaurants.id, organizationId: restaurants.organizationId })
+    .from(restaurants)
+    .where(eq(restaurants.id, restaurantId))
+    .limit(1);
+
+  if (!restaurant) {
+    logger.warn("Webhook VAPI end-of-call-report : restaurant introuvable", { restaurantId });
+    return;
+  }
+
+  if (!restaurant.organizationId) {
+    logger.warn("Webhook VAPI end-of-call-report : restaurant sans organisation", { restaurantId });
+    return;
+  }
+
+  const startedAt = message.call?.startedAt ? new Date(message.call.startedAt) : null;
+  const endedAt = message.call?.endedAt ? new Date(message.call.endedAt) : null;
+  const endedReason = message.endedReason ?? "completed";
+  const status = (endedReason === "customer-ended-call" || endedReason === "assistant-ended-call")
+    ? "completed" as const
+    : endedReason === "no-answer"
+      ? "no-answer" as const
+      : "completed" as const;
+
+  await db
+    .insert(callLogs)
+    .values({
+      restaurantId: restaurant.id,
+      organizationId: restaurant.organizationId,
+      externalCallId: callId,
+      provider: "vapi",
+      durationSeconds: Math.round(durationSeconds),
+      startedAt,
+      endedAt,
+      status,
+    })
+    .onConflictDoNothing(); // idempotent si le webhook est rejoué
+
+  logger.info("Appel VAPI enregistré dans call_logs", {
+    restaurantId,
+    callId,
+    durationSeconds,
+    status,
   });
 }
 
@@ -279,6 +403,20 @@ export async function POST(request: Request) {
         },
         { status: 200 }
       );
+    }
+
+    // Traiter la fin d'appel (end-of-call-report)
+    if (message?.type === "end-of-call-report" && restaurantId) {
+      try {
+        await handleEndOfCall(restaurantId, message);
+      } catch (err) {
+        logger.error(
+          "Erreur handleEndOfCall VAPI",
+          err instanceof Error ? err : new Error(String(err)),
+          { restaurantId }
+        );
+      }
+      return NextResponse.json({}, { status: 200 });
     }
 
     // Ignorer les messages qui ne sont pas des tool calls

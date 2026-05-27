@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { OrdersGrid } from "./orders-grid";
+import Link from "next/link";
 import { type Order } from "@/components/orders";
 import { 
   TrendingUp, 
@@ -12,21 +10,19 @@ import {
   Clock, 
   DollarSign,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  ChevronRight,
 } from "lucide-react";
 
 interface DashboardContentProps {
   orders: Order[];
 }
 
-type FilterStatus = "all" | "new" | "preparing" | "completed";
-
 type DeltaMeta =
   | { kind: "increase" | "decrease" | "flat"; value: number }
   | { kind: "new" };
 
 export function DashboardContent({ orders }: Readonly<DashboardContentProps>) {
-  const [filter, setFilter] = useState<FilterStatus>("all");
 
   const getDeltaMeta = (current: number, previous: number): DeltaMeta => {
     if (previous === 0 && current === 0) {
@@ -125,25 +121,6 @@ export function DashboardContent({ orders }: Readonly<DashboardContentProps>) {
   
   const newOrders = orders.filter((o) => o.status === "NEW");
   const preparingOrders = orders.filter((o) => o.status === "PREPARING");
-  const completedOrders = orders.filter(
-    (o) => o.status === "DELIVERED" || o.status === "CANCELLED"
-  );
-
-  // Filtrer les commandes selon le filtre actif
-  const filteredOrders = (() => {
-    switch (filter) {
-      case "new":
-        return orders.filter((o) => o.status === "NEW");
-      case "preparing":
-        return orders.filter((o) => o.status === "PREPARING");
-      case "completed":
-        return orders.filter(
-          (o) => o.status === "DELIVERED" || o.status === "CANCELLED"
-        );
-      default:
-        return orders;
-    }
-  })();
 
   return (
     <div className="space-y-8">
@@ -277,64 +254,28 @@ export function DashboardContent({ orders }: Readonly<DashboardContentProps>) {
         </CardContent>
       </Card>
 
-      {/* Orders Section with Filters */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-xl flex items-center gap-2">
-                <span className="text-2xl">📋</span>{" "}
-                Suivi des Commandes
-              </CardTitle>
-              <CardDescription className="mt-1">
-                Gérez vos commandes en temps réel
-              </CardDescription>
+      {/* CTA → page Commandes */}
+      <Link href="/dashboard/orders">
+        <Card className="bg-card border-border hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer group">
+          <CardContent className="flex items-center justify-between p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <ShoppingCart className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-base">Suivi des commandes</p>
+                <p className="text-sm text-muted-foreground">
+                  {newOrders.length > 0 ? (
+                    <span className="text-blue-500 font-medium">{newOrders.length} nouvelle{newOrders.length > 1 ? "s" : ""} • </span>
+                  ) : null}
+                  {preparingOrders.length} en préparation aujourd&apos;hui
+                </p>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Filter Tabs */}
-          <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterStatus)}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="all" className="relative">
-                Toutes
-                {orders.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
-                    {orders.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="new" className="relative">
-                Nouvelles
-                {newOrders.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs bg-blue-500/20 text-blue-600">
-                    {newOrders.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="preparing" className="relative">
-                En préparation
-                {preparingOrders.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs bg-orange-500/20 text-orange-600">
-                    {preparingOrders.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="completed" className="relative">
-                Terminées
-                {completedOrders.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
-                    {completedOrders.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          {/* Orders Grid */}
-          <OrdersGrid initialOrders={filteredOrders} />
-        </CardContent>
-      </Card>
+            <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+          </CardContent>
+        </Card>
+      </Link>
     </div>
   );
 }

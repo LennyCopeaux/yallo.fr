@@ -152,23 +152,25 @@ export function VoicePickerCard({ initialVoiceId, voices }: VoicePickerCardProps
           </div>
         )}
 
-        <Button
-          onClick={handleSave}
-          disabled={!isDirty || !selectedVoiceId || isPending}
-          className="gap-2"
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Sauvegarde…
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" />
-              Sauvegarder
-            </>
-          )}
-        </Button>
+        <div className="flex justify-end pt-2">
+          <Button
+            onClick={handleSave}
+            disabled={!isDirty || !selectedVoiceId || isPending}
+            className="gap-2"
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Sauvegarde…
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Sauvegarder
+              </>
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

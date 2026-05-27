@@ -1,6 +1,6 @@
 "use server";
 
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, getAccessibleRestaurant } from "@/lib/auth";
 import { db } from "@/db";
 import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -40,20 +40,18 @@ export async function getBusinessHours(): Promise<ActionResult> {
   if (user.role === "ADMIN") {
     return { success: false, error: "Un restaurant doit être spécifié pour les admins" };
   }
+  if (user.role === "EMPLOYEE") {
+    return { success: false, error: "Accès non autorisé" };
+  }
 
-  const [ownerRestaurant] = await db
-    .select({ businessHours: restaurants.businessHours })
-    .from(restaurants)
-    .where(eq(restaurants.ownerId, user.id))
-    .limit(1);
-
-  if (!ownerRestaurant) return { success: false, error: "Aucun restaurant trouvé" };
-  if (!ownerRestaurant.businessHours) {
+  const restaurant = await getAccessibleRestaurant();
+  if (!restaurant) return { success: false, error: "Aucun restaurant trouvé" };
+  if (!restaurant.businessHours) {
     return { success: true, data: { timezone: "Europe/Paris", schedule: {} } };
   }
 
   try {
-    const parsedHours = JSON.parse(ownerRestaurant.businessHours);
+    const parsedHours = JSON.parse(restaurant.businessHours);
     const validationResult = businessHoursSchema.safeParse(parsedHours);
     if (!validationResult.success || !parsedHours.schedule || Object.keys(parsedHours.schedule).length === 0) {
       return { success: true, data: { timezone: "Europe/Paris", schedule: {} } };
@@ -69,14 +67,12 @@ export async function updateBusinessHours(formData: FormData): Promise<ActionRes
   if (user.role === "ADMIN") {
     return { success: false, error: "Un restaurant doit être spécifié pour les admins" };
   }
+  if (user.role === "EMPLOYEE") {
+    return { success: false, error: "Accès non autorisé" };
+  }
 
-  const [ownerRestaurant] = await db
-    .select()
-    .from(restaurants)
-    .where(eq(restaurants.ownerId, user.id))
-    .limit(1);
-
-  if (!ownerRestaurant) return { success: false, error: "Aucun restaurant trouvé" };
+  const restaurant = await getAccessibleRestaurant();
+  if (!restaurant) return { success: false, error: "Aucun restaurant trouvé" };
 
   const hoursInput = formData.get("businessHours");
   if (!hoursInput || typeof hoursInput !== "string") {
@@ -90,12 +86,12 @@ export async function updateBusinessHours(formData: FormData): Promise<ActionRes
     await db
       .update(restaurants)
       .set({ businessHours: JSON.stringify(validatedHours), updatedAt: new Date() })
-      .where(eq(restaurants.id, ownerRestaurant.id));
+      .where(eq(restaurants.id, restaurant.id));
 
-    if (ownerRestaurant.vapiAssistantId) {
+    if (restaurant.vapiAssistantId) {
       try {
-        await updateVapiAssistant(ownerRestaurant.vapiAssistantId, {
-          ...ownerRestaurant,
+        await updateVapiAssistant(restaurant.vapiAssistantId, {
+          ...restaurant,
           businessHours: JSON.stringify(validatedHours),
         });
       } catch (err) {
