@@ -167,17 +167,25 @@ describe("fetchHubriseCatalog", () => {
     );
   });
 
-  it("devrait utiliser l’ID catalogue imposé sans appeler la liste", async () => {
+  it("devrait récupérer le catalogue sélectionné automatiquement", async () => {
+    const catalogsList = [listItem("1rbmp", "Menu principal", "2026-01-01T00:00:00Z")];
     const catalogData = { id: "1rbmp", data: { categories: [], products: [] } };
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(catalogData),
-    });
 
-    const result = await fetchHubriseCatalog("valid-token", "location-123", "1rbmp");
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(catalogsList),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(catalogData),
+      });
 
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(mockFetch).toHaveBeenCalledWith(
+    const result = await fetchHubriseCatalog("valid-token", "location-123");
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
       "https://api.hubrise.com/v1/catalogs/1rbmp",
       expect.objectContaining({ method: "GET" })
     );

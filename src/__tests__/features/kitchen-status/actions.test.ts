@@ -3,23 +3,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getKitchenStatus, updateKitchenStatus, updateStatusSettings, type StatusSettings } from "@/features/kitchen-status/actions";
 import { db } from "@/db";
-import { getAppUser, requireAuth } from "@/lib/auth";
+import { getAccessibleRestaurant, requireAuth } from "@/lib/auth";
 import { DEFAULT_STATUS_SETTINGS } from "@/features/kitchen-status/constants";
-import type { SelectRestaurant, KitchenStatus } from "@/db/schema";
+import type { KitchenStatus } from "@/db/schema";
 
 vi.mock("@/db", () => ({
   db: {
-    query: {
-      restaurants: {
-        findFirst: vi.fn(),
-      },
-    },
     update: vi.fn(),
   },
 }));
 
 vi.mock("@/lib/auth", () => ({
-  getAppUser: vi.fn(),
+  getAccessibleRestaurant: vi.fn(),
   requireAuth: vi.fn(),
 }));
 
@@ -44,15 +39,13 @@ describe("Kitchen Status Actions", () => {
 
   describe("getKitchenStatus", () => {
     it("should return kitchen status for authenticated user", async () => {
-      vi.mocked(getAppUser).mockResolvedValue(mockOwner);
-
       const mockRestaurant = {
         id: "rest-123",
         currentStatus: "NORMAL",
         statusSettings: { CALM: { fixed: 5 }, NORMAL: { min: 10, max: 15 } },
       };
 
-      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as unknown as SelectRestaurant | undefined);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue(mockRestaurant as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
 
       const result = await getKitchenStatus();
 
@@ -60,15 +53,13 @@ describe("Kitchen Status Actions", () => {
     });
 
     it("should initialize default settings if none exist", async () => {
-      vi.mocked(getAppUser).mockResolvedValue(mockOwner);
-
       const mockRestaurant = {
         id: "rest-123",
         currentStatus: "NORMAL",
         statusSettings: null,
       };
 
-      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as unknown as SelectRestaurant | undefined);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue(mockRestaurant as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
 
       const updateMock = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
@@ -84,7 +75,7 @@ describe("Kitchen Status Actions", () => {
     });
 
     it("should return null for unauthenticated user", async () => {
-      vi.mocked(getAppUser).mockResolvedValue(null);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue(null);
 
       const result = await getKitchenStatus();
 
@@ -92,9 +83,7 @@ describe("Kitchen Status Actions", () => {
     });
 
     it("should return null if restaurant not found", async () => {
-      vi.mocked(getAppUser).mockResolvedValue(mockOwner);
-
-      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(undefined);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue(null);
 
       const result = await getKitchenStatus();
 
@@ -108,7 +97,7 @@ describe("Kitchen Status Actions", () => {
 
       const mockRestaurant = { id: "rest-123", ownerId: "user-123" };
 
-      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as unknown as SelectRestaurant | undefined);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue(mockRestaurant as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
 
       const updateMock = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
@@ -138,7 +127,7 @@ describe("Kitchen Status Actions", () => {
     it("should throw error if restaurant not found", async () => {
       vi.mocked(requireAuth).mockResolvedValue(mockOwner);
 
-      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(undefined);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue(null);
 
       await expect(updateKitchenStatus("NORMAL")).rejects.toThrow("Restaurant non trouvé");
     });
@@ -156,7 +145,7 @@ describe("Kitchen Status Actions", () => {
 
       const newSettings = { NORMAL: { min: 10, max: 15 } };
 
-      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as unknown as SelectRestaurant | undefined);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue(mockRestaurant as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
 
       const updateMock = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
@@ -182,7 +171,7 @@ describe("Kitchen Status Actions", () => {
 
       const newSettings = { NORMAL: { min: 10, max: 15 } };
 
-      vi.mocked(db.query.restaurants.findFirst).mockResolvedValue(mockRestaurant as unknown as SelectRestaurant | undefined);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue(mockRestaurant as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
 
       const setFn = vi.fn().mockReturnValue({
         where: vi.fn().mockResolvedValue(undefined),

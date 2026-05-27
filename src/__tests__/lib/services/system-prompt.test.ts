@@ -35,11 +35,9 @@ describe("generateSystemPrompt", () => {
     commissionRate: 5,
     stripeCustomerId: null,
     billingStartDate: null,
+    organizationId: null,
     vapiAssistantId: null,
-    vapiStructuredOutputIds: null,
     vapiPhoneNumberId: null,
-    elevenLabsAgentId: null,
-    elevenLabsPhoneNumberId: null,
     systemPrompt: null,
     menuContext: null,
     menuData: null,
@@ -49,7 +47,6 @@ describe("generateSystemPrompt", () => {
     businessHours: "Lundi-Vendredi: 10h-22h",
     hubriseLocationId: "test-location",
     hubriseAccessToken: "test-token",
-    hubriseCatalogId: null as string | null,
     currentStatus: "CALM" as const,
     statusSettings: null,
     stripeSubscriptionId: null,
@@ -76,7 +73,7 @@ describe("generateSystemPrompt", () => {
 
     const prompt = await generateSystemPrompt(mockRestaurant);
 
-    expect(fetchHubriseCatalog).toHaveBeenCalledWith("test-token", "test-location", null);
+    expect(fetchHubriseCatalog).toHaveBeenCalledWith("test-token", "test-location");
     expect(prompt).toContain("Test Restaurant");
     expect(prompt).toContain("Lundi-Vendredi: 10h-22h");
   });
@@ -107,7 +104,6 @@ describe("generateSystemPrompt", () => {
       ...mockRestaurant,
       hubriseAccessToken: null as string | null,
       hubriseLocationId: null as string | null,
-      hubriseCatalogId: null as string | null,
     };
 
     const prompt = await generateSystemPrompt(restaurantWithoutHubrise);

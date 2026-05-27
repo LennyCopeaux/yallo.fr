@@ -2,17 +2,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getBusinessHours, updateBusinessHours } from "@/features/hours/actions";
 import { db } from "@/db";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, getAccessibleRestaurant } from "@/lib/auth";
 
 vi.mock("@/db", () => ({
   db: {
-    select: vi.fn(),
     update: vi.fn(),
   },
 }));
 
 vi.mock("@/lib/auth", () => ({
   requireAuth: vi.fn(),
+  getAccessibleRestaurant: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -55,14 +55,7 @@ describe("Business Hours Actions", () => {
         },
       };
 
-      const selectMock = vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ businessHours: JSON.stringify(mockHours) }]),
-          }),
-        }),
-      });
-      vi.mocked(db.select).mockReturnValue(selectMock() as unknown as ReturnType<typeof db.select>);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue({ id: "rest-123", businessHours: JSON.stringify(mockHours), vapiAssistantId: null } as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
 
       const result = await getBusinessHours();
 
@@ -73,14 +66,7 @@ describe("Business Hours Actions", () => {
     it("should return default empty schedule if no hours set", async () => {
       vi.mocked(requireAuth).mockResolvedValue(mockOwner);
 
-      const selectMock = vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ businessHours: null }]),
-          }),
-        }),
-      });
-      vi.mocked(db.select).mockReturnValue(selectMock() as unknown as ReturnType<typeof db.select>);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue({ id: "rest-123", businessHours: null, vapiAssistantId: null } as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
 
       const result = await getBusinessHours();
 
@@ -106,14 +92,7 @@ describe("Business Hours Actions", () => {
     it("should return error if restaurant not found", async () => {
       vi.mocked(requireAuth).mockResolvedValue(mockOwner);
 
-      const selectMock = vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([]),
-          }),
-        }),
-      });
-      vi.mocked(db.select).mockReturnValue(selectMock() as unknown as ReturnType<typeof db.select>);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue(null);
 
       const result = await getBusinessHours();
 
@@ -124,14 +103,7 @@ describe("Business Hours Actions", () => {
     it("should handle invalid JSON gracefully", async () => {
       vi.mocked(requireAuth).mockResolvedValue(mockOwner);
 
-      const selectMock = vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ businessHours: "invalid json" }]),
-          }),
-        }),
-      });
-      vi.mocked(db.select).mockReturnValue(selectMock() as unknown as ReturnType<typeof db.select>);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue({ id: "rest-123", businessHours: "invalid json", vapiAssistantId: null } as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
 
       const result = await getBusinessHours();
 
@@ -151,20 +123,12 @@ describe("Business Hours Actions", () => {
         },
       };
 
-      const selectMock = vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ id: "rest-123" }]),
-          }),
-        }),
-      });
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue({ id: "rest-123", vapiAssistantId: null } as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
       const updateMock = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue(undefined),
         }),
       });
-
-      vi.mocked(db.select).mockReturnValue(selectMock() as unknown as ReturnType<typeof db.select>);
       vi.mocked(db.update).mockReturnValue(updateMock() as unknown as ReturnType<typeof db.update>);
 
       const formData = new FormData();
@@ -179,14 +143,7 @@ describe("Business Hours Actions", () => {
     it("should return error for invalid form data", async () => {
       vi.mocked(requireAuth).mockResolvedValue(mockOwner);
 
-      const selectMock = vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ id: "rest-123" }]),
-          }),
-        }),
-      });
-      vi.mocked(db.select).mockReturnValue(selectMock() as unknown as ReturnType<typeof db.select>);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue({ id: "rest-123", vapiAssistantId: null } as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
 
       const formData = new FormData();
 
@@ -199,14 +156,7 @@ describe("Business Hours Actions", () => {
     it("should return error for invalid JSON", async () => {
       vi.mocked(requireAuth).mockResolvedValue(mockOwner);
 
-      const selectMock = vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ id: "rest-123" }]),
-          }),
-        }),
-      });
-      vi.mocked(db.select).mockReturnValue(selectMock() as unknown as ReturnType<typeof db.select>);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue({ id: "rest-123", vapiAssistantId: null } as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
 
       const formData = new FormData();
       formData.append("businessHours", "invalid json");
