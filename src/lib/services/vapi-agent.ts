@@ -214,6 +214,7 @@ function buildAnalysisPlan() {
 
 function buildAssistantConfig(restaurant: Restaurant, systemPrompt: string) {
   const webhookUrl = getWebhookUrl(restaurant.id);
+  const webhookSecret = getWebhookSecret();
   const voiceId = restaurant.voiceId?.trim() || process.env.VAPI_VOICE_ID?.trim() || DEFAULT_VOICE_ID;
   const llmModel = process.env.VAPI_LLM_MODEL?.trim() || DEFAULT_LLM_MODEL;
   const llmTemperature =
@@ -259,6 +260,15 @@ function buildAssistantConfig(restaurant: Restaurant, systemPrompt: string) {
     },
     firstMessage: `Bonjour ici ${restaurant.name}, je vous écoute`,
     analysisPlan: buildAnalysisPlan(),
+    // Server URL au niveau assistant pour recevoir end-of-call-report (stats d'appels)
+    ...(webhookUrl
+      ? {
+          server: {
+            url: webhookUrl,
+            ...(webhookSecret ? { secret: webhookSecret } : {}),
+          },
+        }
+      : {}),
   };
 }
 

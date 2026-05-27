@@ -453,6 +453,12 @@ export async function POST(request: Request) {
           ? (JSON.parse(rawArgs) as Record<string, unknown>)
           : (rawArgs ?? {});
 
+      // Fallback : utiliser le numéro de l'appelant si le modèle n'a pas fourni customer_phone
+      const callerPhone = message.call?.customer?.number;
+      if (callerPhone && !toolArgs.customer_phone) {
+        toolArgs.customer_phone = callerPhone;
+      }
+
       if (toolName === "submit_order") {
         const normalized = normalizeSubmitOrderPayload(toolArgs);
         if (!normalized) {
