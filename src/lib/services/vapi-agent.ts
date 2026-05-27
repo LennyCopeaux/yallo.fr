@@ -247,6 +247,7 @@ function buildAssistantConfig(restaurant: Restaurant, systemPrompt: string) {
     voice: {
       provider: "11labs",
       voiceId,
+      model: "eleven_turbo_v2_5",
       stability: 0.5,
       similarityBoost: 0.75,
       optimizeStreamingLatency: 3,

@@ -17,6 +17,9 @@ const subscriptionPayloadSchema = z.object({
   planId: z.string().nullable(),
   currentPeriodEnd: z.date().nullable(),
   startDate: z.date().nullable(),
+  /** ID organisation (nouveaux checkouts) */
+  organizationId: z.string().uuid().nullable(),
+  /** ID restaurant (anciens checkouts — rétrocompat) */
   restaurantId: z.string().uuid().nullable(),
 });
 
@@ -61,6 +64,7 @@ function parseCheckoutSessionCompleted(
   }
 
   const restaurantId = session.metadata?.restaurantId ?? null;
+  const organizationId = session.metadata?.organizationId ?? null;
 
   return subscriptionPayloadSchema.parse({
     eventType: event.type,
@@ -71,6 +75,7 @@ function parseCheckoutSessionCompleted(
     planId: session.metadata?.planId ?? null,
     currentPeriodEnd: null,
     startDate: new Date(),
+    organizationId,
     restaurantId,
   });
 }
@@ -84,6 +89,7 @@ function parseSubscriptionEvent(
   }
 
   const restaurantId = subscription.metadata?.restaurantId ?? null;
+  const organizationId = subscription.metadata?.organizationId ?? null;
 
   return subscriptionPayloadSchema.parse({
     eventType: event.type,
@@ -96,6 +102,7 @@ function parseSubscriptionEvent(
       getCurrentPeriodEndFromSubscription(subscription)
     ),
     startDate: subscription.start_date ? new Date(subscription.start_date * 1000) : null,
+    organizationId,
     restaurantId,
   });
 }

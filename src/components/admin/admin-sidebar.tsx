@@ -7,8 +7,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Store,
-  Users,
+  Shield,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -17,8 +16,7 @@ import { createClient } from "@/lib/supabase/client";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
-  { name: "Restaurants", href: "/admin/restaurants", icon: Store, exact: false },
-  { name: "Utilisateurs", href: "/admin/users", icon: Users, exact: false },
+  { name: "Rôles", href: "/admin/roles", icon: Shield, exact: false },
 ] as const;
 
 async function handleLogout(): Promise<void> {

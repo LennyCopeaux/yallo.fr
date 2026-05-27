@@ -3,8 +3,8 @@
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { restaurants } from "@/db/schema";
-import { requireAuth } from "@/lib/auth";
+import { organizations } from "@/db/schema";
+import { requireAuth, getUserOrganization } from "@/lib/auth";
 import { getStripeServerClient } from "@/lib/services/stripe";
 import { SUBSCRIPTION_PLANS, type PlanId } from "./plans";
 
@@ -26,28 +26,14 @@ function getBaseUrlFromHeaders(allHeaders: Headers): string {
   return `${protocol}://${host}`;
 }
 
-async function getOwnerRestaurant(ownerId: string) {
-  const [restaurant] = await db
-    .select({
-      id: restaurants.id,
-      name: restaurants.name,
-      stripeCustomerId: restaurants.stripeCustomerId,
-    })
-    .from(restaurants)
-    .where(eq(restaurants.ownerId, ownerId))
-    .limit(1);
-
-  return restaurant ?? null;
-}
-
 export async function createStripeCheckoutSessionForRestaurant(
   planId: PlanId = "essential"
 ): Promise<BillingActionResult> {
   try {
     const user = await requireAuth();
-    const restaurant = await getOwnerRestaurant(user.id);
-    if (!restaurant) {
-      return { success: false, error: "Aucun restaurant associé à ce compte." };
+    const org = await getUserOrganization();
+    if (!org) {
+      return { success: false, error: "Aucune organisation associée à ce compte." };
     }
 
     const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId);
@@ -57,24 +43,21 @@ export async function createStripeCheckoutSessionForRestaurant(
 
     const stripe = getStripeServerClient();
 
-    let stripeCustomerId = restaurant.stripeCustomerId;
+    let stripeCustomerId = org.stripeCustomerId;
     if (!stripeCustomerId) {
       const customer = await stripe.customers.create({
         email: user.email,
-        name: restaurant.name,
+        name: org.name,
         metadata: {
-          restaurantId: restaurant.id,
+          organizationId: org.id,
         },
       });
       stripeCustomerId = customer.id;
 
       await db
-        .update(restaurants)
-        .set({
-          stripeCustomerId,
-          updatedAt: new Date(),
-        })
-        .where(eq(restaurants.id, restaurant.id));
+        .update(organizations)
+        .set({ stripeCustomerId, updatedAt: new Date() })
+        .where(eq(organizations.id, org.id));
     }
 
     const requestHeaders = await headers();
@@ -100,12 +83,12 @@ export async function createStripeCheckoutSessionForRestaurant(
       success_url: `${appUrl}/dashboard/billing?billing=success`,
       cancel_url: `${appUrl}/dashboard/billing?billing=cancel`,
       metadata: {
-        restaurantId: restaurant.id,
+        organizationId: org.id,
         planId: plan.id,
       },
       subscription_data: {
         metadata: {
-          restaurantId: restaurant.id,
+          organizationId: org.id,
           planId: plan.id,
         },
       },
@@ -115,12 +98,7 @@ export async function createStripeCheckoutSessionForRestaurant(
       return { success: false, error: "Stripe n'a pas retourné d'URL de paiement." };
     }
 
-    return {
-      success: true,
-      data: {
-        checkoutUrl: session.url,
-      },
-    };
+    return { success: true, data: { checkoutUrl: session.url } };
   } catch (error) {
     return {
       success: false,
@@ -131,12 +109,11 @@ export async function createStripeCheckoutSessionForRestaurant(
 
 export async function createStripePortalSession(): Promise<BillingActionResult> {
   try {
-    const user = await requireAuth();
-    const restaurant = await getOwnerRestaurant(user.id);
-    if (!restaurant) {
-      return { success: false, error: "Aucun restaurant associé à ce compte." };
+    const org = await getUserOrganization();
+    if (!org) {
+      return { success: false, error: "Aucune organisation associée à ce compte." };
     }
-    if (!restaurant.stripeCustomerId) {
+    if (!org.stripeCustomerId) {
       return { success: false, error: "Aucun abonnement Stripe actif." };
     }
 
@@ -145,7 +122,7 @@ export async function createStripePortalSession(): Promise<BillingActionResult> 
     const appUrl = getBaseUrlFromHeaders(requestHeaders);
 
     const portalSession = await stripe.billingPortal.sessions.create({
-      customer: restaurant.stripeCustomerId,
+      customer: org.stripeCustomerId,
       return_url: `${appUrl}/dashboard/billing`,
     });
 

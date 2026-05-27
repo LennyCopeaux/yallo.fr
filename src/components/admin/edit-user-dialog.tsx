@@ -23,14 +23,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { updateUser } from "@/app/(admin)/admin/actions";
-import { Loader2, Shield, User } from "lucide-react";
+import { Loader2, Shield, User, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 
 const formSchema = z.object({
   email: z.string().email(),
   firstName: z.string().max(100).optional(),
   lastName: z.string().max(100).optional(),
-  role: z.enum(["ADMIN", "OWNER"]),
+  role: z.enum(["ADMIN", "OWNER", "EMPLOYEE"]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -40,7 +40,7 @@ type User = {
   email: string;
   firstName: string | null;
   lastName: string | null;
-  role: "ADMIN" | "OWNER";
+  role: "ADMIN" | "OWNER" | "EMPLOYEE";
 };
 
 interface EditUserDialogProps {
@@ -137,7 +137,7 @@ export function EditUserDialog({ user, open, onOpenChange }: Readonly<EditUserDi
               <Label htmlFor="role">Rôle *</Label>
               <Select
                 value={roleValue}
-                onValueChange={(value: "ADMIN" | "OWNER") => form.setValue("role", value)}
+                onValueChange={(value: "ADMIN" | "OWNER" | "EMPLOYEE") => form.setValue("role", value)}
                 disabled={isLoading}
               >
                 <SelectTrigger className="bg-background/50 border-border focus:border-primary/50">
@@ -149,7 +149,16 @@ export function EditUserDialog({ user, open, onOpenChange }: Readonly<EditUserDi
                       <User className="w-4 h-4 text-primary" />
                       <div>
                         <span className="font-medium">Owner</span>
-                        <span className="text-muted-foreground ml-2">— Propriétaire de restaurant</span>
+                        <span className="text-muted-foreground ml-2">— Gestion complète de son org</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="EMPLOYEE">
+                    <div className="flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 text-blue-400" />
+                      <div>
+                        <span className="font-medium">Employee</span>
+                        <span className="text-muted-foreground ml-2">— Commandes + cuisine uniquement</span>
                       </div>
                     </div>
                   </SelectItem>
@@ -158,7 +167,7 @@ export function EditUserDialog({ user, open, onOpenChange }: Readonly<EditUserDi
                       <Shield className="w-4 h-4 text-red-400" />
                       <div>
                         <span className="font-medium">Admin</span>
-                        <span className="text-muted-foreground ml-2">— Accès complet</span>
+                        <span className="text-muted-foreground ml-2">— Accès complet au panel</span>
                       </div>
                     </div>
                   </SelectItem>

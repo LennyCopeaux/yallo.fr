@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createUser } from "@/app/(admin)/admin/actions";
-import { Plus, Loader2, Shield, User } from "lucide-react";
+import { Plus, Loader2, Shield, User, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 
 export function AddUserDialog() {
@@ -128,7 +128,16 @@ export function AddUserDialog() {
                       <User className="w-4 h-4 text-primary" />
                       <div>
                         <span className="font-medium">Owner</span>
-                        <span className="text-muted-foreground ml-2">— Propriétaire de restaurant</span>
+                        <span className="text-muted-foreground ml-2">— Gestion complète de son org</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="EMPLOYEE">
+                    <div className="flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 text-blue-400" />
+                      <div>
+                        <span className="font-medium">Employee</span>
+                        <span className="text-muted-foreground ml-2">— Commandes + cuisine uniquement</span>
                       </div>
                     </div>
                   </SelectItem>
@@ -137,14 +146,14 @@ export function AddUserDialog() {
                       <Shield className="w-4 h-4 text-red-400" />
                       <div>
                         <span className="font-medium">Admin</span>
-                        <span className="text-muted-foreground ml-2">— Accès complet</span>
+                        <span className="text-muted-foreground ml-2">— Accès complet au panel</span>
                       </div>
                     </div>
                   </SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Les Owners ne peuvent gérer que leur restaurant
+                Les Employees ont accès uniquement aux commandes et au statut cuisine.
               </p>
             </div>
           </div>

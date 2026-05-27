@@ -25,10 +25,15 @@ interface BillingPageContentProps {
     billingStartDate: string | null;
     stripeCustomerId: string | null;
   };
+  restaurantCount: number;
   plans: readonly Plan[];
 }
 
-export function BillingPageContent({ restaurant, plans }: Readonly<BillingPageContentProps>) {
+function normalizeFeature(feature: string): string {
+  return feature.trim().toLowerCase();
+}
+
+export function BillingPageContent({ restaurant, restaurantCount, plans }: Readonly<BillingPageContentProps>) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -73,6 +78,24 @@ export function BillingPageContent({ restaurant, plans }: Readonly<BillingPageCo
     });
   };
 
+  const formatFeatureLabel = (planId: PlanId, feature: string): string => {
+    if (planId === "infinity" && feature === "1 numéro de téléphone dédié par restaurant") {
+      return `${restaurantCount} numéro${restaurantCount > 1 ? "s" : ""} dédié${restaurantCount > 1 ? "s" : ""} (${restaurantCount} restaurant${restaurantCount > 1 ? "s" : ""})`;
+    }
+    return feature;
+  };
+
+  const getIncrementalFeatures = (plan: Plan, previousPlan?: Plan): string[] => {
+    if (!previousPlan) {
+      return plan.included.map((feature) => formatFeatureLabel(plan.id as PlanId, feature));
+    }
+
+    const previousSet = new Set(previousPlan.included.map((feature) => normalizeFeature(feature)));
+    return plan.included
+      .filter((feature) => !previousSet.has(normalizeFeature(feature)))
+      .map((feature) => formatFeatureLabel(plan.id as PlanId, feature));
+  };
+
   return (
     <div className="space-y-8">
       {/* Sélection de plan */}
@@ -81,7 +104,9 @@ export function BillingPageContent({ restaurant, plans }: Readonly<BillingPageCo
           {isActive ? "Votre abonnement" : "Choisissez votre plan"}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans.map((plan) => {
+          {plans.map((plan, index) => {
+            const previousPlan = index > 0 ? plans[index - 1] : undefined;
+            const incrementalFeatures = getIncrementalFeatures(plan, previousPlan);
             const isCurrentPlan = isActive && plan.id === (restaurant.stripePriceId as PlanId);
             return (
             <Card
@@ -104,7 +129,7 @@ export function BillingPageContent({ restaurant, plans }: Readonly<BillingPageCo
                 {!isCurrentPlan && plan.popular && (
                   <Badge className="bg-primary text-black border-primary px-2 py-0.5 text-xs font-semibold">
                     <Sparkles className="w-3 h-3 mr-1" />
-                    Populaire
+                    {plan.popularLabel ?? "Populaire"}
                   </Badge>
                 )}
               </div>
@@ -120,28 +145,22 @@ export function BillingPageContent({ restaurant, plans }: Readonly<BillingPageCo
                     <span className="text-4xl font-black">{plan.monthlyPrice}€</span>
                     <span className="text-muted-foreground text-sm">/mois</span>
                   </div>
-                </div>
-
-                <div className="space-y-2 pb-4 border-b border-border/50 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Minutes</span>
-                    <span className="font-medium">{plan.minutes}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Commission</span>
-                    {plan.commission ? (
-                      <span className="font-medium">{plan.commission} / commande</span>
-                    ) : (
-                      <span className="font-medium text-emerald-500">Aucune</span>
-                    )}
-                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">+ {plan.callRate}</p>
                 </div>
 
                 <div className="space-y-2 flex-1">
-                  {plan.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-2 text-sm">
+                  {previousPlan && (
+                    <p className="text-xs font-semibold uppercase tracking-wider text-primary/90">
+                      Tout pareil que {previousPlan.name} +
+                    </p>
+                  )}
+
+                  {incrementalFeatures.map((feature) => (
+                    <div key={`${plan.id}-${feature}`} className="flex items-center gap-2 text-sm">
                       <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span className="text-muted-foreground">{feature}</span>
+                      <span className="text-muted-foreground">
+                        {feature}
+                      </span>
                     </div>
                   ))}
                 </div>

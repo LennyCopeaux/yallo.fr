@@ -1,10 +1,12 @@
 import { getAppUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getUserRestaurant } from "@/features/orders/actions";
+import { getUserOrganization } from "@/lib/auth";
 import { SUBSCRIPTION_PLANS } from "@/features/billing/plans";
 import { BillingPageContent } from "./_components/billing-page-content";
+import { UsageSection } from "./_components/usage-section";
 import { AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { getCallUsageForCurrentPeriod } from "@/features/billing/usage-actions";
 
 export default async function BillingPage() {
   const user = await getAppUser();
@@ -17,9 +19,10 @@ export default async function BillingPage() {
     redirect("/admin");
   }
 
-  const restaurant = await getUserRestaurant();
+  const org = await getUserOrganization();
+  const usageResult = await getCallUsageForCurrentPeriod();
 
-  if (!restaurant) {
+  if (!org) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold mb-8">Abonnement</h1>
@@ -55,13 +58,15 @@ export default async function BillingPage() {
         <h1 className="text-3xl font-bold mb-2">Abonnement</h1>
         <p className="text-muted-foreground">Gérez votre abonnement Yallo.</p>
       </div>
+      {usageResult.success && <UsageSection usage={usageResult.data} />}
       <BillingPageContent
         restaurant={{
-          stripeSubscriptionStatus: restaurant.stripeSubscriptionStatus,
-          stripePriceId: restaurant.stripePriceId,
-          billingStartDate: restaurant.billingStartDate,
-          stripeCustomerId: restaurant.stripeCustomerId,
+          stripeSubscriptionStatus: org.stripeSubscriptionStatus,
+          stripePriceId: org.stripePriceId,
+          billingStartDate: org.billingStartDate,
+          stripeCustomerId: org.stripeCustomerId,
         }}
+        restaurantCount={org.restaurants.length}
         plans={SUBSCRIPTION_PLANS}
       />
     </div>
