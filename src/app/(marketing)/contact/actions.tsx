@@ -16,7 +16,7 @@ const contactFormSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   email: z.string().email(),
   subject: z.string().refine(
-    (val) => ["installation", "rdv-expert", "plan-starter", "plan-essential", "plan-infinity", "enterprise", "support", "autre"].includes(val),
+    (val) => ["installation", "rdv-expert", "plan-essentiel", "plan-pro", "plan-business", "enterprise", "support", "autre"].includes(val),
     { message: "Veuillez sélectionner un sujet" }
   ),
   message: z.string().min(10, "Le message doit contenir au moins 10 caractères"),
@@ -25,10 +25,9 @@ const contactFormSchema = z.object({
 const subjectLabels: Record<string, string> = {
   installation: "Installation",
   "rdv-expert": "Parler à un expert",
-  "plan-starter": "Plan Starter",
-  "plan-essential": "Plan Essential",
-  "plan-infinity": "Plan Infinity",
-  enterprise: "Offre Enterprise",
+  "plan-essentiel": "Plan Essentiel",
+  "plan-pro": "Plan Pro",
+  "plan-business": "Plan Business",
   support: "Support Technique",
   autre: "Autre demande",
 };

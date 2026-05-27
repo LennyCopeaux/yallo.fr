@@ -125,7 +125,7 @@ export function FeaturesSection() {
               <div className={ICON}>
                 <Cloud className="w-6 h-6 text-primary" />
               </div>
-              <CardTitle className="text-lg text-foreground">Ligne Infinie</CardTitle>
+              <CardTitle className="text-lg text-foreground">Multi ligne</CardTitle>
             </CardHeader>
             <CardContent className="p-0 flex-1 flex flex-col justify-between">
               <CardDescription className="leading-relaxed mb-4">

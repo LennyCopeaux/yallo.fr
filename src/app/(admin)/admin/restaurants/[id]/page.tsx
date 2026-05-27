@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { restaurants, users, type RestaurantStatus } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { restaurants, users, organizations, restaurantMembers, type RestaurantStatus } from "@/db/schema";
+import { eq, inArray } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -35,9 +35,10 @@ async function getOwners() {
     .select({
       id: users.id,
       email: users.email,
+      role: users.role,
     })
     .from(users)
-    .where(eq(users.role, "OWNER"))
+    .where(inArray(users.role, ["OWNER", "EMPLOYEE"]))
     .orderBy(users.email);
 }
 
@@ -51,10 +52,10 @@ async function getRestaurant(id: string) {
       ownerId: restaurants.ownerId,
       status: restaurants.status,
       isActive: restaurants.isActive,
-      stripeCustomerId: restaurants.stripeCustomerId,
-      billingStartDate: restaurants.billingStartDate,
       vapiAssistantId: restaurants.vapiAssistantId,
       vapiPhoneNumberId: restaurants.vapiPhoneNumberId,
+      
+      
       systemPrompt: restaurants.systemPrompt,
       menuContext: restaurants.menuContext,
       twilioPhoneNumber: restaurants.twilioPhoneNumber,
@@ -64,6 +65,7 @@ async function getRestaurant(id: string) {
       createdAt: restaurants.createdAt,
       updatedAt: restaurants.updatedAt,
       ownerEmail: users.email,
+      organizationId: restaurants.organizationId,
     })
     .from(restaurants)
     .innerJoin(users, eq(restaurants.ownerId, users.id))
@@ -79,9 +81,15 @@ export default async function RestaurantDetailPage({
   params: Promise<{ id: string }>;
 }>) {
   const { id } = await params;
-  const [restaurant, owners] = await Promise.all([
+  const [restaurant, owners, organizationsList, restaurantMembersList] = await Promise.all([
     getRestaurant(id),
     getOwners(),
+    db.select({ id: organizations.id, name: organizations.name }).from(organizations).orderBy(organizations.name),
+    db
+      .select({ id: users.id, email: users.email, role: users.role })
+      .from(restaurantMembers)
+      .innerJoin(users, eq(restaurantMembers.userId, users.id))
+      .where(eq(restaurantMembers.restaurantId, id)),
   ]);
 
   if (!restaurant) {
@@ -150,7 +158,7 @@ export default async function RestaurantDetailPage({
         </div>
       </div>
 
-      <RestaurantDetailTabs restaurant={restaurant} owners={owners} />
+      <RestaurantDetailTabs restaurant={restaurant} owners={owners} organizations={organizationsList} restaurantMembers={restaurantMembersList} />
     </div>
   );
 }

@@ -1,1 +1,2 @@
-export { AuthSessionProvider } from "./session-provider";
+// NextAuth SessionProvider removed - Supabase SSR gère l'auth côté serveur
+

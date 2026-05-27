@@ -1,26 +1,18 @@
-import { auth } from "@/lib/auth/auth";
+import { getAppUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 import { DashboardContent } from "./dashboard-content";
 import { getOrders, getUserRestaurant } from "@/features/orders/actions";
-import { UpdateAssistantButton } from "@/components/dashboard/update-assistant-button";
-import { getKitchenStatus, type StatusSettings } from "@/features/kitchen-status/actions";
-import { KitchenStatusControl } from "@/components/kitchen-status";
 
 export default async function DashboardPage() {
-  const session = await auth();
+  const user = await getAppUser();
 
-  if (!session?.user) {
+  if (!user) {
     redirect("/login");
   }
 
-  // Si l'utilisateur doit changer son mot de passe, redirige vers /update-password
-  if (session.user.mustChangePassword === true) {
-    redirect("/update-password");
-  }
-
-  if (session.user.role === "ADMIN") {
+  if (user.role === "ADMIN") {
     redirect("/admin");
   }
 
@@ -29,9 +21,6 @@ export default async function DashboardPage() {
   
   // Récupérer les commandes (sera vide si pas de restaurant)
   const ordersData = restaurant ? await getOrders() : [];
-  
-  // Récupérer le statut de la cuisine
-  const kitchenStatus = restaurant ? await getKitchenStatus() : null;
   
   // Transformer les données pour le composant
   const orders = ordersData.map((order) => ({
@@ -93,37 +82,6 @@ export default async function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-        )}
-
-        {/* Sélecteur de Charge Cuisine - seulement si restaurant */}
-        {restaurant && kitchenStatus && (
-          <div className="mb-6">
-            <KitchenStatusControl
-              currentStatus={kitchenStatus.currentStatus}
-              statusSettings={kitchenStatus.statusSettings as StatusSettings | null}
-            />
-          </div>
-        )}
-
-        {/* Quick Actions - seulement si restaurant */}
-        {restaurant && (
-          <>
-            {restaurant.vapiAssistantId && (
-              <Card className="bg-card border-border mb-8">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-1">Assistant IA Vocal</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Mettez à jour votre assistant IA après avoir modifié votre menu
-                      </p>
-                    </div>
-                    <UpdateAssistantButton restaurantId={restaurant.id} />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </>
         )}
 
         {/* Dashboard Content with KPIs, Graph, and Orders - seulement si restaurant */}

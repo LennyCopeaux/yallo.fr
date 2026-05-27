@@ -17,6 +17,27 @@ interface HubriseCatalogListItem {
   created_at: string;
 }
 
+/** Noms du type "test …" (catalogues d’essai) — évité en choix auto. */
+function looksLikeTestHubriseCatalogName(name: string): boolean {
+  return /^test(\s|$)/i.test(name.trim());
+}
+
+/** Plusieurs catalogues sur une location : préfère un nom autre que "test …", sinon le plus ancien. */
+function pickDefaultHubriseCatalogId(catalogs: HubriseCatalogListItem[]): string {
+  if (catalogs.length === 0) {
+    throw new HubriseError("Aucun catalogue trouvé pour cette location HubRise", 404);
+  }
+  if (catalogs.length === 1) {
+    return catalogs[0].id;
+  }
+  const nonTest = catalogs.filter((c) => !looksLikeTestHubriseCatalogName(c.name));
+  const pool = nonTest.length > 0 ? nonTest : catalogs;
+  const sorted = [...pool].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+  return sorted[0].id;
+}
+
 export async function fetchHubriseCatalog(
   accessToken: string,
   locationId: string
@@ -38,7 +59,7 @@ export async function fetchHubriseCatalog(
 
     if (!catalogsResponse.ok) {
       const errorText = await catalogsResponse.text().catch(() => "Unknown error");
-      
+
       if (catalogsResponse.status === 401 || catalogsResponse.status === 403) {
         throw new HubriseError(
           "Token d'accès HubRise invalide ou expiré",
@@ -55,7 +76,7 @@ export async function fetchHubriseCatalog(
     }
 
     const catalogsList: HubriseCatalogListItem[] = await catalogsResponse.json();
-    
+
     if (!catalogsList || catalogsList.length === 0) {
       throw new HubriseError(
         "Aucun catalogue trouvé pour cette location HubRise",
@@ -63,7 +84,8 @@ export async function fetchHubriseCatalog(
       );
     }
 
-    const catalogId = catalogsList[0].id;
+    const catalogId = pickDefaultHubriseCatalogId(catalogsList);
+
     const catalogUrl = `https://api.hubrise.com/v1/catalogs/${catalogId}`;
 
     const catalogResponse = await fetch(catalogUrl, {

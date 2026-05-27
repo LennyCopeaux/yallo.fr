@@ -1,7 +1,8 @@
-# Cahier des Charges – Yallo V1
+# Cahier des Charges – Yallo V2
 
-> Dernière mise à jour : 1er février 2026
+> Dernière mise à jour : 26 mai 2026
 > Branche de référence : `develop`
+> Version logicielle : `0.3.0`
 
 ---
 
@@ -34,18 +35,24 @@
 
 | Couche | Technologie |
 |--------|------------|
-| Framework | Next.js 16 (App Router) |
-| Langage | TypeScript 5.9 (strict) |
-| Base de données | PostgreSQL (Neon Serverless) + Drizzle ORM |
-| Auth | NextAuth v5 (JWT, Credentials) |
-| Styling | Tailwind CSS + shadcn/ui |
-| Animations | motion/react (v12+) |
-| Voice AI | Vapi (orchestrateur) + GPT-4o (LLM) + Deepgram Nova 2 (transcription) |
-| Email | Resend + React Email |
-| AI Menu | OpenAI GPT-4o Vision |
-| Intégration caisse | HubRise |
-| Tests | Vitest + Testing Library |
-| CI/CD | GitHub Actions + Vercel + SonarCloud |
+| Framework | Next.js 16.0.7 (App Router) |
+| Langage | TypeScript 5.9.3 (strict) |
+| Base de données | PostgreSQL (Neon Serverless) + Drizzle ORM 0.44.7 |
+| Auth | Supabase Auth (`@supabase/ssr` 0.10 + `@supabase/supabase-js` 2.101) |
+| Styling | Tailwind CSS 4 + shadcn/ui (Radix UI) |
+| Animations | Motion 12.23 (motion/react) |
+| Formulaires | React Hook Form 7.67 + Zod 4.1 |
+| Voice AI (appels réels) | **VAPI** — assistant IA vocal pour la prise de commande téléphonique |
+| Voice AI (preview UI) | **ElevenLabs** — aperçu voix dans les paramètres du dashboard uniquement |
+| Téléphonie | Twilio (provisioning numéros + SMS de confirmation) |
+| Email | Resend 6.5 + React Email |
+| AI Menu | OpenAI 6.17 (GPT-4o Vision, parsing menu depuis photos) |
+| Intégration caisse | HubRise (lecture catalogue + push commandes) |
+| Paiement | Stripe 22 (abonnements, webhook) |
+| Tests | Vitest 4 + Testing Library |
+| CI/CD | GitHub Actions (lint + tests + build) → Vercel + SonarCloud |
+
+> ℹ️ **Architecture Voice AI :** VAPI gère tous les appels téléphoniques réels. ElevenLabs est conservé uniquement pour la fonctionnalité de **prévisualisation de voix** dans l'interface paramètres du dashboard. NextAuth est conservé comme dépendance legacy (à retirer). Les champs `vapiAssistantId`, `vapiStructuredOutputIds`, `vapiPhoneNumberId` sont utilisés par VAPI.
 
 ---
 
@@ -61,201 +68,230 @@
 | Page Démo | ⚠️ Partiel | Numéro de téléphone placeholder (`0000000000`) |
 | Page Guide | ✅ Complet | 5 étapes d'onboarding |
 | Page Mentions Légales | ⚠️ Partiel | Données entreprise placeholder (RCS, SIRET, adresse) |
-| Page Legal | ✅ Complet | CGU, RGPD, cookies |
-| SEO | ✅ Complet | robots.ts, sitemap.ts, metadata, JSON-LD, Open Graph |
+| Page Legal (CGU/RGPD) | ✅ Complet | CGU, politique de confidentialité, cookies |
+| SEO | ✅ Complet | robots.ts, sitemap.ts, metadata, Open Graph |
 | Navigation | ✅ Complet | Navbar glassmorphism, mode toggle, login button |
-| Testimonials Carousel | ⚠️ Non utilisé | Composant créé mais pas intégré à la landing page |
 
 ### 3.2 Dashboard Restaurant ✅
 
 | Fonctionnalité | Statut | Détails |
 |---------------|--------|---------|
 | Tableau de bord | ✅ Complet | KPIs (CA, commandes, panier moyen), grille commandes |
-| Gestion commandes | ✅ Complet | Cycle de vie NEW → PREPARING → READY → DELIVERED/CANCELLED |
-| Ticket de commande | ✅ Complet | Détails client, articles, options, total, temps de retrait |
-| Statut cuisine | ✅ Complet | CALM / NORMAL / RUSH / STOP avec délais configurables |
-| Gestion menu | ✅ Complet | Import magique (IA) via photos, éditeur JSON, suppression |
-| Horaires d'ouverture | ✅ Complet | Par jour, créneaux simples ou midi/soir |
-| Menu HubRise | ✅ Complet | Page informative quand HubRise est connecté |
-| Navigation | ✅ Complet | Menu desktop (bouton) + barre fixe mobile |
-| Mise à jour assistant | ✅ Complet | Bouton de sync Vapi |
-| Simulation commande | ✅ Complet | Pour les tests uniquement |
+| Gestion commandes | ✅ Complet | Cycle de vie NEW → PREPARING → READY → DELIVERED / CANCELLED |
+| Ticket de commande | ✅ Complet | Détails client, articles, options, total, heure de retrait |
+| Statut cuisine | ✅ Complet | CALM / NORMAL / RUSH / STOP avec délais d'attente configurables par statut |
+| Gestion menu | ✅ Complet | Import IA (photos → JSON via GPT-4o Vision), éditeur, suppression |
+| Horaires d'ouverture | ✅ Complet | Par jour, créneaux simples ou midi/soir, timezone |
+| **Paramètres** | ✅ **NOUVEAU** | Transfert d'appel + voix assistant + upsell auto + SMS confirmation + auto-RUSH (seuil) |
+| Navigation | ✅ Complet | Sidebar rétractable : Dashboard, Menu, Horaires, Paramètres, Abonnement |
+| Mise à jour assistant | ✅ Complet | Synchronisation VAPI automatique après modifications (menu, horaires, charge cuisine, paramètres) |
+| Abonnement | ✅ Complet | Gestion Stripe au niveau organisation, statut abonnement, portail client |
+| **Usage appels** | ✅ **NOUVEAU** | Minutes consommées, coût estimé, nombre d'appels, remise à zéro — lié à la période Stripe |
 
 ### 3.3 Panel Admin ✅
 
 | Fonctionnalité | Statut | Détails |
 |---------------|--------|---------|
-| Dashboard | ✅ Complet | Onglets Restaurants / Utilisateurs, KPIs |
-| CRUD Restaurants | ✅ Complet | Création, édition, suppression, filtres, recherche |
-| CRUD Utilisateurs | ✅ Complet | Création, édition, suppression, envoi welcome/reset email |
-| Détail Restaurant | ✅ Complet | 5 onglets : Général, IA & Menu, Téléphonie, Facturation, HubRise |
-| Configuration IA | ✅ Complet | Création/mise à jour/suppression assistant Vapi, prompt système |
-| Configuration HubRise | ✅ Complet | Location ID + Access Token manuels |
-| Gestion des offres | ✅ Complet | Formulaire complet pour les 3 plans tarifaires |
-| Navigation | ✅ Complet | Menu desktop + mobile, paramètres |
+| Dashboard | ✅ Complet | Onglets Organisations / Restaurants / Utilisateurs, KPIs |
+| CRUD Restaurants | ✅ Complet | Création, édition, suppression, filtres, recherche, pagination |
+| CRUD Utilisateurs | ✅ Complet | Création (rôles ADMIN/OWNER/EMPLOYEE), édition, suppression, envoi welcome/reset email |
+| **CRUD Rôles** | ✅ **NOUVEAU** | Gestion des rôles personnalisés (nom + description). Rôles système ADMIN/OWNER/EMPLOYEE protégés en lecture seule |
+| Détail Restaurant | ✅ Complet | Onglets : Général, IA & Menu, Téléphonie, Facturation, HubRise |
+| Configuration IA | ✅ Complet | Création/mise à jour/suppression agent ElevenLabs, prompt système |
+| Configuration Téléphonie | ✅ Complet | Import numéro Twilio dans ElevenLabs + assignation à l'agent |
+| Configuration HubRise | ✅ Complet | Location ID + Access Token + Catalog ID |
+| Génération menu JSON | ✅ Complet | Endpoint admin pour parser les images via OpenAI |
+| Navigation | ✅ Complet | Sidebar admin : Dashboard + Rôles (sidebar simplifiée) |
 
 ### 3.4 Auth ✅
 
 | Fonctionnalité | Statut | Détails |
 |---------------|--------|---------|
-| Login | ✅ Complet | Email/password, rôles ADMIN/OWNER |
-| Changement mot de passe | ✅ Complet | Premier login + reset via token |
-| Middleware | ✅ Complet | Routage par domaine, protection par rôle, redirection |
-| Session | ✅ Complet | JWT avec id, email, role, mustChangePassword |
+| Login | ✅ Complet | Email/password via Supabase Auth, rôles ADMIN/OWNER/EMPLOYEE |
+| Changement mot de passe | ✅ Complet | Flow Supabase update-password |
+| Middleware | ✅ Complet | Routage par sous-domaine, protection par rôle : ADMIN → /admin, EMPLOYEE → /dashboard, OWNER → /org |
+| Mapping utilisateur | ✅ Complet | `authUserId` lie Supabase Auth → table `users` locale |
+| Déconnexion | ✅ Corrigé | Détection staging/localhost, redirige vers le bon domaine |
+| **Contrôle d'accès EMPLOYEE** | ✅ **NOUVEAU** | EMPLOYEE : accès commandes + statut cuisine uniquement. Menu, Horaires, Paramètres, /org bloqués. |
 
 ### 3.5 Intégrations
 
 | Service | Statut | Détails |
 |---------|--------|---------|
-| **Vapi** | ✅ Fonctionnel | CRUD assistant, prompt dynamique via webhook |
-| **HubRise** | ⚠️ Partiel | Lecture catalogue uniquement, pas de push commandes |
-| **OpenAI** | ✅ Fonctionnel | Parsing menu depuis photos |
-| **Resend** | ✅ Fonctionnel | Welcome, reset password, contact |
-| **Stripe** | ❌ Placeholder | Champ `stripeCustomerId` stocké, aucun SDK/webhook |
-| **Twilio** | ❌ Placeholder | Champ `twilioPhoneNumber` stocké, aucun SDK |
+| **ElevenLabs** | ✅ Fonctionnel | Prévisualisation voix uniquement (CRUD agent, sync auto depuis paramètres) |
+| **VAPI** | ✅ Fonctionnel | Appels téléphoniques réels : tool `submit_order` + `end-of-call-report` (enregistrement call_logs) |
+| **Twilio** | ✅ Fonctionnel | Import numéro dans ElevenLabs + SMS de confirmation commande au client |
+| **HubRise** | ✅ Fonctionnel | Lecture catalogue (fallback menu) + push commandes vers caisse |
+| **OpenAI** | ✅ Fonctionnel | Parsing menu depuis photos (GPT-4o Vision) |
+| **Resend** | ✅ Fonctionnel | Welcome email, reset password, formulaire contact |
+| **Stripe** | ✅ Fonctionnel | Webhooks abonnements (checkout.session.completed, subscription.updated/deleted) |
 
-### 3.6 Tests
+### 3.6 Flux de commande vocale ✅ (OPÉRATIONNEL — VAPI)
 
-- **200 tests** dans 23 fichiers
-- **Coverage** : 92.67% statements, 94.52% lines (Vitest)
-- **SonarCloud** : ~12.7% (beaucoup de fichiers UI non testés)
+```
+Client appelle → Numéro Twilio → VAPI (assistant IA vocal)
+                                         ↓
+                           Prompt système dynamique :
+                           - Menu (menuData JSON ou HubRise catalog)
+                           - Horaires d'ouverture
+                           - Statut cuisine (CALM/RUSH/STOP)
+                           - Instructions transfert (si activé)
+                                         ↓
+                           LLM gère la conversation vocale
+                                         ↓
+                    ┌────────────────────┴─────────────────────┐
+                    │                                           │
+              Client demande              Client finalise
+              à parler au patron          sa commande
+                    │                                           │
+              transfer_call               submit_order
+              (VAPI built-in)         → POST /api/vapi/webhook?rid=<id>
+                    │                           │
+              Transfert vers                Commande BDD
+              numéro du restaurateur        (orders + order_items)
+                                            │           │
+                                      SMS client    HubRise push
+                                      (Twilio)      (si configuré)
+                                                         │
+                                      Fin d'appel → end-of-call-report
+                                      → POST /api/vapi/webhook?rid=<id>
+                                                         │
+                                               INSERT call_logs
+                                               (durée, statut, callId)
+```
+
+### 3.7 Tests
+
+- **213 tests** dans 28 fichiers (Vitest 4)
+- Scope : services (ElevenLabs, VAPI, HubRise, Twilio, Stripe, menu parser, system prompt), features (orders, hours, kitchen-status, menu, billing usage, restaurant switch), utils, validators, composants, API webhooks
+- Pipeline CI : lint → tests → build sur chaque push `develop`
+
+### 3.8 Organisations (multi-restaurants)
+
+| Élément | Statut | Détails |
+|---------|--------|----------|
+| Table `organizations` | ✅ Complet | Propriétaire, liens Stripe, restaurants liés |
+| FK `organizationId` sur `restaurants` | ✅ Complet | Chaque restaurant appartient à une organisation |
+| `getUserOrganization()` | ✅ Complet | Retourne l'org avec ses restaurants en une requête |
+| Stripe au niveau org | ✅ Complet | Checkout + webhook → mise à jour `organizations` + propagation aux `restaurants` |
+| Sélecteur de restaurant (sidebar) | ✅ Complet | Affiché si l'org a >1 restaurant, cookie `yallo_restaurant_id` |
+| `switchRestaurant()` server action | ✅ Complet | Sécurisé : valide l'appartenance via `restaurant_members` avant de poser le cookie |
+| **Tables membres** | ✅ **NOUVEAU** | `organization_members` (orgId, userId, role) + `restaurant_members` (restaurantId, userId, role) |
+| **Accès restaurant EMPLOYEE** | ✅ **NOUVEAU** | `getAccessibleRestaurant()` / `getAccessibleRestaurantForUser()` — résoud le restaurant actif via `restaurant_members` (support OWNER + EMPLOYEE) |
+
+### 3.9 Facturation à la minute (call_logs)
+
+| Élément | Statut | Détails |
+|---------|--------|----------|
+| Table `call_logs` | ✅ Complet | Par appel : restaurantId, organizationId, provider, durée, statut |
+| VAPI `end-of-call-report` | ✅ Complet | Webhook qui insère dans `call_logs` (idempotent via `onConflictDoNothing`) |
+| `getCallUsageForCurrentPeriod()` | ✅ Complet | Agrège minutes + coût pour la période de facturation Stripe en cours |
+| Page Abonnement (usage) | ✅ Complet | 4 cartes : Minutes consommées, Coût estimé, Appels traités, Remise à zéro |
+| Tarif par plan | ✅ Complet | 19 cts/min (Essentiel), 17 cts/min (Pro), 15 cts/min (Business) |
 
 ---
 
-## 4. Ce qui reste à faire pour la V1
+## 4. Ce qui reste à faire
 
-### 4.1 🔴 CRITIQUE – Bloquant pour le lancement
+### 4.1 🔴 CRITIQUE – Bloquant pour la mise en production
 
-#### 4.1.1 Webhook Vapi → Création de commandes réelles
-**Actuellement :** Les commandes sont créées uniquement via `simulateOrder()`. L'agent vocal Vapi n'a aucun moyen de créer une commande dans la BDD.
-
-**À faire :**
-- Créer un endpoint `/api/vapi/webhook` (ou `/api/vapi/end-of-call`) pour recevoir les résultats de conversation Vapi
-- Parser le résumé de commande (articles, quantités, options, nom client, téléphone)
-- Créer la commande dans la BDD
-- Déclencher une notification temps réel sur le dashboard (polling, SSE, ou WebSocket)
-
-#### 4.1.2 Notifications temps réel sur le dashboard
-**Actuellement :** Le dashboard utilise `router.refresh()` pour rafraîchir les commandes. Aucune notification sonore ou visuelle quand une nouvelle commande arrive.
+#### 4.1.1 Notifications temps réel sur le dashboard
+**Actuellement :** Le dashboard utilise `router.refresh()`. Aucune notification quand une commande arrive pendant que le staff est sur l'interface.
 
 **À faire :**
-- Polling régulier ou Server-Sent Events pour les nouvelles commandes
-- Notification sonore (bip) quand une commande arrive
-- Badge / indicateur de nouvelles commandes
+- Polling automatique toutes les 30s ou Server-Sent Events
+- Notification sonore (bip) à l'arrivée d'une commande
+- Badge/indicateur de nouvelles commandes non vues
 
-#### 4.1.3 Numéro de téléphone de démo
+#### 4.1.2 Numéro de téléphone de démo
 **Actuellement :** La page `/demo` affiche `0000000000`.
 
 **À faire :**
-- Configurer un numéro Vapi de démonstration réel
-- Ou implémenter un player Vapi web (widget SDK) pour tester directement depuis le navigateur
+- Configurer un numéro VAPI/Twilio de démo réel
+- Ou intégrer le widget web VAPI pour tester depuis le navigateur
 
-#### 4.1.4 Formulaire de contact – Sujets manquants
-**Actuellement :** Les liens de la section pricing envoient `?subject=plan-starter`, `plan-essential`, `plan-infinity`, `enterprise`, mais le formulaire de contact n'accepte que `plan-commission`, `plan-fixe`.
+#### 4.1.3 Formulaire de contact – Sujets tarifaires
+**Actuellement :** Les liens pricing utilisent des slugs (`plan-starter`, `plan-essential`, etc.) que le formulaire de contact ne reconnaît pas.
 
 **À faire :**
-- Mettre à jour les valeurs acceptées dans le schéma Zod du formulaire de contact
-- Ajouter les labels correspondants : Plan Starter, Plan Essential, Plan Infinity, Enterprise
+- Aligner les valeurs du schéma Zod du formulaire avec les slugs des plans
+- Labels : Plan Starter, Plan Essential, Plan Infinity, Enterprise
 
 ### 4.2 🟠 IMPORTANT – Nécessaire pour une V1 propre
 
 #### 4.2.1 PWA (Progressive Web App)
-**Actuellement :** Aucune configuration PWA. Le dashboard est censé être tablet-first.
+**Actuellement :** Aucune configuration PWA. Le dashboard est prévu tablet-first.
 
 **À faire :**
-- Créer `manifest.json` (nom, icônes, thème, orientation)
-- Configurer le service worker (mode hors-ligne basique, cache)
-- Ajouter les meta tags PWA dans le layout
-- Tester l'installation sur tablette
+- `manifest.json` (nom, icônes, thème, orientation landscape)
+- Service worker (cache offline basique)
+- Meta tags PWA dans le layout `/app`
 
 #### 4.2.2 KPIs du dashboard – Valeurs hardcodées
-**Actuellement :** Les pourcentages de variation sont en dur : `+12.5%`, `+3.2%`, `-5s`, `1m 30s`.
+**Actuellement :** Les pourcentages de variation (`+12.5%`, `+3.2%`) et les temps (`1m 30s`) sont en dur.
 
 **À faire :**
-- Calculer les vrais KPIs par comparaison jour J vs J-1
-- Temps moyen IA : récupérer depuis les logs Vapi ou estimer depuis les données de commande
-- Graphique d'activité : implémenter un vrai graphique (Recharts) par tranche horaire
+- Calculer les vrais KPIs par comparaison J vs J-1
+- Temps moyen de traitement estimé depuis les données de commande
+- Graphique d'activité par tranche horaire (Recharts ou similar)
 
-#### 4.2.3 Données entreprise – Mentions légales
-**Actuellement :** RCS, SIRET, adresse sont des placeholders.
+#### 4.2.3 Données légales réelles
+**Actuellement :** RCS, SIRET, adresse sont des placeholders dans `/mentions-legales`.
 
 **À faire :**
 - Remplacer par les vraies données d'immatriculation
-- Créer la page `/confidentialite` (lien cassé depuis mentions-legales)
 
-#### 4.2.4 Menu Parser – Alignement de schéma
-**Actuellement :** Le prompt OpenAI demande un format (`donnees_menu`/`categorie`/`articles`/`tarifs`) différent du schéma `MenuData` (`categories`/`products`/`skus`). Le parsing peut échouer silencieusement.
-
-**À faire :**
-- Ajouter une couche de transformation entre la sortie OpenAI et le schéma `MenuData`
-- Ou aligner le prompt avec le schéma exact
-- Ajouter des tests pour la transformation
-
-#### 4.2.5 Fichier `.env.example`
-**Actuellement :** Pas de `.env.example`. Les variables sont inférées du code.
+#### 4.2.4 Planification tarifaire — stripePriceId → plan mapping
+**Actuellement :** `getCallUsageForCurrentPeriod()` utilise un fallback hardcodé sur le tarif Essentiel (19 cts/min).
 
 **À faire :**
-- Créer `.env.example` avec toutes les variables documentées
-- `DATABASE_URL`, `AUTH_SECRET`, `VAPI_PRIVATE_API_KEY`, `OPENAI_API_KEY`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_TO_EMAIL`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_APP_URL`
+- Stocker le `planId` dans `organizations.metadata` lors du checkout Stripe
+- Mapper `stripePriceId` → plan pour calculer le bon tarif à la minute
 
-### 4.3 🟡 SOUHAITABLE – Pour une V1 de qualité
+### 4.3 🟡 SOUHAITABLE
 
-#### 4.3.1 HubRise – Push commandes
-**Actuellement :** HubRise est en lecture seule (catalogue). Les commandes prises par l'IA ne sont pas poussées vers le système de caisse.
+#### 4.3.1 Impersonation Admin
+**Actuellement :** L'action `impersonateRestaurant` est codée côté serveur mais le bouton UI est désactivé avec "(À venir)".
 
 **À faire :**
-- Implémenter `pushOrderToHubRise()` pour envoyer les commandes vers la caisse
-- Déclencher après la création de commande via le webhook Vapi
+- Wirer le bouton UI à l'action serveur
+- Bandeau visible "Mode impersonation" sur le dashboard du restaurateur
 
 #### 4.3.2 Navigation mobile marketing
-**Actuellement :** Pas de menu hamburger sur mobile. Les liens de navigation sont cachés (`hidden md:flex`).
+**Actuellement :** Les liens de nav sont cachés sur mobile (`hidden md:flex`), pas de menu hamburger.
 
 **À faire :**
-- Ajouter un menu hamburger / sheet pour mobile
-- Inclure tous les liens de navigation + CTAs
+- Menu hamburger / Sheet mobile avec tous les liens + CTAs
 
-#### 4.3.3 Testimonials
-**Actuellement :** Le composant `TestimonialsCarousel` existe mais n'est pas utilisé sur la landing page.
-
-**À faire :**
-- Intégrer le carousel entre les sections existantes (après Features ou avant FAQ)
-- Ou le supprimer si non pertinent pour le lancement
-
-#### 4.3.4 Impersonation Admin
-**Actuellement :** L'action `impersonateRestaurant` existe côté serveur, mais le bouton UI est désactivé avec "(À venir)".
-
-**À faire :**
-- Wire le bouton UI à l'action serveur
-- Gérer le cookie/session d'impersonation dans `getUserRestaurant`
-- Ajouter un bandeau visible "Mode impersonation" sur le dashboard
-
-#### 4.3.5 FAQ – Contenu cohérent
-**Actuellement :** La FAQ mentionne "5% par commande" alors que les plans sont dynamiques depuis la BDD.
-
-**À faire :**
-- Mettre à jour la FAQ pour refléter les vrais tarifs
-- Ou rendre la FAQ dynamique avec les données des plans
-
-#### 4.3.6 Coverage SonarCloud
-**Actuellement :** ~12.7% sur SonarCloud (beaucoup de fichiers UI non testés).
+#### 4.3.3 Coverage SonarCloud
+**Actuellement :** ~12% sur SonarCloud (fichiers UI non couverts).
 
 **À faire :**
 - Ajouter `coverage/` au `.gitignore`
-- Augmenter la couverture des fichiers critiques (actions, services)
-- Objectif : ≥ 40% pour le Quality Gate SonarCloud
+- Augmenter la couverture sur les actions critiques (settings, billing)
+- Objectif ≥ 40% pour le Quality Gate
+
+#### 4.3.4 Multi-site — filtrage données par restaurant sélectionné
+**Actuellement :** La sidebar affiche le sélecteur de restaurant (cookie `yallo_restaurant_id`). Les commandes et KPIs respectent déjà la sélection via `getUserRestaurant()`.
+
+**À faire (si org avec >1 restaurants) :**
+- Vue agrégée "Tous les sites" pour les KPIs du dashboard
+- Filtrage des exports / analytics par restaurant
+- Vérifier que toutes les pages dashboard respectent bien le cookie de sélection
 
 ### 4.4 🔵 POST-V1 – Améliorations futures
 
 | Fonctionnalité | Description |
 |---------------|-------------|
-| **Stripe Billing** | Intégration complète : Checkout, abonnements, webhooks, facturation automatique |
-| **Twilio** | Provisioning automatique de numéros, routage d'appels |
-| **HubRise OAuth** | Flow OAuth pour connecter HubRise automatiquement (au lieu de copier-coller les tokens) |
-| **Tableau de bord analytique** | Graphiques avancés, historique, export CSV |
-| **Multi-langue** | Support anglais pour l'agent vocal et le dashboard |
-| **Notifications push** | PWA push notifications pour nouvelles commandes |
+| **HubRise OAuth** | Flow OAuth pour connecter HubRise auto (au lieu de copier-coller les tokens) |
+| **Tableau de bord analytique** | Graphiques avancés, historique commandes, export CSV |
+| **Notifications push PWA** | Push notifications pour nouvelles commandes |
 | **Mode hors-ligne** | Cache des commandes en cours si perte de connexion |
-| **Upsell intelligent** | IA qui propose des suppléments basés sur l'historique |
+| **Upsell intelligent** | Suggestions contextuelles basées sur l'historique, panier et statut cuisine |
+| **Multi-langue** | Support anglais pour l'agent vocal et le dashboard |
+| **Webhook entrant HubRise** | Réception d'événements HubRise (ex : changement statut commande) |
+| **Analytics appels** | Graphique minutes/jour, taux de no-answer, durée moyenne par restaurant |
+| **Webhook entrant HubRise** | Réception d'événements HubRise (ex : changement statut commande) |
 
 ---
 
@@ -264,60 +300,272 @@
 ```
 users
 ├── id (uuid, PK)
-├── email (text, unique)
-├── passwordHash (text)
+├── authUserId (text, unique) → FK Supabase Auth
+├── email (text, unique, not null)
 ├── firstName (text, nullable)
 ├── lastName (text, nullable)
-├── role (ADMIN | OWNER)
-├── mustChangePassword (boolean)
-├── resetToken (text, nullable)
-├── resetTokenExpires (timestamp, nullable)
+├── role (ADMIN | OWNER | EMPLOYEE, default OWNER)
 └── createdAt (timestamp)
+
+organization_members                  ← NOUVEAU (contrôle d'accès)
+├── id (uuid, PK)
+├── organizationId (uuid, FK → organizations)
+├── userId (uuid, FK → users)
+├── role (owner | member, default member)
+└── UNIQUE (organizationId, userId)
+
+restaurant_members                    ← NOUVEAU (contrôle d'accès)
+├── id (uuid, PK)
+├── restaurantId (uuid, FK → restaurants)
+├── userId (uuid, FK → users)
+├── role (owner | member, default member)
+└── UNIQUE (restaurantId, userId)
+
+roles                                 ← NOUVEAU (référentiel rôles)
+├── id (uuid, PK)
+├── name (text, unique, not null)   ← ADMIN / OWNER / EMPLOYEE + rôles custom
+├── description (text, nullable)
+└── createdAt (timestamp)
+
+Note : La protection des rôles système (ADMIN/OWNER/EMPLOYEE) est assurée
+       par validation côté serveur sur le nom — pas de colonne is_system.
+
+organizations                         ← NOUVEAU (multi-restaurants)
+├── id (uuid, PK)
+├── name (text, not null)
+├── ownerId (uuid, FK → users)
+│
+├── -- Stripe (facturation au niveau organisation) --
+├── stripeCustomerId (text, nullable)
+├── stripeSubscriptionId (text, nullable)
+├── stripeSubscriptionStatus (text, nullable)
+├── stripePriceId (text, nullable)
+├── stripeCurrentPeriodEnd (timestamp, nullable)
+├── billingStartDate (text, nullable)
+│
+├── isActive (boolean, default true)
+├── createdAt (timestamp)
+└── updatedAt (timestamp)
 
 restaurants
 ├── id (uuid, PK)
-├── name (text)
+├── organizationId (uuid, FK → organizations) ← NOUVEAU
+├── name (text, not null)
 ├── address (text, nullable)
-├── phoneNumber (text)
-├── ownerId (uuid, FK → users)
-├── status (onboarding | active | suspended)
-├── isActive (boolean)
-├── plan (fixed | commission)
-├── commissionRate (integer)
-├── stripeCustomerId (text, nullable)
-├── billingStartDate (text, nullable)
+├── phoneNumber (text, not null)  ← numéro de contact public du restaurant
+├── ownerId (uuid, FK → users, cascade delete)
+├── status (onboarding | active | suspended, default onboarding)
+├── isActive (boolean, default true)
+├── plan (fixed | commission, default commission)
+├── commissionRate (integer, default 5)
+│
+├── -- ElevenLabs (preview voix uniquement) --
+├── elevenLabsAgentId (text, nullable)
+├── elevenLabsPhoneNumberId (text, nullable)
+│
+├── -- VAPI (appels réels) --
 ├── vapiAssistantId (text, nullable)
+├── vapiStructuredOutputIds (text, nullable)
+├── vapiPhoneNumberId (text, nullable)
+│
+├── -- Téléphonie --
+├── twilioPhoneNumber (text, nullable)        ← numéro Twilio dans VAPI
+├── forwardingPhoneNumber (text, nullable)    ← numéro du restaurateur pour transfert
+├── callForwardingEnabled (boolean, default false)
+│
+├── -- Agent & Menu --
 ├── systemPrompt (text, nullable)
 ├── menuContext (text, nullable)
-├── menuData (JSONB, nullable)
-├── twilioPhoneNumber (text, nullable)
-├── businessHours (text, nullable)
+├── menuData (jsonb, nullable) → MenuData { categories[], option_lists[] }
+├── businessHours (text, nullable) → JSON { timezone, schedule: { lundi: ... } }
+│
+├── -- HubRise --
 ├── hubriseLocationId (text, nullable)
 ├── hubriseAccessToken (text, nullable)
-├── currentStatus (CALM | NORMAL | RUSH | STOP)
-├── statusSettings (JSONB, nullable)
+├── hubriseCatalogId (text, nullable)
+│
+├── -- Cuisine --
+├── currentStatus (CALM | NORMAL | RUSH | STOP, default CALM)
+├── statusSettings (jsonb) → { CALM: { fixed|min/max }, ..., STOP: { message } }
+│
 ├── createdAt (timestamp)
 └── updatedAt (timestamp)
 
-pricing_plans
+call_logs                             ← NOUVEAU (facturation à la minute)
 ├── id (uuid, PK)
-├── name (text, unique)
-├── subtitle (text)
-├── target (text)
-├── monthlyPrice (integer, centimes)
-├── setupFee (integer, nullable)
-├── commissionRate (integer, nullable)
-├── includedMinutes (integer, nullable)
-├── overflowPricePerMinute (integer, nullable)
-├── hubrise (boolean)
-├── popular (boolean)
+├── restaurantId (uuid, FK → restaurants)
+├── organizationId (uuid, FK → organizations)
+├── externalCallId (text, not null)  ← call.id depuis VAPI
+├── provider (vapi | elevenlabs)
+├── durationSeconds (integer, nullable)
+├── startedAt (timestamp, nullable)
+├── endedAt (timestamp, nullable)
+├── status (completed | failed | no-answer, default completed)
 ├── createdAt (timestamp)
-└── updatedAt (timestamp)
+│
+└── UNIQUE INDEX (externalCallId, provider)  ← idempotence webhook
 
 orders
 ├── id (uuid, PK)
-├── restaurantId (uuid, FK → restaurants)
-├── orderNumber (text)
+├── restaurantId (uuid, FK → restaurants, cascade delete)
+├── orderNumber (text, not null)
+├── customerName (text, nullable)
+├── customerPhone (text, nullable)
+├── status (NEW | PREPARING | READY | DELIVERED | CANCELLED, default NEW)
+├── totalAmount (integer, centimes, default 0)
+├── pickupTime (timestamp, nullable)
+├── notes (text, nullable)
+├── createdAt (timestamp)
+└── updatedAt (timestamp)
+
+order_items
+├── id (uuid, PK)
+├── orderId (uuid, FK → orders, cascade delete)
+├── productName (text, not null)
+├── quantity (integer, not null)
+├── unitPrice (integer, centimes)
+├── totalPrice (integer, centimes)
+├── options (text, nullable)
+└── createdAt (timestamp)
+```
+
+---
+
+## 6. Architecture des flux
+
+### Flux de commande vocale (OPÉRATIONNEL)
+
+```
+Client appelle → Numéro Twilio → ElevenLabs Conversational AI
+                                         ↓
+                           Prompt système dynamique :
+                           - Menu (HubRise ou menuData JSON)
+                           - Horaires d'ouverture
+                           - Statut cuisine (CALM/RUSH/STOP)
+                           - Instructions transfert (si activé)
+                                         ↓
+                           GPT-4.1-nano gère la conversation
+                                         ↓
+                    ┌────────────────────┴─────────────────────┐
+                    │                                           │
+              Client demande              Client finalise
+              à parler au patron          sa commande
+                    │                                           │
+              transfer_call               submit_order
+              (système EL)           → POST /api/elevenlabs/webhook
+                    │                           │
+              Transfert vers                Commande BDD
+              numéro du restaurateur        (orders + order_items)
+                                            │           │
+                                      SMS client    HubRise push
+                                      (Twilio)      (si configuré)
+```
+
+### Flux d'onboarding restaurant
+
+```
+Prospect → Site Marketing → Formulaire Contact
+                                   ↓
+Admin crée le restaurant + utilisateur (panel admin)
+                                   ↓
+Email de bienvenue (Resend) avec identifiants Supabase
+                                   ↓
+Owner se connecte → Configuration :
+  - Menu : import photos IA ou connexion HubRise
+  - Horaires d'ouverture
+  - Paramètres : transfert d'appel (on/off + numéro)
+                                   ↓
+Admin configure (panel) :
+  - Import numéro Twilio dans ElevenLabs
+  - Assignation de l'agent au numéro
+                                   ↓
+L'agent IA est opérationnel — numéro Twilio actif
+```
+
+### Flux de mise à jour de l'agent
+
+```
+Owner modifie Menu / Horaires / Paramètres / Statut cuisine
+                    ↓
+Bouton "Mettre à jour l'assistant" (ou save auto)
+                    ↓
+updateElevenLabsAgent(agentId, restaurant)
+  - Régénère le prompt système (menu + horaires + statut + forwarding)
+  - Met à jour les tools (submit_order + transfer_call si activé)
+  - PATCH /v1/convai/agents/{agentId}
+```
+
+---
+
+## 7. Variables d'environnement requises
+
+```env
+# Base de données
+DATABASE_URL=
+
+# Auth Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# App URLs (multi-domaine)
+NEXT_PUBLIC_APP_URL=         # https://app.yallo.fr (ou staging)
+NEXT_PUBLIC_SITE_URL=        # https://yallo.fr (ou staging)
+AUTH_SECRET=                 # NextAuth legacy (à conserver pour compatibilité)
+
+# ElevenLabs
+ELEVENLABS_API_KEY=
+ELEVENLABS_WEBHOOK_SECRET=   # Optionnel, sécurise le webhook
+ELEVENLABS_VOICE_ID=         # Optionnel, défaut EXAVITQu4vr4xnSDxMaL
+ELEVENLABS_LLM_MODEL=        # Optionnel, défaut gpt-4.1-nano-2025-04-14
+ELEVENLABS_TTS_MODEL=        # Optionnel, défaut eleven_turbo_v2_5
+
+# Twilio
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_API_KEY=
+TWILIO_API_SECRET=
+TWILIO_SMS_FROM=             # Optionnel, fallback sur twilioPhoneNumber du restaurant
+TWILIO_ORDER_CONFIRMATION_SMS=  # Mettre "false" pour désactiver les SMS
+
+# OpenAI
+OPENAI_API_KEY=
+
+# Stripe
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+
+# Email
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=
+RESEND_TO_EMAIL=
+
+# HubRise (optionnel, pour les restaurants connectés)
+# Configuré par restaurant dans le panel admin
+```
+
+---
+
+## 8. Critères d'acceptation V1
+
+La V1 est considérée comme **prête au lancement** quand :
+
+- [x] Un restaurant peut recevoir des commandes téléphoniques via l'IA vocale (ElevenLabs)
+- [x] Les commandes sont créées en base de données via le webhook ElevenLabs
+- [x] Le cycle de vie complet d'une commande fonctionne (NEW → DELIVERED)
+- [x] Le menu peut être configuré (IA photos ou HubRise)
+- [x] Les horaires d'ouverture sont respectés par l'agent vocal
+- [x] Le statut cuisine (CALM/RUSH/STOP) influence le comportement de l'IA
+- [x] SMS de confirmation envoyé au client après commande
+- [x] Push commandes vers HubRise si configuré
+- [x] Transfert d'appel vers le restaurateur (configurable)
+- [x] Les abonnements Stripe sont gérés (création, mise à jour, résiliation)
+- [ ] Le site marketing a un vrai numéro de démo fonctionnel
+- [ ] Les formulaires de contact acceptent tous les sujets tarifaires
+- [ ] Les pages légales contiennent les vraies informations
+- [ ] Le dashboard affiche des KPIs réels (pas de valeurs hardcodées)
+- [ ] Le dashboard est installable comme PWA sur tablette
+- [ ] Tous les tests passent et le build est propre ✅ (191/191)
 ├── customerName (text, nullable)
 ├── customerPhone (text, nullable)
 ├── status (NEW | PREPARING | READY | DELIVERED | CANCELLED)
@@ -337,83 +585,3 @@ order_items
 ├── options (text, nullable)
 └── createdAt (timestamp)
 ```
-
----
-
-## 6. Architecture des flux
-
-### Flux de commande vocale (cible V1)
-
-```
-Client appelle → Twilio → Vapi (IA vocale)
-                              ↓
-                     GPT-4o traite la conversation
-                              ↓
-                     Vapi POST /api/vapi/webhook
-                              ↓
-                     Création commande en BDD
-                              ↓
-                     Dashboard restaurant (notification)
-                              ↓
-                     Staff prépare la commande
-                              ↓
-                     (Optionnel) Push vers HubRise → Caisse
-```
-
-### Flux d'onboarding restaurant
-
-```
-Prospect → Site Marketing → Formulaire Contact
-                                    ↓
-Admin crée le restaurant + utilisateur dans le panel
-                                    ↓
-Email de bienvenue avec identifiants temporaires
-                                    ↓
-Owner se connecte → Force changement mot de passe
-                                    ↓
-Owner configure : Menu (photos IA ou HubRise) + Horaires
-                                    ↓
-Admin configure : Assistant Vapi + Numéro Twilio
-                                    ↓
-L'agent IA est opérationnel
-```
-
----
-
-## 7. Estimation de charge – Roadmap V1
-
-| Tâche | Priorité | Complexité | Estimation |
-|-------|----------|------------|------------|
-| Webhook Vapi → commandes | 🔴 Critique | Haute | 3-5 jours |
-| Notifications temps réel dashboard | 🔴 Critique | Moyenne | 2-3 jours |
-| Fix formulaire contact (sujets) | 🔴 Critique | Basse | 0.5 jour |
-| Numéro démo ou player web Vapi | 🔴 Critique | Moyenne | 1-2 jours |
-| PWA (manifest + service worker) | 🟠 Important | Moyenne | 2-3 jours |
-| KPIs réels dashboard | 🟠 Important | Moyenne | 2-3 jours |
-| Données légales réelles | 🟠 Important | Basse | 0.5 jour |
-| Menu parser alignment | 🟠 Important | Moyenne | 1-2 jours |
-| `.env.example` | 🟠 Important | Basse | 0.5 jour |
-| HubRise push commandes | 🟡 Souhaitable | Haute | 3-4 jours |
-| Navigation mobile marketing | 🟡 Souhaitable | Basse | 1 jour |
-| Testimonials intégration | 🟡 Souhaitable | Basse | 0.5 jour |
-| FAQ cohérence tarifs | 🟡 Souhaitable | Basse | 0.5 jour |
-| Coverage SonarCloud | 🟡 Souhaitable | Moyenne | 2-3 jours |
-| **Total estimé** | | | **~20-28 jours** |
-
----
-
-## 8. Critères d'acceptation V1
-
-La V1 est considérée comme **prête au lancement** quand :
-
-- [ ] Un restaurant peut recevoir des commandes téléphoniques via l'IA vocale
-- [ ] Les commandes apparaissent en temps réel sur le dashboard
-- [ ] Le cycle de vie complet d'une commande fonctionne (NEW → DELIVERED)
-- [ ] Le menu peut être configuré (IA photos ou HubRise)
-- [ ] Les horaires d'ouverture sont respectés par l'agent vocal
-- [ ] Le statut cuisine (CALM/RUSH/STOP) influence le comportement de l'IA
-- [ ] Le site marketing est fonctionnel avec un vrai numéro de démo
-- [ ] Les formulaires de contact fonctionnent avec tous les sujets
-- [ ] Les pages légales contiennent les vraies informations
-- [ ] Le dashboard est installable comme PWA sur tablette
-- [ ] Tous les tests passent et le build est propre

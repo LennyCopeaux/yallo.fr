@@ -35,18 +35,28 @@ describe("generateSystemPrompt", () => {
     commissionRate: 5,
     stripeCustomerId: null,
     billingStartDate: null,
+    organizationId: null,
     vapiAssistantId: null,
-    vapiStructuredOutputIds: null,
     vapiPhoneNumberId: null,
     systemPrompt: null,
     menuContext: null,
     menuData: null,
     twilioPhoneNumber: null,
+    forwardingPhoneNumber: null,
+    callForwardingEnabled: false,
     businessHours: "Lundi-Vendredi: 10h-22h",
     hubriseLocationId: "test-location",
     hubriseAccessToken: "test-token",
     currentStatus: "CALM" as const,
     statusSettings: null,
+    stripeSubscriptionId: null,
+    stripeSubscriptionStatus: null,
+    stripePriceId: null,
+    stripeCurrentPeriodEnd: null,
+    voiceId: null,
+    upsellEnabled: false,
+    smsConfirmationEnabled: false,
+    autoRushThreshold: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -66,7 +76,6 @@ describe("generateSystemPrompt", () => {
     expect(fetchHubriseCatalog).toHaveBeenCalledWith("test-token", "test-location");
     expect(prompt).toContain("Test Restaurant");
     expect(prompt).toContain("Lundi-Vendredi: 10h-22h");
-    expect(prompt).toContain("+33123456789");
   });
 
   it("should fallback to Yallo menu when HubRise fails", async () => {
@@ -116,7 +125,25 @@ describe("generateSystemPrompt", () => {
     expect(prompt).toContain("Lundi-Vendredi: 10h-22h");
   });
 
-  it("should include phone number for transfer", async () => {
+  it("should include call forwarding instruction when enabled", async () => {
+    const mockMenuJson = JSON.stringify({
+      categories: [{ category: "Kebab", items: [] }],
+    });
+    vi.mocked(fetchHubriseCatalog).mockResolvedValue(mockMenuJson);
+
+    const restaurantWithForwarding = {
+      ...mockRestaurant,
+      callForwardingEnabled: true,
+      forwardingPhoneNumber: "+33612345678",
+    };
+
+    const prompt = await generateSystemPrompt(restaurantWithForwarding);
+
+    expect(prompt).toContain("transfer_to_number");
+    expect(prompt).toContain("Transfert d'appel");
+  });
+
+  it("should not include call forwarding instruction when disabled", async () => {
     const mockMenuJson = JSON.stringify({
       categories: [{ category: "Kebab", items: [] }],
     });
@@ -124,7 +151,7 @@ describe("generateSystemPrompt", () => {
 
     const prompt = await generateSystemPrompt(mockRestaurant);
 
-    expect(prompt).toContain("+33123456789");
+    expect(prompt).not.toContain("Transfert d'appel");
   });
 
   it("should include menu structure in prompt", async () => {

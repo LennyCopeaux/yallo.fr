@@ -8,6 +8,7 @@ interface DotPatternProps {
   dotSize?: number;
   spacing?: number;
   withVignette?: boolean;
+  patternId?: string;
 }
 
 export function DotPattern({
@@ -15,9 +16,11 @@ export function DotPattern({
   dotSize = 1,
   spacing = 20,
   withVignette = true,
+  patternId,
 }: Readonly<DotPatternProps>) {
-  // useId() generates stable IDs across server/client renders
-  const patternId = useId();
+  // Keep a deterministic fallback, but allow explicit IDs for hydration-sensitive views.
+  const generatedPatternId = useId();
+  const resolvedPatternId = patternId ?? generatedPatternId;
 
   return (
     <div className={cn("absolute inset-0 overflow-hidden pointer-events-none", className)}>
@@ -27,7 +30,7 @@ export function DotPattern({
       >
         <defs>
           <pattern
-            id={patternId}
+            id={resolvedPatternId}
             x="0"
             y="0"
             width={spacing}
@@ -42,7 +45,7 @@ export function DotPattern({
             />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill={`url(#${patternId})`} />
+        <rect width="100%" height="100%" fill={`url(#${resolvedPatternId})`} />
       </svg>
       
       {/* Vignette effect - radial gradient that fades dots at edges */}
@@ -59,24 +62,32 @@ export function DotPattern({
 }
 
 // Preset variations - More visible dots (adaptive via CSS classes)
-export function DotPatternHero({ className }: Readonly<{ className?: string }>) {
+export function DotPatternHero({
+  className,
+  patternId,
+}: Readonly<{ className?: string; patternId?: string }>) {
   return (
     <DotPattern
       className={className}
       dotSize={1}
       spacing={22}
       withVignette={true}
+      patternId={patternId}
     />
   );
 }
 
-export function DotPatternSubtle({ className }: Readonly<{ className?: string }>) {
+export function DotPatternSubtle({
+  className,
+  patternId,
+}: Readonly<{ className?: string; patternId?: string }>) {
   return (
     <DotPattern
       className={className}
       dotSize={1}
       spacing={20}
       withVignette={true}
+      patternId={patternId}
     />
   );
 }

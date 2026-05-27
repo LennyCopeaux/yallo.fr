@@ -1,11 +1,15 @@
+// @vitest-environment node
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getMenuData, saveMenuData, generateMenuFromImages, clearMenuData } from "@/features/menu/actions";
-import type { Session } from "next-auth";
+import type { AppUser } from "@/lib/auth";
 
-const mockAuth = vi.fn<() => Promise<Session | null>>();
+const mockRequireAuth = vi.fn<() => Promise<AppUser>>();
+const mockGetAccessibleRestaurant = vi.fn();
 
-vi.mock("@/lib/auth/auth", () => ({
-  auth: () => mockAuth(),
+vi.mock("@/lib/auth", () => ({
+  requireAuth: () => mockRequireAuth(),
+  getAccessibleRestaurant: () => mockGetAccessibleRestaurant(),
 }));
 
 vi.mock("@/db", () => ({
@@ -42,6 +46,16 @@ vi.mock("@/lib/services/menu-parser", () => ({
 import { db } from "@/db";
 import { parseMenuFromBase64Images } from "@/lib/services/menu-parser";
 
+const mockOwner: AppUser = {
+  id: "user-1",
+  authUserId: "auth-1",
+  email: "test@example.com",
+  firstName: null,
+  lastName: null,
+  role: "OWNER",
+  createdAt: new Date(),
+};
+
 describe("menu actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -49,21 +63,14 @@ describe("menu actions", () => {
 
   describe("getMenuData", () => {
     it("should throw error when not authenticated", async () => {
-      mockAuth.mockResolvedValue(null);
+      mockRequireAuth.mockRejectedValue(new Error("Non autorisé"));
 
-      await expect(getMenuData()).rejects.toThrow("Non authentifié");
+      await expect(getMenuData()).rejects.toThrow("Non autorisé");
     });
 
     it("should throw error when no restaurant found", async () => {
-      mockAuth.mockResolvedValue({
-        user: { id: "user-1", email: "test@example.com", role: "OWNER", mustChangePassword: false },
-        expires: new Date().toISOString(),
-      } as Session);
-      vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([]),
-        }),
-      } as unknown as ReturnType<typeof db.select>);
+      mockRequireAuth.mockResolvedValue(mockOwner);
+      mockGetAccessibleRestaurant.mockResolvedValue(null);
 
       await expect(getMenuData()).rejects.toThrow("Restaurant non trouvé");
     });
@@ -73,15 +80,8 @@ describe("menu actions", () => {
         categories: [{ name: "Tacos", products: [] }],
         option_lists: [],
       };
-      mockAuth.mockResolvedValue({
-        user: { id: "user-1", email: "test@example.com", role: "OWNER", mustChangePassword: false },
-        expires: new Date().toISOString(),
-      } as Session);
-      vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ menuData: mockMenuData }]),
-        }),
-      } as unknown as ReturnType<typeof db.select>);
+      mockRequireAuth.mockResolvedValue(mockOwner);
+      mockGetAccessibleRestaurant.mockResolvedValue({ id: "rest-1", menuData: mockMenuData, vapiAssistantId: null });
 
       const result = await getMenuData();
 
@@ -89,15 +89,8 @@ describe("menu actions", () => {
     });
 
     it("should return null when menuData is not set", async () => {
-      mockAuth.mockResolvedValue({
-        user: { id: "user-1", email: "test@example.com", role: "OWNER", mustChangePassword: false },
-        expires: new Date().toISOString(),
-      } as Session);
-      vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ menuData: null }]),
-        }),
-      } as unknown as ReturnType<typeof db.select>);
+      mockRequireAuth.mockResolvedValue(mockOwner);
+      mockGetAccessibleRestaurant.mockResolvedValue({ id: "rest-1", menuData: null, vapiAssistantId: null });
 
       const result = await getMenuData();
 
@@ -155,27 +148,27 @@ describe("menu actions", () => {
   });
 
   describe("saveMenuData", () => {
-    it("should throw error when not authenticated", async () => {
-      mockAuth.mockResolvedValue(null);
+    it("should return error when not authenticated", async () => {
+      mockRequireAuth.mockRejectedValue(new Error("Non autorisé"));
 
       const result = await saveMenuData({ categories: [], option_lists: [] });
 
       expect(result).toEqual({
         success: false,
-        error: "Non authentifié",
+        error: "Non autorisé",
       });
     });
   });
 
   describe("clearMenuData", () => {
-    it("should throw error when not authenticated", async () => {
-      mockAuth.mockResolvedValue(null);
+    it("should return error when not authenticated", async () => {
+      mockRequireAuth.mockRejectedValue(new Error("Non autorisé"));
 
       const result = await clearMenuData();
 
       expect(result).toEqual({
         success: false,
-        error: "Non authentifié",
+        error: "Non autorisé",
       });
     });
   });

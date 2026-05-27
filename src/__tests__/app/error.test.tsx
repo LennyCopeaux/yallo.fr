@@ -2,6 +2,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
 import ErrorPage from "@/app/error";
 
+const { mockCaptureException } = vi.hoisted(() => ({
+  mockCaptureException: vi.fn(),
+}));
+
+vi.mock("@sentry/nextjs", () => ({
+  captureException: mockCaptureException,
+}));
+
 // Mock motion/react pour éviter les problèmes avec addEventListener dans les tests
 vi.mock("motion/react", () => ({
   motion: {
@@ -17,7 +25,6 @@ describe("ErrorPage", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(console, "error").mockImplementation(() => {});
     Object.defineProperty(globalThis, "window", {
       value: {
         location: { href: "" },
@@ -36,10 +43,10 @@ describe("ErrorPage", () => {
     expect(container.textContent).toContain("Désolé, une erreur inattendue s'est produite");
   });
 
-  it("should log error to console", () => {
+  it("should report error to Sentry", () => {
     render(<ErrorPage error={mockError} reset={mockReset} />);
 
-    expect(console.error).toHaveBeenCalledWith("Application error:", mockError);
+    expect(mockCaptureException).toHaveBeenCalledWith(mockError);
   });
 
   it("should render retry button", () => {

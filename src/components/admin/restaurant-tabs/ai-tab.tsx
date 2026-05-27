@@ -7,9 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Bot, Brain, FileText, Sparkles, Code, Trash2, Clock } from "lucide-react";
+import { Loader2, Bot, Brain, FileText, Sparkles, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { createVapiAssistant, updateVapiAssistant, deleteVapiAssistant } from "@/app/(admin)/admin/restaurants/actions";
+import {
+  createVapiAgent,
+  updateVapiAgent,
+  deleteVapiAgent,
+} from "@/app/(admin)/admin/restaurants/actions";
+import { AdminStatusBadge } from "@/components/admin/status-badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,42 +40,27 @@ interface AITabProps {
   restaurant: Restaurant;
 }
 
-function getAIStatusText(
-  isFullyOperational: boolean,
-  hasVapiId: boolean,
-  hasPhoneLinked: boolean,
-  hasTwilioNumber: boolean,
-  twilioPhoneNumber: string | null
-): { title: string; description: string } {
-  if (isFullyOperational) {
-    return {
-      title: "IA Opérationnelle",
-      description: `Agent IA actif sur le ${twilioPhoneNumber}`,
-    };
-  }
-  if (hasVapiId && !hasPhoneLinked) {
-    return {
-      title: "IA partiellement configurée",
-      description: "L'assistant existe mais aucun numéro de téléphone n'est lié",
-    };
-  }
-  if (!hasTwilioNumber) {
-    return {
-      title: "IA Non configurée",
-      description: "Renseignez d'abord le numéro Twilio dans l'onglet Téléphonie",
-    };
-  }
-  return {
-    title: "IA Non configurée",
-    description: "Créez l'agent IA pour activer la prise de commande vocale",
-  };
+function ElevenLabsIcon() {
+  return (
+    <svg
+      className="w-5 h-5 text-primary"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M8 4v16" />
+      <path d="M12 4v16" />
+      <path d="M16 4v16" />
+    </svg>
+  );
 }
 
 export function AITab({ restaurant }: Readonly<AITabProps>) {
   const router = useRouter();
-  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
-  const [isGeneratingMenuJson, setIsGeneratingMenuJson] = useState(false);
-  const [isGeneratingHoursJson, setIsGeneratingHoursJson] = useState(false);
   const [isCreatingAssistant, setIsCreatingAssistant] = useState(false);
   const [isUpdatingAssistant, setIsUpdatingAssistant] = useState(false);
   const [isDeletingAssistant, setIsDeletingAssistant] = useState(false);
@@ -89,20 +79,35 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
     }
   }, [restaurant.businessHours]);
 
-  const hasVapiId = !!restaurant.vapiAssistantId;
+  useEffect(() => {
+    fetch(`/api/admin/restaurants/${restaurant.id}/generate-system-prompt`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((data: { systemPrompt: string }) => setSystemPrompt(data.systemPrompt))
+      .catch(() => {});
+  }, [restaurant.id]);
+
+  useEffect(() => {
+    fetch(`/api/admin/restaurants/${restaurant.id}/generate-menu-json`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((data: { menuJson: string }) => {
+        if (data.menuJson && data.menuJson !== "Menu non configuré") {
+          setMenuContext(data.menuJson);
+        }
+      })
+      .catch(() => {});
+  }, [restaurant.id]);
+
+  const hasAgentId = !!restaurant.vapiAssistantId;
   const hasPhoneLinked = !!restaurant.vapiPhoneNumberId;
   const hasTwilioNumber = !!restaurant.twilioPhoneNumber;
-  const isFullyOperational = hasVapiId && hasPhoneLinked;
-
-  const statusText = getAIStatusText(isFullyOperational, hasVapiId, hasPhoneLinked, hasTwilioNumber, restaurant.twilioPhoneNumber);
-  const statusCardClassName = isFullyOperational ? "border-emerald-400/20 bg-emerald-400/5" : "border-amber-400/20 bg-amber-400/5";
+  const isFullyOperational = hasAgentId && hasPhoneLinked;
 
   const handleCreateAssistant = async () => {
     setIsCreatingAssistant(true);
     try {
-      const result = await createVapiAssistant(restaurant.id);
+      const result = await createVapiAgent(restaurant.id);
       if (result.success && result.data) {
-        toast.success("Agent IA créé et numéro de téléphone lié avec succès");
+        toast.success("Assistant VAPI créé et numéro de téléphone lié avec succès");
         router.refresh();
       } else {
         toast.error(result.error || "Erreur lors de la création de l'assistant");
@@ -117,9 +122,9 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
   const handleUpdateAssistant = async () => {
     setIsUpdatingAssistant(true);
     try {
-      const result = await updateVapiAssistant(restaurant.id);
+      const result = await updateVapiAgent(restaurant.id);
       if (result.success) {
-        toast.success("Assistant Vapi mis à jour avec succès");
+        toast.success("Assistant VAPI mis à jour avec succès");
       } else {
         toast.error(result.error || "Erreur lors de la mise à jour de l'assistant");
       }
@@ -134,144 +139,57 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
     setShowDeleteDialog(false);
     setIsDeletingAssistant(true);
     try {
-      const result = await deleteVapiAssistant(restaurant.id);
+      const result = await deleteVapiAgent(restaurant.id);
       if (result.success) {
-        toast.success("Agent IA supprimé avec succès");
+        toast.success("Assistant VAPI supprimé avec succès");
         router.refresh();
       } else {
-        toast.error(result.error || "Erreur lors de la suppression de l'agent");
+        toast.error(result.error || "Erreur lors de la suppression de l'assistant");
       }
     } catch {
-      toast.error("Erreur lors de la suppression de l'agent");
+      toast.error("Erreur lors de la suppression de l'assistant");
     } finally {
       setIsDeletingAssistant(false);
     }
   };
 
-  const handleGeneratePrompt = async () => {
-    setIsGeneratingPrompt(true);
-    try {
-      const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-system-prompt`);
-      if (!response.ok) throw new Error("Erreur lors de la génération");
-      const data = await response.json();
-      setSystemPrompt(data.systemPrompt);
-      toast.success("Prompt système généré");
-    } catch {
-      toast.error("Erreur lors de la génération du prompt");
-    } finally {
-      setIsGeneratingPrompt(false);
-    }
-  };
-
-  const handleGenerateMenuJson = async () => {
-    setIsGeneratingMenuJson(true);
-    try {
-      const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-menu-json`);
-      if (!response.ok) throw new Error("Erreur lors de la génération");
-      const data = await response.json();
-      if (data.menuJson === "Menu non configuré") {
-        setMenuContext("Menu non configuré");
-        toast.info("Aucun menu configuré pour ce restaurant");
-      } else {
-        setMenuContext(data.menuJson);
-        toast.success("JSON menu généré");
-      }
-    } catch {
-      toast.error("Erreur lors de la génération du JSON");
-    } finally {
-      setIsGeneratingMenuJson(false);
-    }
-  };
-
-  const handleGenerateHoursJson = async () => {
-    setIsGeneratingHoursJson(true);
-    try {
-      const response = await fetch(`/api/admin/restaurants/${restaurant.id}/generate-business-hours-json`);
-      if (!response.ok) {
-        throw new Error("Erreur lors de la génération");
-      }
-      const data = await response.json();
-      if (data.businessHoursJson === "Horaires d'ouverture non configurée") {
-        setBusinessHoursJson("Horaires d'ouverture non configurée");
-        toast.info("Aucun horaire configuré pour ce restaurant");
-      } else {
-        setBusinessHoursJson(data.businessHoursJson);
-        toast.success("JSON horaires généré");
-      }
-    } catch {
-      toast.error("Erreur lors de la génération du JSON");
-    } finally {
-      setIsGeneratingHoursJson(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
-      <Card className={`border ${statusCardClassName}`}>
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg ${isFullyOperational ? "bg-emerald-400/10" : "bg-amber-400/10"} flex items-center justify-center`}>
-                <Bot className={`w-5 h-5 ${isFullyOperational ? "text-emerald-400" : "text-amber-400"}`} />
-              </div>
-              <div>
-                <p className={`font-medium ${isFullyOperational ? "text-emerald-400" : "text-amber-400"}`}>
-                  {statusText.title}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {statusText.description}
-                </p>
-              </div>
-            </div>
-            {hasVapiId && (
-              <div className="flex items-center gap-4 ml-[52px] text-xs">
-                <span className={`flex items-center gap-1.5 ${hasVapiId ? 'text-emerald-400' : 'text-muted-foreground'}`}>
-                  <div className={`w-1.5 h-1.5 rounded-full ${hasVapiId ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
-                  Assistant
-                </span>
-                <span className={`flex items-center gap-1.5 ${hasPhoneLinked ? 'text-emerald-400' : 'text-red-400'}`}>
-                  <div className={`w-1.5 h-1.5 rounded-full ${hasPhoneLinked ? 'bg-emerald-400' : 'bg-red-400'}`} />
-                  {hasPhoneLinked ? `Numéro lié (${restaurant.twilioPhoneNumber})` : 'Numéro non lié'}
-                </span>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="space-y-6">
         <Card className="border-border bg-card/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="w-5 h-5 text-primary" />
-              Assistant Vapi
-            </CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className="flex items-center gap-2">
+                <ElevenLabsIcon />
+                Agent ElevenLabs
+              </CardTitle>
+              {isFullyOperational ? (
+                <AdminStatusBadge tone="active" label="Actif" />
+              ) : (
+                <AdminStatusBadge tone="warning" label="Non configuré" />
+              )}
+            </div>
             <CardDescription className="space-y-2">
               <span className="block">
-                L&apos;identifiant de l&apos;assistant Vapi qui gère les appels (voix ElevenLabs Turbo v2.5 —{" "}
+                L&apos;identifiant de l&apos;agent ElevenLabs Conversational AI qui gère les appels
+                vocaux (voix ElevenLabs Turbo v2.5 —{" "}
                 <code className="font-mono text-xs">ELEVENLABS_VOICE_ID</code> optionnel).
               </span>
               <span className="block text-xs text-muted-foreground border-l-2 border-amber-500/40 pl-2">
                 <strong>Vercel / prod :</strong> définissez{" "}
-                <code className="font-mono rounded bg-muted px-0.5">VAPI_WEBHOOK_SECRET</code> (chaîne secrète, ex.{" "}
-                <code className="font-mono">openssl rand -hex 32</code>
-                ) puis cliquez sur <strong>Mettre à jour l&apos;assistant</strong> pour que Vapi envoie ce secret au
-                webhook. Sans cela, les commandes vocales échouent (erreur « server rejected »). Optionnel :{" "}
+                <code className="font-mono rounded bg-muted px-0.5">ELEVENLABS_WEBHOOK_SECRET</code>{" "}
+                (chaîne secrète, ex. <code className="font-mono">openssl rand -hex 32</code>) puis
+                cliquez sur <strong>Mettre à jour l&apos;agent</strong> pour que ElevenLabs envoie
+                ce secret au webhook. Sans cela, les commandes vocales échouent. Optionnel :{" "}
                 <code className="font-mono">NEXT_PUBLIC_APP_URL</code> en https vers votre app.
-              </span>
-              <span className="block text-xs text-muted-foreground border-l-2 border-primary/30 pl-2">
-                Dans le dashboard Vapi, le menu <strong>Tools</strong> peut proposer des outils workspace (
-                <code className="font-mono">api_request_tool</code>, etc.) : ce n&apos;est pas obligatoire. La prise de
-                commande utilise la fonction <code className="font-mono">submit_order</code> poussée par Yallo dans le
-                modèle ; ne la remplacez pas manuellement par un outil vide.
               </span>
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {hasVapiId && (
+              {hasAgentId && (
                 <div className="space-y-2">
-                  <Label htmlFor="vapiAssistantId">ID de l&apos;assistant Vapi</Label>
+                  <Label htmlFor="vapiAssistantId">ID de l&apos;assistant VAPI</Label>
                   <Input
                     id="vapiAssistantId"
                     readOnly
@@ -281,24 +199,26 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
                   />
                   {hasPhoneLinked && (
                     <p className="text-xs text-emerald-400">
-                      Numéro {restaurant.twilioPhoneNumber} lié à l&apos;assistant — les appels sont routés vers l&apos;IA
+                      Numéro {restaurant.twilioPhoneNumber} lié à l&apos;agent — les appels sont
+                      routés vers l&apos;IA
                     </p>
                   )}
                   {!hasPhoneLinked && (
                     <p className="text-xs text-red-400">
-                      Aucun numéro lié — supprimez l&apos;agent et recréez-le après avoir configuré le numéro Twilio
+                      Aucun numéro lié — supprimez l&apos;agent et recréez-le après avoir configuré
+                      le numéro Twilio
                     </p>
                   )}
                 </div>
               )}
-              {!hasVapiId && (
+              {!hasAgentId && (
                 <p className="text-sm text-muted-foreground">
                   {hasTwilioNumber
-                    ? `Le numéro ${restaurant.twilioPhoneNumber} sera automatiquement importé dans Vapi et lié à l'agent.`
-                    : 'Renseignez d\'abord le numéro Twilio dans l\'onglet Téléphonie, puis revenez ici pour créer l\'agent.'}
+                    ? `Le numéro ${restaurant.twilioPhoneNumber} sera automatiquement importé dans ElevenLabs et lié à l'agent.`
+                    : "Renseignez d'abord le numéro Twilio dans l'onglet Téléphonie, puis revenez ici pour créer l'agent."}
                 </p>
               )}
-              {!hasVapiId ? (
+              {!hasAgentId ? (
                 <Button
                   type="button"
                   variant="default"
@@ -356,36 +276,14 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
 
         <Card className="border-border bg-card/30">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="w-5 h-5 text-purple-400" />
-                  Prompt Système
-                </CardTitle>
-                <CardDescription>
-                  Instructions personnalisées pour l&apos;IA de ce restaurant (surcharge le prompt par défaut)
-                </CardDescription>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isGeneratingPrompt}
-                onClick={handleGeneratePrompt}
-              >
-                {isGeneratingPrompt ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Génération...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Générer le Prompt System
-                  </>
-                )}
-              </Button>
-            </div>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-purple-400" />
+              Prompt Système
+            </CardTitle>
+            <CardDescription>
+              Instructions personnalisées pour l&apos;IA de ce restaurant (surcharge le prompt
+              par défaut)
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -426,40 +324,22 @@ Règles importantes :
                   Contexte Menu
                 </CardTitle>
                 <CardDescription>
-                  Le menu du restaurant au format texte ou JSON. L&apos;IA utilisera ces informations pour comprendre les produits.
+                  Le menu du restaurant au format texte ou JSON. L&apos;IA utilisera ces
+                  informations pour comprendre les produits.
                 </CardDescription>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isGeneratingMenuJson}
-                onClick={handleGenerateMenuJson}
-              >
-                {isGeneratingMenuJson ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Génération...
-                  </>
-                ) : (
-                  <>
-                    <Code className="w-4 h-4 mr-2" />
-                    Générer JSON Menu
-                  </>
-                )}
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-                <Label htmlFor="menuContext">Données du menu</Label>
-                <Textarea
-                  id="menuContext"
-                  readOnly
-                  disabled
-                  value={menuContext}
-                  rows={12}
-                  placeholder={`{
+              <Label htmlFor="menuContext">Données du menu</Label>
+              <Textarea
+                id="menuContext"
+                readOnly
+                disabled
+                value={menuContext}
+                rows={12}
+                placeholder={`{
   "categories": [
     {
       "name": "Kebabs",
@@ -477,11 +357,11 @@ Règles importantes :
     }
   ]
 }`}
-                  className="bg-muted/50 cursor-not-allowed font-mono text-sm resize-y min-h-[300px]"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {menuContext.length} / 50 000 caractères (lecture seule)
-                </p>
+                className="bg-muted/50 cursor-not-allowed font-mono text-sm resize-y min-h-[300px]"
+              />
+              <p className="text-xs text-muted-foreground">
+                {menuContext.length} / 50 000 caractères (lecture seule)
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -495,28 +375,10 @@ Règles importantes :
                   Horaires d&apos;ouverture
                 </CardTitle>
                 <CardDescription>
-                  Configuration des horaires au format JSON (utilisés par l&apos;IA pour informer les clients)
+                  Configuration des horaires au format JSON (utilisés par l&apos;IA pour informer
+                  les clients)
                 </CardDescription>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isGeneratingHoursJson}
-                onClick={handleGenerateHoursJson}
-              >
-                {isGeneratingHoursJson ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Génération...
-                  </>
-                ) : (
-                  <>
-                    <Code className="w-4 h-4 mr-2" />
-                    Générer JSON Horaires
-                  </>
-                )}
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -538,7 +400,8 @@ Règles importantes :
                 className="bg-muted/50 cursor-not-allowed font-mono text-sm resize-y min-h-[250px]"
               />
               <p className="text-xs text-muted-foreground">
-                Format JSON avec les jours de la semaine et les horaires d&apos;ouverture/fermeture (lecture seule)
+                Format JSON avec les jours de la semaine et les horaires d&apos;ouverture/fermeture
+                (lecture seule)
               </p>
             </div>
           </CardContent>

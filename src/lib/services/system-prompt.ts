@@ -39,18 +39,43 @@ function getKitchenStatusInstruction(restaurant: Restaurant): string {
   }
 
   const statusLabels: Record<string, string> = {
-    CALM: "calme (temps d'attente court)",
+    CALM: "calme",
     NORMAL: "normal",
-    RUSH: "chargé (temps d'attente plus long que d'habitude)",
+    RUSH: "chargé",
   };
 
-  const label = statusLabels[restaurant.currentStatus] || "normal";
-  return `\n\nStatut actuel de la cuisine : ${label}.`;
+  const currentKey = restaurant.currentStatus as "CALM" | "NORMAL" | "RUSH";
+  const label = statusLabels[currentKey] || "normal";
+  const waitSettings = restaurant.statusSettings?.[currentKey];
+  const waitStr = waitSettings
+    ? "fixed" in waitSettings
+      ? `, temps d'attente estimé : environ ${waitSettings.fixed} min`
+      : `, temps d'attente estimé : entre ${waitSettings.min} et ${waitSettings.max} min`
+    : "";
+  return `\n\nStatut actuel de la cuisine : ${label}${waitStr}.`;
 }
 
 /**
  * Prompt système pour l’assistant téléphonique (restauration, menu variable).
- */
+ */function getCallForwardingInstruction(restaurant: Restaurant): string {
+  if (!restaurant.callForwardingEnabled || !restaurant.phoneNumber) return "";
+
+  return `\n\nTransfert d'appel :
+- Si le client demande explicitement à parler à un responsable, au patron, au gérant ou à un humain, tu peux utiliser l'outil transfer_to_number pour transférer l'appel vers le restaurant.
+- Utilise transfer_to_number UNIQUEMENT si le client le demande clairement. Ne propose pas cette option de toi-même.
+- Avant de transférer, dis simplement : « Je vous mets en relation avec l'équipe, un instant. »
+- Le numéro de transfert est déjà configuré, tu n'as pas à le mentionner au client.`;
+}
+
+function getUpsellInstruction(restaurant: Restaurant): string {
+  if (!restaurant.upsellEnabled) return "";
+
+  return `\n\nUpsell automatique :
+- En fin de prise de commande (après avoir confirmé les articles principaux mais avant d'appeler submit_order), propose naturellement et brièvement un complément pertinent s'il en existe dans le menu : boisson, dessert, supplément, sauce…
+- Ne propose qu'un seul complément maximum, de manière naturelle, sans insister.
+- Si le client refuse, accepte immédiatement et passe à la finalisation.`;
+}
+
 export async function generateSystemPrompt(restaurant: Restaurant): Promise<string> {
   const menuStructure = await getMenuStructure(restaurant);
 
@@ -60,12 +85,21 @@ Langue : français (France). Ton professionnel, courtois et naturel. Réponses c
 
 Menu et catalogue :
 - Le JSON ci-dessous est ta référence interne (prix, options obligatoires). Tu ne le lis pas au client mot pour mot.
-- Ne liste pas les pizzas, catégories ou articles tant que le client ne demande pas explicitement ce qu’il y a au menu (ex. « qu’est-ce que vous avez », « quelles pizzas », « la carte »). Dans ce cas seulement, tu peux résumer ou proposer des catégories, sans énumérer 20 noms d’un coup si ce n’est pas utile.
-- Si le client commande directement un produit (« une margherita », « un menu »), tu enchaînes sur les options manquantes selon le menu, pas sur l’inventaire complet.
+- Tu DOIS proposer uniquement des articles qui existent EXACTEMENT dans le menu. Ne mentionne JAMAIS de produits, options, variantes ou noms qui ne sont pas listés.
+- Si le client nomme une option qui n'existe pas (ex. « fromagère classique », « sauce maison »), ne l'accepte PAS : corrige-le immédiatement et propose uniquement les options disponibles dans la catégorie concernée.
+- Ne liste pas les catégories ou articles tant que le client ne demande pas explicitement ce qu'il y a au menu. Dans ce cas seulement, tu peux résumer ou proposer des catégories, sans tout énumérer d'un coup.
+- Si le client commande directement un produit, tu enchaînes sur les options manquantes selon le menu, pas sur l'inventaire complet.
 
 Quantités :
 - Si le client commande un article au singulier sans chiffre (« une margherita », « un burger », « une grande salade »), considère la quantité **1** pour cet article. Ne demande pas « combien » sauf si c’est ambigu (ex. « des pizzas », « plusieurs », « pour six personnes », « deux de chaque »).
-
+STRUCTURE DES PRODUITS (Important - À RESPECTER SCRUPULEUSEMENT) :
+Si le menu contient des catégories "Taille & Quantité", "Viande", "Base", "Sauce" → Il s'agit d'un produit COMPOSABLE (ex: Tacos).
+- La taille/quantité indique le NOMBRE d'éléments : "Double (2 viandes)" = 2 viandes à choisir.
+- Les autres catégories sont des OPTIONS OBLIGATOIRES à ajouter après la taille.
+- Exemple : Client dit "Je veux un double" → Tu dois ensuite demander : 2 viandes, une base, une sauce.
+- Pour "Double (2 viandes)", le client peut choisir 2 viandes différentes ou 2 fois la même.
+- IMPORTANT : Les articles listés sous "Viande", "Base", "Sauce" ne sont PAS des produits complets : ce sont des COMPOSANTS.
+- Reconnaître automatiquement que ces composants font partie du produit ordonnancé.
 Ordre de la conversation (respecte cet ordre) :
 1. Accueil bref avec le nom du restaurant.
 2. Collecte des articles et de **toutes** les options obligatoires du menu (une question à la fois si besoin).
@@ -84,11 +118,9 @@ Outil submit_order :
 - pickup_time, notes : si pertinent (mode, contraintes, heure de retrait dans notes ou pickup_time selon le cas).
 
 Menu (JSON, référence interne) :
-${JSON.stringify(menuStructure, null, 2)}
+${JSON.stringify(menuStructure)}
 
 Horaires :
 ${restaurant.businessHours || "Non configuré"}
-${getKitchenStatusInstruction(restaurant)}
-
-Numéro du restaurant (transfert ou info) : ${restaurant.phoneNumber}`;
+${getKitchenStatusInstruction(restaurant)}${getCallForwardingInstruction(restaurant)}${getUpsellInstruction(restaurant)}`;
 }

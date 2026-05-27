@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "motion/react";
-import { signIn } from "next-auth/react";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -33,19 +33,20 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const result = await signIn("credentials", {
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
-        redirect: false,
       });
 
-      if (result?.error) {
+      if (signInError) {
         setError("Email ou mot de passe incorrect");
         setIsLoading(false);
         return;
       }
 
       router.push("/api/auth/redirect");
+      router.refresh();
     } catch {
       setError("Une erreur est survenue");
       setIsLoading(false);
@@ -54,7 +55,7 @@ export function LoginForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-      <DotPatternSubtle className="z-0" />
+      <DotPatternSubtle className="z-0" patternId="login-dot-pattern" />
 
       <div className="w-full max-w-md mx-4 relative z-10">
         <Card className="bg-card/50 border-border backdrop-blur-xl">

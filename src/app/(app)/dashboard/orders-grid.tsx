@@ -2,16 +2,18 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { OrderTicket, type Order } from "@/components/orders";
-import { updateOrderStatus } from "@/features/orders/actions";
+import { simulateSubmitOrder, updateOrderStatus } from "@/features/orders/actions";
 import { type OrderStatus } from "@/db/schema";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { PlusCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 interface OrdersGridProps {
   initialOrders: Order[];
 }
+
+const AUTO_REFRESH_INTERVAL_MS = 15_000;
 
 export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
   const [orders, setOrders] = useState(initialOrders);
@@ -34,6 +36,7 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
       try {
         await updateOrderStatus(orderId, newStatus);
         updateOrderInList(orderId, newStatus);
+        router.refresh();
         toast.success("Statut mis à jour");
       } catch {
         toast.error("Erreur lors de la mise à jour");
@@ -41,9 +44,34 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
     });
   };
 
+  const handleSimulateSubmitOrder = async () => {
+    startTransition(async () => {
+      try {
+        await simulateSubmitOrder();
+        router.refresh();
+        toast.success("Commande de test ajoutee");
+      } catch {
+        toast.error("Erreur lors de la simulation submit_order");
+      }
+    });
+  };
+
   const handleRefresh = () => {
     router.refresh();
   };
+
+  useEffect(() => {
+    // Vercel ne fournit pas de WebSocket natif sans service externe: on utilise un polling léger.
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        router.refresh();
+      }
+    }, AUTO_REFRESH_INTERVAL_MS);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [router]);
 
   // Afficher toutes les commandes (le filtrage est déjà fait par DashboardContent)
   // Mais on peut toujours séparer actives et terminées pour l'affichage
@@ -56,20 +84,6 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
   
   // Si toutes les commandes sont actives, on les affiche toutes ensemble
   const displayOrders = completedOrders.length === 0 ? orders : activeOrders;
-
-  if (orders.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 px-4">
-        <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-          <span className="text-5xl">📋</span>
-        </div>
-        <h3 className="text-xl font-semibold mb-2 text-center">Aucune commande</h3>
-        <p className="text-muted-foreground text-center max-w-md">
-          Les commandes prises par votre assistant vocal apparaîtront ici en temps réel.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8">
@@ -84,7 +98,23 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
+        <Button size="sm" onClick={handleSimulateSubmitOrder}>
+          <PlusCircle className="w-4 h-4 mr-2" />
+          Simuler submit_order
+        </Button>
       </div>
+
+      {orders.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+            <span className="text-5xl">📋</span>
+          </div>
+          <h3 className="text-xl font-semibold mb-2 text-center">Aucune commande</h3>
+          <p className="text-muted-foreground text-center max-w-md">
+            Les commandes prises par votre assistant vocal apparaîtront ici en temps réel.
+          </p>
+        </div>
+      ) : null}
 
       {/* Orders Grid */}
       {displayOrders.length > 0 && (

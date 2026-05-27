@@ -1,18 +1,10 @@
-import { auth } from "@/lib/auth/auth";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/db";
 import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { fetchHubriseCatalog } from "@/lib/services/hubrise";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user?.role || session.user.role !== "ADMIN") {
-    throw new Error("Non autorisé");
-  }
-  return session;
-}
 
 export async function GET(
   request: Request,
@@ -25,6 +17,7 @@ export async function GET(
     const [restaurant] = await db
       .select({
         menuData: restaurants.menuData,
+        menuContext: restaurants.menuContext,
         hubriseAccessToken: restaurants.hubriseAccessToken,
         hubriseLocationId: restaurants.hubriseLocationId,
       })
@@ -42,11 +35,6 @@ export async function GET(
           restaurant.hubriseAccessToken,
           restaurant.hubriseLocationId
         );
-        const parsedHubrise = JSON.parse(hubriseMenuJson);
-        const isEmpty = !parsedHubrise.categories || parsedHubrise.categories.length === 0;
-        if (isEmpty) {
-          return NextResponse.json({ menuJson: "Menu non configuré" });
-        }
         return NextResponse.json({ menuJson: hubriseMenuJson });
       } catch (error) {
         logger.warn("Erreur récupération menu HubRise, fallback sur menuData", {
@@ -56,13 +44,17 @@ export async function GET(
       }
     }
 
-    if (!restaurant.menuData?.categories?.length) {
-      return NextResponse.json({ menuJson: "Menu non configuré" });
+    if (restaurant.menuData) {
+      return NextResponse.json({ 
+        menuJson: JSON.stringify(restaurant.menuData, null, 2) 
+      });
     }
 
-    return NextResponse.json({ 
-      menuJson: JSON.stringify(restaurant.menuData, null, 2) 
-    });
+    if (restaurant.menuContext) {
+      return NextResponse.json({ menuJson: restaurant.menuContext });
+    }
+
+    return NextResponse.json({ menuJson: "Menu non configuré" });
   } catch (error) {
     logger.error("Erreur génération JSON menu", error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(

@@ -7,22 +7,21 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Store,
-  Users,
+  Shield,
   LogOut,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { createClient } from "@/lib/supabase/client";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
-  { name: "Restaurants", href: "/admin/restaurants", icon: Store, exact: false },
-  { name: "Utilisateurs", href: "/admin/users", icon: Users, exact: false },
+  { name: "Rôles", href: "/admin/roles", icon: Shield, exact: false },
 ] as const;
 
 async function handleLogout(): Promise<void> {
-  await signOut({ redirect: false });
+  const supabase = createClient();
+  await supabase.auth.signOut();
   if (globalThis.window !== undefined) {
     const hostname = globalThis.window.location.hostname;
     const port = globalThis.window.location.port || "3000";

@@ -11,7 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -39,16 +38,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { 
-  MoreHorizontal, 
-  Search, 
-  Eye, 
-  Trash2,
-  UserCheck,
-  Loader2
-} from "lucide-react";
+import { MoreHorizontal, Search, Eye, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteRestaurant } from "@/app/(admin)/admin/restaurants/actions";
+import { AdminStatusBadge } from "@/components/admin/status-badge";
 
 type Restaurant = {
   id: string;
@@ -62,6 +55,7 @@ type Restaurant = {
   twilioPhoneNumber: string | null;
   createdAt: Date | null;
   ownerEmail: string;
+  owners: string[];
   ordersCount: number;
 };
 
@@ -122,11 +116,11 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
 
   const handleDelete = async () => {
     if (!restaurantToDelete) return;
-    
+
     setIsDeleting(true);
     const result = await deleteRestaurant(restaurantToDelete.id);
     setIsDeleting(false);
-    
+
     if (result.success) {
       toast.success("Restaurant supprimé");
       setDeleteDialogOpen(false);
@@ -136,32 +130,18 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
     }
   };
 
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
-        return (
-          <Badge className="bg-emerald-400/10 text-emerald-400 border-emerald-400/20 hover:bg-emerald-400/15">
-            Actif
-          </Badge>
-        );
+        return <AdminStatusBadge tone="active" label="Actif" />;
       case "onboarding":
-        return (
-          <Badge className="bg-amber-400/10 text-amber-400 border-amber-400/20 hover:bg-amber-400/15">
-            Onboarding
-          </Badge>
-        );
+        return <AdminStatusBadge tone="warning" label="Onboarding" />;
       case "suspended":
-        return (
-          <Badge className="bg-red-400/10 text-red-400 border-red-400/20 hover:bg-red-400/15">
-            Suspendu
-          </Badge>
-        );
+        return <AdminStatusBadge tone="danger" label="Suspendu" />;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <AdminStatusBadge tone="neutral" label={status} />;
     }
   };
-
 
   return (
     <div className="space-y-4">
@@ -225,93 +205,113 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
         ) : (
           <div className="overflow-x-auto">
             <Table>
-            <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-muted-foreground font-medium">Restaurant</TableHead>
-                <TableHead className="text-muted-foreground font-medium hidden md:table-cell">Propriétaire</TableHead>
-                <TableHead className="text-muted-foreground font-medium">Statut</TableHead>
-                <TableHead className="text-muted-foreground font-medium text-center">Commandes</TableHead>
-                <TableHead className="text-muted-foreground font-medium text-center">IA</TableHead>
-                <TableHead className="w-[70px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((restaurant) => (
-              <TableRow 
-                key={restaurant.id} 
-                className="border-border hover:bg-primary/[0.02] cursor-pointer"
-                onClick={() => router.push(`/admin/restaurants/${restaurant.id}`)}
-              >
-                <TableCell className="min-w-[150px]">
-                  <div>
-                    <div className="font-medium text-sm sm:text-base">{restaurant.name}</div>
-                    <div className="text-xs text-muted-foreground md:hidden mt-1">
-                      {restaurant.ownerEmail}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="hidden md:table-cell text-muted-foreground min-w-[180px]">
-                  {restaurant.ownerEmail}
-                </TableCell>
-                <TableCell className="min-w-[100px]">
-                  {getStatusBadge(restaurant.status)}
-                </TableCell>
-                <TableCell className="text-center text-muted-foreground min-w-[80px]">
-                  {restaurant.ordersCount}
-                </TableCell>
-                <TableCell className="text-center min-w-[60px]">
-                  <div 
-                    className={`w-3 h-3 rounded-full mx-auto ${
-                      restaurant.vapiAssistantId 
-                        ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' 
-                        : 'bg-zinc-600'
-                    }`}
-                    title={restaurant.vapiAssistantId ? "IA configurée" : "IA non configurée"}
-                  />
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()} className="min-w-[44px]">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
-                        <MoreHorizontal className="w-4 h-4" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-card border-border">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator className="bg-muted/50" />
-                      <DropdownMenuItem asChild>
-                        <Link href={`/admin/restaurants/${restaurant.id}`}>
-                          <Eye className="w-4 h-4 mr-2" />
-                          Voir détails
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        disabled
-                        className="opacity-50 cursor-not-allowed"
-                      >
-                        <UserCheck className="w-4 h-4 mr-2" />
-                        <span className="line-through">Se connecter en tant que</span>
-                        <span className="ml-2 text-xs text-muted-foreground">(À venir)</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-muted/50" />
-                      <DropdownMenuItem
-                        className="text-red-400 focus:text-red-400"
-                        onClick={() => {
-                          setRestaurantToDelete(restaurant);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Supprimer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              <TableHeader>
+                <TableRow className="border-border hover:bg-transparent">
+                  <TableHead className="text-muted-foreground font-medium">Restaurant</TableHead>
+                  <TableHead className="text-muted-foreground font-medium hidden md:table-cell">
+                    Membres
+                  </TableHead>
+                  <TableHead className="text-muted-foreground font-medium">Statut</TableHead>
+                  <TableHead className="text-muted-foreground font-medium text-center">
+                    Commandes
+                  </TableHead>
+                  <TableHead className="text-muted-foreground font-medium text-center">
+                    IA
+                  </TableHead>
+                  <TableHead className="w-[70px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.map((restaurant) => (
+                  <TableRow
+                    key={restaurant.id}
+                    className="border-border hover:bg-primary/[0.02] cursor-pointer"
+                    onClick={() => router.push(`/admin/restaurants/${restaurant.id}`)}
+                  >
+                    <TableCell className="min-w-[150px]">
+                      <div>
+                        <div className="font-medium text-sm sm:text-base">{restaurant.name}</div>
+                        <div className="md:hidden mt-1 flex flex-col gap-0.5">
+                          {restaurant.owners.length === 0 ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : (
+                            restaurant.owners.map((ownerEmail) => (
+                              <span key={ownerEmail} className="text-xs text-muted-foreground break-all">
+                                {ownerEmail}
+                              </span>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-muted-foreground min-w-[180px]">
+                      <div className="flex flex-col gap-0.5">
+                        {restaurant.owners.length === 0 ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : (
+                          restaurant.owners.map((ownerEmail) => (
+                            <span key={ownerEmail} className="text-sm text-muted-foreground break-all">
+                              {ownerEmail}
+                            </span>
+                          ))
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="min-w-[100px]">
+                      {getStatusBadge(restaurant.status)}
+                    </TableCell>
+                    <TableCell className="text-center text-muted-foreground min-w-[80px]">
+                      {restaurant.ordersCount}
+                    </TableCell>
+                    <TableCell className="text-center min-w-[60px]">
+                      <div
+                        className={`w-3 h-3 rounded-full mx-auto ${
+                          restaurant.vapiAssistantId
+                            ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"
+                            : "bg-zinc-600"
+                        }`}
+                        title={restaurant.vapiAssistantId ? "IA configurée" : "IA non configurée"}
+                      />
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()} className="min-w-[44px]">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                            <span className="sr-only">Actions</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-card border-border">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator className="bg-muted/50" />
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/restaurants/${restaurant.id}`}>
+                              <Eye className="w-4 h-4 mr-2" />
+                              Voir détails
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="bg-muted/50" />
+                          <DropdownMenuItem
+                            className="text-red-400 focus:text-red-400"
+                            onClick={() => {
+                              setRestaurantToDelete(restaurant);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>
@@ -327,8 +327,8 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer le restaurant ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer <strong>{restaurantToDelete?.name}</strong> ?
-              Cette action est irréversible et supprimera toutes les données associées.
+              Êtes-vous sûr de vouloir supprimer <strong>{restaurantToDelete?.name}</strong> ? Cette
+              action est irréversible et supprimera toutes les données associées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

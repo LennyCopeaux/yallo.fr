@@ -13,7 +13,6 @@ async function getUsers() {
       firstName: users.firstName,
       lastName: users.lastName,
       role: users.role,
-      mustChangePassword: users.mustChangePassword,
       createdAt: users.createdAt,
     })
     .from(users)
@@ -35,7 +34,7 @@ export default async function UsersPage() {
         <AddUserDialog />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div className="p-4 rounded-xl border border-border bg-card/30">
           <p className="text-2xl font-bold">{usersList.length}</p>
           <p className="text-sm text-muted-foreground">Total</p>
@@ -51,12 +50,6 @@ export default async function UsersPage() {
             {usersList.filter(u => u.role === "OWNER").length}
           </p>
           <p className="text-sm text-muted-foreground">Owners</p>
-        </div>
-        <div className="p-4 rounded-xl border border-border bg-card/30">
-          <p className="text-2xl font-bold text-amber-400">
-            {usersList.filter(u => u.mustChangePassword).length}
-          </p>
-          <p className="text-sm text-muted-foreground">En attente</p>
         </div>
       </div>
 

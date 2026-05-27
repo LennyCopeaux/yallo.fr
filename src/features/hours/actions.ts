@@ -1,11 +1,12 @@
 "use server";
 
-import { auth } from "@/lib/auth/auth";
+import { requireAuth, getAccessibleRestaurant } from "@/lib/auth";
 import { db } from "@/db";
 import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { updateVapiAssistant } from "@/lib/services/vapi-agent";
 
 const timeSlotSchema = z.object({
   open: z.string(),
@@ -35,25 +36,22 @@ export type ActionResult = {
 };
 
 export async function getBusinessHours(): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user) return { success: false, error: "Non autorisé" };
-  if (session.user.role === "ADMIN") {
+  const user = await requireAuth();
+  if (user.role === "ADMIN") {
     return { success: false, error: "Un restaurant doit être spécifié pour les admins" };
   }
+  if (user.role === "EMPLOYEE") {
+    return { success: false, error: "Accès non autorisé" };
+  }
 
-  const [ownerRestaurant] = await db
-    .select({ businessHours: restaurants.businessHours })
-    .from(restaurants)
-    .where(eq(restaurants.ownerId, session.user.id))
-    .limit(1);
-
-  if (!ownerRestaurant) return { success: false, error: "Aucun restaurant trouvé" };
-  if (!ownerRestaurant.businessHours) {
+  const restaurant = await getAccessibleRestaurant();
+  if (!restaurant) return { success: false, error: "Aucun restaurant trouvé" };
+  if (!restaurant.businessHours) {
     return { success: true, data: { timezone: "Europe/Paris", schedule: {} } };
   }
 
   try {
-    const parsedHours = JSON.parse(ownerRestaurant.businessHours);
+    const parsedHours = JSON.parse(restaurant.businessHours);
     const validationResult = businessHoursSchema.safeParse(parsedHours);
     if (!validationResult.success || !parsedHours.schedule || Object.keys(parsedHours.schedule).length === 0) {
       return { success: true, data: { timezone: "Europe/Paris", schedule: {} } };
@@ -65,19 +63,16 @@ export async function getBusinessHours(): Promise<ActionResult> {
 }
 
 export async function updateBusinessHours(formData: FormData): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user) return { success: false, error: "Non autorisé" };
-  if (session.user.role === "ADMIN") {
+  const user = await requireAuth();
+  if (user.role === "ADMIN") {
     return { success: false, error: "Un restaurant doit être spécifié pour les admins" };
   }
+  if (user.role === "EMPLOYEE") {
+    return { success: false, error: "Accès non autorisé" };
+  }
 
-  const [ownerRestaurant] = await db
-    .select({ id: restaurants.id })
-    .from(restaurants)
-    .where(eq(restaurants.ownerId, session.user.id))
-    .limit(1);
-
-  if (!ownerRestaurant) return { success: false, error: "Aucun restaurant trouvé" };
+  const restaurant = await getAccessibleRestaurant();
+  if (!restaurant) return { success: false, error: "Aucun restaurant trouvé" };
 
   const hoursInput = formData.get("businessHours");
   if (!hoursInput || typeof hoursInput !== "string") {
@@ -90,8 +85,19 @@ export async function updateBusinessHours(formData: FormData): Promise<ActionRes
 
     await db
       .update(restaurants)
-      .set({ businessHours: JSON.stringify(validatedHours) })
-      .where(eq(restaurants.id, ownerRestaurant.id));
+      .set({ businessHours: JSON.stringify(validatedHours), updatedAt: new Date() })
+      .where(eq(restaurants.id, restaurant.id));
+
+    if (restaurant.vapiAssistantId) {
+      try {
+        await updateVapiAssistant(restaurant.vapiAssistantId, {
+          ...restaurant,
+          businessHours: JSON.stringify(validatedHours),
+        });
+      } catch (err) {
+        console.error("Erreur sync assistant VAPI après mise à jour horaires :", err);
+      }
+    }
 
     revalidatePath("/dashboard/hours");
     revalidatePath("/dashboard");

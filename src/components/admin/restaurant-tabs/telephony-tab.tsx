@@ -12,6 +12,7 @@ import { Loader2, Save, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { updateRestaurantTelephony } from "@/app/(admin)/admin/restaurants/actions";
 import { cn, normalizeFrenchPhoneNumber } from "@/lib/utils";
+import { AdminStatusBadge } from "@/components/admin/status-badge";
 
 const formSchema = z.object({
   phoneNumber: z.string().min(10, "Numéro invalide"),
@@ -24,7 +25,8 @@ const formSchema = z.object({
         return normalizeFrenchPhoneNumber(val) !== null;
       },
       {
-        message: "Format invalide. Utilisez le format +33XXXXXXXXX (ex: +33939035299) ou 0XXXXXXXXX (ex: 0939035299)",
+        message:
+          "Format invalide. Utilisez le format 0XXXXXXXXX (ex: 0939035299)",
       }
     ),
 });
@@ -40,7 +42,6 @@ type Restaurant = {
 interface TelephonyTabProps {
   readonly restaurant: Restaurant;
 }
-
 
 export function TelephonyTab({ restaurant }: TelephonyTabProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -60,19 +61,14 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
 
-    // Normalise le numéro Twilio au format E.164 avant l'envoi
-    const normalizedTwilioNumber = data.twilioPhoneNumber
-      ? normalizeFrenchPhoneNumber(data.twilioPhoneNumber) || data.twilioPhoneNumber
-      : null;
-    
     const result = await updateRestaurantTelephony(restaurant.id, {
       phoneNumber: data.phoneNumber,
-      twilioPhoneNumber: normalizedTwilioNumber,
+      twilioPhoneNumber: data.twilioPhoneNumber || null,
     });
 
     if (result.success) {
       toast.success("Configuration téléphonie mise à jour");
-      form.reset(data); // Reset form state après succès
+      form.reset(data);
     } else {
       toast.error(result.error || "Erreur lors de la mise à jour");
     }
@@ -84,37 +80,21 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
 
   return (
     <div className="space-y-6">
-      <Card className={`border ${hasTwilioNumber ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-amber-400/20 bg-amber-400/5'}`}>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg ${hasTwilioNumber ? 'bg-emerald-400/10' : 'bg-amber-400/10'} flex items-center justify-center`}>
-              <Phone className={`w-5 h-5 ${hasTwilioNumber ? 'text-emerald-400' : 'text-amber-400'}`} />
-            </div>
-            <div>
-              <p className={`font-medium ${hasTwilioNumber ? 'text-emerald-400' : 'text-amber-400'}`}>
-                {hasTwilioNumber ? 'Ligne Twilio Active' : 'Ligne Twilio Non configurée'}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {hasTwilioNumber
-                  ? `Numéro Twilio : ${twilioPhoneNumberValue}`
-                  : 'Configurez un numéro Twilio pour recevoir les appels via l\'IA'
-                }
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card className="border-border bg-card/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Phone className="w-5 h-5 text-primary" />
-              Numéros de téléphone
-            </CardTitle>
-            <CardDescription>
-              Configuration des numéros de téléphone du restaurant
-            </CardDescription>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className="flex items-center gap-2">
+                <Phone className="w-5 h-5 text-primary" />
+                Numéros de téléphone
+              </CardTitle>
+              {hasTwilioNumber ? (
+                <AdminStatusBadge tone="active" label="Actif" />
+              ) : (
+                <AdminStatusBadge tone="warning" label="Non configuré" />
+              )}
+            </div>
+            <CardDescription>Configuration des numéros de téléphone du restaurant</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
@@ -140,14 +120,16 @@ export function TelephonyTab({ restaurant }: TelephonyTabProps) {
                 id="twilioPhoneNumber"
                 {...form.register("twilioPhoneNumber")}
                 disabled={isLoading}
-                placeholder="0939035299 ou +33939035299"
+                placeholder="0939035299"
                 className="bg-background/50 border-border focus:border-primary/50 font-mono"
               />
               {form.formState.errors.twilioPhoneNumber && (
-                <p className="text-sm text-red-400">{form.formState.errors.twilioPhoneNumber.message}</p>
+                <p className="text-sm text-red-400">
+                  {form.formState.errors.twilioPhoneNumber.message}
+                </p>
               )}
               <p className="text-xs text-muted-foreground">
-                Numéro acheté sur Twilio pour recevoir les appels de l&apos;IA. Format accepté : 0939035299 ou +33939035299 (sera automatiquement converti en +33XXXXXXXXX)
+                Numéro acheté sur Twilio pour recevoir les appels de l&apos;IA.
               </p>
             </div>
           </CardContent>

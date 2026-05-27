@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.47% </span>
+                <span class="strong">89.18% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>38/42</span>
+                <span class='fraction'>33/37</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">84% </span>
+                <span class="strong">80.95% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>21/25</span>
+                <span class='fraction'>17/21</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">94.59% </span>
+                <span class="strong">94.11% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>35/37</span>
+                <span class='fraction'>32/34</span>
             </div>
         
             
@@ -165,22 +165,7 @@
 <a name='L100'></a><a href='#L100'>100</a>
 <a name='L101'></a><a href='#L101'>101</a>
 <a name='L102'></a><a href='#L102'>102</a>
-<a name='L103'></a><a href='#L103'>103</a>
-<a name='L104'></a><a href='#L104'>104</a>
-<a name='L105'></a><a href='#L105'>105</a>
-<a name='L106'></a><a href='#L106'>106</a>
-<a name='L107'></a><a href='#L107'>107</a>
-<a name='L108'></a><a href='#L108'>108</a>
-<a name='L109'></a><a href='#L109'>109</a>
-<a name='L110'></a><a href='#L110'>110</a>
-<a name='L111'></a><a href='#L111'>111</a>
-<a name='L112'></a><a href='#L112'>112</a>
-<a name='L113'></a><a href='#L113'>113</a>
-<a name='L114'></a><a href='#L114'>114</a>
-<a name='L115'></a><a href='#L115'>115</a>
-<a name='L116'></a><a href='#L116'>116</a>
-<a name='L117'></a><a href='#L117'>117</a>
-<a name='L118'></a><a href='#L118'>118</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L103'></a><a href='#L103'>103</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -216,21 +201,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -260,7 +231,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -299,7 +269,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">"use server";
 &nbsp;
-import { auth } from "@/lib/auth/auth";
+import { requireAuth } from "@/lib/auth";
 import { db } from "@/db";
 import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -333,30 +303,16 @@ export type ActionResult = {
   data?: unknown;
 };
 &nbsp;
-const DEFAULT_BUSINESS_HOURS = {
-  timezone: "Europe/Paris",
-  schedule: {
-    monday: { open: "11:00", close: "22:00" },
-    tuesday: { open: "11:00", close: "22:00" },
-    wednesday: { open: "11:00", close: "22:00" },
-    thursday: { open: "11:00", close: "22:00" },
-    friday: { open: "11:00", close: "23:00" },
-    saturday: { open: "11:00", close: "23:00" },
-    sunday: { open: "11:00", close: "22:00" },
-  },
-};
-&nbsp;
 export async function getBusinessHours(): Promise&lt;ActionResult&gt; {
-  const session = await auth();
-  if (!session?.user) return { success: false, error: "Non autorisé" };
-  if (session.user.role === "ADMIN") {
+  const user = await requireAuth();
+  if (user.role === "ADMIN") {
     return { success: false, error: "Un restaurant doit être spécifié pour les admins" };
   }
 &nbsp;
   const [ownerRestaurant] = await db
     .select({ businessHours: restaurants.businessHours })
     .from(restaurants)
-    .where(eq(restaurants.ownerId, session.user.id))
+    .where(eq(restaurants.ownerId, user.id))
     .limit(1);
 &nbsp;
   if (!ownerRestaurant) return { success: false, error: "Aucun restaurant trouvé" };
@@ -377,16 +333,15 @@ export async function getBusinessHours(): Promise&lt;ActionResult&gt; {
 }
 &nbsp;
 export async function updateBusinessHours(formData: FormData): Promise&lt;ActionResult&gt; {
-  const session = await auth();
-  if (!session?.user) return { success: false, error: "Non autorisé" };
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (session.user.role === "ADMIN") {
+  const user = await requireAuth();
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (user.role === "ADMIN") {
 <span class="cstat-no" title="statement not covered" >    return { success: false, error: "Un restaurant doit être spécifié pour les admins" };</span>
   }
 &nbsp;
   const [ownerRestaurant] = await db
     .select({ id: restaurants.id })
     .from(restaurants)
-    .where(eq(restaurants.ownerId, session.user.id))
+    .where(eq(restaurants.ownerId, user.id))
     .limit(1);
 &nbsp;
   <span class="missing-if-branch" title="if path not taken" >I</span>if (!ownerRestaurant) <span class="cstat-no" title="statement not covered" >return { success: false, error: "Aucun restaurant trouvé" };</span>
@@ -421,7 +376,7 @@ export async function updateBusinessHours(formData: FormData): Promise&lt;Action
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-05T15:34:09.746Z
+                at 2026-05-20T08:53:07.607Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

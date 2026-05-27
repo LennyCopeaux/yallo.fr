@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
+import * as Sentry from "@sentry/nextjs";
 import { Button } from "@/components/ui/button";
 import { Phone, AlertCircle, Home, RefreshCw } from "lucide-react";
 interface ErrorPageProps {
@@ -15,7 +16,7 @@ export default function ErrorPage({
   reset,
 }: Readonly<ErrorPageProps>) {
   useEffect(() => {
-    console.error("Application error:", error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (

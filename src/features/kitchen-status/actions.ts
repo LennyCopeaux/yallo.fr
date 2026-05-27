@@ -2,11 +2,12 @@
 
 import { db } from "@/db";
 import { restaurants, type KitchenStatus } from "@/db/schema";
-import { auth } from "@/lib/auth/auth";
+import { requireAuth, getAccessibleRestaurant } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { DEFAULT_STATUS_SETTINGS } from "./constants";
+import { updateVapiAssistant } from "@/lib/services/vapi-agent";
 
 const statusSettingsSchema = z.object({
   CALM: z.union([
@@ -27,14 +28,7 @@ const statusSettingsSchema = z.object({
 export type StatusSettings = z.infer<typeof statusSettingsSchema>;
 
 export async function getKitchenStatus() {
-  const session = await auth();
-  if (!session?.user?.id) return null;
-
-  const ownerRestaurant = await db.query.restaurants.findFirst({
-    where: eq(restaurants.ownerId, session.user.id),
-    columns: { id: true, currentStatus: true, statusSettings: true },
-  });
-
+  const ownerRestaurant = await getAccessibleRestaurant();
   if (!ownerRestaurant) return null;
 
   if (!ownerRestaurant.statusSettings) {
@@ -50,15 +44,12 @@ export async function getKitchenStatus() {
 }
 
 export async function updateKitchenStatus(status: KitchenStatus) {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Non autorisé");
+  await requireAuth();
 
   const isValidStatus = ["CALM", "NORMAL", "RUSH", "STOP"].includes(status);
   if (!isValidStatus) throw new Error("Statut invalide");
 
-  const ownerRestaurant = await db.query.restaurants.findFirst({
-    where: eq(restaurants.ownerId, session.user.id),
-  });
+  const ownerRestaurant = await getAccessibleRestaurant();
   if (!ownerRestaurant) throw new Error("Restaurant non trouvé");
 
   await db
@@ -66,19 +57,27 @@ export async function updateKitchenStatus(status: KitchenStatus) {
     .set({ currentStatus: status, updatedAt: new Date() })
     .where(eq(restaurants.id, ownerRestaurant.id));
 
+  if (ownerRestaurant.vapiAssistantId) {
+    try {
+      await updateVapiAssistant(ownerRestaurant.vapiAssistantId, {
+        ...ownerRestaurant,
+        currentStatus: status,
+      });
+    } catch (err) {
+      console.error("Erreur sync assistant VAPI après mise à jour statut cuisine :", err);
+    }
+  }
+
   revalidatePath("/dashboard");
   return { success: true };
 }
 
 export async function updateStatusSettings(settings: StatusSettings) {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Non autorisé");
+  await requireAuth();
 
   const validatedSettings = statusSettingsSchema.parse(settings);
 
-  const ownerRestaurant = await db.query.restaurants.findFirst({
-    where: eq(restaurants.ownerId, session.user.id),
-  });
+  const ownerRestaurant = await getAccessibleRestaurant();
   if (!ownerRestaurant) throw new Error("Restaurant non trouvé");
 
   const existingSettings = (ownerRestaurant.statusSettings as StatusSettings) || {};
@@ -88,6 +87,17 @@ export async function updateStatusSettings(settings: StatusSettings) {
     .update(restaurants)
     .set({ statusSettings: mergedSettings, updatedAt: new Date() })
     .where(eq(restaurants.id, ownerRestaurant.id));
+
+  if (ownerRestaurant.vapiAssistantId) {
+    try {
+      await updateVapiAssistant(ownerRestaurant.vapiAssistantId, {
+        ...ownerRestaurant,
+        statusSettings: mergedSettings,
+      });
+    } catch (err) {
+      console.error("Erreur sync assistant VAPI après mise à jour paramètres cuisine :", err);
+    }
+  }
 
   revalidatePath("/dashboard");
   return { success: true };

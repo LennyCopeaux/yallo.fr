@@ -32,7 +32,7 @@ const contactFormSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   email: z.string().email(),
   subject: z.string().refine(
-    (val) => ["installation", "rdv-expert", "plan-starter", "plan-essential", "plan-infinity", "enterprise", "support", "autre"].includes(val),
+    (val) => ["installation", "rdv-expert", "plan-essentiel", "plan-pro", "plan-business", "enterprise", "support", "autre"].includes(val),
     { message: "Veuillez sélectionner un sujet" }
   ),
   message: z.string().min(10, "Le message doit contenir au moins 10 caractères"),
@@ -43,10 +43,9 @@ type ContactFormData = z.infer<typeof contactFormSchema>;
 const subjectOptions = [
   { value: "installation", label: "Installation" },
   { value: "rdv-expert", label: "Parler à un expert" },
-  { value: "plan-starter", label: "Plan Starter" },
-  { value: "plan-essential", label: "Plan Essential" },
-  { value: "plan-infinity", label: "Plan Infinity" },
-  { value: "enterprise", label: "Offre Enterprise" },
+  { value: "plan-essentiel", label: "Plan Essentiel" },
+  { value: "plan-pro", label: "Plan Pro" },
+  { value: "plan-business", label: "Plan Business" },
   { value: "support", label: "Support Technique" },
   { value: "autre", label: "Autre demande" },
 ];
@@ -57,9 +56,9 @@ function mapUrlSubjectToValue(subject: string | null): string | undefined {
     "autre": "autre",
     "installation": "installation",
     "rdv-expert": "rdv-expert",
-    "plan-starter": "plan-starter",
-    "plan-essential": "plan-essential",
-    "plan-infinity": "plan-infinity",
+    "plan-essentiel": "plan-essentiel",
+    "plan-pro": "plan-pro",
+    "plan-business": "plan-business",
     "enterprise": "enterprise",
     "demo": "rdv-expert", // Redirection demo vers rdv-expert
   };
@@ -70,10 +69,9 @@ function getDefaultMessage(subject: string | null): string {
   const messages: Record<string, string> = {
     "installation": "Bonjour,\n\nJe souhaite installer Yallo pour mon restaurant et obtenir un accès à la plateforme.\n\nMerci de me recontacter pour discuter des modalités d'installation.\n\nCordialement,",
     "rdv-expert": "Bonjour,\n\nJe souhaite prendre rendez-vous avec un expert pour discuter de la solution Yallo pour mon restaurant.\n\nMerci de me proposer des créneaux disponibles.\n\nCordialement,",
-    "plan-starter": "Bonjour,\n\nJe suis intéressé par le Plan Starter.\n\nPourriez-vous me fournir plus d'informations sur cette formule ?\n\nCordialement,",
-    "plan-essential": "Bonjour,\n\nJe suis intéressé par le Plan Essential.\n\nPourriez-vous me fournir plus d'informations sur cette formule ?\n\nCordialement,",
-    "plan-infinity": "Bonjour,\n\nJe suis intéressé par le Plan Infinity.\n\nPourriez-vous me fournir plus d'informations sur cette formule ?\n\nCordialement,",
-    "enterprise": "Bonjour,\n\nJe suis intéressé par l'offre Enterprise pour ma franchise / restaurant à fort volume.\n\nPourriez-vous me contacter pour discuter d'une solution sur mesure ?\n\nCordialement,",
+    "plan-essentiel": "Bonjour,\n\nJe suis intéressé par le plan Essentiel.\n\nPourriez-vous me fournir plus d'informations sur cette formule ?\n\nCordialement,",
+    "plan-pro": "Bonjour,\n\nJe suis intéressé par le plan Pro.\n\nPourriez-vous me fournir plus d'informations sur cette formule ?\n\nCordialement,",
+    "plan-business": "Bonjour,\n\nJe suis intéressé par le plan Business.\n\nPourriez-vous me fournir plus d'informations sur cette formule ?\n\nCordialement,",
     "support": "Bonjour,\n\nJ'ai besoin d'aide concernant...\n\nMerci de votre retour.\n\nCordialement,",
   };
   return messages[subject || ""] || "";

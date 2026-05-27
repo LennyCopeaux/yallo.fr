@@ -1,107 +1,53 @@
 import { db } from "@/db";
-import { orders, orderItems, restaurants } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { orders, orderItems, restaurants, callLogs } from "@/db/schema";
+import { eq, and, inArray, count } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { pushVoiceOrderToHubrise } from "@/lib/services/hubrise";
-import { normalizeSubmitOrderPayload } from "@/lib/services/vapi-submit-order-args";
+import { normalizeSubmitOrderPayload } from "@/lib/services/submit-order-args";
 import { trySendOrderConfirmationSms } from "@/lib/services/twilio-sms";
+import { updateVapiAssistant } from "@/lib/services/vapi-agent";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
-import {
-  buildVapiToolCallsMessageFromBody,
-  collectToolCallsFromVapiMessage,
-  vapiMessageHasToolCalls,
-} from "@/lib/services/vapi-tool-call-payload";
 
-interface OrderItem {
-  product_name: string;
-  quantity: number;
-  unit_price: number;
-  options?: string;
-}
-
-interface SubmitOrderArgs {
-  customer_name: string;
-  customer_phone?: string;
-  items: OrderItem[];
-  pickup_time?: string;
-  notes?: string;
-}
+export const runtime = "nodejs";
 
 interface ToolCall {
   id: string;
-  name: string;
-  parameters?: Record<string, unknown>;
-  /** Variante OpenAI / certains payloads Vapi */
-  arguments?: string | Record<string, unknown>;
+  /** Format direct (ancien VAPI) */
+  name?: string;
+  /** Format OpenAI-compatible (VAPI actuel) */
+  function?: {
+    name: string;
+    arguments: string | Record<string, unknown>;
+  };
+  arguments?: Record<string, unknown>;
 }
 
+/**
+ * Format VAPI pour les tool calls (envoyé sur server URL configurée dans l'assistant).
+ * https://docs.vapi.ai/tools/custom-tools
+ */
 interface VapiWebhookBody {
-  /** Variante : toolCalls OpenAI uniquement à la racine du JSON. */
-  toolCalls?: Array<{
-    id: string;
-    type?: string;
-    function?: { name?: string; arguments?: string };
-  }>;
-  message: {
-    type?: string;
+  message?: {
+    type: string;
+    /** Présent pour type=tool-calls */
+    toolCallList?: ToolCall[];
+    /** Présent pour type=end-of-call-report */
+    durationSeconds?: number;
+    endedReason?: string;
     call?: {
       id?: string;
-      phoneNumber?: { number?: string };
-      assistantId?: string;
-      assistant?: { id?: string };
+      startedAt?: string;
+      endedAt?: string;
+      customer?: {
+        number?: string;
+      };
     };
-    toolCallList?: ToolCall[];
-    toolWithToolCallList?: Array<{
-      name: string;
-      toolCall: ToolCall;
-    }>;
-    /** Format OpenAI (function.name + arguments) — utilisé par certains flux Vapi. */
-    toolCalls?: Array<{
-      id: string;
-      type?: string;
-      function?: { name?: string; arguments?: string };
-    }>;
-    assistant?: { id?: string };
-    phoneNumber?: string;
-    assistantId?: string;
   };
 }
 
-/** Vapi envoie parfois un libellé différent dans le dashboard (« Submit Order »). */
-function isSubmitOrderToolName(name: string | undefined): boolean {
-  if (!name) {
-    return false;
-  }
-  const n = name.trim().toLowerCase().replaceAll(/\s+/g, "_");
-  return n === "submit_order";
-}
-
-function isToolCallsPayload(body: VapiWebhookBody): boolean {
-  const t = body.message?.type;
-  if (t === "tool-calls" || t === "tool_calls") {
-    return true;
-  }
-  return vapiMessageHasToolCalls(buildVapiToolCallsMessageFromBody(body));
-}
-
-function extractCallerPhone(body: VapiWebhookBody): string | undefined {
-  const n = body.message.call?.phoneNumber?.number;
-  return typeof n === "string" && n.trim().length > 0 ? n.trim() : undefined;
-}
-
-async function findRestaurantByAssistantId(assistantId: string) {
-  const [restaurant] = await db
-    .select()
-    .from(restaurants)
-    .where(eq(restaurants.vapiAssistantId, assistantId))
-    .limit(1);
-  return restaurant;
-}
-
 function generateOrderNumber(): string {
-  // Utilise timestamp + random pour éviter les collisions
-  const timestamp = Date.now().toString().slice(-6); // 6 derniers chiffres du timestamp
+  const timestamp = Date.now().toString().slice(-6);
   const random = Math.floor(Math.random() * 1000).toString().padStart(3, "0");
   return `#${timestamp}${random}`;
 }
@@ -123,14 +69,37 @@ function parsePickupTime(pickupTimeStr?: string): Date | null {
   return pickup;
 }
 
+interface OrderItem {
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  options?: string;
+}
+
+interface SubmitOrderArgs {
+  customer_name: string;
+  customer_phone?: string;
+  items: OrderItem[];
+  pickup_time?: string;
+  notes?: string;
+}
+
 async function handleSubmitOrder(
-  assistantId: string,
+  restaurantId: string,
   args: SubmitOrderArgs,
-  options?: Readonly<{ callerPhone?: string }>
 ): Promise<string> {
-  const restaurant = await findRestaurantByAssistantId(assistantId);
+  const [restaurant] = await db
+    .select()
+    .from(restaurants)
+    .where(eq(restaurants.id, restaurantId))
+    .limit(1);
+
   if (!restaurant) {
-    logger.error("Restaurant introuvable pour l'assistant Vapi", new Error(`assistantId: ${assistantId}`));
+    logger.error(
+      "Restaurant introuvable",
+      new Error(`restaurantId: ${restaurantId}`),
+      { restaurantId }
+    );
     throw new Error("Restaurant introuvable");
   }
 
@@ -168,7 +137,6 @@ async function handleSubmitOrder(
 
   const mergedCustomerPhone =
     (args.customer_phone?.trim() && normalizeFrenchPhoneNumber(args.customer_phone.trim())) ||
-    (options?.callerPhone?.trim() && normalizeFrenchPhoneNumber(options.callerPhone.trim())) ||
     null;
 
   const [createdOrder] = await db
@@ -218,7 +186,7 @@ async function handleSubmitOrder(
     }
   }
 
-  logger.info("Commande créée via Vapi", {
+  logger.info("Commande créée via VAPI", {
     orderId: createdOrder.id,
     orderNumber,
     restaurantId: restaurant.id,
@@ -227,9 +195,53 @@ async function handleSubmitOrder(
     totalAmount,
   });
 
-  if (process.env.TWILIO_ORDER_CONFIRMATION_SMS !== "false") {
+  if (
+    restaurant.autoRushThreshold !== null &&
+    restaurant.autoRushThreshold !== undefined &&
+    restaurant.currentStatus !== "RUSH"
+  ) {
+    try {
+      const [{ value: activeOrderCount }] = await db
+        .select({ value: count() })
+        .from(orders)
+        .where(
+          and(
+            eq(orders.restaurantId, restaurant.id),
+            inArray(orders.status, ["NEW", "PREPARING"])
+          )
+        );
+
+      if (activeOrderCount >= restaurant.autoRushThreshold) {
+        await db
+          .update(restaurants)
+          .set({ currentStatus: "RUSH", updatedAt: new Date() })
+          .where(eq(restaurants.id, restaurant.id));
+
+        if (restaurant.vapiAssistantId) {
+          await updateVapiAssistant(restaurant.vapiAssistantId, {
+            ...restaurant,
+            currentStatus: "RUSH",
+          });
+        }
+
+        logger.info("Passage automatique en RUSH", {
+          restaurantId: restaurant.id,
+          activeOrderCount,
+          threshold: restaurant.autoRushThreshold,
+        });
+      }
+    } catch (rushErr) {
+      logger.error(
+        "Erreur lors du calcul auto-rush",
+        rushErr instanceof Error ? rushErr : new Error(String(rushErr)),
+        { restaurantId: restaurant.id }
+      );
+    }
+  }
+
+  if (restaurant.smsConfirmationEnabled && process.env.TWILIO_ORDER_CONFIRMATION_SMS !== "false") {
     const fromRaw = process.env.TWILIO_SMS_FROM?.trim() || restaurant.twilioPhoneNumber?.trim();
-    const toRaw = args.customer_phone?.trim() || options?.callerPhone?.trim();
+    const toRaw = args.customer_phone?.trim();
     if (fromRaw && toRaw) {
       await trySendOrderConfirmationSms({
         toRaw,
@@ -252,240 +264,247 @@ async function handleSubmitOrder(
   });
 }
 
-function extractAssistantId(body: VapiWebhookBody): string | null {
-  return (
-    body.message.call?.assistantId ||
-    body.message.call?.assistant?.id ||
-    body.message.assistant?.id ||
-    body.message.assistantId ||
-    null
-  );
-}
+/**
+ * Enregistre un appel terminé dans call_logs.
+ * Appelé sur réception d'un message de type "end-of-call-report" depuis VAPI.
+ */
+async function handleEndOfCall(
+  restaurantId: string,
+  message: NonNullable<VapiWebhookBody["message"]>
+): Promise<void> {
+  const callId = message.call?.id;
+  const durationSeconds = message.durationSeconds;
 
-function extractBearerToken(authorization: string | null): string | undefined {
-  if (!authorization) {
-    return undefined;
+  if (!callId) {
+    logger.warn("Webhook VAPI end-of-call-report : call.id manquant", { restaurantId });
+    return;
   }
-  const m = /^Bearer\s+(.+)$/i.exec(authorization.trim());
-  return m?.[1]?.trim();
+
+  if (typeof durationSeconds !== "number" || durationSeconds < 0) {
+    logger.warn("Webhook VAPI end-of-call-report : durationSeconds invalide", {
+      restaurantId,
+      callId,
+      durationSeconds,
+    });
+    return;
+  }
+
+  const [restaurant] = await db
+    .select({ id: restaurants.id, organizationId: restaurants.organizationId })
+    .from(restaurants)
+    .where(eq(restaurants.id, restaurantId))
+    .limit(1);
+
+  if (!restaurant) {
+    logger.warn("Webhook VAPI end-of-call-report : restaurant introuvable", { restaurantId });
+    return;
+  }
+
+  if (!restaurant.organizationId) {
+    logger.warn("Webhook VAPI end-of-call-report : restaurant sans organisation", { restaurantId });
+    return;
+  }
+
+  const startedAt = message.call?.startedAt ? new Date(message.call.startedAt) : null;
+  const endedAt = message.call?.endedAt ? new Date(message.call.endedAt) : null;
+  const endedReason = message.endedReason ?? "completed";
+  const status = (endedReason === "customer-ended-call" || endedReason === "assistant-ended-call")
+    ? "completed" as const
+    : endedReason === "no-answer"
+      ? "no-answer" as const
+      : "completed" as const;
+
+  await db
+    .insert(callLogs)
+    .values({
+      restaurantId: restaurant.id,
+      organizationId: restaurant.organizationId,
+      externalCallId: callId,
+      provider: "vapi",
+      durationSeconds: Math.round(durationSeconds),
+      startedAt,
+      endedAt,
+      status,
+    })
+    .onConflictDoNothing(); // idempotent si le webhook est rejoué
+
+  logger.info("Appel VAPI enregistré dans call_logs", {
+    restaurantId,
+    callId,
+    durationSeconds,
+    status,
+  });
 }
 
-async function verifyWebhookSignature(request: Request): Promise<boolean> {
+function verifyWebhookSecret(request: Request): boolean {
   if (process.env.VAPI_WEBHOOK_DISABLE_AUTH === "true") {
-    logger.warn("VAPI_WEBHOOK_DISABLE_AUTH=true — authentification webhook désactivée (ne pas utiliser en prod)");
+    logger.warn(
+      "VAPI_WEBHOOK_DISABLE_AUTH=true — authentification webhook désactivée (ne pas utiliser en prod)"
+    );
     return true;
   }
 
   const secret = process.env.VAPI_WEBHOOK_SECRET?.trim();
+  const vercelEnv = process.env.VERCEL_ENV?.trim();
+  const isStrictProduction = vercelEnv === "production";
 
-  // En production, le secret est obligatoire (sinon 401 systématique côté Vapi).
   if (!secret) {
-    if (process.env.NODE_ENV === "production") {
+    if (isStrictProduction) {
       logger.error(
-        "VAPI_WEBHOOK_SECRET manquant en production — le webhook renvoie 401. Définir le secret sur Vercel et le même sur Vapi (tool server ou credential)."
+        "VAPI_WEBHOOK_SECRET manquant en production Vercel — le webhook renvoie 401",
+        new Error("missing_webhook_secret"),
+        { vercelEnv, nodeEnv: process.env.NODE_ENV }
       );
       return false;
     }
-    logger.warn("VAPI_WEBHOOK_SECRET non défini - webhook accepté (dev uniquement)");
+    logger.warn("VAPI_WEBHOOK_SECRET non défini - webhook accepté hors production Vercel", {
+      vercelEnv,
+      nodeEnv: process.env.NODE_ENV,
+    });
     return true;
   }
 
-  const xVapiSecret = request.headers.get("x-vapi-secret")?.trim();
-  const xVapiSignature = request.headers.get("x-vapi-signature")?.trim();
-  const bearer = extractBearerToken(request.headers.get("authorization"));
-
-  const candidates = [xVapiSecret, xVapiSignature, bearer].filter(
-    (v): v is string => typeof v === "string" && v.length > 0
-  );
-
-  if (candidates.length === 0) {
-    logger.warn(
-      "Webhook Vapi : aucun en-tête d’auth (x-vapi-secret, x-vapi-signature, Authorization Bearer). Vérifier que le tool submit_order a le même secret que VAPI_WEBHOOK_SECRET."
-    );
+  const incoming = request.headers.get("x-vapi-secret")?.trim();
+  if (!incoming) {
+    logger.warn("Webhook VAPI : header x-vapi-secret absent", {
+      vercelEnv,
+      nodeEnv: process.env.NODE_ENV,
+    });
     return false;
   }
 
-  try {
-    const ok = candidates.some((c) => c === secret);
-    if (!ok) {
-      logger.warn("Webhook Vapi : secret reçu ne correspond pas à VAPI_WEBHOOK_SECRET");
-    }
-    return ok;
-  } catch (error) {
-    logger.error("Erreur vérification signature webhook", error instanceof Error ? error : new Error(String(error)));
-    return false;
-  }
-}
-
-function getRawToolParameters(toolCall: ToolCall): unknown {
-  if (toolCall.parameters !== undefined) {
-    return toolCall.parameters;
-  }
-  if (toolCall.arguments !== undefined) {
-    return toolCall.arguments;
-  }
-  return {};
-}
-
-async function processSubmitOrderToolCall(
-  body: VapiWebhookBody,
-  toolCall: ToolCall
-): Promise<{ name: string; toolCallId: string; result: string }> {
-  const assistantId = extractAssistantId(body);
-  if (!assistantId) {
-    logger.warn("Assistant ID manquant dans tool call", {
-      toolCallId: toolCall.id,
-      body: JSON.stringify(body, null, 2),
+  const ok = incoming === secret;
+  if (!ok) {
+    logger.warn("Webhook VAPI : secret reçu ne correspond pas à VAPI_WEBHOOK_SECRET", {
+      vercelEnv,
+      nodeEnv: process.env.NODE_ENV,
     });
-    return {
-      name: toolCall.name,
-      toolCallId: toolCall.id,
-      result: JSON.stringify({ success: false, message: "Assistant non identifié" }),
-    };
   }
-
-  try {
-    const rawParams = getRawToolParameters(toolCall);
-    logger.info("Traitement submit_order", {
-      assistantId,
-      parameters: JSON.stringify(rawParams),
-    });
-
-    const normalized = normalizeSubmitOrderPayload(rawParams);
-    if (!normalized) {
-      return {
-        name: toolCall.name,
-        toolCallId: toolCall.id,
-        result: JSON.stringify({
-          success: false,
-          message:
-            "Données de commande invalides : prénom/nom client et au moins un article avec libellé sont requis (submit_order).",
-        }),
-      };
-    }
-
-    const result = await handleSubmitOrder(assistantId, normalized, {
-      callerPhone: extractCallerPhone(body),
-    });
-
-    logger.info("submit_order réussi", {
-      toolCallId: toolCall.id,
-      result,
-    });
-
-    return {
-      name: toolCall.name,
-      toolCallId: toolCall.id,
-      result,
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error("Erreur submit_order", new Error(errorMessage), {
-      toolCallId: toolCall.id,
-      parameters: JSON.stringify(getRawToolParameters(toolCall)),
-    });
-
-    return {
-      name: toolCall.name,
-      toolCallId: toolCall.id,
-      result: JSON.stringify({
-        success: false,
-        message: `Erreur : ${errorMessage}`,
-      }),
-    };
-  }
-}
-
-async function handleToolCalls(body: VapiWebhookBody): Promise<{ results: Array<{ name: string; toolCallId: string; result: string }> }> {
-  const mergedMessage = buildVapiToolCallsMessageFromBody(body);
-  const toolCalls = collectToolCallsFromVapiMessage(mergedMessage);
-
-  logger.info("Tool calls reçus", {
-    count: toolCalls.length,
-    tools: toolCalls.map((t) => t.name),
-    sources: {
-      toolCallList: mergedMessage.toolCallList?.length ?? 0,
-      toolWithToolCallList: mergedMessage.toolWithToolCallList?.length ?? 0,
-      toolCallsOpenAI: mergedMessage.toolCalls?.length ?? 0,
-    },
-  });
-
-  const results = [];
-
-  for (const toolCall of toolCalls) {
-    if (isSubmitOrderToolName(toolCall.name)) {
-      const result = await processSubmitOrderToolCall(body, toolCall);
-      results.push(result);
-    } else {
-      logger.warn("Tool call non géré", { name: toolCall.name, id: toolCall.id });
-      results.push({
-        name: toolCall.name,
-        toolCallId: toolCall.id,
-        result: JSON.stringify({ success: false, message: "Tool non implémenté" }),
-      });
-    }
-  }
-
-  return { results };
+  return ok;
 }
 
 export async function POST(request: Request) {
   try {
-    // Vérification de sécurité du webhook
-    if (!(await verifyWebhookSignature(request))) {
-      logger.warn("Webhook Vapi rejeté: signature invalide ou manquante");
-      return NextResponse.json(
-        {
-          error: "Unauthorized",
-          hint:
-            "Vercel: définir VAPI_WEBHOOK_SECRET. Vapi: même valeur sur le serveur du tool (secret ou credential X-Vapi-Secret / Bearer). Voir docs/VAPI_WEBHOOK.md",
-        },
-        { status: 401 }
-      );
+    if (!verifyWebhookSecret(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = (await request.json()) as VapiWebhookBody;
-    const messageType = body.message?.type;
+    const message = body.message;
 
-    logger.info("Webhook Vapi reçu", {
-      type: messageType,
-      assistantId: extractAssistantId(body),
-      callId: body.message.call?.id,
+    // Le restaurantId est embarqué dans l'URL : /api/vapi/webhook?rid=<restaurantId>
+    const url = new URL(request.url);
+    const restaurantId = url.searchParams.get("rid") ?? "";
+
+    if (!restaurantId) {
+      logger.error("Webhook VAPI : paramètre rid manquant dans l'URL", new Error("missing_rid"));
+      return NextResponse.json(
+        {
+          results: [
+            {
+              toolCallId: "unknown",
+              result: "Configuration incorrecte : rid manquant. Mettez à jour l'assistant depuis le dashboard.",
+            },
+          ],
+        },
+        { status: 200 }
+      );
+    }
+
+    // Traiter la fin d'appel (end-of-call-report)
+    if (message?.type === "end-of-call-report" && restaurantId) {
+      try {
+        await handleEndOfCall(restaurantId, message);
+      } catch (err) {
+        logger.error(
+          "Erreur handleEndOfCall VAPI",
+          err instanceof Error ? err : new Error(String(err)),
+          { restaurantId }
+        );
+      }
+      return NextResponse.json({}, { status: 200 });
+    }
+
+    // Ignorer les messages qui ne sont pas des tool calls
+    if (!message || message.type !== "tool-calls") {
+      logger.info("Webhook VAPI : message ignoré (type non tool-calls)", {
+        restaurantId,
+        type: message?.type,
+      });
+      return NextResponse.json({}, { status: 200 });
+    }
+
+    const toolCallList = message.toolCallList ?? [];
+
+    logger.info("Webhook VAPI tool-calls reçu", {
+      restaurantId,
+      tools: toolCallList.map((t) => t.name ?? t.function?.name),
     });
 
-    if (isToolCallsPayload(body)) {
-      const { results } = await handleToolCalls(body);
-      logger.info("Réponse webhook tool-calls", { resultsCount: results.length, declaredType: messageType });
-      return NextResponse.json({ results }, { status: 200 });
-    }
+    const results: Array<{ toolCallId: string; result: string }> = [];
 
-    if (messageType === "end-of-call-report") {
-      logger.info("Rapport de fin d'appel Vapi reçu", {
-        callId: body.message.call?.id,
-      });
-      return NextResponse.json({ ok: true }, { status: 200 });
-    }
+    for (const toolCall of toolCallList) {
+      // VAPI envoie soit name+arguments à la racine (ancien format),
+      // soit function.name + function.arguments (format OpenAI-compatible actuel)
+      const toolName = toolCall.name ?? toolCall.function?.name;
+      const rawArgs = toolCall.arguments ?? toolCall.function?.arguments;
+      const toolArgs: Record<string, unknown> =
+        typeof rawArgs === "string"
+          ? (JSON.parse(rawArgs) as Record<string, unknown>)
+          : (rawArgs ?? {});
 
-    logger.info("Message type non géré", { type: messageType });
-    return NextResponse.json({ ok: true }, { status: 200 });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error("Erreur webhook Vapi", error instanceof Error ? error : new Error(errorMessage));
+      // Fallback : utiliser le numéro de l'appelant si le modèle n'a pas fourni customer_phone
+      const callerPhone = message.call?.customer?.number;
+      if (callerPhone && !toolArgs.customer_phone) {
+        toolArgs.customer_phone = callerPhone;
+      }
 
-    return NextResponse.json(
-      {
-        results: [
-          {
-            name: "submit_order",
-            toolCallId: "unknown",
+      if (toolName === "submit_order") {
+        const normalized = normalizeSubmitOrderPayload(toolArgs);
+        if (!normalized) {
+          logger.warn("Webhook VAPI : données commande invalides", { args: toolCall.arguments });
+          results.push({
+            toolCallId: toolCall.id,
             result: JSON.stringify({
               success: false,
-              message: `Erreur serveur : ${errorMessage}`,
+              message: "Données de commande incomplètes ou invalides.",
             }),
-          },
-        ],
-      },
-      { status: 500 }
+          });
+          continue;
+        }
+
+        try {
+          const result = await handleSubmitOrder(restaurantId, normalized);
+          results.push({ toolCallId: toolCall.id, result });
+        } catch (err) {
+          logger.error(
+            "Erreur handleSubmitOrder VAPI",
+            err instanceof Error ? err : new Error(String(err)),
+            { restaurantId }
+          );
+          results.push({
+            toolCallId: toolCall.id,
+            result: JSON.stringify({
+              success: false,
+              message: "Erreur lors de l'enregistrement de la commande.",
+            }),
+          });
+        }
+      } else {
+        // Tool inconnu — répondre pour éviter que VAPI bloque
+        results.push({
+          toolCallId: toolCall.id,
+          result: JSON.stringify({ success: false, message: `Tool inconnu : ${toolName}` }),
+        });
+      }
+    }
+
+    return NextResponse.json({ results }, { status: 200 });
+  } catch (err) {
+    logger.error(
+      "Erreur webhook VAPI",
+      err instanceof Error ? err : new Error(String(err))
     );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -7,16 +7,28 @@ export function cn(...inputs: ClassValue[]) {
 
 export function getAppUrl(path: string = ""): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  
-  const isLocalhost = 
-    (globalThis.window?.location?.hostname?.includes("localhost")) ||
-    (typeof process !== "undefined" && process.env.NODE_ENV === "development");
-  
-  if (isLocalhost) {
-    const port = globalThis.window?.location?.port ?? "3000";
-    return `http://app.localhost:${port}${normalizedPath}`;
+
+  if (typeof globalThis.window !== "undefined") {
+    const hostname = globalThis.window.location.hostname;
+    const port = globalThis.window.location.port;
+
+    if (hostname.includes("localhost")) {
+      return `http://app.localhost:${port || "3000"}${normalizedPath}`;
+    }
+    if (hostname.includes("staging")) {
+      return `https://app.staging.yallo.fr${normalizedPath}`;
+    }
+    return `https://app.yallo.fr${normalizedPath}`;
   }
-  
+
+  // Server-side fallback
+  const isLocalhost =
+    typeof process !== "undefined" && process.env.NODE_ENV === "development";
+
+  if (isLocalhost) {
+    return `http://app.localhost:3000${normalizedPath}`;
+  }
+
   return `https://app.yallo.fr${normalizedPath}`;
 }
 
@@ -84,4 +96,14 @@ export function normalizeFrenchPhoneNumber(phoneNumber: string | null | undefine
   
   // Si aucun pattern reconnu, retourne null
   return null;
+}
+
+/**
+ * Convertit un numéro FR valide vers le format local stocké en base (0XXXXXXXXX).
+ * Retourne null si le format n'est pas reconnu.
+ */
+export function toFrenchLocalPhoneNumber(phoneNumber: string | null | undefined): string | null {
+  const e164 = normalizeFrenchPhoneNumber(phoneNumber);
+  if (!e164 || !e164.startsWith("+33") || e164.length < 12) return null;
+  return `0${e164.slice(3)}`;
 }

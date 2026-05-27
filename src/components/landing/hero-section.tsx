@@ -13,7 +13,7 @@ function scrollToFeatures() {
 export function HeroSection() {
   return (
     <section className="relative min-h-dvh flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden">
-      <DotPatternHero className="z-0" />
+      <DotPatternHero className="z-0" patternId="marketing-hero-dot-pattern" />
 
       <div className="relative z-10 w-full max-w-4xl mx-auto text-center px-2">
         <motion.p
