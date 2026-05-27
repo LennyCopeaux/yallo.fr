@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 import { DashboardContent } from "./dashboard-content";
-import { getOrders, getUserRestaurant } from "@/features/orders/actions";
+import { getOrders, getUserRestaurant, getRestaurantCallStats } from "@/features/orders/actions";
 
 export default async function DashboardPage() {
   const user = await getAppUser();
@@ -21,6 +21,7 @@ export default async function DashboardPage() {
   
   // Récupérer les commandes (sera vide si pas de restaurant)
   const ordersData = restaurant ? await getOrders() : [];
+  const callStats = restaurant ? await getRestaurantCallStats() : null;
   
   // Transformer les données pour le composant
   const orders = ordersData.map((order) => ({
@@ -85,7 +86,7 @@ export default async function DashboardPage() {
         )}
 
         {/* Dashboard Content with KPIs, Graph, and Orders - seulement si restaurant */}
-        {restaurant && <DashboardContent orders={orders} />}
+        {restaurant && <DashboardContent orders={orders} callStats={callStats} />}
     </div>
   );
 }

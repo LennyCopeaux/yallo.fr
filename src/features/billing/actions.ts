@@ -80,8 +80,8 @@ export async function createStripeCheckoutSessionForRestaurant(
           quantity: 1,
         },
       ],
-      success_url: `${appUrl}/dashboard/billing?billing=success`,
-      cancel_url: `${appUrl}/dashboard/billing?billing=cancel`,
+      success_url: `${appUrl}/org/${org.id}?billing=success`,
+      cancel_url: `${appUrl}/org/${org.id}?billing=cancel`,
       metadata: {
         organizationId: org.id,
         planId: plan.id,
@@ -123,7 +123,7 @@ export async function createStripePortalSession(): Promise<BillingActionResult> 
 
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: org.stripeCustomerId,
-      return_url: `${appUrl}/dashboard/billing`,
+      return_url: `${appUrl}/org/${org.id}`,
     });
 
     return { success: true, data: { checkoutUrl: portalSession.url } };
