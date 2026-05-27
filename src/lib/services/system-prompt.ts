@@ -1,6 +1,7 @@
 import { restaurants } from "@/db/schema";
 import { fetchHubriseCatalog, HubriseError } from "./hubrise";
 import { logger } from "@/lib/logger";
+import { buildHoursStatusLineForPrompt } from "./business-hours";
 
 type Restaurant = typeof restaurants.$inferSelect;
 
@@ -82,6 +83,7 @@ export async function generateSystemPrompt(restaurant: Restaurant, options?: { i
   const menuStructure = await getMenuStructure(restaurant);
 
   let timeBlock = "";
+  let computedHoursStatusBlock = "";
   if (options?.includeCurrentTime) {
     const now = new Date();
     const currentTimeStr = now.toLocaleString("fr-FR", {
@@ -91,6 +93,7 @@ export async function generateSystemPrompt(restaurant: Restaurant, options?: { i
       minute: "2-digit",
     });
     timeBlock = `\nHeure et jour actuels (Paris) : ${currentTimeStr}\n`;
+    computedHoursStatusBlock = `\n${buildHoursStatusLineForPrompt(restaurant.businessHours, now)}\n`;
   }
 
   return `Tu es Yallo, l'assistant vocal du restaurant « ${restaurant.name} ». Tu prends les commandes téléphoniques (selon les horaires et les capacités de l'établissement).
@@ -136,7 +139,8 @@ ${JSON.stringify(menuStructure)}
 
 Horaires :
 ${restaurant.businessHours || "Non configuré"}
+${computedHoursStatusBlock}
 
-${options?.includeCurrentTime ? "Si l'heure actuelle (fournie ci-dessus) est en dehors des horaires d'ouverture, accueille le client, explique poliment que le restaurant est fermé, et propose-toi pour répondre à ses questions. NE prends AUCUNE commande." : "Si le client demande les horaires, réfère-toi aux horaires ci-dessus."}
+${options?.includeCurrentTime ? "Respecte en priorité absolue le 'Statut d'ouverture calculé en temps réel' ci-dessus. S'il indique FERME, dis clairement que le restaurant est fermé et NE prends AUCUNE commande. Ne contredis jamais ce statut." : "Si le client demande les horaires, réfère-toi aux horaires ci-dessus."}
 ${getKitchenStatusInstruction(restaurant)}${getCallForwardingInstruction(restaurant)}${getUpsellInstruction(restaurant)}`;
 }

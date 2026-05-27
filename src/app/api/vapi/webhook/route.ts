@@ -7,6 +7,7 @@ import { pushVoiceOrderToHubrise } from "@/lib/services/hubrise";
 import { normalizeSubmitOrderPayload } from "@/lib/services/submit-order-args";
 import { trySendOrderConfirmationSms } from "@/lib/services/twilio-sms";
 import { updateVapiAssistant, buildAssistantPayloadForCall } from "@/lib/services/vapi-agent";
+import { getBusinessHoursOpenState } from "@/lib/services/business-hours";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -107,6 +108,14 @@ async function handleSubmitOrder(
     return JSON.stringify({
       success: false,
       message: "Le restaurant est actuellement fermé et ne prend plus de commandes.",
+    });
+  }
+
+  const hoursState = getBusinessHoursOpenState(restaurant.businessHours);
+  if (hoursState.isConfigured && !hoursState.isOpen) {
+    return JSON.stringify({
+      success: false,
+      message: "Le restaurant est actuellement fermé selon ses horaires d'ouverture.",
     });
   }
 
