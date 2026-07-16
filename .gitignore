@@ -22,3 +22,5 @@
 # Tooling / artefact builds
 coverage/
 *.tsbuildinfo
+vitest
+yallo@*
