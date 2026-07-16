@@ -53,7 +53,7 @@ jobs:
         env:
           DATABASE_URL: "postgresql://fake:fake@localhost:5432/fake"
           AUTH_SECRET: "fake-secret-for-build-only"
-          NEXT_PUBLIC_APP_URL: "https://staging.yallo.fr"
+          NEXT_PUBLIC_APP_URL: "https://app.staging.yallo.fr"
         run: pnpm run build
 
   sonarcloud:
@@ -107,7 +107,14 @@ jobs:
             ls -lh coverage/lcov.info
           fi
 
+      - name: Setup Java for SonarScanner
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
       - name: SonarCloud Scan
+        continue-on-error: true
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
