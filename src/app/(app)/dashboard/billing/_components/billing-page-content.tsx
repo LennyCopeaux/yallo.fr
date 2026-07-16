@@ -27,13 +27,14 @@ interface BillingPageContentProps {
   };
   restaurantCount: number;
   plans: readonly Plan[];
+  orgId?: string;
 }
 
 function normalizeFeature(feature: string): string {
   return feature.trim().toLowerCase();
 }
 
-export function BillingPageContent({ restaurant, restaurantCount, plans }: Readonly<BillingPageContentProps>) {
+export function BillingPageContent({ restaurant, restaurantCount, plans, orgId }: Readonly<BillingPageContentProps>) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -45,12 +46,13 @@ export function BillingPageContent({ restaurant, restaurantCount, plans }: Reado
 
   useEffect(() => {
     const billing = searchParams.get("billing");
+    const returnPath = orgId ? `/org/${orgId}` : "/dashboard/billing";
     if (billing === "success") {
       toast.success("Abonnement activé avec succès !");
-      router.replace("/dashboard/billing");
+      router.replace(returnPath);
     } else if (billing === "cancel") {
       toast.info("Paiement annulé.");
-      router.replace("/dashboard/billing");
+      router.replace(returnPath);
     }
   }, [searchParams, router]);
 

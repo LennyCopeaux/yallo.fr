@@ -115,6 +115,7 @@ export type AssistantSettings = {
   upsellEnabled: boolean;
   smsConfirmationEnabled: boolean;
   autoRushThreshold: number | null;
+  welcomeMessage: string | null;
 };
 
 export async function getAssistantSettings(): Promise<ActionResult> {
@@ -136,6 +137,7 @@ export async function getAssistantSettings(): Promise<ActionResult> {
       upsellEnabled: restaurant.upsellEnabled,
       smsConfirmationEnabled: restaurant.smsConfirmationEnabled,
       autoRushThreshold: restaurant.autoRushThreshold ?? null,
+      welcomeMessage: restaurant.welcomeMessage ?? null,
     } satisfies AssistantSettings,
   };
 }
@@ -185,6 +187,7 @@ const updateAssistantBehaviourSchema = z.object({
   upsellEnabled: z.boolean(),
   smsConfirmationEnabled: z.boolean(),
   autoRushThreshold: z.number().int().positive().nullable(),
+  welcomeMessage: z.string().trim().max(300).nullable(),
 });
 
 export async function updateAssistantBehaviour(
@@ -210,6 +213,7 @@ export async function updateAssistantBehaviour(
       upsellEnabled: parsed.data.upsellEnabled,
       smsConfirmationEnabled: parsed.data.smsConfirmationEnabled,
       autoRushThreshold: parsed.data.autoRushThreshold,
+      welcomeMessage: parsed.data.welcomeMessage,
       updatedAt: new Date(),
     })
     .where(eq(restaurants.id, restaurant.id));
@@ -221,6 +225,7 @@ export async function updateAssistantBehaviour(
         upsellEnabled: parsed.data.upsellEnabled,
         smsConfirmationEnabled: parsed.data.smsConfirmationEnabled,
         autoRushThreshold: parsed.data.autoRushThreshold,
+        welcomeMessage: parsed.data.welcomeMessage,
       });
     } catch (err) {
       console.error("Erreur sync assistant VAPI après mise à jour comportement :", err);

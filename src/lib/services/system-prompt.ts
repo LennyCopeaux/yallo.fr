@@ -1,6 +1,7 @@
 import { restaurants } from "@/db/schema";
 import { fetchHubriseCatalog, HubriseError } from "./hubrise";
 import { logger } from "@/lib/logger";
+import { buildHoursStatusLineForPrompt } from "./business-hours";
 
 type Restaurant = typeof restaurants.$inferSelect;
 
@@ -68,7 +69,9 @@ function getKitchenStatusInstruction(restaurant: Restaurant): string {
 }
 
 function getUpsellInstruction(restaurant: Restaurant): string {
-  if (!restaurant.upsellEnabled) return "";
+  if (!restaurant.upsellEnabled) {
+    return `\n\nUpsell : NE propose JAMAIS de compléments, boissons, desserts ou autres articles supplémentaires de ta propre initiative. Tu prends uniquement ce que le client demande.`;
+  }
 
   return `\n\nUpsell automatique :
 - En fin de prise de commande (après avoir confirmé les articles principaux mais avant d'appeler submit_order), propose naturellement et brièvement un complément pertinent s'il en existe dans le menu : boisson, dessert, supplément, sauce…
@@ -76,11 +79,25 @@ function getUpsellInstruction(restaurant: Restaurant): string {
 - Si le client refuse, accepte immédiatement et passe à la finalisation.`;
 }
 
-export async function generateSystemPrompt(restaurant: Restaurant): Promise<string> {
+export async function generateSystemPrompt(restaurant: Restaurant, options?: { includeCurrentTime?: boolean }): Promise<string> {
   const menuStructure = await getMenuStructure(restaurant);
 
-  return `Tu es Yallo, l’assistant vocal du restaurant « ${restaurant.name} ». Tu prends les commandes téléphoniques (selon les horaires et les capacités de l’établissement).
+  let timeBlock = "";
+  let computedHoursStatusBlock = "";
+  if (options?.includeCurrentTime) {
+    const now = new Date();
+    const currentTimeStr = now.toLocaleString("fr-FR", {
+      timeZone: "Europe/Paris",
+      weekday: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    timeBlock = `\nHeure et jour actuels (Paris) : ${currentTimeStr}\n`;
+    computedHoursStatusBlock = `\n${buildHoursStatusLineForPrompt(restaurant.businessHours, now)}\n`;
+  }
 
+  return `Tu es Yallo, l'assistant vocal du restaurant « ${restaurant.name} ». Tu prends les commandes téléphoniques (selon les horaires et les capacités de l'établissement).
+${timeBlock}
 Langue : français (France). Ton professionnel, courtois et naturel. Réponses claires, sans monologue.
 
 Menu et catalogue :
@@ -101,26 +118,32 @@ Si le menu contient des catégories "Taille & Quantité", "Viande", "Base", "Sau
 - IMPORTANT : Les articles listés sous "Viande", "Base", "Sauce" ne sont PAS des produits complets : ce sont des COMPOSANTS.
 - Reconnaître automatiquement que ces composants font partie du produit ordonnancé.
 Ordre de la conversation (respecte cet ordre) :
-1. Accueil bref avec le nom du restaurant.
+1. Accueil bref (premier message déjà envoyé automatiquement). Enchaîne directement sur la prise en charge du client.
 2. Collecte des articles et de **toutes** les options obligatoires du menu (une question à la fois si besoin).
-3. Ensuite seulement : mode de retrait / sur place / livraison (ou ce que l’établissement propose), créneau ou heure si pertinent — **pas** juste après avoir noté un plat, sauf si le client l’aborde lui-même.
+3. Ensuite seulement : mode de retrait / sur place / livraison (ou ce que l’établissement propose), puis DEMANDE TOUJOURS l'heure de retrait souhaitée (format HH:MM ou relatif comme « dans 30 min » que tu convertis en HH:MM).
 4. **Prénom ou nom pour la commande : uniquement en fin de prise de commande**, juste avant d’appeler submit_order. Ne demande pas le prénom au milieu du choix des plats.
 5. N’invente jamais de prénom ni n’utilise un prénom entendu par erreur ailleurs dans l’appel : le prénom/nom enregistré est **uniquement** celui que le client te donne quand tu le demandes explicitement pour la commande.
 
 Finalisation :
 - Quand tout est clair (articles, options, quantités avec prix issus du menu, mode si applicable, prénom obtenu), appelle submit_order **une seule fois** avec les données complètes.
+- Ne répète PAS la commande à chaque article. Fais au maximum une confirmation très brève en fin de collecte, puis finalise.
 - Pas de long récapitulatif oral sauf si le client le demande ; tu peux confirmer brièvement que c’est enregistré.
 
 Outil submit_order :
 - customer_name : prénom ou nom **tel que le client vient de te le donner** pour la commande (obligatoire).
 - customer_phone : le numéro de l’appelant si tu le connais ; sinon laisse vide (le système peut utiliser le numéro affiché).
 - items : tableau non vide ; chaque ligne : product_name, quantity (nombre, défaut 1 si une unité), unit_price en euros décimaux, options en texte si besoin.
-- pickup_time, notes : si pertinent (mode, contraintes, heure de retrait dans notes ou pickup_time selon le cas).
+- pickup_time : OBLIGATOIRE (HH:MM). Si le client dit « dans X minutes », convertis en heure absolue HH:MM avant l'appel outil.
+- notes : contraintes éventuelles.
 
 Menu (JSON, référence interne) :
 ${JSON.stringify(menuStructure)}
 
 Horaires :
 ${restaurant.businessHours || "Non configuré"}
+${computedHoursStatusBlock}
+
+${options?.includeCurrentTime ? "Respecte en priorité absolue le 'Statut d'ouverture calculé en temps réel' ci-dessus. S'il indique FERME, dis clairement que le restaurant est fermé et NE prends AUCUNE commande. Ne contredis jamais ce statut." : "Si le client demande les horaires, réfère-toi aux horaires ci-dessus."}
+${options?.includeCurrentTime ? "Quand le client demande les horaires, cite UNIQUEMENT les jours/créneaux présents dans le JSON ci-dessus. N'invente jamais des jours ou des plages supplémentaires. Si un jour n'est pas présent, dis explicitement que le restaurant est fermé ce jour-là." : ""}
 ${getKitchenStatusInstruction(restaurant)}${getCallForwardingInstruction(restaurant)}${getUpsellInstruction(restaurant)}`;
 }

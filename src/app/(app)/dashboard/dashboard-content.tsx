@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { type Order } from "@/components/orders";
+import { useState, useTransition } from "react";
 import { 
   TrendingUp, 
   ShoppingCart, 
@@ -12,17 +13,49 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   ChevronRight,
+  PhoneCall,
+  RefreshCw,
+  Mic,
+  Star,
+  Phone,
+  Zap,
 } from "lucide-react";
+
+import {
+  getRestaurantCallStats,
+  type RestaurantCallStats,
+  type DateRangeFilter,
+} from "@/features/orders/actions";
+
+const DATE_RANGE_OPTIONS: { value: DateRangeFilter; label: string }[] = [
+  { value: "all_time", label: "Tout le temps" },
+  { value: "last_7_days", label: "7 derniers jours" },
+  { value: "last_30_days", label: "30 derniers jours" },
+  { value: "current_month", label: "Mois en cours" },
+  { value: "previous_month", label: "Mois précédent" },
+];
 
 interface DashboardContentProps {
   orders: Order[];
+  callStats: RestaurantCallStats | null;
 }
 
 type DeltaMeta =
   | { kind: "increase" | "decrease" | "flat"; value: number }
   | { kind: "new" };
 
-export function DashboardContent({ orders }: Readonly<DashboardContentProps>) {
+export function DashboardContent({ orders, callStats: initialCallStats }: Readonly<DashboardContentProps>) {
+  const [callStats, setCallStats] = useState<RestaurantCallStats | null>(initialCallStats);
+  const [callRangeFilter, setCallRangeFilter] = useState<DateRangeFilter>("all_time");
+  const [isPendingCallStats, startCallStatsTransition] = useTransition();
+
+  function handleCallRangeChange(filter: DateRangeFilter) {
+    setCallRangeFilter(filter);
+    startCallStatsTransition(async () => {
+      const stats = await getRestaurantCallStats(filter);
+      setCallStats(stats);
+    });
+  }
 
   const getDeltaMeta = (current: number, previous: number): DeltaMeta => {
     if (previous === 0 && current === 0) {
@@ -124,7 +157,7 @@ export function DashboardContent({ orders }: Readonly<DashboardContentProps>) {
 
   return (
     <div className="space-y-8">
-      {/* KPIs Section */}
+      {/* KPIs Section — Commandes du jour */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Chiffre du jour */}
         <Card className="bg-card border-border hover:border-primary/20 transition-colors">
@@ -174,21 +207,167 @@ export function DashboardContent({ orders }: Readonly<DashboardContentProps>) {
           </CardContent>
         </Card>
 
-        {/* Temps moyen IA */}
+        {/* Total commandes (toutes) */}
         <Card className="bg-card border-border hover:border-primary/20 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Temps moyen IA
+              Total commandes
             </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">--</div>
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-              <span>Mesure bientot disponible</span>
-            </p>
+            <div className="text-2xl font-bold">{orders.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">depuis le début</p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Section IA — Métriques avec filtre de période */}
+      <div>
+        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-sky-400" />
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
+              Performances IA
+            </h2>
+            {isPendingCallStats && <RefreshCw className="w-3 h-3 text-muted-foreground animate-spin" />}
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {DATE_RANGE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => handleCallRangeChange(opt.value)}
+                disabled={isPendingCallStats}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  callRangeFilter === opt.value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 transition-opacity ${isPendingCallStats ? "opacity-50" : ""}`}>
+          {/* Temps moyen IA */}
+          <Card className="bg-card border-border hover:border-primary/20 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Temps moyen IA
+              </CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {callStats?.avgDurationSeconds != null
+                  ? `${callStats.avgDurationSeconds}s`
+                  : "--"}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">par appel</p>
+            </CardContent>
+          </Card>
+
+          {/* Appels IA */}
+          <Card className="bg-card border-border hover:border-primary/20 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Appels IA
+              </CardTitle>
+              <PhoneCall className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {callStats?.totalCallsAllTime ?? "--"}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">sur la période</p>
+            </CardContent>
+          </Card>
+
+          {/* Taux de décroché — placeholder */}
+          <Card className="bg-card border-border hover:border-primary/20 transition-colors opacity-60">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Taux de décroché
+              </CardTitle>
+              <Phone className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">--</div>
+              <p className="text-xs text-muted-foreground mt-1">bientôt disponible</p>
+            </CardContent>
+          </Card>
+
+          {/* Satisfaction client — placeholder */}
+          <Card className="bg-card border-border hover:border-primary/20 transition-colors opacity-60">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Satisfaction client
+              </CardTitle>
+              <Star className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">--</div>
+              <p className="text-xs text-muted-foreground mt-1">bientôt disponible</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Deuxième ligne de métriques IA (placeholders) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 opacity-60">
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Appels transférés
+              </CardTitle>
+              <PhoneCall className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">--</div>
+              <p className="text-xs text-muted-foreground mt-1">bientôt disponible</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Taux commande / appel
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">--</div>
+              <p className="text-xs text-muted-foreground mt-1">bientôt disponible</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Heure de pointe
+              </CardTitle>
+              <Mic className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">--</div>
+              <p className="text-xs text-muted-foreground mt-1">bientôt disponible</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                CA généré via IA
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">--</div>
+              <p className="text-xs text-muted-foreground mt-1">bientôt disponible</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Graphique Section */}

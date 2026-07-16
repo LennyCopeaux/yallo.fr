@@ -6,7 +6,8 @@ import { logger } from "@/lib/logger";
 import { pushVoiceOrderToHubrise } from "@/lib/services/hubrise";
 import { normalizeSubmitOrderPayload } from "@/lib/services/submit-order-args";
 import { trySendOrderConfirmationSms } from "@/lib/services/twilio-sms";
-import { updateVapiAssistant } from "@/lib/services/vapi-agent";
+import { updateVapiAssistant, buildAssistantPayloadForCall } from "@/lib/services/vapi-agent";
+import { getBusinessHoursOpenState } from "@/lib/services/business-hours";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -69,6 +70,43 @@ function parsePickupTime(pickupTimeStr?: string): Date | null {
   return pickup;
 }
 
+function getCurrentWaitCeilMinutes(
+  status: "CALM" | "NORMAL" | "RUSH" | "STOP",
+  statusSettings: typeof restaurants.$inferSelect["statusSettings"]
+): number {
+  if (!statusSettings) return 15;
+  const setting = statusSettings[status];
+  if (!setting) return 15;
+
+  if ("fixed" in setting && typeof setting.fixed === "number") {
+    return Math.max(0, Math.ceil(setting.fixed));
+  }
+
+  if ("max" in setting && typeof setting.max === "number") {
+    return Math.max(0, Math.ceil(setting.max));
+  }
+
+  return 15;
+}
+
+function roundUpToNextTenMinutes(date: Date): Date {
+  const rounded = new Date(date);
+  rounded.setSeconds(0, 0);
+  const minutes = rounded.getMinutes();
+  const remainder = minutes % 10;
+  if (remainder !== 0) {
+    rounded.setMinutes(minutes + (10 - remainder));
+  }
+  return rounded;
+}
+
+function formatFrenchHour(date: Date): string {
+  return date.toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 interface OrderItem {
   product_name: string;
   quantity: number;
@@ -110,10 +148,45 @@ async function handleSubmitOrder(
     });
   }
 
+  const hoursState = getBusinessHoursOpenState(restaurant.businessHours);
+  if (hoursState.isConfigured && !hoursState.isOpen) {
+    return JSON.stringify({
+      success: false,
+      message: "Le restaurant est actuellement fermé selon ses horaires d'ouverture.",
+    });
+  }
+
   if (!args.items || args.items.length === 0) {
     return JSON.stringify({
       success: false,
       message: "La commande ne contient aucun article.",
+    });
+  }
+
+  if (!args.pickup_time?.trim()) {
+    return JSON.stringify({
+      success: false,
+      message:
+        "Merci d'indiquer une heure de retrait souhaitée (HH:MM) avant de finaliser la commande.",
+    });
+  }
+
+  const pickupTime = parsePickupTime(args.pickup_time);
+  if (!pickupTime) {
+    return JSON.stringify({
+      success: false,
+      message: "Format d'heure invalide. Merci d'indiquer l'heure de retrait au format HH:MM.",
+    });
+  }
+
+  const waitMinutes = getCurrentWaitCeilMinutes(restaurant.currentStatus, restaurant.statusSettings);
+  const earliestReadyAt = roundUpToNextTenMinutes(new Date(Date.now() + waitMinutes * 60 * 1000));
+
+  if (pickupTime.getTime() < earliestReadyAt.getTime()) {
+    return JSON.stringify({
+      success: false,
+      message: `Le délai est trop court avec la charge actuelle en cuisine. Propose une heure de retrait à partir de ${formatFrenchHour(earliestReadyAt)}.`,
+      earliest_pickup_time: formatFrenchHour(earliestReadyAt),
     });
   }
 
@@ -133,7 +206,6 @@ async function handleSubmitOrder(
   });
 
   const totalAmount = itemsForDb.reduce((sum, item) => sum + item.totalPrice, 0);
-  const pickupTime = parsePickupTime(args.pickup_time);
 
   const mergedCustomerPhone =
     (args.customer_phone?.trim() && normalizeFrenchPhoneNumber(args.customer_phone.trim())) ||
@@ -250,9 +322,15 @@ async function handleSubmitOrder(
         orderNumber,
         lines: itemsForDb.map((item) => {
           const lineEuros = (item.totalPrice / 100).toFixed(2);
-          return `${item.productName} x${item.quantity} — ${lineEuros} €`;
+          const optionsSuffix = item.options ? ` (${item.options})` : "";
+          return `${item.productName}${optionsSuffix} x${item.quantity} — ${lineEuros} €`;
         }),
         totalEuros: (totalAmount / 100).toFixed(2),
+        customerName: args.customer_name || null,
+        pickupTime: pickupTime
+          ? pickupTime.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+          : null,
+        notes: args.notes || null,
       });
     }
   }
@@ -409,6 +487,37 @@ export async function POST(request: Request) {
         },
         { status: 200 }
       );
+    }
+
+    // assistant-request : VAPI demande la config de l'assistant en début d'appel (approche dynamique)
+    // On génère le prompt avec l'heure actuelle pour permettre la détection des horaires en temps réel
+    if (message?.type === "assistant-request" && restaurantId) {
+      try {
+        const [restaurant] = await db
+          .select()
+          .from(restaurants)
+          .where(eq(restaurants.id, restaurantId))
+          .limit(1);
+
+        if (!restaurant) {
+          logger.error("Webhook VAPI assistant-request : restaurant introuvable", new Error(restaurantId));
+          return NextResponse.json({ error: "Restaurant introuvable" }, { status: 404 });
+        }
+
+        const assistantConfig = await buildAssistantPayloadForCall(restaurant);
+        logger.info("Webhook VAPI assistant-request traité", {
+          restaurantId,
+          hasBusinessHours: Boolean(restaurant.businessHours),
+        });
+        return NextResponse.json({ assistant: assistantConfig });
+      } catch (err) {
+        logger.error(
+          "Erreur assistant-request VAPI",
+          err instanceof Error ? err : new Error(String(err)),
+          { restaurantId }
+        );
+        return NextResponse.json({ error: "Erreur interne" }, { status: 500 });
+      }
     }
 
     // Traiter la fin d'appel (end-of-call-report)
