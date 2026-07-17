@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -20,11 +19,6 @@ const aeonik = localFont({
   variable: "--font-aeonik",
   display: "swap",
   fallback: ["system-ui", "sans-serif"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yallo.fr";
@@ -144,7 +138,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${aeonik.variable} ${geistMono.variable}`}>
+    <html lang="fr" className={aeonik.variable}>
       <head>
         <script
           type="application/ld+json"
