@@ -13,23 +13,29 @@ function parseSampleRate(value: string | undefined, fallback: number): number {
   return Number.isNaN(parsed) ? fallback : parsed;
 }
 
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT || process.env.NODE_ENV,
-  tracesSampleRate: parseSampleRate(
-    process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE,
-    DEFAULT_TRACES_SAMPLE_RATE
-  ),
-  replaysSessionSampleRate: parseSampleRate(
-    process.env.NEXT_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE,
-    DEFAULT_REPLAYS_SESSION_SAMPLE_RATE
-  ),
-  replaysOnErrorSampleRate: parseSampleRate(
-    process.env.NEXT_PUBLIC_SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE,
-    DEFAULT_REPLAYS_ON_ERROR_SAMPLE_RATE
-  ),
-  integrations: [Sentry.replayIntegration()],
-  sendDefaultPii: false,
-});
+// Client Sentry only in production builds (staging/prod on Vercel).
+if (process.env.NODE_ENV === "production") {
+  Sentry.init({
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT || process.env.NODE_ENV,
+    tracesSampleRate: parseSampleRate(
+      process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE,
+      DEFAULT_TRACES_SAMPLE_RATE
+    ),
+    replaysSessionSampleRate: parseSampleRate(
+      process.env.NEXT_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE,
+      DEFAULT_REPLAYS_SESSION_SAMPLE_RATE
+    ),
+    replaysOnErrorSampleRate: parseSampleRate(
+      process.env.NEXT_PUBLIC_SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE,
+      DEFAULT_REPLAYS_ON_ERROR_SAMPLE_RATE
+    ),
+    integrations: [Sentry.replayIntegration()],
+    sendDefaultPii: false,
+  });
+}
 
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+export const onRouterTransitionStart =
+  process.env.NODE_ENV === "production"
+    ? Sentry.captureRouterTransitionStart
+    : () => undefined;

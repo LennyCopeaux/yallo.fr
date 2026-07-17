@@ -2,7 +2,7 @@
 
 @theme {
   --font-sans: var(--font-aeonik), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono);
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
