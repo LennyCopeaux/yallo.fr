@@ -51,6 +51,12 @@ function getWebhookUrl(restaurantId: string): string | undefined {
   return undefined;
 }
 
+/** VAPI limite le nom de l'assistant/numéro à 40 caractères. */
+function buildVapiName(label: string): string {
+  const full = `Yallo - ${label}`.trim();
+  return full.length <= 40 ? full : full.slice(0, 40).trim();
+}
+
 function getWebhookSecret(): string | undefined {
   const s = process.env.VAPI_WEBHOOK_SECRET?.trim();
   return s && s.length > 0 ? s : undefined;
@@ -232,7 +238,7 @@ function buildAssistantConfig(restaurant: Restaurant, systemPrompt: string) {
   }
 
   return {
-    name: `Yallo - ${restaurant.name}`,
+    name: buildVapiName(restaurant.name),
     model: {
       provider: "openai",
       model: llmModel,
@@ -393,7 +399,7 @@ export async function importTwilioPhoneNumber(
       number: normalizedNumber,
       twilioAccountSid,
       twilioAuthToken,
-      name: `Yallo - ${phoneNumber}`,
+      name: buildVapiName(phoneNumber),
       ...(webhookUrl
         ? {
             server: {

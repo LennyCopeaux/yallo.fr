@@ -148,7 +148,12 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
         "Erreur envoi email de bienvenue",
         mailError instanceof Error ? mailError : new Error(String(mailError))
       );
-      // On ne bloque pas la création si l'email échoue
+      revalidatePath("/admin");
+      return {
+        success: true,
+        error:
+          "Compte créé, mais l'email de bienvenue n'a pas pu être envoyé. Utilisez « Renvoyer » ou vérifiez Resend / spam.",
+      };
     }
 
     revalidatePath("/admin");
