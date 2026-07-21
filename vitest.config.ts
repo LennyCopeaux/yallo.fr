@@ -5,7 +5,11 @@ import path from "path";
 export default defineConfig({
   plugins: [react()],
   test: {
-    pool: "threads",
+    // Vitest 4 : 1 seul worker. Le parallélisme (threads/forks) timeout au
+    // démarrage sur cette machine avec coverage v8.
+    pool: "forks",
+    maxWorkers: 1,
+    fileParallelism: false,
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/__tests__/setup.ts"],

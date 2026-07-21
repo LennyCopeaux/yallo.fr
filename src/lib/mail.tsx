@@ -40,13 +40,20 @@ Vous pouvez vous connecter ici : ${loginUrl}
 À bientôt,
 L'équipe Yallo`;
 
-    await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "Yallo <onboarding@yallo.fr>",
       to: email,
       subject: "Bienvenue sur Yallo - Vos identifiants de connexion",
       html,
       text,
     });
+
+    if (error) {
+      logger.error("Resend welcome email rejected", new Error(error.message));
+      throw new Error(`Impossible d'envoyer l'email de bienvenue: ${error.message}`);
+    }
+
+    logger.info("Welcome email sent", { email, resendId: data?.id });
   } catch (error) {
     logger.error("Erreur lors de l'envoi de l'email de bienvenue", error instanceof Error ? error : new Error(String(error)));
     throw new Error("Impossible d'envoyer l'email de bienvenue");
@@ -82,13 +89,20 @@ Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.
 À bientôt,
 L'équipe Yallo`;
 
-    await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "Yallo <onboarding@yallo.fr>",
       to: email,
       subject: "Réinitialisation de votre mot de passe Yallo",
       html,
       text,
     });
+
+    if (error) {
+      logger.error("Resend reset email rejected", new Error(error.message));
+      throw new Error(`Impossible d'envoyer l'email de réinitialisation: ${error.message}`);
+    }
+
+    logger.info("Reset password email sent", { email, resendId: data?.id });
   } catch (error) {
     logger.error("Erreur lors de l'envoi de l'email de réinitialisation", error instanceof Error ? error : new Error(String(error)));
     throw new Error("Impossible d'envoyer l'email de réinitialisation");
