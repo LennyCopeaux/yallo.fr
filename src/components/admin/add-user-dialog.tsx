@@ -41,7 +41,11 @@ export function AddUserDialog() {
     const result = await createUser(formData);
 
     if (result.success) {
-      toast.success("Utilisateur créé - Un email a été envoyé avec les identifiants");
+      if (result.error) {
+        toast.warning(result.error);
+      } else {
+        toast.success("Utilisateur créé - Un email a été envoyé avec les identifiants");
+      }
       setOpen(false);
       setSelectedRole("");
     } else {
