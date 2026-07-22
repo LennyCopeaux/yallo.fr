@@ -12,7 +12,7 @@ export async function GET(
   await requireAdmin();
 
   const { id } = await params;
-  
+
   const [restaurant] = await db
     .select({ businessHours: restaurants.businessHours })
     .from(restaurants)

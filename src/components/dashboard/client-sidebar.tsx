@@ -76,7 +76,7 @@ export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurant
     if (hasHubriseConfig && item.href === "/dashboard/menu") {
       return false;
     }
-    // EMPLOYEE: only Dashboard + Commandes
+
     if (userRole === "EMPLOYEE") {
       return item.href === "/dashboard" || item.href === "/dashboard/orders";
     }
@@ -92,7 +92,7 @@ export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurant
         expanded ? "w-56" : "w-16"
       )}
     >
-      {/* Header */}
+      {}
       <div className="h-16 flex items-center justify-between px-4 border-b border-border shrink-0">
         <AnimatePresence initial={false}>
           {expanded && (
@@ -125,7 +125,7 @@ export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurant
         </button>
       </div>
 
-      {/* Nav */}
+      {}
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
         {orgNavigation.length > 0 && expanded && (
           <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
@@ -283,7 +283,7 @@ export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurant
         })}
       </nav>
 
-      {/* Footer – logout */}
+      {}
       <div className="p-2 border-t border-border shrink-0">
         <button
           onClick={handleLogout}

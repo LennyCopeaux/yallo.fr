@@ -112,7 +112,7 @@ export function HoursEditor({ initialHours }: Readonly<HoursEditorProps>) {
     setIsSaving(true);
     try {
       const scheduleToSave: Record<string, { open: string; close: string } | { lunch: { open: string; close: string }; dinner: { open: string; close: string } }> = {};
-      
+
       Object.entries(data.schedule).forEach(([day, config]) => {
         if (!config?.enabled) return;
 

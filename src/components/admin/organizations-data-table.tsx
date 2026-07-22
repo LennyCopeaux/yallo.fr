@@ -97,7 +97,6 @@ export function OrganizationsDataTable({
   const [deleteTarget, setDeleteTarget] = useState<OrganizationRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Sync local input with URL changes (back navigation, external filter updates)
   if (prevUrlSearch !== urlSearch) {
     setPrevUrlSearch(urlSearch);
     setSearchValue(urlSearch);

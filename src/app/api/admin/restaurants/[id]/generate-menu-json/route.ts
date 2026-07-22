@@ -45,8 +45,8 @@ export async function GET(
     }
 
     if (restaurant.menuData) {
-      return NextResponse.json({ 
-        menuJson: JSON.stringify(restaurant.menuData, null, 2) 
+      return NextResponse.json({
+        menuJson: JSON.stringify(restaurant.menuData, null, 2)
       });
     }
 

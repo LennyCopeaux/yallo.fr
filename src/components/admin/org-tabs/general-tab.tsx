@@ -52,14 +52,12 @@ export function OrgGeneralTab({
   const [isLoading, setIsLoading] = useState(false);
   const [, startTransition] = useTransition();
 
-  // Restaurants management
   const [pendingAddRestaurants, setPendingAddRestaurants] = useState<string[]>([]);
   const [pendingRemoveRestaurants, setPendingRemoveRestaurants] = useState<string[]>([]);
   const [isSavingRestaurants, setIsSavingRestaurants] = useState(false);
   const [restaurantsOpen, setRestaurantsOpen] = useState(false);
   const restaurantsRef = useRef<HTMLDivElement>(null);
 
-  // Owners management
   const [pendingAddMembers, setPendingAddMembers] = useState<string[]>([]);
   const [pendingRemoveMembers, setPendingRemoveMembers] = useState<string[]>([]);
   const [isSavingMembers, setIsSavingMembers] = useState(false);
@@ -97,7 +95,6 @@ export function OrgGeneralTab({
   const statusValue = useWatch({ control: form.control, name: "status" });
   const isDirty = form.formState.isDirty;
 
-  // Restaurant helpers
   function isRestaurantChecked(rId: string) {
     const isAssigned = assignedRestaurants.some((r) => r.id === rId);
     if (isAssigned) return !pendingRemoveRestaurants.includes(rId);
@@ -141,7 +138,6 @@ export function OrgGeneralTab({
     return { success: true };
   }
 
-  // Owner helpers
   function isMemberChecked(ownerId: string) {
     const isCurrentMember = members.some((m) => m.id === ownerId);
     if (isCurrentMember) return !pendingRemoveMembers.includes(ownerId);
@@ -241,7 +237,7 @@ export function OrgGeneralTab({
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Row 1: Nom + Statut */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="org-name">Nom de l&apos;organisation *</Label>
@@ -289,9 +285,9 @@ export function OrgGeneralTab({
               </div>
             </div>
 
-            {/* Row 2: Restaurants + Membres */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Restaurants */}
+              {}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Restaurants</Label>
@@ -336,7 +332,7 @@ export function OrgGeneralTab({
                 </div>
               </div>
 
-              {/* Membres */}
+              {}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Membres</Label>
@@ -387,7 +383,7 @@ export function OrgGeneralTab({
               </div>
             </div>
 
-            {/* Footer */}
+            {}
             <div className="pt-4 border-t border-border">
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <span>

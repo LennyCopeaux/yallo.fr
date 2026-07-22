@@ -10,7 +10,6 @@ describe("business-hours", () => {
       },
     });
 
-    // 2026-05-27T18:37:00.000Z = mercredi 20:37 à Paris
     const state = getBusinessHoursOpenState(businessHours, new Date("2026-05-27T18:37:00.000Z"));
 
     expect(state.isConfigured).toBe(true);
@@ -26,7 +25,6 @@ describe("business-hours", () => {
       },
     });
 
-    // mercredi 20:37 à Paris
     const state = getBusinessHoursOpenState(businessHours, new Date("2026-05-27T18:37:00.000Z"));
 
     expect(state.isConfigured).toBe(true);

@@ -172,8 +172,8 @@ export function AddUserDialog() {
             >
               Annuler
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isLoading || !selectedRole}
               className="bg-primary text-black hover:bg-primary/90"
             >

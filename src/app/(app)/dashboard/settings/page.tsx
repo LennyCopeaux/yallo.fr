@@ -100,7 +100,7 @@ export default async function SettingsPage() {
         </Button>
       </Link>
 
-      {/* Header */}
+      {}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -117,7 +117,7 @@ export default async function SettingsPage() {
 
       <div className="space-y-10">
 
-        {/* ── Charge cuisine ── */}
+        {}
         <section>
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
             Charge cuisine
@@ -132,7 +132,7 @@ export default async function SettingsPage() {
           )}
         </section>
 
-        {/* ── Gestion des appels ── */}
+        {}
         <section>
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
             Gestion des appels
@@ -140,7 +140,7 @@ export default async function SettingsPage() {
           <CallForwardingCard initialData={settings} />
         </section>
 
-        {/* ── Comportement de l'assistant ── */}
+        {}
         <section>
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
             Comportement de l&apos;assistant

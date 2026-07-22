@@ -52,7 +52,7 @@ describe("getAppUrl", () => {
     vi.stubEnv("NODE_ENV", "production");
     // @ts-expect-error - mock window for test
     global.window = undefined;
-    
+
     const result = getAppUrl("dashboard");
     expect(result).toBe("https://app.yallo.fr/dashboard");
   });
@@ -61,7 +61,7 @@ describe("getAppUrl", () => {
     vi.stubEnv("NODE_ENV", "production");
     // @ts-expect-error - mock window for test
     global.window = undefined;
-    
+
     const result = getAppUrl("/dashboard");
     expect(result).toBe("https://app.yallo.fr/dashboard");
   });
@@ -70,7 +70,7 @@ describe("getAppUrl", () => {
     vi.stubEnv("NODE_ENV", "production");
     // @ts-expect-error - mock window for test
     global.window = undefined;
-    
+
     const result = getAppUrl("");
     expect(result).toBe("https://app.yallo.fr/");
   });
@@ -79,20 +79,17 @@ describe("getAppUrl", () => {
     vi.stubEnv("NODE_ENV", "development");
     // @ts-expect-error - mock window for test
     global.window = undefined;
-    
+
     const result = getAppUrl("/dashboard");
     expect(result).toBe("http://app.localhost:3000/dashboard");
   });
 });
 
 describe("buildAppUrlServer", () => {
-  // Note: Ces tests ne modifient pas NEXT_PUBLIC_APP_URL car process.env
-  // est lu au moment de l'import du module, pas à chaque appel.
-  // Les tests vérifient le comportement par défaut (sans NEXT_PUBLIC_APP_URL).
 
   it("devrait utiliser localhost en dev", () => {
     const result = buildAppUrlServer("/dashboard", "localhost:3000");
-    // Si NEXT_PUBLIC_APP_URL n'est pas défini, utilise localhost
+
     expect(result).toContain("/dashboard");
   });
 

@@ -29,7 +29,7 @@ export async function saveMenuData(menuData: MenuData): Promise<{ success: boole
 
     await db
       .update(restaurants)
-      .set({ 
+      .set({
         menuData,
         updatedAt: new Date(),
       })
@@ -83,7 +83,7 @@ export async function clearMenuData(): Promise<{ success: boolean; error?: strin
 
     await db
       .update(restaurants)
-      .set({ 
+      .set({
         menuData: null,
         updatedAt: new Date(),
       })

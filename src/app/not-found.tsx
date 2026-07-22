@@ -76,7 +76,7 @@ export default function NotFound() {
           </div>
 
           <p className="text-lg text-muted-foreground max-w-md mx-auto">
-            Cette page semble avoir disparu du menu. 
+            Cette page semble avoir disparu du menu.
             Elle a peut-être été déplacée ou retirée du service.
           </p>
         </motion.div>

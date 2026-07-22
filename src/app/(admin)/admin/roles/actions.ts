@@ -9,7 +9,6 @@ import { z } from "zod";
 
 export type { SelectRole } from "@/db/schema";
 
-// Les rôles système sont protégés par leur nom — ils ne peuvent pas être modifiés ni supprimés
 const SYSTEM_ROLE_NAMES = ["ADMIN", "OWNER", "EMPLOYEE"] as const;
 
 const roleSchema = z.object({
@@ -80,7 +79,6 @@ export async function deleteRole(id: string): Promise<{ success: boolean; error?
   const [existing] = await db.select().from(roles).where(eq(roles.id, id)).limit(1);
   if (!existing) return { success: false, error: "Rôle introuvable" };
 
-  // Vérifie s'il existe des utilisateurs avec ce rôle avant toute suppression
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(users)

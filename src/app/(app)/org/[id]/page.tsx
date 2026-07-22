@@ -72,7 +72,6 @@ export default async function OrgDetailPage({
     getCallUsageForCurrentPeriod(),
   ]);
 
-  // Set selected restaurant cookie if none set
   const cookieStore = await cookies();
   const selectedRestaurantId = cookieStore.get("yallo_restaurant_id")?.value;
   const validRestaurant = stats.restaurants.find((r) => r.id === selectedRestaurantId);

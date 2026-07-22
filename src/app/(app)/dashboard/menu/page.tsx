@@ -21,7 +21,6 @@ export default async function MenuPage() {
 
   const restaurant = await getUserRestaurant();
 
-  // Pas de restaurant associé
   if (!restaurant) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -56,7 +55,6 @@ export default async function MenuPage() {
 
   const hasHubRise = !!(restaurant.hubriseLocationId && restaurant.hubriseAccessToken);
 
-  // Si HubRise est configuré, l'édition manuelle du menu n'est plus accessible.
   if (hasHubRise) {
     redirect("/dashboard");
   }

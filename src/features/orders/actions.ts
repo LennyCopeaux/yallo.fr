@@ -133,9 +133,6 @@ function resolveDateRangeForRestaurant(filter: DateRangeFilter): { from: Date; t
   }
 }
 
-/**
- * Retourne les statistiques d'appels IA pour le restaurant courant.
- */
 export async function getRestaurantCallStats(
   rangeFilter: DateRangeFilter = "all_time"
 ): Promise<RestaurantCallStats> {

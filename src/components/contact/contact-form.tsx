@@ -60,7 +60,7 @@ function mapUrlSubjectToValue(subject: string | null): string | undefined {
     "plan-pro": "plan-pro",
     "plan-business": "plan-business",
     "enterprise": "enterprise",
-    "demo": "rdv-expert", // Redirection demo vers rdv-expert
+    "demo": "rdv-expert",
   };
   return subject ? mapping[subject] : undefined;
 }
@@ -98,7 +98,6 @@ function ContactFormInner() {
 
   const selectedSubject = watch("subject");
 
-  // Mettre à jour le message quand le sujet change (depuis URL ou sélection)
   useEffect(() => {
     const mappedSubject = mapUrlSubjectToValue(urlSubject);
     if (mappedSubject) {
@@ -110,7 +109,6 @@ function ContactFormInner() {
     }
   }, [urlSubject, setValue]);
 
-  // Mettre à jour le message quand l'utilisateur change le sujet manuellement
   useEffect(() => {
     if (selectedSubject) {
       const defaultMsg = getDefaultMessage(selectedSubject);

@@ -47,9 +47,6 @@ export async function requireRole(role: UserRole): Promise<AppUser> {
   return user;
 }
 
-/**
- * Retourne toutes les organisations dont l'utilisateur est membre.
- */
 export async function getUserOrganizations() {
   const user = await getAppUser();
   if (!user?.id) return [];
@@ -71,10 +68,6 @@ export async function getUserOrganizations() {
   return memberships;
 }
 
-/**
- * Retourne la première organisation de l'utilisateur (compat).
- * @deprecated Utiliser getUserOrganizations() pour le multi-orgs.
- */
 export async function getUserOrganization() {
   const orgs = await getUserOrganizations();
   if (!orgs.length) return null;
@@ -89,11 +82,6 @@ export async function getUserOrganization() {
   return org ?? null;
 }
 
-/**
- * Retourne les IDs de restaurants accessibles pour l'utilisateur connecté.
- * OWNER/ADMIN : tous les restaurants de leurs organisations.
- * EMPLOYEE : uniquement les restaurants explicitement assignés via restaurant_members.
- */
 async function getAccessibleRestaurantIds(userId: string, role: string): Promise<string[]> {
   if (role === "EMPLOYEE") {
     const memberships = await db
@@ -103,7 +91,6 @@ async function getAccessibleRestaurantIds(userId: string, role: string): Promise
     return memberships.map((m) => m.restaurantId);
   }
 
-  // OWNER / ADMIN : accès via l'appartenance à l'organisation
   const orgRestaurants = await db
     .select({ id: restaurants.id })
     .from(organizationMembers)
@@ -113,11 +100,6 @@ async function getAccessibleRestaurantIds(userId: string, role: string): Promise
   return orgRestaurants.map((r) => r.id);
 }
 
-/**
- * Retourne le restaurant sélectionné accessible à l'utilisateur connecté.
- * Priorité : cookie yallo_restaurant_id (si accessible), sinon premier accessible.
- * OWNER/ADMIN : accès via organisation. EMPLOYEE : accès via restaurant_members.
- */
 export async function getAccessibleRestaurant(): Promise<SelectRestaurant | null> {
   const user = await getAppUser();
   if (!user?.id) return null;
@@ -140,9 +122,6 @@ export async function getAccessibleRestaurant(): Promise<SelectRestaurant | null
   return restaurant ?? null;
 }
 
-/**
- * Retourne le restaurant accessible pour un userId donné (évite le double getAppUser).
- */
 export async function getAccessibleRestaurantForUser(
   userId: string,
   selectedId?: string
@@ -167,12 +146,6 @@ export async function getAccessibleRestaurantForUser(
   return restaurant ?? null;
 }
 
-/**
- * Retourne les restaurants accessibles à l'utilisateur.
- * OWNER/ADMIN : tous les restaurants de leurs organisations.
- * EMPLOYEE : uniquement les restaurants explicitement assignés.
- * Filtre optionnel par organisation.
- */
 export async function getUserRestaurants(organizationId?: string) {
   const user = await getAppUser();
   if (!user?.id) return [];
@@ -200,10 +173,6 @@ export async function getUserRestaurants(organizationId?: string) {
   return rows;
 }
 
-/**
- * Retourne le premier restaurant de l'organisation de l'utilisateur connecté.
- * Pour la compatibilité avec les pages single-restaurant.
- */
 export async function getOwnerRestaurantFromOrg() {
   const org = await getUserOrganization();
   if (!org) return null;

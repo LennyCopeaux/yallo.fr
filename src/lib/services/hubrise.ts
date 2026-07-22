@@ -17,12 +17,10 @@ interface HubriseCatalogListItem {
   created_at: string;
 }
 
-/** Noms du type "test …" (catalogues d’essai) — évité en choix auto. */
 function looksLikeTestHubriseCatalogName(name: string): boolean {
   return /^test(\s|$)/i.test(name.trim());
 }
 
-/** Plusieurs catalogues sur une location : préfère un nom autre que "test …", sinon le plus ancien. */
 function pickDefaultHubriseCatalogId(catalogs: HubriseCatalogListItem[]): string {
   if (catalogs.length === 0) {
     throw new HubriseError("Aucun catalogue trouvé pour cette location HubRise", 404);
@@ -98,7 +96,7 @@ export async function fetchHubriseCatalog(
 
     if (!catalogResponse.ok) {
       const errorText = await catalogResponse.text().catch(() => "Unknown error");
-      
+
       if (catalogResponse.status === 404) {
         throw new HubriseError(
           `Catalogue HubRise introuvable: ${catalogId}`,
@@ -154,10 +152,6 @@ export interface PushVoiceOrderToHubriseInput {
   notes?: string | null;
 }
 
-/**
- * Envoie une commande vocale Yallo vers HubRise (caisse / file de commandes).
- * Utilise le token et la location configurés pour le restaurant.
- */
 export async function pushVoiceOrderToHubrise(
   accessToken: string,
   locationId: string,

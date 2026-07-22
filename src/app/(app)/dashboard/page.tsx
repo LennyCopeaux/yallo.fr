@@ -16,14 +16,11 @@ export default async function DashboardPage() {
     redirect("/admin");
   }
 
-  // Vérifier si l'utilisateur a un restaurant
   const restaurant = await getUserRestaurant();
-  
-  // Récupérer les commandes (sera vide si pas de restaurant)
+
   const ordersData = restaurant ? await getOrders() : [];
   const callStats = restaurant ? await getRestaurantCallStats() : null;
-  
-  // Transformer les données pour le composant
+
   const orders = ordersData.map((order) => ({
     id: order.id,
     orderNumber: order.orderNumber,
@@ -46,7 +43,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
+        {}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
             Bienvenue
@@ -62,7 +59,7 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Alert si pas de restaurant */}
+        {}
         {!restaurant && (
           <Card className="bg-amber-500/10 border-amber-500/30 mb-8">
             <CardContent className="p-6">
@@ -73,7 +70,7 @@ export default async function DashboardPage() {
                 <div>
                   <h3 className="text-lg font-semibold mb-2 text-amber-500">Aucun restaurant associé</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Votre compte n&apos;est pas encore rattaché à un restaurant. 
+                    Votre compte n&apos;est pas encore rattaché à un restaurant.
                     Contactez l&apos;administrateur pour qu&apos;il vous associe à votre établissement.
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -85,7 +82,7 @@ export default async function DashboardPage() {
           </Card>
         )}
 
-        {/* Dashboard Content with KPIs, Graph, and Orders - seulement si restaurant */}
+        {}
         {restaurant && <DashboardContent orders={orders} callStats={callStats} />}
     </div>
   );

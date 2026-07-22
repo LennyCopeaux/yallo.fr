@@ -10,9 +10,7 @@ export default function MarketingLayout({
 }>) {
   const pathname = usePathname();
   const isHomePage = pathname === "/";
-  
-  // Sur la page d'accueil, pas de padding-top car le hero prend toute la hauteur
-  // Sur les autres pages, ajouter un padding-top pour compenser le navbar fixe
+
   const mainPaddingTop = isHomePage ? "" : "pt-24 sm:pt-28";
 
   return (

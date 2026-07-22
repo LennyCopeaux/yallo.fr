@@ -7,13 +7,10 @@ type Restaurant = typeof restaurants.$inferSelect;
 
 const VAPI_API_URL = "https://api.vapi.ai";
 
-/** Modèle LLM utilisé par l'assistant VAPI. */
 const DEFAULT_LLM_MODEL = "gpt-4o-mini";
 
-/** Température LLM. */
 const DEFAULT_LLM_TEMPERATURE = 0.4;
 
-/** Voix ElevenLabs (via VAPI) par défaut. Surcharge via VAPI_VOICE_ID. */
 const DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
 
 function getApiKey(): string {
@@ -51,7 +48,6 @@ function getWebhookUrl(restaurantId: string): string | undefined {
   return undefined;
 }
 
-/** VAPI limite le nom de l'assistant/numéro à 40 caractères. */
 function buildVapiName(label: string): string {
   const full = `Yallo - ${label}`.trim();
   return full.length <= 40 ? full : full.slice(0, 40).trim();
@@ -62,10 +58,6 @@ function getWebhookSecret(): string | undefined {
   return s && s.length > 0 ? s : undefined;
 }
 
-/**
- * Construit le tool VAPI de type "function" pour la soumission de commandes.
- * https://docs.vapi.ai/tools/custom-tools
- */
 function buildSubmitOrderTool(webhookUrl?: string) {
   const secret = getWebhookSecret();
 
@@ -140,10 +132,6 @@ function buildSubmitOrderTool(webhookUrl?: string) {
   };
 }
 
-/**
- * Construit le tool VAPI natif de transfert d'appel.
- * https://docs.vapi.ai/tools/transfer-call
- */
 function buildTransferCallTool(phoneNumber: string) {
   return {
     type: "transferCall",
@@ -160,9 +148,6 @@ function buildTransferCallTool(phoneNumber: string) {
   };
 }
 
-/**
- * Construit le plan d'analyse structurée post-appel (remplace ElevenLabs data collection).
- */
 function buildAnalysisPlan() {
   return {
     structuredDataPlan: {
@@ -268,7 +253,7 @@ function buildAssistantConfig(restaurant: Restaurant, systemPrompt: string) {
     },
     firstMessage: restaurant.welcomeMessage ?? `Bonjour ici ${restaurant.name}, je vous écoute`,
     analysisPlan: buildAnalysisPlan(),
-    // Server URL au niveau assistant pour recevoir end-of-call-report (stats d'appels)
+
     ...(webhookUrl
       ? {
           server: {
@@ -280,10 +265,6 @@ function buildAssistantConfig(restaurant: Restaurant, systemPrompt: string) {
   };
 }
 
-/**
- * Génère la config complète de l'assistant avec le prompt à jour (incluant l'heure actuelle).
- * Utilisé pour répondre aux messages `assistant-request` de VAPI (appel en temps réel).
- */
 export async function buildAssistantPayloadForCall(restaurant: Restaurant) {
   const systemPrompt = await generateSystemPrompt(restaurant, { includeCurrentTime: true });
   return buildAssistantConfig(restaurant, systemPrompt);
@@ -360,10 +341,6 @@ export async function deleteVapiAssistant(assistantId: string): Promise<void> {
   }
 }
 
-/**
- * Importe un numéro Twilio dans VAPI et l'associe à un assistant.
- * https://docs.vapi.ai/api-reference/phone-numbers/create
- */
 export async function importTwilioPhoneNumber(
   phoneNumber: string,
   restaurantId: string
@@ -424,10 +401,6 @@ export async function importTwilioPhoneNumber(
   return { phone_number_id: data.id };
 }
 
-/**
- * Met à jour un numéro de téléphone VAPI existant pour utiliser un serverUrl dynamique
- * (assistant-request) plutôt qu'un assistantId statique.
- */
 export async function updateVapiPhoneNumberServer(
   phoneNumberId: string,
   restaurantId: string

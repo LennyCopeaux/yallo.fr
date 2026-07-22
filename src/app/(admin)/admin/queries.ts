@@ -138,7 +138,7 @@ export async function getOrganizationsWithRestaurants(searchParams: Organization
     const searchPattern = `%${sanitizedSearch}%`;
     conditions.push(sql`${organizations.name} ILIKE ${searchPattern}`);
   }
-  // Base org data + restaurant count
+
   const orgs = await db
     .select({
       id: organizations.id,
@@ -167,7 +167,6 @@ export async function getOrganizationsWithRestaurants(searchParams: Organization
     )
     .orderBy(sql`${organizations.createdAt} DESC`);
 
-  // Fetch members for each org
   const orgIds = orgs.map((o) => o.id);
   const allMembers = orgIds.length
     ? await db

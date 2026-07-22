@@ -13,7 +13,6 @@ function parseSampleRate(value: string | undefined, fallback: number): number {
   return Number.isNaN(parsed) ? fallback : parsed;
 }
 
-// Client Sentry only in production builds (staging/prod on Vercel).
 if (process.env.NODE_ENV === "production") {
   Sentry.init({
     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,

@@ -33,7 +33,7 @@ export function OrgWelcome({ user, organizations, restaurants }: Readonly<OrgWel
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-lg space-y-8">
-        {/* Header */}
+        {}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
             <Building2 className="w-7 h-7 text-primary" />
@@ -42,7 +42,7 @@ export function OrgWelcome({ user, organizations, restaurants }: Readonly<OrgWel
           <p className="text-muted-foreground">Sélectionnez votre organisation</p>
         </div>
 
-        {/* Org list */}
+        {}
         <div className="space-y-3">
           {organizations.map((org) => {
             const orgRestaurants = restaurants.filter((r) => r.organizationId === org.id);

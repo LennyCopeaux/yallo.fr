@@ -134,7 +134,7 @@ export function LoginForm() {
                 </button>
               </div>
             </div>
-            
+
               {error && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -144,7 +144,7 @@ export function LoginForm() {
                   {error}
                 </motion.div>
               )}
-              
+
               <Button
                 type="submit"
                 className="w-full h-11 bg-primary text-black hover:bg-primary/90 font-semibold"
@@ -160,7 +160,7 @@ export function LoginForm() {
                 )}
               </Button>
             </form>
-            
+
             <div className="mt-6 text-center">
               <MarketingHomeLink className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 ← Retour à l&apos;accueil

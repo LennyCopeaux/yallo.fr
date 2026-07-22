@@ -1,4 +1,4 @@
-// Animation variants pour motion/react
+
 
 export const fadeInUp = {
   initial: { opacity: 0, y: 40 },

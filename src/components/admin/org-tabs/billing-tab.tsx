@@ -54,7 +54,7 @@ export function OrgBillingTab({ org }: Readonly<OrgBillingTabProps>) {
 
   return (
     <div className="space-y-6">
-      {/* Status Stripe */}
+      {}
       <Card className="border-border bg-card/30">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export function OrgBillingTab({ org }: Readonly<OrgBillingTabProps>) {
         </CardContent>
       </Card>
 
-      {/* Champs éditables */}
+      {}
       <Card className="border-border bg-card/30">
         <CardHeader>
           <div className="flex items-center justify-between">

@@ -30,7 +30,7 @@ export default function DemoPage() {
       <ScrollToTop />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 w-full">
         <BackToHomeLink />
-        
+
         <DemoHeader>
           <Card className="mb-12 border-primary/30 bg-primary/5">
             <CardHeader className="text-center">
@@ -127,7 +127,7 @@ export default function DemoPage() {
             <CardContent className="py-4 px-4">
               <div className="flex items-center justify-center">
                 <p className="text-sm text-muted-foreground text-center leading-relaxed">
-                  <strong className="text-foreground">Astuce :</strong> Essayez de commander avec des modifications 
+                  <strong className="text-foreground">Astuce :</strong> Essayez de commander avec des modifications
                   ou des demandes spéciales. L&apos;IA comprend tout !
                 </p>
               </div>

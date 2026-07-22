@@ -69,7 +69,7 @@ export function UsageSection({ usage: initialUsage }: Readonly<UsageSectionProps
           </p>
         </div>
 
-        {/* Sélecteur de période */}
+        {}
         <div className="flex items-center gap-1.5 flex-wrap">
           {isPending && <RefreshCw className="w-3.5 h-3.5 text-muted-foreground animate-spin shrink-0" />}
           {DATE_RANGE_OPTIONS.map((opt) => (
@@ -90,7 +90,7 @@ export function UsageSection({ usage: initialUsage }: Readonly<UsageSectionProps
       </div>
 
       <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 transition-opacity ${isPending ? "opacity-50" : ""}`}>
-        {/* Minutes consommées */}
+        {}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -104,7 +104,7 @@ export function UsageSection({ usage: initialUsage }: Readonly<UsageSectionProps
           </CardContent>
         </Card>
 
-        {/* Coût estimé */}
+        {}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -124,7 +124,7 @@ export function UsageSection({ usage: initialUsage }: Readonly<UsageSectionProps
           </CardContent>
         </Card>
 
-        {/* Nombre d'appels */}
+        {}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -138,7 +138,7 @@ export function UsageSection({ usage: initialUsage }: Readonly<UsageSectionProps
           </CardContent>
         </Card>
 
-        {/* Durée moyenne par appel */}
+        {}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -154,7 +154,7 @@ export function UsageSection({ usage: initialUsage }: Readonly<UsageSectionProps
           </CardContent>
         </Card>
 
-        {/* Remise à zéro */}
+        {}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -188,10 +188,7 @@ export function UsageSection({ usage: initialUsage }: Readonly<UsageSectionProps
   );
 }
 
-
 interface UsageSectionProps {
   usage: CallUsage;
 }
-
-
 

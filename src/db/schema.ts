@@ -20,7 +20,6 @@ export const kitchenStatusEnum = ["CALM", "NORMAL", "RUSH", "STOP"] as const;
 export type KitchenStatus = (typeof kitchenStatusEnum)[number];
 export const kitchenStatusPgEnum = pgEnum("kitchen_status", kitchenStatusEnum);
 
-// Type pour la structure JSON du menu (compatible HubRise/Vapi)
 export type MenuSku = {
   ref: string;
   name: string;
@@ -60,7 +59,7 @@ export type MenuData = {
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
-  /** FK vers auth.users.id (Supabase Auth) */
+
   authUserId: text("auth_user_id").unique(),
   email: text("email").unique().notNull(),
   firstName: text("first_name"),
@@ -69,11 +68,6 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-/**
- * Une organisation regroupe un ou plusieurs restaurants sous un même contrat.
- * C'est à ce niveau que l'abonnement Stripe est attaché.
- * 1 utilisateur (OWNER) = 1 organisation.
- */
 export const organizations = pgTable("organizations", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
@@ -81,7 +75,6 @@ export const organizations = pgTable("organizations", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
 
-  // Abonnement Stripe attaché à l'organisation
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   stripeSubscriptionStatus: text("stripe_subscription_status"),
@@ -105,35 +98,33 @@ export const restaurants = pgTable("restaurants", {
   ownerId: uuid("owner_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  /** Organisation à laquelle appartient ce restaurant */
+
   organizationId: uuid("organization_id")
     .references(() => organizations.id, { onDelete: "set null" }),
-  
+
   status: restaurantStatusPgEnum("status").default("onboarding").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
-  
+
   plan: restaurantPlanPgEnum("plan").default("commission"),
   commissionRate: integer("commission_rate").default(5),
-  
+
   vapiAssistantId: text("vapi_assistant_id"),
   vapiPhoneNumberId: text("vapi_phone_number_id"),  systemPrompt: text("system_prompt"),
   menuContext: text("menu_context"),
-  
-  // Nouveau champ: stockage document-oriented du menu complet
+
   menuData: jsonb("menu_data").$type<MenuData>(),
-  
+
   twilioPhoneNumber: text("twilio_phone_number"),
-  
-  /** Numéro de téléphone du restaurateur vers lequel rediriger l'appel si demandé. */
+
   forwardingPhoneNumber: text("forwarding_phone_number"),
-  /** Si true, l'agent peut transférer l'appel vers forwardingPhoneNumber sur demande du client. */
+
   callForwardingEnabled: boolean("call_forwarding_enabled").default(false).notNull(),
-  
+
   businessHours: text("business_hours"),
-  
+
   hubriseLocationId: text("hubrise_location_id"),
   hubriseAccessToken: text("hubrise_access_token"),
-  
+
   currentStatus: kitchenStatusPgEnum("current_status").default("CALM").notNull(),
   statusSettings: jsonb("status_settings").$type<{
     CALM?: { fixed: number } | { min: number; max: number };
@@ -142,17 +133,16 @@ export const restaurants = pgTable("restaurants", {
     STOP?: { message?: string };
   }>(),
 
-  /** ID de voix (ElevenLabs via VAPI) choisi par le restaurateur (null = voix par défaut). */
   voiceId: text("voice_id"),
-  /** Si true, l'agent propose des upsells automatiques en fin de commande. */
+
   upsellEnabled: boolean("upsell_enabled").default(false).notNull(),
-  /** Si true, un SMS de confirmation est envoyé au client après commande. */
+
   smsConfirmationEnabled: boolean("sms_confirmation_enabled").default(false).notNull(),
-  /** Seuil de commandes en attente pour basculer automatiquement en mode RUSH (null = désactivé). */
+
   autoRushThreshold: integer("auto_rush_threshold"),
-  /** Texte personnalisé que l'IA dit en tout début d'appel (null = formule par défaut). */
+
   welcomeMessage: text("welcome_message"),
-  
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -298,10 +288,6 @@ export type CallProvider = (typeof callProviderEnum)[number];
 export const callStatusEnum = ["completed", "failed", "no-answer"] as const;
 export type CallStatus = (typeof callStatusEnum)[number];
 
-/**
- * Enregistrement d'un appel IA.
- * Alimenté par les webhooks VAPI (end-of-call-report) et ElevenLabs (conversation_end).
- */
 export const callLogs = pgTable("call_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
   restaurantId: uuid("restaurant_id")
@@ -310,7 +296,7 @@ export const callLogs = pgTable("call_logs", {
   organizationId: uuid("organization_id")
     .notNull()
     .references(() => organizations.id, { onDelete: "cascade" }),
-  /** ID de l'appel côté provider (VAPI call ID ou ElevenLabs conversation ID) */
+
   externalCallId: text("external_call_id").notNull(),
   provider: text("provider", { enum: callProviderEnum }).notNull(),
   durationSeconds: integer("duration_seconds").notNull(),

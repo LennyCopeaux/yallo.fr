@@ -288,7 +288,7 @@ export function PricingSection() {
             ))}
           </CarouselContent>
         </Carousel>
-        
+
         <div className="flex justify-center gap-2 mt-6">
           {PLANS.map((plan, index) => (
             <button

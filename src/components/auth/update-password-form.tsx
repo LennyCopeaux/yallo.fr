@@ -205,7 +205,7 @@ function UpdatePasswordFormContent() {
                 </button>
               </div>
             </div>
-            
+
               {error && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -215,7 +215,7 @@ function UpdatePasswordFormContent() {
                   {error}
                 </motion.div>
               )}
-              
+
               <Button
                 type="submit"
                 className="w-full h-11 bg-primary text-black hover:bg-primary/90 font-semibold"
@@ -231,7 +231,7 @@ function UpdatePasswordFormContent() {
                 )}
               </Button>
             </form>
-            
+
             {user && (
               <div className="mt-6 text-center">
                 <p className="text-xs text-muted-foreground">

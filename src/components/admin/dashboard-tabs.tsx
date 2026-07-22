@@ -73,22 +73,22 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, organiz
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
       <TabsList className="bg-card/30 border border-border p-1 w-full sm:w-auto">
-        <TabsTrigger 
-          value="organizations" 
+        <TabsTrigger
+          value="organizations"
           className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
         >
           <Building2 className="w-4 h-4" />
           Organisations
         </TabsTrigger>
-        <TabsTrigger 
-          value="restaurants" 
+        <TabsTrigger
+          value="restaurants"
           className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
         >
           <UtensilsCrossed className="w-4 h-4" />
           Restaurants
         </TabsTrigger>
-        <TabsTrigger 
-          value="users" 
+        <TabsTrigger
+          value="users"
           className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
         >
           <Users className="w-4 h-4" />

@@ -16,17 +16,17 @@ export type DateRangeFilter =
 
 export type CallUsage = {
   minutesUsed: number;
-  /** Nombre d'appels dans la période */
+
   callCount: number;
-  /** Coût estimé en centimes (minutes × tarif/min selon plan) */
+
   estimatedCostCents: number;
-  /** Tarif au centime par minute selon le plan actif */
+
   callRateCentsPerMinute: number;
-  /** Date de début de la période de facturation en cours */
+
   periodStart: Date;
-  /** Date de fin de la période (remise à zéro) */
+
   periodEnd: Date | null;
-  /** Filtre appliqué */
+
   rangeFilter: DateRangeFilter;
 };
 
@@ -66,9 +66,6 @@ function resolveDateRange(
   }
 }
 
-/**
- * Calcule la consommation d'appels IA pour la période sélectionnée.
- */
 export async function getCallUsageForCurrentPeriod(
   rangeFilter: DateRangeFilter = "billing_period"
 ): Promise<
@@ -79,7 +76,6 @@ export async function getCallUsageForCurrentPeriod(
     return { success: false, error: "Aucune organisation trouvée." };
   }
 
-  // Période de facturation par défaut
   const now = new Date();
   let billingPeriodStart: Date;
 
@@ -115,7 +111,6 @@ export async function getCallUsageForCurrentPeriod(
   const callCount = result?.callCount ?? 0;
   const minutesUsed = totalSeconds > 0 ? Math.ceil(totalSeconds / 60) : 0;
 
-  // Trouver le tarif du plan actif via stripePriceId (contient le planId ou le priceId Stripe)
   const activePlan =
     SUBSCRIPTION_PLANS.find((p) => p.id === org.stripePriceId) ?? SUBSCRIPTION_PLANS[0];
   const callRateCentsPerMinute = activePlan.callRateCentsPerMinute;

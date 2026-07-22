@@ -6,9 +6,9 @@ export const SUBSCRIPTION_PLANS = [
     monthlyPrice: 49,
     amountCents: 4900,
     callRate: "0,19€ / minute d'appel",
-    /** Tarif en centimes d'euro par minute d'appel IA */
+
     callRateCentsPerMinute: 19,
-    /** Nombre maximum de restaurants dans l'organisation (null = illimité) */
+
     maxRestaurants: 1,
     popular: false,
     popularLabel: "Populaire",
@@ -61,7 +61,7 @@ export const SUBSCRIPTION_PLANS = [
     amountCents: 19900,
     callRate: "0,15€ / minute d'appel",
     callRateCentsPerMinute: 15,
-    /** null = illimité */
+
     maxRestaurants: null,
     popular: false,
     popularLabel: "Populaire",

@@ -4,7 +4,7 @@ import { HubriseError, fetchHubriseCatalog } from "@/lib/services/hubrise";
 describe("HubriseError", () => {
   it("devrait créer une erreur avec message seulement", () => {
     const error = new HubriseError("Test error");
-    
+
     expect(error.message).toBe("Test error");
     expect(error.name).toBe("HubriseError");
     expect(error.statusCode).toBeUndefined();
@@ -13,7 +13,7 @@ describe("HubriseError", () => {
 
   it("devrait créer une erreur avec statusCode", () => {
     const error = new HubriseError("Token invalide", 401);
-    
+
     expect(error.message).toBe("Token invalide");
     expect(error.statusCode).toBe(401);
   });
@@ -21,13 +21,13 @@ describe("HubriseError", () => {
   it("devrait créer une erreur avec response", () => {
     const responseData = { error: "unauthorized" };
     const error = new HubriseError("Token invalide", 401, responseData);
-    
+
     expect(error.response).toEqual(responseData);
   });
 
   it("devrait être une instance de Error", () => {
     const error = new HubriseError("Test");
-    
+
     expect(error instanceof Error).toBe(true);
     expect(error instanceof HubriseError).toBe(true);
   });
@@ -93,11 +93,10 @@ describe("fetchHubriseCatalog", () => {
       });
 
     const result = await fetchHubriseCatalog("valid-token", "location-123");
-    
+
     expect(result).toBe(JSON.stringify(catalogData, null, 2));
     expect(mockFetch).toHaveBeenCalledTimes(2);
-    
-    // Vérifier le premier appel (liste des catalogues)
+
     expect(mockFetch).toHaveBeenNthCalledWith(
       1,
       "https://api.hubrise.com/v1/location/catalogs",
@@ -109,8 +108,7 @@ describe("fetchHubriseCatalog", () => {
         },
       })
     );
-    
-    // Vérifier le deuxième appel (catalogue spécifique)
+
     expect(mockFetch).toHaveBeenNthCalledWith(
       2,
       "https://api.hubrise.com/v1/catalogs/catalog-123",

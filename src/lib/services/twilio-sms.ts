@@ -1,10 +1,6 @@
 import { logger } from "@/lib/logger";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
 
-/**
- * Envoie un SMS via l’API Twilio (auth API Key + Secret).
- * @see https://www.twilio.com/docs/sms/api/message-resource
- */
 export async function sendTwilioSms(sms: Readonly<{ toE164: string; fromE164: string; body: string }>): Promise<void> {
   const accountSid = process.env.TWILIO_ACCOUNT_SID?.trim();
   const apiKey = process.env.TWILIO_API_KEY?.trim();
@@ -37,9 +33,6 @@ export async function sendTwilioSms(sms: Readonly<{ toE164: string; fromE164: st
   }
 }
 
-/**
- * Construit le texte du récap SMS.
- */
 export function buildOrderConfirmationSmsBody(params: Readonly<{
   restaurantName: string;
   orderNumber: string;
@@ -73,9 +66,6 @@ export function buildOrderConfirmationSmsBody(params: Readonly<{
   return parts.join("\n");
 }
 
-/**
- * Tente d’envoyer le SMS de confirmation ; échec silencieux côté client (log seulement).
- */
 export async function trySendOrderConfirmationSms(options: Readonly<{
   toRaw: string | undefined | null;
   fromRaw: string | undefined | null;

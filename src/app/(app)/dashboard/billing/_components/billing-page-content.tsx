@@ -100,7 +100,7 @@ export function BillingPageContent({ restaurant, restaurantCount, plans, orgId }
 
   return (
     <div className="space-y-8">
-      {/* Sélection de plan */}
+      {}
       <div>
         <h2 className="text-xl font-semibold mb-4">
           {isActive ? "Votre abonnement" : "Choisissez votre plan"}

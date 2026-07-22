@@ -1,5 +1,4 @@
 export async function register() {
-  // Skip Sentry entirely in local/dev — avoids OpenTelemetry webpack spam + slow compiles.
   if (process.env.NODE_ENV !== "production") {
     return;
   }

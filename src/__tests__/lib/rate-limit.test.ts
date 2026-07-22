@@ -21,29 +21,26 @@ describe("Rate Limiting", () => {
 
     it("should block requests exceeding limit", () => {
       const identifier = "test-user-2";
-      // Make 5 requests (limit)
+
       for (let i = 0; i < 5; i++) {
         expect(rateLimit(identifier, 5, 60000)).toBe(true);
       }
-      // 6th request should be blocked
+
       expect(rateLimit(identifier, 5, 60000)).toBe(false);
     });
 
     it("should reset after window expires", async () => {
       const identifier = "test-user-3";
-      // Use a very short window for testing
-      const shortWindow = 50; // 50ms
 
-      // Exhaust the limit
+      const shortWindow = 50;
+
       for (let i = 0; i < 3; i++) {
         rateLimit(identifier, 3, shortWindow);
       }
       expect(rateLimit(identifier, 3, shortWindow)).toBe(false);
 
-      // Wait for window to expire
       await new Promise((resolve) => setTimeout(resolve, 60));
 
-      // Should be allowed again
       expect(rateLimit(identifier, 3, shortWindow)).toBe(true);
     });
 
@@ -51,19 +48,17 @@ describe("Rate Limiting", () => {
       const identifier1 = "user-a";
       const identifier2 = "user-b";
 
-      // Exhaust limit for user-a
       for (let i = 0; i < 2; i++) {
         rateLimit(identifier1, 2, 60000);
       }
       expect(rateLimit(identifier1, 2, 60000)).toBe(false);
 
-      // user-b should still be allowed
       expect(rateLimit(identifier2, 2, 60000)).toBe(true);
     });
 
     it("should use default values when not specified", () => {
       const identifier = "test-default";
-      // Default is 10 requests per minute
+
       for (let i = 0; i < 10; i++) {
         expect(rateLimit(identifier)).toBe(true);
       }

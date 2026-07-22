@@ -7,7 +7,7 @@ export function FooterSection() {
     e.preventDefault();
     const hostname = globalThis.window?.location?.hostname ?? "";
     const port = globalThis.window?.location?.port ?? "3000";
-    
+
     let appUrl: string;
     if (hostname.includes("localhost")) {
       appUrl = `http://app.localhost:${port}/login`;
@@ -16,13 +16,13 @@ export function FooterSection() {
     } else {
       appUrl = "https://app.yallo.fr/login";
     }
-    
+
     globalThis.window.location.href = appUrl;
   };
 
   return (
     <footer className="relative overflow-hidden">
-      {/* Links Grid */}
+      {}
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-border">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
@@ -79,7 +79,7 @@ export function FooterSection() {
             <h4 className="font-semibold text-foreground mb-4">Ressources</h4>
             <ul className="space-y-3">
               <li>
-                <button 
+                <button
                   type="button"
                   onClick={handleLoginClick}
                   className="text-muted-foreground hover:text-primary transition-colors text-sm cursor-pointer"
@@ -97,7 +97,7 @@ export function FooterSection() {
         </div>
       </div>
 
-      {/* Bottom bar */}
+      {}
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-6 border-t border-border">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
@@ -109,9 +109,9 @@ export function FooterSection() {
         </div>
       </div>
 
-      {/* Giant YALLO text - behind all content */}
+      {}
       <div className="hidden md:block absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none select-none z-0">
-        <div 
+        <div
           className="text-[12rem] sm:text-[18rem] md:text-[24rem] font-black leading-none tracking-tighter whitespace-nowrap"
           style={{ color: 'var(--pattern)', opacity: 'var(--yallo-watermark-opacity)' }}
         >

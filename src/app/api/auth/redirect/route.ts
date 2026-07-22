@@ -32,7 +32,6 @@ export async function GET() {
       return NextResponse.redirect(buildAppUrl("/login", host), 307);
     }
 
-    // Check if the user needs to change their temporary password
     const { createClient } = await import("@/lib/supabase/server");
     const supabase = await createClient();
     const {

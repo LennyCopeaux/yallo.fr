@@ -45,7 +45,7 @@ describe("Orders Actions", () => {
         restaurantId: "restaurant-123",
         customerName: "John Doe",
         items: [],
-        total: 2500, // in cents
+        total: 2500,
         createdAt: new Date(),
       };
 
