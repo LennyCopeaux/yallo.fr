@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, integer, pgEnum, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, boolean, integer, pgEnum, jsonb, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import type { InferSelectModel } from "drizzle-orm";
 
@@ -86,7 +86,9 @@ export const organizations = pgTable("organizations", {
 
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("organizations_owner_id_idx").on(table.ownerId),
+]);
 
 export type SelectOrganization = InferSelectModel<typeof organizations>;
 
@@ -145,7 +147,10 @@ export const restaurants = pgTable("restaurants", {
 
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("restaurants_organization_id_idx").on(table.organizationId),
+  index("restaurants_owner_id_idx").on(table.ownerId),
+]);
 
 export const usersRelations = relations(users, ({ many }) => ({
   organizationMemberships: many(organizationMembers),
@@ -162,7 +167,10 @@ export const organizationMembers = pgTable("organization_members", {
     .references(() => users.id, { onDelete: "cascade" }),
   role: text("role", { enum: ["owner", "member"] }).default("owner").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("organization_members_user_id_idx").on(table.userId),
+  index("organization_members_organization_id_idx").on(table.organizationId),
+]);
 
 export const restaurantMembers = pgTable("restaurant_members", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -174,7 +182,10 @@ export const restaurantMembers = pgTable("restaurant_members", {
     .references(() => users.id, { onDelete: "cascade" }),
   role: text("role", { enum: ["owner", "member"] }).default("owner").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("restaurant_members_user_id_idx").on(table.userId),
+  index("restaurant_members_restaurant_id_idx").on(table.restaurantId),
+]);
 
 export const organizationMembersRelations = relations(organizationMembers, ({ one }) => ({
   organization: one(organizations, {
@@ -234,7 +245,10 @@ export const orders = pgTable("orders", {
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Couvre le filtre par restaurant ET le tri par date du dashboard.
+  index("orders_restaurant_id_created_at_idx").on(table.restaurantId, table.createdAt.desc()),
+]);
 
 export const orderItems = pgTable("order_items", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -247,7 +261,10 @@ export const orderItems = pgTable("order_items", {
   totalPrice: integer("total_price").notNull(),
   options: text("options"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  // Drizzle charge les articles via `where order_id in (...)` pour `with: { items: true }`.
+  index("order_items_order_id_idx").on(table.orderId),
+]);
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({
   restaurant: one(restaurants, {
@@ -304,7 +321,12 @@ export const callLogs = pgTable("call_logs", {
   endedAt: timestamp("ended_at"),
   status: text("status", { enum: callStatusEnum }).default("completed").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  // Stats d'appels par restaurant sur une plage de dates.
+  index("call_logs_restaurant_id_created_at_idx").on(table.restaurantId, table.createdAt),
+  // Consommation facturable par organisation sur la periode de facturation.
+  index("call_logs_organization_id_created_at_idx").on(table.organizationId, table.createdAt),
+]);
 
 export const callLogsRelations = relations(callLogs, ({ one }) => ({
   restaurant: one(restaurants, {

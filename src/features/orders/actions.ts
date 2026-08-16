@@ -18,6 +18,13 @@ export async function getUserRestaurant() {
   return getAccessibleRestaurant();
 }
 
+/**
+ * Le dashboard n'affiche que les commandes en cours et, au plus, 6 commandes
+ * terminees. Charger tout l'historique (avec tous les articles) a chaque rendu
+ * et a chaque rafraichissement automatique serait inutilement couteux.
+ */
+const DASHBOARD_ORDERS_LIMIT = 100;
+
 export async function getOrders() {
   const ownerRestaurant = await getAccessibleRestaurant();
   if (!ownerRestaurant) return [];
@@ -25,6 +32,7 @@ export async function getOrders() {
   return db.query.orders.findMany({
     where: eq(orders.restaurantId, ownerRestaurant.id),
     orderBy: [desc(orders.createdAt)],
+    limit: DASHBOARD_ORDERS_LIMIT,
     with: { items: true },
   });
 }
