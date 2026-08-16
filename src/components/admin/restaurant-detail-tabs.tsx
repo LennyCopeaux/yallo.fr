@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Bot, Phone, Link2, BarChart2 } from "lucide-react";
 import { GeneralTab } from "@/components/admin/restaurant-tabs/general-tab";
@@ -56,8 +56,6 @@ interface RestaurantDetailTabsProps {
 
 export function RestaurantDetailTabs({ restaurant, owners, organizations = [], restaurantMembers = [] }: Readonly<RestaurantDetailTabsProps>) {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const [, startTransition] = useTransition();
   const urlTab = searchParams.get("tab") || "general";
   const [activeTab, setActiveTab] = useState(urlTab);
 
@@ -67,11 +65,9 @@ export function RestaurantDetailTabs({ restaurant, owners, organizations = [], r
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("tab", value);
-      router.push(`?${params.toString()}`, { scroll: false });
-    });
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", value);
+    window.history.pushState(null, "", `?${params.toString()}`);
   };
 
   return (

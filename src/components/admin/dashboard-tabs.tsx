@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UtensilsCrossed, Users, Building2 } from "lucide-react";
 import { RestaurantsDataTable } from "@/components/admin/restaurants-data-table";
@@ -54,8 +54,6 @@ interface DashboardTabsProps {
 
 export function DashboardTabs({ restaurants, users, owners, totalOrders, organizations, defaultTab = "organizations" }: Readonly<DashboardTabsProps>) {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const [, startTransition] = useTransition();
   const urlTab = searchParams.get("tab") || defaultTab;
   const [activeTab, setActiveTab] = useState(urlTab);
 
@@ -65,9 +63,8 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, organiz
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    startTransition(() => {
-      router.replace(`/admin?tab=${value}`);
-    });
+    // window.history évite de déclencher un rechargement du Server Component parent
+    window.history.replaceState(null, "", `/admin?tab=${value}`);
   };
 
   return (

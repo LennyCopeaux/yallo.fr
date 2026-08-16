@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { db } from "@/db";
@@ -8,15 +9,23 @@ export const RESTAURANT_COOKIE = "yallo_restaurant_id";
 
 export type AppUser = typeof users.$inferSelect;
 
-export async function getAuthUser() {
+/**
+ * Memoized per-request: un seul appel HTTP à Supabase Auth par render,
+ * même si getAuthUser() est appelée depuis plusieurs Server Components ou actions.
+ */
+export const getAuthUser = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   return user;
-}
+});
 
-export async function getAppUser(): Promise<AppUser | null> {
+/**
+ * Memoized per-request: une seule requête DB par render pour récupérer
+ * l'utilisateur applicatif, peu importe le nombre d'appelants.
+ */
+export const getAppUser = cache(async (): Promise<AppUser | null> => {
   const authUser = await getAuthUser();
   if (!authUser) return null;
 
@@ -27,7 +36,7 @@ export async function getAppUser(): Promise<AppUser | null> {
     .limit(1);
 
   return appUser ?? null;
-}
+});
 
 export async function requireAuth(): Promise<AppUser> {
   const user = await getAppUser();
@@ -100,7 +109,11 @@ async function getAccessibleRestaurantIds(userId: string, role: string): Promise
   return orgRestaurants.map((r) => r.id);
 }
 
-export async function getAccessibleRestaurant(): Promise<SelectRestaurant | null> {
+/**
+ * Memoized per-request: évite de refaire les 2 requêtes DB d'accès restaurant
+ * à chaque appel (getOrders, getRestaurantCallStats, etc. l'invoquent toutes).
+ */
+export const getAccessibleRestaurant = cache(async (): Promise<SelectRestaurant | null> => {
   const user = await getAppUser();
   if (!user?.id) return null;
 
@@ -120,7 +133,7 @@ export async function getAccessibleRestaurant(): Promise<SelectRestaurant | null
     .limit(1);
 
   return restaurant ?? null;
-}
+});
 
 export async function getAccessibleRestaurantForUser(
   userId: string,
