@@ -77,8 +77,8 @@ export default async function RestaurantsPage({
             </div>
           </div>
         ) : (
-          <RestaurantsDataTable 
-            data={restaurantsList} 
+          <RestaurantsDataTable
+            data={restaurantsList}
           />
         )}
       </Suspense>

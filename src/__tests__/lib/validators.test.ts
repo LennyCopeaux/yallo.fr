@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { z } from "zod";
 
-// Schémas de validation utilisés dans l'application
 const userLoginSchema = z.object({
   email: z.string().email("Email invalide"),
   password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
@@ -34,7 +33,6 @@ const businessHoursSchema = z.object({
   }),
 });
 
-// Helper pour extraire le premier message d'erreur
 function getFirstErrorMessage(result: { success: boolean; error?: { issues?: Array<{ message?: string }>; errors?: Array<{ message?: string }> } }): string | undefined {
   if (result.success) return undefined;
   const issues = result.error?.issues || result.error?.errors || [];
@@ -45,14 +43,14 @@ describe("userLoginSchema", () => {
   it("devrait valider un email et mot de passe corrects", () => {
     const data = { email: "test@example.com", password: "password123" };
     const result = userLoginSchema.safeParse(data);
-    
+
     expect(result.success).toBe(true);
   });
 
   it("devrait rejeter un email invalide", () => {
     const data = { email: "invalid-email", password: "password123" };
     const result = userLoginSchema.safeParse(data);
-    
+
     expect(result.success).toBe(false);
     expect(getFirstErrorMessage(result)).toBeDefined();
   });
@@ -60,7 +58,7 @@ describe("userLoginSchema", () => {
   it("devrait rejeter un mot de passe trop court", () => {
     const data = { email: "test@example.com", password: "123" };
     const result = userLoginSchema.safeParse(data);
-    
+
     expect(result.success).toBe(false);
     expect(getFirstErrorMessage(result)).toBeDefined();
   });
@@ -68,7 +66,7 @@ describe("userLoginSchema", () => {
   it("devrait rejeter si email manquant", () => {
     const data = { password: "password123" };
     const result = userLoginSchema.safeParse(data);
-    
+
     expect(result.success).toBe(false);
   });
 });
@@ -81,7 +79,7 @@ describe("restaurantSchema", () => {
       address: "123 Rue de Paris",
     };
     const result = restaurantSchema.safeParse(data);
-    
+
     expect(result.success).toBe(true);
   });
 
@@ -91,7 +89,7 @@ describe("restaurantSchema", () => {
       phoneNumber: "0123456789",
     };
     const result = restaurantSchema.safeParse(data);
-    
+
     expect(result.success).toBe(true);
   });
 
@@ -101,7 +99,7 @@ describe("restaurantSchema", () => {
       phoneNumber: "0123456789",
     };
     const result = restaurantSchema.safeParse(data);
-    
+
     expect(result.success).toBe(false);
     expect(getFirstErrorMessage(result)).toBeDefined();
   });
@@ -112,7 +110,7 @@ describe("restaurantSchema", () => {
       phoneNumber: "abc",
     };
     const result = restaurantSchema.safeParse(data);
-    
+
     expect(result.success).toBe(false);
   });
 });
@@ -124,7 +122,7 @@ describe("hubriseConfigSchema", () => {
       hubriseAccessToken: "valid-access-token-123",
     };
     const result = hubriseConfigSchema.safeParse(data);
-    
+
     expect(result.success).toBe(true);
   });
 
@@ -134,7 +132,7 @@ describe("hubriseConfigSchema", () => {
       hubriseAccessToken: "valid-token",
     };
     const result = hubriseConfigSchema.safeParse(data);
-    
+
     expect(result.success).toBe(false);
     expect(getFirstErrorMessage(result)).toBeDefined();
   });
@@ -145,7 +143,7 @@ describe("hubriseConfigSchema", () => {
       hubriseAccessToken: "",
     };
     const result = hubriseConfigSchema.safeParse(data);
-    
+
     expect(result.success).toBe(false);
     expect(getFirstErrorMessage(result)).toBeDefined();
   });
@@ -159,7 +157,7 @@ describe("orderItemSchema", () => {
       unitPrice: 850,
     };
     const result = orderItemSchema.safeParse(data);
-    
+
     expect(result.success).toBe(true);
   });
 
@@ -170,7 +168,7 @@ describe("orderItemSchema", () => {
       unitPrice: 850,
     };
     const result = orderItemSchema.safeParse(data);
-    
+
     expect(result.success).toBe(false);
     expect(getFirstErrorMessage(result)).toBeDefined();
   });
@@ -182,7 +180,7 @@ describe("orderItemSchema", () => {
       unitPrice: 850,
     };
     const result = orderItemSchema.safeParse(data);
-    
+
     expect(result.success).toBe(false);
   });
 
@@ -193,7 +191,7 @@ describe("orderItemSchema", () => {
       unitPrice: -100,
     };
     const result = orderItemSchema.safeParse(data);
-    
+
     expect(result.success).toBe(false);
   });
 
@@ -204,7 +202,7 @@ describe("orderItemSchema", () => {
       unitPrice: 850,
     };
     const result = orderItemSchema.safeParse(data);
-    
+
     expect(result.success).toBe(false);
   });
 });
@@ -219,7 +217,7 @@ describe("businessHoursSchema", () => {
       },
     };
     const result = businessHoursSchema.safeParse(data);
-    
+
     expect(result.success).toBe(true);
   });
 
@@ -232,7 +230,7 @@ describe("businessHoursSchema", () => {
       },
     };
     const result = businessHoursSchema.safeParse(data);
-    
+
     expect(result.success).toBe(true);
   });
 
@@ -245,7 +243,7 @@ describe("businessHoursSchema", () => {
       },
     };
     const result = businessHoursSchema.safeParse(data);
-    
+
     expect(result.success).toBe(false);
     expect(getFirstErrorMessage(result)).toBeDefined();
   });
@@ -259,7 +257,7 @@ describe("businessHoursSchema", () => {
       },
     };
     const result = businessHoursSchema.safeParse(data);
-    
+
     expect(result.success).toBe(false);
   });
 });

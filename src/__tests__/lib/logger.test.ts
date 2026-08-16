@@ -97,7 +97,7 @@ describe("Logger", () => {
     it("should include ISO timestamp in logs", () => {
       logger.info("Test");
       const call = vi.mocked(console.log).mock.calls[0][0];
-      // Check for ISO date format pattern
+
       expect(call).toMatch(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
     });
   });

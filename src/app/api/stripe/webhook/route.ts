@@ -29,10 +29,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true, ignored: true }, { status: 200 });
     }
 
-    // Résolution de l'organisation cible
-    // Priorité 1 : trouver l'org par stripeCustomerId (la plus fiable)
-    // Priorité 2 : organizationId en metadata (nouveaux checkouts)
-    // Priorité 3 : restaurantId en metadata (anciens checkouts — rétrocompat)
     let targetOrgId: string | null = null;
 
     const [orgByCustomer] = await db
@@ -46,7 +42,7 @@ export async function POST(request: Request) {
     } else if (syncPayload.organizationId) {
       targetOrgId = syncPayload.organizationId;
     } else if (syncPayload.restaurantId) {
-      // Rétrocompat : chercher l'org rattachée au restaurant
+
       const [restaurantWithOrg] = await db
         .select({ organizationId: restaurants.organizationId })
         .from(restaurants)
@@ -67,7 +63,6 @@ export async function POST(request: Request) {
     const isActive = isRestaurantActiveFromStripeStatus(syncPayload.subscriptionStatus);
     const startDateStr = syncPayload.startDate?.toISOString().split("T")[0] ?? new Date().toISOString().split("T")[0];
 
-    // Mettre à jour l'organisation
     await db
       .update(organizations)
       .set({
@@ -84,7 +79,6 @@ export async function POST(request: Request) {
       })
       .where(eq(organizations.id, targetOrgId));
 
-    // Propager isActive + status sur tous les restaurants de l'organisation
     await db
       .update(restaurants)
       .set({

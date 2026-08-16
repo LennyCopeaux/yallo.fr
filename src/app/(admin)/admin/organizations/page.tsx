@@ -35,7 +35,7 @@ export default async function OrganizationsPage({
         <AddOrganizationDialog owners={owners} />
       </div>
 
-      {/* KPIs */}
+      {}
       <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
         <div className="p-4 rounded-xl border border-border bg-card/30">
           <p className="text-2xl font-bold">{organizations.length}</p>

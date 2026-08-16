@@ -29,7 +29,7 @@ describe("Admin Actions Utils", () => {
     it("should only contain allowed characters", () => {
       const allowedChars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
       const password = generateTempPassword();
-      
+
       for (const char of password) {
         expect(allowedChars.includes(char)).toBe(true);
       }
@@ -51,7 +51,7 @@ describe("Admin Actions Utils", () => {
     it("should only contain allowed characters", () => {
       const allowedChars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
       const token = generateResetToken();
-      
+
       for (const char of token) {
         expect(allowedChars.includes(char)).toBe(true);
       }

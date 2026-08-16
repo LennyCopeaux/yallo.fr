@@ -81,7 +81,7 @@ const mockOrgWithRestaurants = {
 describe("getUserOrganization", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Restore chain behaviors after clearAllMocks
+
     mockUserChain.from.mockReturnThis();
     mockUserChain.innerJoin.mockReturnThis();
     mockUserChain.where.mockReturnThis();

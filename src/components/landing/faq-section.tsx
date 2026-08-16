@@ -63,7 +63,7 @@ export function FaqSection() {
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
               Tout ce que vous devez savoir sur Yallo et comment nous pouvons transformer votre prise de commande.
             </p>
-            
+
             <div className="p-5 rounded-2xl bg-card/30 border border-border noise">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -72,8 +72,8 @@ export function FaqSection() {
                 <div>
                   <h4 className="font-semibold text-foreground mb-1">Une autre question ?</h4>
                   <p className="text-sm text-muted-foreground mb-3">Notre équipe vous répond sous 24h.</p>
-                  <a 
-                    href="mailto:support@yallo.com" 
+                  <a
+                    href="mailto:support@yallo.com"
                     className="text-primary hover:text-primary/80 font-medium text-sm transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     support@yallo.com

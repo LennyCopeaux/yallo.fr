@@ -18,7 +18,7 @@ export function DotPattern({
   withVignette = true,
   patternId,
 }: Readonly<DotPatternProps>) {
-  // Keep a deterministic fallback, but allow explicit IDs for hydration-sensitive views.
+
   const generatedPatternId = useId();
   const resolvedPatternId = patternId ?? generatedPatternId;
 
@@ -37,20 +37,20 @@ export function DotPattern({
             height={spacing}
             patternUnits="userSpaceOnUse"
           >
-            <circle 
-              cx={spacing / 2} 
-              cy={spacing / 2} 
-              r={dotSize} 
+            <circle
+              cx={spacing / 2}
+              cy={spacing / 2}
+              r={dotSize}
               style={{ fill: 'var(--pattern)', fillOpacity: 'var(--dot-opacity)' }}
             />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill={`url(#${resolvedPatternId})`} />
       </svg>
-      
-      {/* Vignette effect - radial gradient that fades dots at edges */}
+
+      {}
       {withVignette && (
-        <div 
+        <div
           className="absolute inset-0"
           style={{
             background: `radial-gradient(ellipse at center, transparent 0%, transparent 50%, hsl(var(--background)) 90%, hsl(var(--background)) 100%)`
@@ -61,7 +61,6 @@ export function DotPattern({
   );
 }
 
-// Preset variations - More visible dots (adaptive via CSS classes)
 export function DotPatternHero({
   className,
   patternId,

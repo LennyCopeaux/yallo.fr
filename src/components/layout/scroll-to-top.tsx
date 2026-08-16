@@ -11,7 +11,7 @@ export function ScrollToTop() {
         document.documentElement.style.scrollBehavior = "";
       }, 0);
     };
-    
+
     scrollToTop();
   }, []);
 

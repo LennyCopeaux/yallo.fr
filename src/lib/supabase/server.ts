@@ -18,8 +18,7 @@ export async function createClient() {
               cookieStore.set(name, value, options);
             }
           } catch {
-            // setAll is called from Server Component where cookies can't be set.
-            // This can safely be ignored when the middleware refreshes the session.
+
           }
         },
       },
@@ -27,10 +26,6 @@ export async function createClient() {
   );
 }
 
-/**
- * Admin client using the service role key — bypasses RLS.
- * Only use in server actions / route handlers, never expose to the client.
- */
 export async function createAdminClient() {
   const cookieStore = await cookies();
 
@@ -48,7 +43,7 @@ export async function createAdminClient() {
               cookieStore.set(name, value, options);
             }
           } catch {
-            // ignored in read-only contexts
+
           }
         },
       },

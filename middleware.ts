@@ -95,7 +95,6 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(buildAppUrl("/org", host), 307);
     }
 
-    // EMPLOYEE users cannot access /org routes
     if (isOrgRoute && isLoggedIn && userRole === "EMPLOYEE") {
       return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
     }

@@ -16,7 +16,7 @@ export async function sendWelcomeEmail(
 ): Promise<void> {
   try {
     const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://app.localhost:3000"}/login`;
-    
+
     const html = await render(
       <WelcomeEmail
         email={email}
@@ -66,7 +66,7 @@ export async function sendResetPasswordEmail(
 ): Promise<void> {
   try {
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://app.localhost:3000"}/update-password?token=${resetToken}`;
-    
+
     const html = await render(
       <ResetPasswordEmail
         email={email}

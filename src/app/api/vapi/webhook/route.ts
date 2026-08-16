@@ -14,9 +14,9 @@ export const runtime = "nodejs";
 
 interface ToolCall {
   id: string;
-  /** Format direct (ancien VAPI) */
+
   name?: string;
-  /** Format OpenAI-compatible (VAPI actuel) */
+
   function?: {
     name: string;
     arguments: string | Record<string, unknown>;
@@ -24,17 +24,15 @@ interface ToolCall {
   arguments?: Record<string, unknown>;
 }
 
-/**
- * Format VAPI pour les tool calls (envoyé sur server URL configurée dans l'assistant).
- * https://docs.vapi.ai/tools/custom-tools
- */
 interface VapiWebhookBody {
   message?: {
     type: string;
-    /** Présent pour type=tool-calls */
+
     toolCallList?: ToolCall[];
-    /** Présent pour type=end-of-call-report */
+
     durationSeconds?: number;
+
+    durationMs?: number;
     endedReason?: string;
     call?: {
       id?: string;
@@ -45,6 +43,23 @@ interface VapiWebhookBody {
       };
     };
   };
+}
+
+function resolveCallDurationSeconds(
+  message: NonNullable<VapiWebhookBody["message"]>
+): number | null {
+  if (typeof message.durationSeconds === "number" && message.durationSeconds >= 0) {
+    return message.durationSeconds;
+  }
+  if (typeof message.durationMs === "number" && message.durationMs >= 0) {
+    return message.durationMs / 1000;
+  }
+  const startedAt = message.call?.startedAt ? Date.parse(message.call.startedAt) : NaN;
+  const endedAt = message.call?.endedAt ? Date.parse(message.call.endedAt) : NaN;
+  if (Number.isFinite(startedAt) && Number.isFinite(endedAt) && endedAt >= startedAt) {
+    return (endedAt - startedAt) / 1000;
+  }
+  return null;
 }
 
 function generateOrderNumber(): string {
@@ -342,27 +357,26 @@ async function handleSubmitOrder(
   });
 }
 
-/**
- * Enregistre un appel terminé dans call_logs.
- * Appelé sur réception d'un message de type "end-of-call-report" depuis VAPI.
- */
 async function handleEndOfCall(
   restaurantId: string,
   message: NonNullable<VapiWebhookBody["message"]>
 ): Promise<void> {
   const callId = message.call?.id;
-  const durationSeconds = message.durationSeconds;
+  const durationSeconds = resolveCallDurationSeconds(message);
 
   if (!callId) {
     logger.warn("Webhook VAPI end-of-call-report : call.id manquant", { restaurantId });
     return;
   }
 
-  if (typeof durationSeconds !== "number" || durationSeconds < 0) {
-    logger.warn("Webhook VAPI end-of-call-report : durationSeconds invalide", {
+  if (durationSeconds === null) {
+    logger.warn("Webhook VAPI end-of-call-report : durée introuvable", {
       restaurantId,
       callId,
-      durationSeconds,
+      durationSeconds: message.durationSeconds,
+      durationMs: message.durationMs,
+      startedAt: message.call?.startedAt,
+      endedAt: message.call?.endedAt,
     });
     return;
   }
@@ -386,11 +400,14 @@ async function handleEndOfCall(
   const startedAt = message.call?.startedAt ? new Date(message.call.startedAt) : null;
   const endedAt = message.call?.endedAt ? new Date(message.call.endedAt) : null;
   const endedReason = message.endedReason ?? "completed";
-  const status = (endedReason === "customer-ended-call" || endedReason === "assistant-ended-call")
-    ? "completed" as const
-    : endedReason === "no-answer"
-      ? "no-answer" as const
-      : "completed" as const;
+  const status =
+    endedReason === "no-answer"
+      ? ("no-answer" as const)
+      : endedReason.includes("error") ||
+          endedReason.includes("pipeline") ||
+          endedReason === "hang"
+        ? ("failed" as const)
+        : ("completed" as const);
 
   await db
     .insert(callLogs)
@@ -404,7 +421,7 @@ async function handleEndOfCall(
       endedAt,
       status,
     })
-    .onConflictDoNothing(); // idempotent si le webhook est rejoué
+    .onConflictDoNothing();
 
   logger.info("Appel VAPI enregistré dans call_logs", {
     restaurantId,
@@ -470,7 +487,6 @@ export async function POST(request: Request) {
     const body = (await request.json()) as VapiWebhookBody;
     const message = body.message;
 
-    // Le restaurantId est embarqué dans l'URL : /api/vapi/webhook?rid=<restaurantId>
     const url = new URL(request.url);
     const restaurantId = url.searchParams.get("rid") ?? "";
 
@@ -489,8 +505,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // assistant-request : VAPI demande la config de l'assistant en début d'appel (approche dynamique)
-    // On génère le prompt avec l'heure actuelle pour permettre la détection des horaires en temps réel
     if (message?.type === "assistant-request" && restaurantId) {
       try {
         const [restaurant] = await db
@@ -520,7 +534,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Traiter la fin d'appel (end-of-call-report)
     if (message?.type === "end-of-call-report" && restaurantId) {
       try {
         await handleEndOfCall(restaurantId, message);
@@ -534,7 +547,6 @@ export async function POST(request: Request) {
       return NextResponse.json({}, { status: 200 });
     }
 
-    // Ignorer les messages qui ne sont pas des tool calls
     if (!message || message.type !== "tool-calls") {
       logger.info("Webhook VAPI : message ignoré (type non tool-calls)", {
         restaurantId,
@@ -553,8 +565,7 @@ export async function POST(request: Request) {
     const results: Array<{ toolCallId: string; result: string }> = [];
 
     for (const toolCall of toolCallList) {
-      // VAPI envoie soit name+arguments à la racine (ancien format),
-      // soit function.name + function.arguments (format OpenAI-compatible actuel)
+
       const toolName = toolCall.name ?? toolCall.function?.name;
       const rawArgs = toolCall.arguments ?? toolCall.function?.arguments;
       const toolArgs: Record<string, unknown> =
@@ -562,7 +573,6 @@ export async function POST(request: Request) {
           ? (JSON.parse(rawArgs) as Record<string, unknown>)
           : (rawArgs ?? {});
 
-      // Fallback : utiliser le numéro de l'appelant si le modèle n'a pas fourni customer_phone
       const callerPhone = message.call?.customer?.number;
       if (callerPhone && !toolArgs.customer_phone) {
         toolArgs.customer_phone = callerPhone;
@@ -600,7 +610,7 @@ export async function POST(request: Request) {
           });
         }
       } else {
-        // Tool inconnu — répondre pour éviter que VAPI bloque
+
         results.push({
           toolCallId: toolCall.id,
           result: JSON.stringify({ success: false, message: `Tool inconnu : ${toolName}` }),

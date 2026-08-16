@@ -4,7 +4,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/vapi/webhook/route";
 import { db } from "@/db";
 
-// Désactiver la vérification du secret VAPI en test
 vi.stubEnv("VAPI_WEBHOOK_DISABLE_AUTH", "true");
 vi.stubEnv("VERCEL_ENV", "test");
 
@@ -135,7 +134,7 @@ describe("VAPI Webhook — end-of-call-report", () => {
     const selectChain = {
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockResolvedValue([]), // restaurant not found
+      limit: vi.fn().mockResolvedValue([]),
     };
     vi.mocked(db.select).mockReturnValue(selectChain as unknown as ReturnType<typeof db.select>);
 
@@ -194,22 +193,21 @@ describe("VAPI Webhook — end-of-call-report", () => {
         type: "end-of-call-report",
         durationSeconds: 90,
         endedReason: "customer-ended-call",
-        call: {}, // no id
+        call: {},
       },
     });
 
     const response = await POST(request);
     expect(response.status).toBe(200);
-    // insert may have been called for restaurant lookup but not for callLogs
-    // The key is onConflictDoNothing should not be called for a callLog insert
+
     const insertCalls = vi.mocked(db.insert).mock.calls;
-    // No callLogs insert should happen
+
     const callLogsInsertCalled = insertCalls.some(
       (args) => String(args[0]).includes("call")
     );
-    // We simply check the endpoint didn't crash
+
     expect(response.status).toBe(200);
-    expect(callLogsInsertCalled || !callLogsInsertCalled).toBe(true); // endpoint responded OK
+    expect(callLogsInsertCalled || !callLogsInsertCalled).toBe(true);
   });
 
   it("returns 400 when rid is missing", async () => {
@@ -226,7 +224,7 @@ describe("VAPI Webhook — end-of-call-report", () => {
     });
 
     const response = await POST(request);
-    // Returns 200 with error message in body (VAPI expects 200)
+
     expect(response.status).toBe(200);
   });
 
@@ -263,6 +261,42 @@ describe("VAPI Webhook — end-of-call-report", () => {
       expect.objectContaining({
         status: "no-answer",
         durationSeconds: 0,
+      })
+    );
+  });
+
+  it("derives duration from startedAt/endedAt when durationSeconds is missing", async () => {
+    const selectChain = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([baseRestaurant]),
+    };
+    vi.mocked(db.select).mockReturnValue(selectChain as unknown as ReturnType<typeof db.select>);
+
+    const insertChain = {
+      values: vi.fn().mockReturnThis(),
+      onConflictDoNothing: vi.fn().mockResolvedValue([]),
+    };
+    vi.mocked(db.insert).mockReturnValue(insertChain as unknown as ReturnType<typeof db.insert>);
+
+    const request = makeEndOfCallRequest("rest-1", {
+      message: {
+        type: "end-of-call-report",
+        endedReason: "pipeline-error",
+        call: {
+          id: "call-no-duration",
+          startedAt: "2026-07-01T10:00:00.000Z",
+          endedAt: "2026-07-01T10:00:45.000Z",
+        },
+      },
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(200);
+    expect(insertChain.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "failed",
+        durationSeconds: 45,
       })
     );
   });

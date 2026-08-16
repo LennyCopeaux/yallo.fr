@@ -44,7 +44,7 @@ export function CallForwardingCard({ initialData }: CallForwardingCardProps) {
         setSuccessMessage("Paramètres sauvegardés et agent vocal mis à jour.");
       } else {
         setErrorMessage(result.error ?? "Une erreur est survenue.");
-        // Revert toggle on error
+
         if (forwardingEnabled !== initialData.callForwardingEnabled) {
           setForwardingEnabled(initialData.callForwardingEnabled);
         }
@@ -70,7 +70,7 @@ export function CallForwardingCard({ initialData }: CallForwardingCardProps) {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Twilio number (read-only) */}
+        {}
         {initialData.twilioPhoneNumber && (
           <div className="space-y-2">
             <Label className="text-sm text-muted-foreground flex items-center gap-2">
@@ -92,7 +92,7 @@ export function CallForwardingCard({ initialData }: CallForwardingCardProps) {
           </div>
         )}
 
-        {/* Forwarding number */}
+        {}
         <div className="space-y-2">
           <Label htmlFor="forwarding-number" className="text-sm font-medium">
             Numéro principal du restaurant (redirection)
@@ -115,7 +115,7 @@ export function CallForwardingCard({ initialData }: CallForwardingCardProps) {
           </p>
         </div>
 
-        {/* Enable/disable toggle */}
+        {}
         <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50 border border-border">
           <div className="space-y-1">
             <p className="text-sm font-medium">Activer le transfert d&apos;appel</p>
@@ -137,7 +137,7 @@ export function CallForwardingCard({ initialData }: CallForwardingCardProps) {
           />
         </div>
 
-        {/* Status messages */}
+        {}
         {successMessage && (
           <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm">
             <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
@@ -151,7 +151,7 @@ export function CallForwardingCard({ initialData }: CallForwardingCardProps) {
           </div>
         )}
 
-        {/* Save button */}
+        {}
         <div className="flex justify-end pt-2">
           <Button
             onClick={handleSave}

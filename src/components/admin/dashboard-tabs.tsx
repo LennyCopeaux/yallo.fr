@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UtensilsCrossed, Users, Building2 } from "lucide-react";
 import { RestaurantsDataTable } from "@/components/admin/restaurants-data-table";
@@ -54,8 +54,6 @@ interface DashboardTabsProps {
 
 export function DashboardTabs({ restaurants, users, owners, totalOrders, organizations, defaultTab = "organizations" }: Readonly<DashboardTabsProps>) {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const [, startTransition] = useTransition();
   const urlTab = searchParams.get("tab") || defaultTab;
   const [activeTab, setActiveTab] = useState(urlTab);
 
@@ -65,30 +63,29 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, organiz
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    startTransition(() => {
-      router.replace(`/admin?tab=${value}`);
-    });
+    // window.history évite de déclencher un rechargement du Server Component parent
+    window.history.replaceState(null, "", `/admin?tab=${value}`);
   };
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
       <TabsList className="bg-card/30 border border-border p-1 w-full sm:w-auto">
-        <TabsTrigger 
-          value="organizations" 
+        <TabsTrigger
+          value="organizations"
           className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
         >
           <Building2 className="w-4 h-4" />
           Organisations
         </TabsTrigger>
-        <TabsTrigger 
-          value="restaurants" 
+        <TabsTrigger
+          value="restaurants"
           className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
         >
           <UtensilsCrossed className="w-4 h-4" />
           Restaurants
         </TabsTrigger>
-        <TabsTrigger 
-          value="users" 
+        <TabsTrigger
+          value="users"
           className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
         >
           <Users className="w-4 h-4" />

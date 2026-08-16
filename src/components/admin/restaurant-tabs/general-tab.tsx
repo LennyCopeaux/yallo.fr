@@ -69,7 +69,6 @@ interface GeneralTabProps {
 export function GeneralTab({ restaurant, owners, organizations = [], restaurantMembers = [] }: Readonly<GeneralTabProps>) {
   const [isLoading, setIsLoading] = useState(false);
 
-  // Members management
   const [pendingAddMembers, setPendingAddMembers] = useState<string[]>([]);
   const [pendingRemoveMembers, setPendingRemoveMembers] = useState<string[]>([]);
   const [isSavingMembers, setIsSavingMembers] = useState(false);
@@ -201,8 +200,6 @@ export function GeneralTab({ restaurant, owners, organizations = [], restaurantM
                 <p className="text-sm text-red-400">{form.formState.errors.name.message}</p>
               )}
             </div>
-
-
 
             <div className="space-y-2">
               <Label htmlFor="status">Statut *</Label>
@@ -365,7 +362,7 @@ export function GeneralTab({ restaurant, owners, organizations = [], restaurantM
         </form>
       </CardContent>
     </Card>
-    
+
     <div className="flex justify-end mt-6">
       <Button
         type="button"

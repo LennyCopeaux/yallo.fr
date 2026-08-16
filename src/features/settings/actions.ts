@@ -89,7 +89,6 @@ export async function updateCallForwardingSettings(
     })
     .where(eq(restaurants.id, restaurant.id));
 
-  // Sync agent if it exists
   if (restaurant.vapiAssistantId) {
     try {
       const updatedRestaurant = {
@@ -99,7 +98,7 @@ export async function updateCallForwardingSettings(
       };
       await updateVapiAssistant(restaurant.vapiAssistantId, updatedRestaurant);
     } catch (err) {
-      // Don't fail the save — agent sync is best-effort
+
       console.error("Erreur sync assistant VAPI après mise à jour forwarding :", err);
     }
   }
@@ -107,8 +106,6 @@ export async function updateCallForwardingSettings(
   revalidatePath("/dashboard/settings");
   return { success: true };
 }
-
-// ─── Assistant behaviour settings ────────────────────────────────────────────
 
 export type AssistantSettings = {
   voiceId: string | null;
@@ -236,8 +233,6 @@ export async function updateAssistantBehaviour(
   return { success: true };
 }
 
-// ─── ElevenLabs voice list ────────────────────────────────────────────────────
-
 export type ElevenLabsVoice = {
   voice_id: string;
   name: string;
@@ -291,8 +286,6 @@ export async function listElevenLabsVoices(): Promise<ActionResult> {
 
     const missingAllowedIds = ALLOWED_VOICE_IDS.filter((voiceId) => !voiceById.has(voiceId));
 
-    // Some curated voices can be in ElevenLabs Voice Library without being returned by /v1/voices.
-    // Fetch them explicitly by ID so owners can still select them.
     const fetchedMissingVoices = await Promise.all(
       missingAllowedIds.map(async (voiceId) => {
         try {

@@ -42,7 +42,6 @@ import { toast } from "sonner";
 import { createRole, updateRole, deleteRole } from "@/app/(admin)/admin/roles/actions";
 import type { SelectRole } from "@/db/schema";
 
-// Rôles système protégés — ne peuvent être ni modifiés ni supprimés
 const SYSTEM_ROLES = ["ADMIN", "OWNER", "EMPLOYEE"];
 
 type RoleFormState = {
@@ -115,7 +114,7 @@ export function RolesManager({ initialRoles }: { initialRoles: SelectRole[] }) {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">Rôles</h2>
@@ -129,7 +128,7 @@ export function RolesManager({ initialRoles }: { initialRoles: SelectRole[] }) {
         </Button>
       </div>
 
-      {/* Table */}
+      {}
       <div className="rounded-xl border border-border overflow-hidden">
         <Table className="table-fixed w-full">
           <TableHeader>
@@ -193,7 +192,7 @@ export function RolesManager({ initialRoles }: { initialRoles: SelectRole[] }) {
         </Table>
       </div>
 
-      {/* Create / Edit dialog */}
+      {}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -235,7 +234,7 @@ export function RolesManager({ initialRoles }: { initialRoles: SelectRole[] }) {
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation */}
+      {}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

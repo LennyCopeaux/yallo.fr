@@ -56,7 +56,7 @@ export function HubriseTab({ restaurant }: Readonly<HubriseTabProps>) {
 
     if (result.success) {
       toast.success("Configuration HubRise mise à jour");
-      form.reset(data); // Reset form state après succès
+      form.reset(data);
       router.refresh();
     } else {
       toast.error(result.error || "Erreur lors de la mise à jour");

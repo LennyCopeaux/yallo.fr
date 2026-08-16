@@ -24,7 +24,7 @@ export function HowItWorksSection() {
       </motion.div>
 
       <div className="space-y-24 lg:space-y-32">
-        {/* Step 1 */}
+        {}
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -53,7 +53,7 @@ export function HowItWorksSection() {
               ))}
             </div>
           </motion.div>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -112,7 +112,7 @@ export function HowItWorksSection() {
           </motion.div>
         </div>
 
-        {/* Step 2 */}
+        {}
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -138,7 +138,7 @@ export function HowItWorksSection() {
               </div>
             </div>
           </motion.div>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -155,7 +155,7 @@ export function HowItWorksSection() {
               L&apos;IA prend la commande
             </h3>
             <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-              Notre IA comprend le client, gère les demandes spéciales et suggère 
+              Notre IA comprend le client, gère les demandes spéciales et suggère
               intelligemment des extras si vous le souhaitez. Elle parle naturellement, sans accent robotique.
             </p>
             <div className="flex flex-wrap gap-3">
@@ -168,7 +168,7 @@ export function HowItWorksSection() {
           </motion.div>
         </div>
 
-        {/* Step 3 */}
+        {}
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <motion.div
             initial={{ opacity: 0, y: 10 }}

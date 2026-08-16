@@ -160,7 +160,7 @@ function StatusDelayConfig({
 export function KitchenStatusControl({ currentStatus, statusSettings }: Readonly<KitchenStatusControlProps>) {
   const [isPending, startTransition] = useTransition();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
-  
+
   const getInitialConfig = (): StatusSettings => {
     if (statusSettings) {
       return statusSettings;
@@ -185,7 +185,7 @@ export function KitchenStatusControl({ currentStatus, statusSettings }: Readonly
 
   const handleStatusChange = (status: KitchenStatus) => {
     if (isPending) return;
-    
+
     startTransition(async () => {
       try {
         await updateKitchenStatus(status);
@@ -221,7 +221,7 @@ export function KitchenStatusControl({ currentStatus, statusSettings }: Readonly
   ) => {
     setConfig({
       ...config,
-      [status]: useFixed 
+      [status]: useFixed
         ? { fixed: typeof value === "number" ? value : value.min }
         : { min: typeof value === "number" ? value : value.min, max: typeof value === "number" ? value : value.max },
     });
@@ -250,7 +250,7 @@ export function KitchenStatusControl({ currentStatus, statusSettings }: Readonly
                   Configurez les temps d&apos;attente annoncés pour chaque état de la cuisine.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-6 py-4">
                 <StatusDelayConfig
                   status="CALM"
@@ -327,7 +327,7 @@ export function KitchenStatusControl({ currentStatus, statusSettings }: Readonly
           {(Object.keys(STATUS_CONFIG) as KitchenStatus[]).map((status) => {
             const config = STATUS_CONFIG[status];
             const isActive = currentStatus === status;
-            
+
             return (
               <Button
                 key={status}

@@ -78,7 +78,7 @@ export function OrgDashboard({ user, org, stats, plans, usage }: Readonly<OrgDas
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {}
       <header className="border-b border-border/60 bg-card/20 backdrop-blur-sm sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
@@ -102,12 +102,12 @@ export function OrgDashboard({ user, org, stats, plans, usage }: Readonly<OrgDas
       </header>
 
       <div className="max-w-7xl mx-auto px-5 pt-8 pb-12">
-        {/* Greeting */}
+        {}
         <p className="text-muted-foreground mb-7">
           Bonjour, <span className="text-foreground font-medium">{greeting}</span>
         </p>
 
-        {/* Organisation menu */}
+        {}
         <div className="mb-6 border border-border rounded-xl bg-card/20 p-1 grid grid-cols-2 gap-1">
           <button
             onClick={() => setActiveTab("overview")}
@@ -131,7 +131,7 @@ export function OrgDashboard({ user, org, stats, plans, usage }: Readonly<OrgDas
           </button>
         </div>
 
-        {/* Overview tab */}
+        {}
         {activeTab === "overview" && (
           <>
         <section className="mb-6">
@@ -211,7 +211,7 @@ export function OrgDashboard({ user, org, stats, plans, usage }: Readonly<OrgDas
           </div>
         </section>
 
-        {/* Stats */}
+        {}
         <div className="border border-border rounded-xl bg-card/20 p-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
@@ -238,7 +238,7 @@ export function OrgDashboard({ user, org, stats, plans, usage }: Readonly<OrgDas
         </>
         )}
 
-        {/* Billing tab */}
+        {}
         {activeTab === "billing" && (
           <div>
             {usage && <UsageSection usage={usage} />}

@@ -56,9 +56,7 @@ function getKitchenStatusInstruction(restaurant: Restaurant): string {
   return `\n\nStatut actuel de la cuisine : ${label}${waitStr}.`;
 }
 
-/**
- * Prompt système pour l’assistant téléphonique (restauration, menu variable).
- */function getCallForwardingInstruction(restaurant: Restaurant): string {
+function getCallForwardingInstruction(restaurant: Restaurant): string {
   if (!restaurant.callForwardingEnabled || !restaurant.phoneNumber) return "";
 
   return `\n\nTransfert d'appel :

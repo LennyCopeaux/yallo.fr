@@ -82,7 +82,7 @@ export function AssistantBehaviourCard({ initialData }: AssistantBehaviourCardPr
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Message d'accueil personnalisé */}
+        {}
         <div className="p-4 rounded-xl bg-muted/50 border border-border space-y-3">
           <div className="flex items-start gap-3">
             <Mic className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
@@ -112,7 +112,7 @@ export function AssistantBehaviourCard({ initialData }: AssistantBehaviourCardPr
           <p className="text-xs text-muted-foreground text-right">{welcomeMessage.length}/300</p>
         </div>
 
-        {/* Upsell automatique */}
+        {}
         <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-muted/50 border border-border">
           <div className="flex items-start gap-3">
             <Sparkles className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
@@ -137,7 +137,7 @@ export function AssistantBehaviourCard({ initialData }: AssistantBehaviourCardPr
           />
         </div>
 
-        {/* SMS de confirmation */}
+        {}
         <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-muted/50 border border-border">
           <div className="flex items-start gap-3">
             <MessageSquare className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
@@ -162,7 +162,7 @@ export function AssistantBehaviourCard({ initialData }: AssistantBehaviourCardPr
           />
         </div>
 
-        {/* Passage auto RUSH */}
+        {}
         <div className="p-4 rounded-xl bg-muted/50 border border-border space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">

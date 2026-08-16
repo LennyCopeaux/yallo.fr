@@ -46,7 +46,7 @@ export function AdminSidebar() {
         expanded ? "w-56" : "w-16"
       )}
     >
-      {/* Header */}
+      {}
       <div className="h-16 flex items-center justify-between px-4 border-b border-border shrink-0">
         <AnimatePresence initial={false}>
           {expanded && (
@@ -82,7 +82,7 @@ export function AdminSidebar() {
         </button>
       </div>
 
-      {/* Nav */}
+      {}
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
         {navigation.map((item) => {
           const isActive = item.exact
@@ -124,7 +124,7 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      {/* Footer – logout */}
+      {}
       <div className="p-2 border-t border-border shrink-0">
         <button
           onClick={handleLogout}

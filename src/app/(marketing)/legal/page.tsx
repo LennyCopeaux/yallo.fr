@@ -15,7 +15,7 @@ export default function LegalPage() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 w-full">
         <div className="max-w-3xl mx-auto">
           <BackToHomeLink />
-          
+
           <div className="mt-8">
             <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-8">
               Mentions Légales & Confidentialité
@@ -69,7 +69,7 @@ export default function LegalPage() {
               <section>
                 <h2 className="text-2xl font-semibold text-foreground mb-4">Protection des données personnelles</h2>
                 <p className="mb-4">
-                  Les données collectées via le formulaire de contact ne sont utilisées que pour répondre à votre demande. 
+                  Les données collectées via le formulaire de contact ne sont utilisées que pour répondre à votre demande.
                   Aucune donnée n&apos;est revendue à des tiers.
                 </p>
                 <p className="mb-4">
@@ -100,7 +100,7 @@ export default function LegalPage() {
               <section>
                 <h2 className="text-2xl font-semibold text-foreground mb-4">Contact</h2>
                 <p>
-                  Pour toute question concernant ces mentions légales ou la protection de vos données, 
+                  Pour toute question concernant ces mentions légales ou la protection de vos données,
                   vous pouvez nous contacter via la{" "}
                   <Link href="/contact" className="text-primary hover:underline">
                     page Contact

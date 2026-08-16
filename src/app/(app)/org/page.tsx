@@ -6,13 +6,12 @@ export default async function OrgPage() {
   const user = await getAppUser();
   if (!user) redirect("/login");
 
-  // EMPLOYEE users go directly to the restaurant dashboard
   if (user.role === "EMPLOYEE") redirect("/dashboard");
 
   const organizations = await getUserOrganizations();
 
   if (organizations.length === 0) {
-    // If the user has restaurant memberships (e.g. was added as member without org), send them to dashboard
+
     const restaurantAccess = await getUserRestaurants();
     if (restaurantAccess.length > 0) redirect("/dashboard");
 
@@ -29,11 +28,10 @@ export default async function OrgPage() {
   }
 
   if (organizations.length === 1) {
-    // Single org → go directly to org page
+
     redirect(`/org/${organizations[0].id}`);
   }
 
-  // Multiple orgs → show selection
   const restaurants = await getUserRestaurants();
 
   return (

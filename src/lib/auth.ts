@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { db } from "@/db";
@@ -8,15 +9,23 @@ export const RESTAURANT_COOKIE = "yallo_restaurant_id";
 
 export type AppUser = typeof users.$inferSelect;
 
-export async function getAuthUser() {
+/**
+ * Memoized per-request: un seul appel HTTP à Supabase Auth par render,
+ * même si getAuthUser() est appelée depuis plusieurs Server Components ou actions.
+ */
+export const getAuthUser = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   return user;
-}
+});
 
-export async function getAppUser(): Promise<AppUser | null> {
+/**
+ * Memoized per-request: une seule requête DB par render pour récupérer
+ * l'utilisateur applicatif, peu importe le nombre d'appelants.
+ */
+export const getAppUser = cache(async (): Promise<AppUser | null> => {
   const authUser = await getAuthUser();
   if (!authUser) return null;
 
@@ -27,7 +36,7 @@ export async function getAppUser(): Promise<AppUser | null> {
     .limit(1);
 
   return appUser ?? null;
-}
+});
 
 export async function requireAuth(): Promise<AppUser> {
   const user = await getAppUser();
@@ -47,9 +56,6 @@ export async function requireRole(role: UserRole): Promise<AppUser> {
   return user;
 }
 
-/**
- * Retourne toutes les organisations dont l'utilisateur est membre.
- */
 export async function getUserOrganizations() {
   const user = await getAppUser();
   if (!user?.id) return [];
@@ -71,10 +77,6 @@ export async function getUserOrganizations() {
   return memberships;
 }
 
-/**
- * Retourne la première organisation de l'utilisateur (compat).
- * @deprecated Utiliser getUserOrganizations() pour le multi-orgs.
- */
 export async function getUserOrganization() {
   const orgs = await getUserOrganizations();
   if (!orgs.length) return null;
@@ -89,11 +91,6 @@ export async function getUserOrganization() {
   return org ?? null;
 }
 
-/**
- * Retourne les IDs de restaurants accessibles pour l'utilisateur connecté.
- * OWNER/ADMIN : tous les restaurants de leurs organisations.
- * EMPLOYEE : uniquement les restaurants explicitement assignés via restaurant_members.
- */
 async function getAccessibleRestaurantIds(userId: string, role: string): Promise<string[]> {
   if (role === "EMPLOYEE") {
     const memberships = await db
@@ -103,7 +100,6 @@ async function getAccessibleRestaurantIds(userId: string, role: string): Promise
     return memberships.map((m) => m.restaurantId);
   }
 
-  // OWNER / ADMIN : accès via l'appartenance à l'organisation
   const orgRestaurants = await db
     .select({ id: restaurants.id })
     .from(organizationMembers)
@@ -114,11 +110,10 @@ async function getAccessibleRestaurantIds(userId: string, role: string): Promise
 }
 
 /**
- * Retourne le restaurant sélectionné accessible à l'utilisateur connecté.
- * Priorité : cookie yallo_restaurant_id (si accessible), sinon premier accessible.
- * OWNER/ADMIN : accès via organisation. EMPLOYEE : accès via restaurant_members.
+ * Memoized per-request: évite de refaire les 2 requêtes DB d'accès restaurant
+ * à chaque appel (getOrders, getRestaurantCallStats, etc. l'invoquent toutes).
  */
-export async function getAccessibleRestaurant(): Promise<SelectRestaurant | null> {
+export const getAccessibleRestaurant = cache(async (): Promise<SelectRestaurant | null> => {
   const user = await getAppUser();
   if (!user?.id) return null;
 
@@ -138,11 +133,8 @@ export async function getAccessibleRestaurant(): Promise<SelectRestaurant | null
     .limit(1);
 
   return restaurant ?? null;
-}
+});
 
-/**
- * Retourne le restaurant accessible pour un userId donné (évite le double getAppUser).
- */
 export async function getAccessibleRestaurantForUser(
   userId: string,
   selectedId?: string
@@ -167,12 +159,6 @@ export async function getAccessibleRestaurantForUser(
   return restaurant ?? null;
 }
 
-/**
- * Retourne les restaurants accessibles à l'utilisateur.
- * OWNER/ADMIN : tous les restaurants de leurs organisations.
- * EMPLOYEE : uniquement les restaurants explicitement assignés.
- * Filtre optionnel par organisation.
- */
 export async function getUserRestaurants(organizationId?: string) {
   const user = await getAppUser();
   if (!user?.id) return [];
@@ -200,10 +186,6 @@ export async function getUserRestaurants(organizationId?: string) {
   return rows;
 }
 
-/**
- * Retourne le premier restaurant de l'organisation de l'utilisateur connecté.
- * Pour la compatibilité avec les pages single-restaurant.
- */
 export async function getOwnerRestaurantFromOrg() {
   const org = await getUserOrganization();
   if (!org) return null;

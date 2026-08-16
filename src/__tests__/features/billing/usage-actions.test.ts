@@ -72,14 +72,14 @@ describe("getCallUsageForCurrentPeriod", () => {
 
   it("calculates minutes correctly (rounds up to nearest minute)", async () => {
     vi.mocked(getUserOrganization).mockResolvedValue(mockOrg);
-    // 125 seconds = ceil(125/60) = 3 minutes
+
     setupDbSelect(125, 5);
 
     const result = await getCallUsageForCurrentPeriod();
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.minutesUsed).toBe(3); // ceil(125 / 60)
+      expect(result.data.minutesUsed).toBe(3);
       expect(result.data.callCount).toBe(5);
       expect(result.data.estimatedCostCents).toBe(3 * result.data.callRateCentsPerMinute);
     }
@@ -102,15 +102,15 @@ describe("getCallUsageForCurrentPeriod", () => {
 
   it("uses billingStartDate to compute period start anniversary", async () => {
     vi.mocked(getUserOrganization).mockResolvedValue({ ...mockOrg, billingStartDate: "2025-01-15T00:00:00.000Z" });
-    setupDbSelect(3600, 10); // 3600 seconds = 60 minutes
+    setupDbSelect(3600, 10);
 
     const result = await getCallUsageForCurrentPeriod();
 
     expect(result.success).toBe(true);
     if (result.success) {
-      // Period start should be on the 15th of some recent month
+
       expect(result.data.periodStart.getDate()).toBe(15);
-      expect(result.data.minutesUsed).toBe(60); // ceil(3600/60)
+      expect(result.data.minutesUsed).toBe(60);
     }
   });
 

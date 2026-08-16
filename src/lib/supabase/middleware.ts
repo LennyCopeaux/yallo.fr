@@ -1,10 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-/**
- * Creates a Supabase client that reads/writes cookies on the request/response pair.
- * Must be used in middleware only (not in Server Components or Route Handlers).
- */
 export async function createClient(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 

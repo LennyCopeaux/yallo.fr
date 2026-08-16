@@ -14,7 +14,7 @@ export default function MentionsLegalesPage() {
         <div className="max-w-4xl mx-auto prose prose-lg">
           <BackToHomeLink />
           <h1 className="text-4xl font-bold text-foreground mb-8">Mentions légales</h1>
-          
+
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">1. Éditeur du site</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
@@ -59,7 +59,7 @@ export default function MentionsLegalesPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">4. Propriété intellectuelle</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              L&apos;ensemble de ce site relève de la législation française et internationale sur le droit d&apos;auteur et la propriété intellectuelle. 
+              L&apos;ensemble de ce site relève de la législation française et internationale sur le droit d&apos;auteur et la propriété intellectuelle.
               Tous les droits de reproduction sont réservés, y compris pour les documents téléchargeables et les représentations iconographiques et photographiques.
             </p>
             <p className="text-muted-foreground leading-relaxed">
@@ -70,7 +70,7 @@ export default function MentionsLegalesPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">5. Protection des données personnelles</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Conformément à la loi « Informatique et Libertés » du 6 janvier 1978 modifiée et au Règlement Général sur la Protection des Données (RGPD), 
+              Conformément à la loi « Informatique et Libertés » du 6 janvier 1978 modifiée et au Règlement Général sur la Protection des Données (RGPD),
               vous disposez d&apos;un droit d&apos;accès, de rectification, de suppression et d&apos;opposition aux données personnelles vous concernant.
             </p>
             <p className="text-muted-foreground leading-relaxed">
@@ -82,8 +82,8 @@ export default function MentionsLegalesPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">6. Cookies</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Ce site utilise des cookies pour améliorer l&apos;expérience utilisateur et analyser le trafic. 
-              En continuant à naviguer sur ce site, vous acceptez l&apos;utilisation de cookies. 
+              Ce site utilise des cookies pour améliorer l&apos;expérience utilisateur et analyser le trafic.
+              En continuant à naviguer sur ce site, vous acceptez l&apos;utilisation de cookies.
               Pour plus d&apos;informations, consultez notre{" "}
               <a href="/confidentialite" className="text-primary hover:text-primary/80">politique de confidentialité</a>.
             </p>
@@ -92,8 +92,8 @@ export default function MentionsLegalesPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">7. Limitation de responsabilité</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Yallo SAS ne pourra être tenu responsable des dommages directs et indirects causés au matériel de l&apos;utilisateur, 
-              lors de l&apos;accès au site yallo.fr, et résultant soit de l&apos;utilisation d&apos;un matériel ne répondant pas aux spécifications, 
+              Yallo SAS ne pourra être tenu responsable des dommages directs et indirects causés au matériel de l&apos;utilisateur,
+              lors de l&apos;accès au site yallo.fr, et résultant soit de l&apos;utilisation d&apos;un matériel ne répondant pas aux spécifications,
               soit de l&apos;apparition d&apos;un bug ou d&apos;une incompatibilité.
             </p>
           </section>

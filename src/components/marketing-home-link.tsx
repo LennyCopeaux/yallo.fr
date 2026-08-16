@@ -6,10 +6,10 @@ function getHomeUrl(): string {
   if (globalThis.window === undefined) {
     return "/";
   }
-  
+
   const hostname = globalThis.window.location.hostname;
   const port = globalThis.window.location.port || "3000";
-  
+
   if (hostname === "app.localhost") {
     return `http://localhost:${port}/`;
   }
@@ -23,10 +23,10 @@ function subscribeToNothing() {
   return () => {};
 }
 
-export function MarketingHomeLink({ 
-  children, 
-  className 
-}: Readonly<{ 
+export function MarketingHomeLink({
+  children,
+  className
+}: Readonly<{
   children: React.ReactNode;
   className?: string;
 }>) {

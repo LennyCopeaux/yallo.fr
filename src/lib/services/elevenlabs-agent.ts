@@ -7,7 +7,6 @@ type Restaurant = typeof restaurants.$inferSelect;
 
 const ELEVENLABS_API_URL = "https://api.elevenlabs.io";
 
-/** Extrait un message d'erreur lisible depuis n'importe quelle réponse API. */
 function extractApiErrorMessage(errorBody: unknown, statusCode: number): string {
   if (typeof errorBody === "string") return errorBody;
   if (typeof errorBody === "object" && errorBody !== null) {
@@ -25,16 +24,12 @@ function extractApiErrorMessage(errorBody: unknown, statusCode: number): string 
   return `Erreur ElevenLabs API: ${statusCode}`;
 }
 
-/** Modèle LLM utilisé par l'agent ElevenLabs. */
 const DEFAULT_LLM_MODEL = "gpt-4.1-nano-2025-04-14";
 
-/** Température LLM. */
 const DEFAULT_LLM_TEMPERATURE = 0.4;
 
-/** Voix ElevenLabs par défaut (Turbo v2.5). Surcharge via ELEVENLABS_VOICE_ID. */
 const DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
 
-/** Modèle TTS ElevenLabs (eleven_turbo_v2_5, eleven_multilingual_v2, eleven_v3, etc.). Surcharge via ELEVENLABS_TTS_MODEL. */
 const DEFAULT_TTS_MODEL = "eleven_multilingual_v2";
 
 function getApiKey(): string {
@@ -77,12 +72,8 @@ function getWebhookSecret(): string | undefined {
   return s && s.length > 0 ? s : undefined;
 }
 
-/**
- * Construit la définition du tool submit_order pour ElevenLabs Conversational AI.
- * https://elevenlabs.io/docs/conversational-ai/customization/tools/server-tools
- */
 function buildSubmitOrderTool(webhookUrl?: string, restaurantId?: string) {
-  void restaurantId; // inclus dans l'URL, pas besoin dans le body
+  void restaurantId;
   const secret = getWebhookSecret();
 
   const requestBodySchema = {
@@ -153,10 +144,6 @@ function buildSubmitOrderTool(webhookUrl?: string, restaurantId?: string) {
   };
 }
 
-/**
- * Construit le tool ElevenLabs natif de transfert d'appel vers le numéro du restaurateur.
- * https://elevenlabs.io/docs/conversational-ai/customization/tools/system-tools
- */
 function buildTransferCallTool(phoneNumber: string) {
   return {
     type: "system",
@@ -180,11 +167,6 @@ function buildTransferCallTool(phoneNumber: string) {
   };
 }
 
-/**
- * Construit la data collection ElevenLabs (équivalent des structured outputs VAPI).
- * Les données sont extraites post-appel par ElevenLabs automatiquement.
- * https://elevenlabs.io/docs/conversational-ai/customization/data-collection
- */
 function buildDataCollection() {
   return {
     customer_name: {
@@ -343,10 +325,6 @@ export async function deleteElevenLabsAgent(agentId: string): Promise<void> {
   }
 }
 
-/**
- * Importe un numéro Twilio dans ElevenLabs et l'associe à un agent.
- * https://elevenlabs.io/docs/conversational-ai/phone-calling
- */
 export async function importTwilioPhoneNumber(
   phoneNumber: string,
   agentId: string
@@ -398,7 +376,6 @@ export async function importTwilioPhoneNumber(
   const data = await response.json();
   const phoneNumberId: string = data.phone_number_id;
 
-  // ElevenLabs ignore agent_id à la création — on doit faire un PATCH séparé
   const patchResponse = await fetch(
     `${ELEVENLABS_API_URL}/v1/convai/phone-numbers/${phoneNumberId}`,
     {

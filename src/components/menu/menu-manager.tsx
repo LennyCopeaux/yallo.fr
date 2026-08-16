@@ -84,11 +84,10 @@ export function MenuManager({ initialMenuData }: Readonly<MenuManagerProps>) {
     }
 
     setIsGenerating(true);
-    
-    // Afficher le toast
+
     toast.info("Traitement en cours", {
       description: "Cela peut prendre quelques minutes",
-      duration: 60000, // 1 minute
+      duration: 60000,
     });
 
     try {
@@ -148,7 +147,7 @@ export function MenuManager({ initialMenuData }: Readonly<MenuManagerProps>) {
 
   const handleClear = async () => {
     setShowDeleteDialog(false);
-    
+
     try {
       const result = await clearMenuData();
 

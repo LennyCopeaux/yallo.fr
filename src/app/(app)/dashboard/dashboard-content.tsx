@@ -5,10 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { type Order } from "@/components/orders";
 import { useState, useTransition } from "react";
-import { 
-  TrendingUp, 
-  ShoppingCart, 
-  Clock, 
+import {
+  TrendingUp,
+  ShoppingCart,
+  Clock,
   DollarSign,
   ArrowUpRight,
   ArrowDownRight,
@@ -111,7 +111,6 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
     return <span>0,0% vs hier</span>;
   };
 
-  // Calculs des KPIs
   const todayOrders = orders.filter((o) => {
     if (!o.createdAt) return false;
     const today = new Date();
@@ -130,8 +129,8 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
   const todayRevenue = todayOrders.reduce((sum, o) => sum + o.totalAmount, 0);
   const yesterdayRevenue = yesterdayOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 
-  const averageBasket = todayOrders.length > 0 
-    ? Math.round(todayRevenue / todayOrders.length) 
+  const averageBasket = todayOrders.length > 0
+    ? Math.round(todayRevenue / todayOrders.length)
     : 0;
   const yesterdayAverageBasket =
     yesterdayOrders.length > 0 ? Math.round(yesterdayRevenue / yesterdayOrders.length) : 0;
@@ -151,15 +150,15 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
 
   const maxHourlyCount = Math.max(1, ...hourlyBuckets.map((bucket) => bucket.count));
   const midHourlyCount = Math.ceil(maxHourlyCount / 2);
-  
+
   const newOrders = orders.filter((o) => o.status === "NEW");
   const preparingOrders = orders.filter((o) => o.status === "PREPARING");
 
   return (
     <div className="space-y-8">
-      {/* KPIs Section — Commandes du jour */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Chiffre du jour */}
+        {}
         <Card className="bg-card border-border hover:border-primary/20 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -175,7 +174,7 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
           </CardContent>
         </Card>
 
-        {/* Commandes */}
+        {}
         <Card className="bg-card border-border hover:border-primary/20 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -191,7 +190,7 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
           </CardContent>
         </Card>
 
-        {/* Panier moyen */}
+        {}
         <Card className="bg-card border-border hover:border-primary/20 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -207,7 +206,7 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
           </CardContent>
         </Card>
 
-        {/* Total commandes (toutes) */}
+        {}
         <Card className="bg-card border-border hover:border-primary/20 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -222,7 +221,7 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
         </Card>
       </div>
 
-      {/* Section IA — Métriques avec filtre de période */}
+      {}
       <div>
         <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
           <div className="flex items-center gap-2">
@@ -251,7 +250,7 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
         </div>
 
         <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 transition-opacity ${isPendingCallStats ? "opacity-50" : ""}`}>
-          {/* Temps moyen IA */}
+          {}
           <Card className="bg-card border-border hover:border-primary/20 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -269,7 +268,7 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
             </CardContent>
           </Card>
 
-          {/* Appels IA */}
+          {}
           <Card className="bg-card border-border hover:border-primary/20 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -285,7 +284,7 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
             </CardContent>
           </Card>
 
-          {/* Taux de décroché — placeholder */}
+          {}
           <Card className="bg-card border-border hover:border-primary/20 transition-colors opacity-60">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -299,7 +298,7 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
             </CardContent>
           </Card>
 
-          {/* Satisfaction client — placeholder */}
+          {}
           <Card className="bg-card border-border hover:border-primary/20 transition-colors opacity-60">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -314,7 +313,7 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
           </Card>
         </div>
 
-        {/* Deuxième ligne de métriques IA (placeholders) */}
+        {}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 opacity-60">
           <Card className="bg-card border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -370,7 +369,7 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
         </div>
       </div>
 
-      {/* Graphique Section */}
+      {}
       <Card className="bg-card border-border">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -433,7 +432,7 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
         </CardContent>
       </Card>
 
-      {/* CTA → page Commandes */}
+      {}
       <Link href="/dashboard/orders">
         <Card className="bg-card border-border hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer group">
           <CardContent className="flex items-center justify-between p-6">

@@ -5,9 +5,9 @@ import { getOwners, getRestaurantsWithFilters, getUsers, getTotalOrdersCount, ge
 export default async function AdminDashboardPage({
   searchParams,
 }: Readonly<{
-  searchParams: Promise<{ 
+  searchParams: Promise<{
     tab?: string;
-    status?: string; 
+    status?: string;
     search?: string;
     hasAI?: string;
   }>;

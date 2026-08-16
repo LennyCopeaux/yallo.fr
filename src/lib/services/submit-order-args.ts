@@ -1,7 +1,4 @@
-/**
- * Normalise les arguments renvoyés par Vapi / le LLM pour submit_order
- * (JSON stringifié, camelCase vs snake_case).
- */
+
 
 export interface VapiSubmitOrderItemInput {
   product_name: string;
@@ -55,9 +52,6 @@ function toPositiveQuantity(value: unknown): number {
   return Math.floor(n);
 }
 
-/**
- * Interprète unit_price comme un montant en euros (ex: 8.5) pour le webhook.
- */
 function toUnitPriceEuros(value: unknown): number {
   const n = typeof value === "number" ? value : Number.parseFloat(String(value).replace(",", "."));
   if (!Number.isFinite(n) || n < 0) {
@@ -86,10 +80,6 @@ function normalizeItem(raw: unknown): VapiSubmitOrderItemInput | null {
   };
 }
 
-/**
- * Transforme les paramètres bruts d'un tool call Vapi en payload exploitable.
- * Retourne null si customer_name ou items valides manquent.
- */
 export function normalizeSubmitOrderPayload(raw: unknown): VapiSubmitOrderPayload | null {
   const o = parseParametersObject(raw);
   const customerName = toOptionalString(o.customer_name ?? o.customerName);

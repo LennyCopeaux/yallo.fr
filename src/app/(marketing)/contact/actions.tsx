@@ -61,7 +61,6 @@ export async function submitContactForm(data: {
       />
     );
 
-    // Version texte pour les clients email qui ne supportent pas HTML
     const text = `Nouveau message de contact
 
 Nom: ${name}

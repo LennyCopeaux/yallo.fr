@@ -62,12 +62,12 @@ export default function GuidePage() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 w-full">
         <div className="max-w-3xl mx-auto">
           <BackToHomeLink />
-          
+
           <div className="mt-8">
             <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-8">
               Démarrez en 5 minutes
             </h1>
-        
+
             <div className="space-y-8">
               {steps.map((step) => (
                 <div key={step.number} className="bg-card/30 rounded-lg p-8 border border-border">
@@ -92,7 +92,7 @@ export default function GuidePage() {
               <p className="text-muted-foreground mb-4">
                 Besoin d&apos;aide ? Notre équipe est là pour vous accompagner.
               </p>
-              <Link 
+              <Link
                 href="/contact?subject=support"
                 className="inline-block px-6 py-3 bg-primary text-black hover:bg-primary/90 rounded-lg font-semibold transition-colors"
               >

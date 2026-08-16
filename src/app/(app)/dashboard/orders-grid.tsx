@@ -20,7 +20,6 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
   const [, startTransition] = useTransition();
   const router = useRouter();
 
-  // Synchroniser les orders avec initialOrders quand ils changent (filtres)
   useEffect(() => {
     setOrders(initialOrders);
   }, [initialOrders]);
@@ -61,7 +60,7 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
   };
 
   useEffect(() => {
-    // Vercel ne fournit pas de WebSocket natif sans service externe: on utilise un polling léger.
+
     const intervalId = setInterval(() => {
       if (document.visibilityState === "visible") {
         router.refresh();
@@ -73,21 +72,18 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
     };
   }, [router]);
 
-  // Afficher toutes les commandes (le filtrage est déjà fait par DashboardContent)
-  // Mais on peut toujours séparer actives et terminées pour l'affichage
   const activeOrders = orders.filter(
     (o) => o.status !== "DELIVERED" && o.status !== "CANCELLED"
   );
   const completedOrders = orders.filter(
     (o) => o.status === "DELIVERED" || o.status === "CANCELLED"
   );
-  
-  // Si toutes les commandes sont actives, on les affiche toutes ensemble
+
   const displayOrders = completedOrders.length === 0 ? orders : activeOrders;
 
   return (
     <div className="space-y-8">
-      {/* Actions */}
+      {}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold">
@@ -116,7 +112,7 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
         </div>
       ) : null}
 
-      {/* Orders Grid */}
+      {}
       {displayOrders.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayOrders.map((order) => (
@@ -129,7 +125,7 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
         </div>
       )}
 
-      {/* Completed Orders Section (seulement si on affiche toutes les commandes) */}
+      {}
       {completedOrders.length > 0 && activeOrders.length > 0 && (
         <div className="pt-8 border-t border-border">
           <h3 className="text-sm font-medium text-muted-foreground mb-4">

@@ -111,7 +111,6 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
       return { success: false, error: "Cet email est déjà utilisé" };
     }
 
-    // Génère un mot de passe temporaire sécurisé
     const tempPassword = randomBytes(12).toString("hex") + "Aa1!";
 
     const supabaseAdmin = await createAdminClient();
@@ -140,7 +139,6 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
       role,
     });
 
-    // Envoi de l'email de bienvenue avec le mot de passe temporaire
     try {
       await sendWelcomeEmail(email, tempPassword);
     } catch (mailError) {
@@ -239,7 +237,6 @@ export async function updateUser(
       return { success: false, error: "Aucune donnée à mettre à jour" };
     }
 
-    // If email changes, also update in Supabase Auth
     if (updateData.email) {
       const [targetUser] = await db
         .select({ authUserId: users.authUserId })
@@ -321,7 +318,6 @@ export async function deleteUser(id: string): Promise<ActionResult> {
       return { success: false, error: "Vous ne pouvez pas vous supprimer vous-même" };
     }
 
-    // Also delete from Supabase Auth
     const [targetUser] = await db
       .select({ authUserId: users.authUserId })
       .from(users)
@@ -504,7 +500,7 @@ export async function createVapiAgent(
       try {
         await cleanupAssistant(assistant.id);
       } catch {
-        // Ignore
+
       }
       const errorMessage = phoneError instanceof Error ? phoneError.message : String(phoneError);
       logger.error(
@@ -566,8 +562,6 @@ export async function updateVapiAgent(id: string): Promise<ActionResult> {
 
     const { updateVapiAssistant, updateVapiPhoneNumberServer } = await import("@/lib/services/vapi-agent");
 
-    // Assure que les numéros historiques utilisent le mode dynamique (assistant-request).
-    // Pour les nouveaux assistants, c'est déjà configuré à la création.
     if (restaurant.vapiPhoneNumberId) {
       await updateVapiPhoneNumberServer(restaurant.vapiPhoneNumberId, restaurant.id);
     }
@@ -590,11 +584,6 @@ export async function updateVapiAgent(id: string): Promise<ActionResult> {
   }
 }
 
-/**
- * Migration : bascule le numéro VAPI d'un restaurant de l'approche `assistantId` statique
- * vers `serverUrl` dynamique (assistant-request à chaque appel).
- * Cela permet d'injecter l'heure réelle dans le prompt au moment de l'appel.
- */
 export async function migrateVapiPhoneNumberToServerUrl(id: string): Promise<ActionResult> {
   "use server";
 
@@ -987,8 +976,6 @@ export async function toggleRestaurantStatus(id: string, isActive: boolean): Pro
   }
 }
 
-// ─── Organisations ──────────────────────────────────────────────────────────
-
 const createOrganizationSchema = z.object({
   name: z.string().min(2, "Nom trop court").max(100, "Nom trop long"),
   ownerIds: z.array(z.string().uuid()).min(1, "Au moins un propriétaire requis"),
@@ -1106,7 +1093,6 @@ export async function deleteOrganization(id: string): Promise<ActionResult> {
 
     if (!id) return { success: false, error: "ID requis" };
 
-    // Détacher tous les restaurants de l'organisation avant suppression
     await db
       .update(restaurants)
       .set({ organizationId: null })
@@ -1136,7 +1122,6 @@ export async function setRestaurantOrganization(
       .set({ organizationId })
       .where(eq(restaurants.id, restaurantId));
 
-    // Auto-add all existing org members to this restaurant (skip already-existing memberships)
     if (organizationId) {
       const orgMembersList = await db
         .select({ userId: organizationMembers.userId, role: organizationMembers.role })
@@ -1162,8 +1147,6 @@ export async function setRestaurantOrganization(
   }
 }
 
-// ─── Members management ──────────────────────────────────────────────────────
-
 export async function addOrganizationMember(orgId: string, userId: string): Promise<ActionResult> {
   try {
     await requireAdmin();
@@ -1178,7 +1161,6 @@ export async function addOrganizationMember(orgId: string, userId: string): Prom
       role: memberRole,
     }).onConflictDoNothing();
 
-    // Auto-add user to all restaurants in the org (skip already-existing memberships)
     const orgRestaurants = await db
       .select({ id: restaurants.id })
       .from(restaurants)

@@ -71,7 +71,6 @@ function isMinuteInSlot(currentMinutes: number, slot: SingleSlot): boolean {
     return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
   }
 
-  // Plage de nuit (ex: 18:00 -> 02:00)
   return currentMinutes >= openMinutes || currentMinutes < closeMinutes;
 }
 

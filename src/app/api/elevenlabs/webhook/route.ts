@@ -25,11 +25,6 @@ interface SubmitOrderArgs {
   notes?: string;
 }
 
-/**
- * Format réel envoyé par ElevenLabs Conversational AI pour les server tools (webhooks).
- * Les paramètres définis dans l'outil sont à la racine, les métadonnées dans `system`.
- * https://elevenlabs.io/docs/conversational-ai/customization/tools/server-tools
- */
 interface ElevenLabsWebhookBody extends Record<string, unknown> {
   system?: {
     agent_id?: string;
@@ -37,7 +32,7 @@ interface ElevenLabsWebhookBody extends Record<string, unknown> {
     conversation_id?: string;
     called_number?: string;
   };
-  // Paramètres du tool submit_order (à la racine)
+
   customer_name?: string;
   customer_phone?: string;
   items?: unknown;
@@ -269,8 +264,6 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as ElevenLabsWebhookBody;
 
-    // ElevenLabs n'envoie que les paramètres du tool dans le body (pas d'agent_id).
-    // Le restaurantId est embarqué dans l'URL : /api/elevenlabs/webhook?rid=<restaurantId>
     const url = new URL(request.url);
     const restaurantId = url.searchParams.get("rid") ?? "";
 

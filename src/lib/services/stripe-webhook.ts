@@ -17,9 +17,9 @@ const subscriptionPayloadSchema = z.object({
   planId: z.string().nullable(),
   currentPeriodEnd: z.date().nullable(),
   startDate: z.date().nullable(),
-  /** ID organisation (nouveaux checkouts) */
+
   organizationId: z.string().uuid().nullable(),
-  /** ID restaurant (anciens checkouts — rétrocompat) */
+
   restaurantId: z.string().uuid().nullable(),
 });
 

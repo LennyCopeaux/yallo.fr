@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Bot, Phone, Link2, BarChart2 } from "lucide-react";
 import { GeneralTab } from "@/components/admin/restaurant-tabs/general-tab";
@@ -56,8 +56,6 @@ interface RestaurantDetailTabsProps {
 
 export function RestaurantDetailTabs({ restaurant, owners, organizations = [], restaurantMembers = [] }: Readonly<RestaurantDetailTabsProps>) {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const [, startTransition] = useTransition();
   const urlTab = searchParams.get("tab") || "general";
   const [activeTab, setActiveTab] = useState(urlTab);
 
@@ -67,46 +65,44 @@ export function RestaurantDetailTabs({ restaurant, owners, organizations = [], r
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("tab", value);
-      router.push(`?${params.toString()}`, { scroll: false });
-    });
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", value);
+    window.history.pushState(null, "", `?${params.toString()}`);
   };
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
       <TabsList className="bg-card/30 border border-border p-1 w-full justify-start overflow-x-auto">
-        <TabsTrigger 
-          value="general" 
+        <TabsTrigger
+          value="general"
           className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
         >
           <Settings className="w-4 h-4" />
           <span className="hidden sm:inline">Général</span>
         </TabsTrigger>
-        <TabsTrigger 
-          value="ai" 
+        <TabsTrigger
+          value="ai"
           className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
         >
           <Bot className="w-4 h-4" />
           <span className="hidden sm:inline">IA & Menu</span>
         </TabsTrigger>
-        <TabsTrigger 
-          value="telephony" 
+        <TabsTrigger
+          value="telephony"
           className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
         >
           <Phone className="w-4 h-4" />
           <span className="hidden sm:inline">Téléphonie</span>
         </TabsTrigger>
-        <TabsTrigger 
-          value="hubrise" 
+        <TabsTrigger
+          value="hubrise"
           className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
         >
           <Link2 className="w-4 h-4" />
           <span className="hidden sm:inline">HubRise</span>
         </TabsTrigger>
-        <TabsTrigger 
-          value="usage" 
+        <TabsTrigger
+          value="usage"
           className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
         >
           <BarChart2 className="w-4 h-4" />

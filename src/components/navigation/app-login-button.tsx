@@ -7,10 +7,10 @@ function getLoginUrl(): string {
   if (globalThis.window === undefined) {
     return "/login";
   }
-  
+
   const hostname = globalThis.window.location.hostname;
   const port = globalThis.window.location.port || "3000";
-  
+
   if (hostname === "localhost") {
     return `http://app.localhost:${port}/login`;
   }
@@ -35,9 +35,9 @@ export function AppLoginButton() {
   );
 
   return (
-    <Button 
-      variant="ghost" 
-      size="sm" 
+    <Button
+      variant="ghost"
+      size="sm"
       className="text-muted-foreground hover:text-foreground hover:bg-accent"
       asChild
     >

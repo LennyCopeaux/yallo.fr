@@ -15,8 +15,7 @@ export default function ErrorPage({
   reset,
 }: Readonly<ErrorPageProps>) {
   useEffect(() => {
-    // Sentry est branché via instrumentation (prod uniquement).
-    // Pas d'import ici : ça spam webpack/OpenTelemetry en dev.
+
     console.error("[error-boundary]", error);
   }, [error]);
 
@@ -91,7 +90,7 @@ export default function ErrorPage({
           </div>
 
           <p className="text-lg text-muted-foreground max-w-md mx-auto">
-            Désolé, une erreur inattendue s&apos;est produite. 
+            Désolé, une erreur inattendue s&apos;est produite.
             Notre équipe technique a été automatiquement notifiée et travaille à résoudre le problème.
           </p>
         </motion.div>
@@ -102,9 +101,9 @@ export default function ErrorPage({
           transition={{ delay: 0.4, duration: 0.5 }}
           className="flex flex-col sm:flex-row gap-4 justify-center items-center"
         >
-          <Button 
-            onClick={reset} 
-            size="lg" 
+          <Button
+            onClick={reset}
+            size="lg"
             className="bg-primary text-black hover:bg-primary/90 flex items-center gap-2"
           >
             <RefreshCw className="w-4 h-4" />

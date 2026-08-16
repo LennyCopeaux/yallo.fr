@@ -23,7 +23,6 @@ export default async function DashboardLayout({
     currentRestaurantFull?.hubriseLocationId && currentRestaurantFull?.hubriseAccessToken
   );
 
-  // EMPLOYEE users don't see org-level navigation
   const orgIdForSidebar = user?.role === "EMPLOYEE" ? null : (org?.id ?? null);
   const orgNameForSidebar = user?.role === "EMPLOYEE" ? null : (org?.name ?? null);
 

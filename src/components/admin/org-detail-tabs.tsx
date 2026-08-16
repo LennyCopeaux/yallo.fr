@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, CreditCard } from "lucide-react";
 import { OrgGeneralTab } from "@/components/admin/org-tabs/general-tab";
@@ -37,8 +37,6 @@ interface OrgDetailTabsProps {
 
 export function OrgDetailTabs({ org, owners, members, assignedRestaurants, allRestaurants }: Readonly<OrgDetailTabsProps>) {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const [, startTransition] = useTransition();
   const urlTab = searchParams.get("tab") || "general";
   const [activeTab, setActiveTab] = useState(urlTab);
 
@@ -48,11 +46,9 @@ export function OrgDetailTabs({ org, owners, members, assignedRestaurants, allRe
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("tab", value);
-      router.push(`?${params.toString()}`, { scroll: false });
-    });
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", value);
+    window.history.pushState(null, "", `?${params.toString()}`);
   };
 
   return (
