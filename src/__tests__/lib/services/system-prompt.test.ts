@@ -195,10 +195,49 @@ describe("generateSystemPrompt", () => {
       businessHours: null as string | null,
     };
 
-    const prompt = await generateSystemPrompt(restaurantWithoutHours);
+    const prompt = await generateSystemPrompt(restaurantWithoutHours, {
+      includeCurrentTime: true,
+    });
 
     expect(prompt).toContain("Horaires");
     expect(prompt).toContain("Non configuré");
+    expect(prompt).toContain("NON_CONFIGURE");
+    expect(prompt).toContain("Tu PEUX et DOIS prendre les commandes");
+  });
+
+  it("should refuse orders in prompt when restaurant is closed by hours", async () => {
+    const mockMenuJson = JSON.stringify({
+      categories: [{ category: "Kebab", items: [] }],
+    });
+    vi.mocked(fetchHubriseCatalog).mockResolvedValue(mockMenuJson);
+
+    const closedHours = JSON.stringify({
+      timezone: "Europe/Paris",
+      schedule: {
+        monday: { open: "11:00", close: "12:00" },
+      },
+    });
+
+    const prompt = await generateSystemPrompt(
+      { ...mockRestaurant, businessHours: closedHours },
+      {
+        includeCurrentTime: true,
+        availability: {
+          canTakeOrders: false,
+          reason: "closed_hours",
+          hoursState: {
+            isConfigured: true,
+            isOpen: false,
+            dayKey: "wednesday",
+            currentTime: "20:37",
+            timeZone: "Europe/Paris",
+          },
+        },
+      }
+    );
+
+    expect(prompt).toContain("RESTAURANT FERMÉ");
+    expect(prompt).toContain("NE prends AUCUNE commande");
   });
 
   it("should handle unknown error type from HubRise", async () => {
