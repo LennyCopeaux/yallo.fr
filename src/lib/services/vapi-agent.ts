@@ -2,6 +2,11 @@ import { generateSystemPrompt } from "./system-prompt";
 import type { restaurants } from "@/db/schema";
 import { logger } from "@/lib/logger";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
+import {
+  resolveAssistantFirstMessage,
+  resolveCallOrderAvailability,
+  type CallOrderAvailability,
+} from "./business-hours";
 
 type Restaurant = typeof restaurants.$inferSelect;
 
@@ -203,7 +208,11 @@ function buildAnalysisPlan() {
   };
 }
 
-function buildAssistantConfig(restaurant: Restaurant, systemPrompt: string) {
+function buildAssistantConfig(
+  restaurant: Restaurant,
+  systemPrompt: string,
+  options?: { availability?: CallOrderAvailability }
+) {
   const webhookUrl = getWebhookUrl(restaurant.id);
   const webhookSecret = getWebhookSecret();
   const voiceId = restaurant.voiceId?.trim() || process.env.VAPI_VOICE_ID?.trim() || DEFAULT_VOICE_ID;
@@ -212,8 +221,21 @@ function buildAssistantConfig(restaurant: Restaurant, systemPrompt: string) {
     Number.parseFloat(process.env.VAPI_LLM_TEMPERATURE?.trim() ?? "") ||
     DEFAULT_LLM_TEMPERATURE;
 
+  // Live calls pass availability; static create/update keep ordering enabled
+  // (real open/closed is applied on assistant-request).
+  const availability = options?.availability ?? {
+    canTakeOrders: true,
+    reason: "open" as const,
+    hoursState: resolveCallOrderAvailability(restaurant).hoursState,
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tools: any[] = [buildSubmitOrderTool(webhookUrl)];
+  const tools: any[] = [];
+
+  // Hard block at call start: no submit_order tool when closed / STOP
+  if (availability.canTakeOrders) {
+    tools.push(buildSubmitOrderTool(webhookUrl));
+  }
 
   if (restaurant.callForwardingEnabled && restaurant.phoneNumber?.trim()) {
     const transferPhoneNumber = normalizeFrenchPhoneNumber(restaurant.phoneNumber.trim());
@@ -251,7 +273,7 @@ function buildAssistantConfig(restaurant: Restaurant, systemPrompt: string) {
       model: "nova-3",
       language: "fr",
     },
-    firstMessage: restaurant.welcomeMessage ?? `Bonjour ici ${restaurant.name}, je vous écoute`,
+    firstMessage: resolveAssistantFirstMessage(restaurant, availability),
     analysisPlan: buildAnalysisPlan(),
 
     ...(webhookUrl
@@ -266,8 +288,12 @@ function buildAssistantConfig(restaurant: Restaurant, systemPrompt: string) {
 }
 
 export async function buildAssistantPayloadForCall(restaurant: Restaurant) {
-  const systemPrompt = await generateSystemPrompt(restaurant, { includeCurrentTime: true });
-  return buildAssistantConfig(restaurant, systemPrompt);
+  const availability = resolveCallOrderAvailability(restaurant);
+  const systemPrompt = await generateSystemPrompt(restaurant, {
+    includeCurrentTime: true,
+    availability,
+  });
+  return buildAssistantConfig(restaurant, systemPrompt, { availability });
 }
 
 export async function createVapiAssistant(restaurant: Restaurant): Promise<{ id: string }> {

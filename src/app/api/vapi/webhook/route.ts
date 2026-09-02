@@ -7,7 +7,7 @@ import { pushVoiceOrderToHubrise } from "@/lib/services/hubrise";
 import { normalizeSubmitOrderPayload } from "@/lib/services/submit-order-args";
 import { trySendOrderConfirmationSms } from "@/lib/services/twilio-sms";
 import { updateVapiAssistant, buildAssistantPayloadForCall } from "@/lib/services/vapi-agent";
-import { getBusinessHoursOpenState } from "@/lib/services/business-hours";
+import { resolveCallOrderAvailability } from "@/lib/services/business-hours";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -156,18 +156,15 @@ async function handleSubmitOrder(
     throw new Error("Restaurant introuvable");
   }
 
-  if (restaurant.currentStatus === "STOP") {
+  const availability = resolveCallOrderAvailability(restaurant);
+  if (!availability.canTakeOrders) {
+    const message =
+      availability.reason === "stop"
+        ? "Le restaurant est actuellement fermé et ne prend plus de commandes."
+        : "Le restaurant est actuellement fermé selon ses horaires d'ouverture.";
     return JSON.stringify({
       success: false,
-      message: "Le restaurant est actuellement fermé et ne prend plus de commandes.",
-    });
-  }
-
-  const hoursState = getBusinessHoursOpenState(restaurant.businessHours);
-  if (hoursState.isConfigured && !hoursState.isOpen) {
-    return JSON.stringify({
-      success: false,
-      message: "Le restaurant est actuellement fermé selon ses horaires d'ouverture.",
+      message,
     });
   }
 
@@ -519,9 +516,12 @@ export async function POST(request: Request) {
         }
 
         const assistantConfig = await buildAssistantPayloadForCall(restaurant);
+        const availability = resolveCallOrderAvailability(restaurant);
         logger.info("Webhook VAPI assistant-request traité", {
           restaurantId,
           hasBusinessHours: Boolean(restaurant.businessHours),
+          canTakeOrders: availability.canTakeOrders,
+          availabilityReason: availability.reason,
         });
         return NextResponse.json({ assistant: assistantConfig });
       } catch (err) {
