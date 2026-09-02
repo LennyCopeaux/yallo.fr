@@ -32,6 +32,24 @@ export type BusinessHoursOpenState = {
   timeZone: string;
 };
 
+/** Availability for taking phone orders (hours + kitchen STOP). */
+export type CallOrderAvailability = {
+  canTakeOrders: boolean;
+  /** Why orders are blocked, or why they are allowed despite missing hours. */
+  reason: "open" | "closed_hours" | "stop" | "hours_unconfigured";
+  hoursState: BusinessHoursOpenState;
+};
+
+type CallAvailabilityRestaurant = {
+  name: string;
+  businessHours: string | null;
+  currentStatus: "CALM" | "NORMAL" | "RUSH" | "STOP";
+  statusSettings?: {
+    STOP?: { message?: string };
+  } | null;
+  welcomeMessage?: string | null;
+};
+
 const DAY_KEYS: DayKey[] = [
   "monday",
   "tuesday",
@@ -174,9 +192,61 @@ export function buildHoursStatusLineForPrompt(
   const state = getBusinessHoursOpenState(businessHoursRaw, now);
 
   if (!state.isConfigured) {
-    return "Statut d'ouverture calculé en temps réel : INCONNU (horaires non configurés correctement).";
+    return "Statut d'ouverture calculé en temps réel : NON_CONFIGURE (horaires absents ou invalides). Dans ce cas, tu PEUX prendre les commandes. Ne dis JAMAIS que le restaurant est fermé pour cause d'horaires.";
   }
 
   const openLabel = state.isOpen ? "OUVERT" : "FERME";
   return `Statut d'ouverture calculé en temps réel : ${openLabel} (jour: ${FR_DAY_LABELS[state.dayKey]}, heure: ${state.currentTime}, fuseau: ${state.timeZone}).`;
+}
+
+/**
+ * Resolves whether the voice agent may take orders right now.
+ * - STOP kitchen status always blocks.
+ * - Configured hours that are closed block.
+ * - Missing / invalid hours do NOT block (fail-open) so restaurants without a schedule still work.
+ */
+export function resolveCallOrderAvailability(
+  restaurant: CallAvailabilityRestaurant,
+  now: Date = new Date()
+): CallOrderAvailability {
+  const hoursState = getBusinessHoursOpenState(restaurant.businessHours, now);
+
+  if (restaurant.currentStatus === "STOP") {
+    return { canTakeOrders: false, reason: "stop", hoursState };
+  }
+
+  if (!hoursState.isConfigured) {
+    return { canTakeOrders: true, reason: "hours_unconfigured", hoursState };
+  }
+
+  if (!hoursState.isOpen) {
+    return { canTakeOrders: false, reason: "closed_hours", hoursState };
+  }
+
+  return { canTakeOrders: true, reason: "open", hoursState };
+}
+
+export function buildClosedFirstMessage(
+  restaurant: CallAvailabilityRestaurant,
+  availability: CallOrderAvailability
+): string {
+  if (availability.reason === "stop") {
+    const stopMessage =
+      restaurant.statusSettings?.STOP?.message?.trim() ||
+      "Nous sommes actuellement fermés et ne prenons plus de commandes.";
+    return `Bonjour, ici ${restaurant.name}. ${stopMessage}`;
+  }
+
+  return `Bonjour, ici ${restaurant.name}. Nous sommes actuellement fermés selon nos horaires d'ouverture et ne pouvons pas prendre de commande pour le moment. Merci de rappeler pendant nos heures d'ouverture. Au revoir.`;
+}
+
+export function resolveAssistantFirstMessage(
+  restaurant: CallAvailabilityRestaurant,
+  availability: CallOrderAvailability
+): string {
+  if (!availability.canTakeOrders) {
+    return buildClosedFirstMessage(restaurant, availability);
+  }
+
+  return restaurant.welcomeMessage?.trim() || `Bonjour ici ${restaurant.name}, je vous écoute`;
 }
