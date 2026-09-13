@@ -78,3 +78,49 @@ export function computeSuggestedPickupTime(now: Date, prepMinutes: number): stri
 
   return `${String(finalHour).padStart(2, "0")}:${String(finalMinute).padStart(2, "0")}`;
 }
+
+const UNITS = ["", "une", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf"];
+const TEENS = [
+  "dix",
+  "onze",
+  "douze",
+  "treize",
+  "quatorze",
+  "quinze",
+  "seize",
+  "dix-sept",
+  "dix-huit",
+  "dix-neuf",
+];
+const TENS = ["", "", "vingt", "trente", "quarante", "cinquante"];
+
+/** 1 → 59, pour les minutes (et les heures 13–23). */
+export function numberToFrench(value: number): string {
+  if (value < 1 || value > 59) return String(value);
+  if (value < 10) return UNITS[value];
+  if (value < 20) return TEENS[value - 10];
+
+  const ten = Math.floor(value / 10);
+  const unit = value % 10;
+  if (unit === 0) return TENS[ten];
+  if (unit === 1) return `${TENS[ten]}-et-une`;
+  return `${TENS[ten]}-${UNITS[unit]}`;
+}
+
+/**
+ * Heure à lire à voix haute. Les chiffres (« 19h05 », « 19 heures 5 ») font
+ * basculer ElevenLabs sur « 19 euros 5 ». On n'envoie donc que des lettres.
+ */
+export function formatSpokenFrenchTime(hhmm: string): string {
+  const [hourRaw, minuteRaw] = hhmm.split(":");
+  const hour = Number(hourRaw);
+  const minute = Number(minuteRaw);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return hhmm;
+
+  const hourPart =
+    hour === 0 ? "minuit" : hour === 12 ? "midi" : hour === 1 ? "une heure" : `${numberToFrench(hour)} heures`;
+
+  if (minute === 0) return hourPart;
+  if (hour === 0 || hour === 12) return `${hourPart} ${numberToFrench(minute)}`;
+  return `${hourPart} ${numberToFrench(minute)}`;
+}

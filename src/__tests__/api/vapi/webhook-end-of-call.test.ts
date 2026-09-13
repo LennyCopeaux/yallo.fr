@@ -68,6 +68,7 @@ const baseRestaurant = {
   hubriseAccessToken: null,
   hubriseLocationId: null,
   smsConfirmationEnabled: false,
+  smsReadyEnabled: false,
   twilioPhoneNumber: null,
   autoRushThreshold: null,
   vapiAssistantId: null,

@@ -6,27 +6,16 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RestaurantDetailTabs } from "@/components/admin";
+import { AdminStatusBadge } from "@/components/admin/status-badge";
 
 function getStatusBadge(status: RestaurantStatus) {
   switch (status) {
     case "active":
-      return (
-        <span className="text-xs px-2 py-1 rounded-full bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 shrink-0">
-          Actif
-        </span>
-      );
+      return <AdminStatusBadge tone="active" label="Actif" />;
     case "onboarding":
-      return (
-        <span className="text-xs px-2 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/20 shrink-0">
-          Onboarding
-        </span>
-      );
+      return <AdminStatusBadge tone="warning" label="Onboarding" />;
     default:
-      return (
-        <span className="text-xs px-2 py-1 rounded-full bg-red-400/10 text-red-400 border border-red-400/20 shrink-0">
-          Suspendu
-        </span>
-      );
+      return <AdminStatusBadge tone="danger" label="Suspendu" />;
   }
 }
 

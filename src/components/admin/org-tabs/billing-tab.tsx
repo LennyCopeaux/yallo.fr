@@ -5,11 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { updateOrganizationBilling } from "@/app/(admin)/admin/actions";
 import type { OrgDetail } from "@/components/admin/org-detail-tabs";
+import { AdminStatusBadge, stripeStatusLabel, stripeStatusTone } from "@/components/admin/status-badge";
 
 function formatDate(date: Date | null | undefined) {
   if (!date) return "—";
@@ -18,12 +18,6 @@ function formatDate(date: Date | null | undefined) {
     month: "long",
     year: "numeric",
   }).format(new Date(date));
-}
-
-function statusVariant(status: string | null): "default" | "secondary" | "destructive" {
-  if (status === "active") return "default";
-  if (status === "trialing") return "secondary";
-  return "destructive";
 }
 
 interface OrgBillingTabProps {
@@ -77,9 +71,10 @@ export function OrgBillingTab({ org }: Readonly<OrgBillingTabProps>) {
             <div className="p-4 rounded-lg bg-background/40 border border-border/50 space-y-1">
               <p className="text-xs text-muted-foreground">Statut</p>
               {org.stripeSubscriptionStatus ? (
-                <Badge variant={statusVariant(org.stripeSubscriptionStatus)} className="capitalize">
-                  {org.stripeSubscriptionStatus}
-                </Badge>
+                <AdminStatusBadge
+                  tone={stripeStatusTone(org.stripeSubscriptionStatus)}
+                  label={stripeStatusLabel(org.stripeSubscriptionStatus)}
+                />
               ) : (
                 <p className="text-sm text-muted-foreground">—</p>
               )}
