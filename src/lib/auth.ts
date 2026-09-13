@@ -163,7 +163,7 @@ export async function getAccessibleRestaurantForUser(
   return restaurant ?? null;
 }
 
-export async function getUserRestaurants(organizationId?: string) {
+export const getUserRestaurants = cache(async (organizationId?: string) => {
   const user = await getAppUser();
   if (!user?.id) return [];
 
@@ -188,7 +188,7 @@ export async function getUserRestaurants(organizationId?: string) {
     return rows.filter((r) => r.organizationId === organizationId);
   }
   return rows;
-}
+});
 
 export async function getOwnerRestaurantFromOrg() {
   const org = await getUserOrganization();

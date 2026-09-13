@@ -1,3 +1,5 @@
+import { toSpokenFrenchLabel } from "./spoken-french";
+
 type DayKey =
   | "monday"
   | "tuesday"
@@ -238,18 +240,20 @@ export function buildClosedFirstMessage(
   restaurant: CallAvailabilityRestaurant,
   availability: CallOrderAvailability
 ): string {
+  const spokenName = toSpokenFrenchLabel(restaurant.name);
+
   if (availability.reason === "suspended") {
-    return `Bonjour, ici ${restaurant.name}. La prise de commande automatique est momentanément indisponible. Merci de rappeler plus tard. Au revoir.`;
+    return `Bonjour, ici ${spokenName}. La prise de commande automatique est momentanément indisponible. Merci de rappeler plus tard. Au revoir.`;
   }
 
   if (availability.reason === "stop") {
     const stopMessage =
       restaurant.statusSettings?.STOP?.message?.trim() ||
       "Nous sommes actuellement fermés et ne prenons plus de commandes.";
-    return `Bonjour, ici ${restaurant.name}. ${stopMessage}`;
+    return `Bonjour, ici ${spokenName}. ${stopMessage}`;
   }
 
-  return `Bonjour, ici ${restaurant.name}. Nous sommes actuellement fermés selon nos horaires d'ouverture et ne pouvons pas prendre de commande pour le moment. Merci de rappeler pendant nos heures d'ouverture. Au revoir.`;
+  return `Bonjour, ici ${spokenName}. Nous sommes actuellement fermés selon nos horaires d'ouverture et ne pouvons pas prendre de commande pour le moment. Merci de rappeler pendant nos heures d'ouverture. Au revoir.`;
 }
 
 export function resolveAssistantFirstMessage(
@@ -260,5 +264,8 @@ export function resolveAssistantFirstMessage(
     return buildClosedFirstMessage(restaurant, availability);
   }
 
-  return restaurant.welcomeMessage?.trim() || `Bonjour ici ${restaurant.name}, je vous écoute`;
+  return (
+    restaurant.welcomeMessage?.trim() ||
+    `Bonjour, ici ${toSpokenFrenchLabel(restaurant.name)}, je vous écoute.`
+  );
 }

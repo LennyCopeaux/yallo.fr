@@ -42,28 +42,29 @@ export function buildOrderConfirmationSmsBody(params: Readonly<{
   pickupTime?: string | null;
   notes?: string | null;
 }>): string {
-  const separator = "──────────────";
-  const header = `✅ Commande confirmée\n${separator}`;
-  const restaurant = `📍 ${params.restaurantName}`;
-  const ref = `🔖 Commande n° ${params.orderNumber}`;
-  const detail = params.lines.map((l) => `  • ${l}`).join("\n");
-  const total = `💶 Total : ${params.totalEuros} €`;
-
-  const parts: string[] = [header, restaurant, ref, separator, detail, separator, total];
+  const lines = [
+    "Commande confirmée",
+    params.restaurantName,
+    `Commande n° ${params.orderNumber}`,
+    "",
+    ...params.lines,
+    "",
+    `Total : ${params.totalEuros} €`,
+  ];
 
   if (params.pickupTime) {
-    parts.push(`⏰ Retrait : ${params.pickupTime}`);
+    lines.push(`Retrait : ${params.pickupTime}`);
   }
   if (params.customerName) {
-    parts.push(`👤 Au nom de : ${params.customerName}`);
+    lines.push(`Au nom de : ${params.customerName}`);
   }
   if (params.notes) {
-    parts.push(`📝 Note : ${params.notes}`);
+    lines.push(`Note : ${params.notes}`);
   }
 
-  parts.push(`\nMerci de votre commande ! 🙏`);
+  lines.push("", "Merci de votre commande !");
 
-  return parts.join("\n");
+  return lines.join("\n");
 }
 
 export async function trySendOrderConfirmationSms(options: Readonly<{
