@@ -1,22 +1,13 @@
-import { getAppUser } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Clock, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { getBusinessHours } from "@/features/hours/actions";
 import { HoursEditor } from "@/components/hours/hours-editor";
+import { requireDashboardAccess } from "@/lib/dashboard-guard";
 
 export default async function HoursPage() {
-  const user = await getAppUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  if (user.role === "ADMIN") {
-    redirect("/admin");
-  }
+  await requireDashboardAccess();
 
   const hoursData = await getBusinessHours();
 

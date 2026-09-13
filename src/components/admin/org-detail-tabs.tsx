@@ -20,6 +20,7 @@ export type OrgDetail = {
   stripePriceId: string | null;
   stripeCurrentPeriodEnd: Date | null;
   billingStartDate: string | null;
+  manualAccessEnabled: boolean;
   createdAt: Date | null;
   updatedAt: Date | null;
 };

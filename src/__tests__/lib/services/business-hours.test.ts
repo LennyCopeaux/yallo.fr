@@ -108,6 +108,69 @@ describe("business-hours", () => {
     expect(availability.reason).toBe("stop");
   });
 
+  it("resolveCallOrderAvailability blocks a suspended restaurant even during opening hours", () => {
+    const businessHours = JSON.stringify({
+      timezone: "Europe/Paris",
+      schedule: {
+        wednesday: { open: "11:00", close: "22:00" },
+      },
+    });
+
+    const availability = resolveCallOrderAvailability(
+      {
+        name: "Chez Test",
+        businessHours,
+        currentStatus: "CALM",
+        isActive: false,
+        status: "suspended",
+      },
+      new Date("2026-05-27T18:37:00.000Z")
+    );
+
+    expect(availability.canTakeOrders).toBe(false);
+    expect(availability.reason).toBe("suspended");
+  });
+
+  it("resolveCallOrderAvailability keeps an onboarding restaurant usable", () => {
+    const availability = resolveCallOrderAvailability(
+      {
+        name: "Chez Test",
+        businessHours: null,
+        currentStatus: "CALM",
+        isActive: true,
+        status: "onboarding",
+      },
+      new Date("2026-05-27T18:37:00.000Z")
+    );
+
+    expect(availability.canTakeOrders).toBe(true);
+  });
+
+  it("suspended first message stays neutral about billing", () => {
+    const availability = resolveCallOrderAvailability(
+      {
+        name: "Chez Test",
+        businessHours: null,
+        currentStatus: "CALM",
+        isActive: false,
+      },
+      new Date("2026-05-27T18:37:00.000Z")
+    );
+
+    const firstMessage = resolveAssistantFirstMessage(
+      {
+        name: "Chez Test",
+        businessHours: null,
+        currentStatus: "CALM",
+        welcomeMessage: "Bienvenue, je vous écoute",
+      },
+      availability
+    );
+
+    expect(firstMessage).toContain("indisponible");
+    expect(firstMessage).not.toMatch(/abonnement|paiement|facture/i);
+  });
+
   it("resolveAssistantFirstMessage announces closure when closed", () => {
     const availability = resolveCallOrderAvailability(
       {

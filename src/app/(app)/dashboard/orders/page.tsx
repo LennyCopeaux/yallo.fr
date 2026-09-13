@@ -1,13 +1,9 @@
-import { getAppUser } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { getOrders, getUserRestaurant } from "@/features/orders/actions";
+import { requireDashboardAccess } from "@/lib/dashboard-guard";
 import { OrdersPageContent } from "./_components/orders-page-content";
 
 export default async function OrdersPage() {
-  const user = await getAppUser();
-
-  if (!user) redirect("/login");
-  if (user.role === "ADMIN") redirect("/admin");
+  await requireDashboardAccess();
 
   const restaurant = await getUserRestaurant();
   const ordersData = restaurant ? await getOrders() : [];

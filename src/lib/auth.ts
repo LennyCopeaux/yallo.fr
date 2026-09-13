@@ -56,7 +56,11 @@ export async function requireRole(role: UserRole): Promise<AppUser> {
   return user;
 }
 
-export async function getUserOrganizations() {
+/**
+ * Memoized per-request: le layout, les pages et le paywall interrogent tous
+ * l'organisation courante — une seule requete suffit par render.
+ */
+export const getUserOrganizations = cache(async () => {
   const user = await getAppUser();
   if (!user?.id) return [];
 
@@ -75,9 +79,9 @@ export async function getUserOrganizations() {
     .where(eq(organizationMembers.userId, user.id));
 
   return memberships;
-}
+});
 
-export async function getUserOrganization() {
+export const getUserOrganization = cache(async () => {
   const orgs = await getUserOrganizations();
   if (!orgs.length) return null;
 
@@ -89,7 +93,7 @@ export async function getUserOrganization() {
   });
 
   return org ?? null;
-}
+});
 
 async function getAccessibleRestaurantIds(userId: string, role: string): Promise<string[]> {
   if (role === "EMPLOYEE") {

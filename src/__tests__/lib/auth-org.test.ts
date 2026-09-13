@@ -70,6 +70,7 @@ const mockOrgWithRestaurants = {
   billingStartDate: null,
   isActive: true,
   status: "active",
+  manualAccessEnabled: false,
   createdAt: new Date(),
   updatedAt: new Date(),
   restaurants: [

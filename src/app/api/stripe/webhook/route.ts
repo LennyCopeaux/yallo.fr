@@ -9,6 +9,7 @@ import {
   getStripeWebhookSecret,
   isRestaurantActiveFromStripeStatus,
 } from "@/lib/services/stripe-webhook";
+import { billPendingCallUsage } from "@/lib/services/call-usage-billing";
 
 export const runtime = "nodejs";
 
@@ -23,6 +24,14 @@ export async function POST(request: Request) {
 
   try {
     const event = stripe.webhooks.constructEvent(payload, stripeSignature, getStripeWebhookSecret());
+
+    // Stripe laisse le brouillon ouvert environ une heure avant de le finaliser :
+    // c'est la fenetre pour y ajouter les minutes d'appel consommees.
+    if (event.type === "invoice.created") {
+      const result = await billPendingCallUsage(event.data.object);
+      return NextResponse.json({ received: true, usage: result }, { status: 200 });
+    }
+
     const syncPayload = extractStripeSubscriptionSyncPayload(event);
 
     if (!syncPayload) {

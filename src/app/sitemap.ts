@@ -37,12 +37,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.3,
     },
     {
-      url: `${siteUrl}/mentions-legales`,
-      lastModified: currentDate,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
-    {
       url: `${siteUrl}/login`,
       lastModified: currentDate,
       changeFrequency: "yearly",

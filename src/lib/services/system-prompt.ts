@@ -100,6 +100,14 @@ function getHoursPriorityInstruction(availability: CallOrderAvailability | null)
 - Confirme poliment que le restaurant ne prend plus de commandes pour le moment.`;
   }
 
+  if (availability.reason === "suspended") {
+    return `PRIORITÉ ABSOLUE — SERVICE INDISPONIBLE :
+- La prise de commande automatique est désactivée pour cet établissement.
+- NE prends AUCUNE commande. N'appelle JAMAIS submit_order.
+- Dis simplement que le service est momentanément indisponible et invite le client à rappeler plus tard.
+- N'évoque JAMAIS de raison administrative, de facturation ou d'abonnement.`;
+  }
+
   if (availability.reason === "hours_unconfigured") {
     return `Horaires non configurés :
 - Le statut est NON_CONFIGURE. Tu PEUX et DOIS prendre les commandes normalement.

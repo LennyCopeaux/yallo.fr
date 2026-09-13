@@ -15,6 +15,15 @@ vi.mock("@/lib/auth", () => ({
   getAccessibleRestaurant: vi.fn(),
 }));
 
+vi.mock("@/lib/subscription-access", () => ({
+  getSubscriptionAccess: vi.fn().mockResolvedValue({
+    hasAccess: true,
+    reason: "paid",
+    status: "active",
+    currentPeriodEnd: null,
+  }),
+}));
+
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));

@@ -1,6 +1,7 @@
 "use server";
 
 import { requireAuth, getAccessibleRestaurant } from "@/lib/auth";
+import { getSubscriptionAccess } from "@/lib/subscription-access";
 import { db } from "@/db";
 import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -14,6 +15,16 @@ export type ActionResult = {
   error?: string;
   data?: unknown;
 };
+
+/** Renvoie une erreur prete a retourner si l'abonnement ne couvre pas la modification. */
+async function blockedBySubscription(): Promise<ActionResult | null> {
+  const access = await getSubscriptionAccess();
+  if (access.hasAccess) return null;
+  return {
+    success: false,
+    error: "Abonnement inactif : réactivez votre abonnement pour modifier les paramètres.",
+  };
+}
 
 export type CallForwardingSettings = {
   twilioPhoneNumber: string | null;
@@ -79,6 +90,9 @@ export async function updateCallForwardingSettings(
 
   const restaurant = await getAccessibleRestaurant();
   if (!restaurant) return { success: false, error: "Aucun restaurant trouvé" };
+
+  const blocked = await blockedBySubscription();
+  if (blocked) return blocked;
 
   await db
     .update(restaurants)
@@ -160,6 +174,9 @@ export async function updateVoiceId(
   const restaurant = await getAccessibleRestaurant();
   if (!restaurant) return { success: false, error: "Aucun restaurant trouvé" };
 
+  const blocked = await blockedBySubscription();
+  if (blocked) return blocked;
+
   await db
     .update(restaurants)
     .set({ voiceId: parsed.data.voiceId, updatedAt: new Date() })
@@ -203,6 +220,9 @@ export async function updateAssistantBehaviour(
 
   const restaurant = await getAccessibleRestaurant();
   if (!restaurant) return { success: false, error: "Aucun restaurant trouvé" };
+
+  const blocked = await blockedBySubscription();
+  if (blocked) return blocked;
 
   await db
     .update(restaurants)

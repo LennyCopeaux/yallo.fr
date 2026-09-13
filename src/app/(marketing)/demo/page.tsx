@@ -7,11 +7,27 @@ import { DemoHeader } from "@/components/demo/demo-header";
 
 export const metadata = {
   title: "Démo gratuite | Yallo",
-  description: "Testez gratuitement Yallo en appelant notre numéro de démonstration. Découvrez l'IA vocale en action avec 30 secondes gratuites.",
+  description: "Testez Yallo en appelant notre numéro de démonstration : passez une vraie commande et découvrez l'assistant vocal en action.",
 };
 
-const phoneNumber = "0000000000";
-const formattedPhoneNumber = "+33 •• •• •• •• ••";
+/**
+ * Le numero de demo n'est expose que si NEXT_PUBLIC_DEMO_PHONE_NUMBER est defini :
+ * sans variable, la page reste en etat "indisponible" et personne ne consomme de
+ * minutes. C'est le seul geste a faire pour ouvrir ou fermer la demo publique.
+ */
+const demoPhoneNumber = process.env.NEXT_PUBLIC_DEMO_PHONE_NUMBER?.trim() ?? "";
+const isDemoCallEnabled = demoPhoneNumber.length > 0;
+
+function formatFrenchPhoneNumber(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  const local = digits.startsWith("33") && digits.length === 11 ? `0${digits.slice(2)}` : digits;
+  if (local.length !== 10) return raw;
+  return (local.match(/.{2}/g) ?? []).join(" ");
+}
+
+const formattedPhoneNumber = isDemoCallEnabled
+  ? formatFrenchPhoneNumber(demoPhoneNumber)
+  : "+33 •• •• •• •• ••";
 
 const menuItems = [
   { name: "Menu Classique", price: "8€" },
@@ -40,13 +56,19 @@ export default function DemoPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
-              <div className="text-3xl font-bold text-foreground mb-2 blur-sm select-none">
+              <div
+                className={`text-3xl font-bold text-foreground mb-2 ${
+                  isDemoCallEnabled ? "" : "blur-sm select-none"
+                }`}
+              >
                 {formattedPhoneNumber}
               </div>
               <div className="text-sm text-muted-foreground mb-2 text-center">
-                Numéro de démonstration temporairement indisponible
+                {isDemoCallEnabled
+                  ? "Appelez et commandez comme un vrai client, sans inscription"
+                  : "Numéro de démonstration temporairement indisponible"}
               </div>
-              <DemoCallButton phoneNumber={phoneNumber} disabled={true} />
+              <DemoCallButton phoneNumber={demoPhoneNumber} disabled={!isDemoCallEnabled} />
             </CardContent>
           </Card>
 

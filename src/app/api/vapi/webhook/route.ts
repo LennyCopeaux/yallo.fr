@@ -1,13 +1,14 @@
 import { db } from "@/db";
 import { orders, orderItems, restaurants, callLogs } from "@/db/schema";
-import { eq, and, inArray, count } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { pushVoiceOrderToHubrise } from "@/lib/services/hubrise";
 import { normalizeSubmitOrderPayload } from "@/lib/services/submit-order-args";
 import { trySendOrderConfirmationSms } from "@/lib/services/twilio-sms";
-import { updateVapiAssistant, buildAssistantPayloadForCall } from "@/lib/services/vapi-agent";
+import { buildAssistantPayloadForCall } from "@/lib/services/vapi-agent";
 import { resolveCallOrderAvailability } from "@/lib/services/business-hours";
+import { applyAutoRush } from "@/lib/services/auto-rush";
 import { normalizeFrenchPhoneNumber } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -158,13 +159,15 @@ async function handleSubmitOrder(
 
   const availability = resolveCallOrderAvailability(restaurant);
   if (!availability.canTakeOrders) {
-    const message =
-      availability.reason === "stop"
-        ? "Le restaurant est actuellement fermé et ne prend plus de commandes."
-        : "Le restaurant est actuellement fermé selon ses horaires d'ouverture.";
+    const messagesByReason: Record<string, string> = {
+      suspended: "La prise de commande automatique est momentanément indisponible.",
+      stop: "Le restaurant est actuellement fermé et ne prend plus de commandes.",
+    };
     return JSON.stringify({
       success: false,
-      message,
+      message:
+        messagesByReason[availability.reason] ??
+        "Le restaurant est actuellement fermé selon ses horaires d'ouverture.",
     });
   }
 
@@ -279,49 +282,7 @@ async function handleSubmitOrder(
     totalAmount,
   });
 
-  if (
-    restaurant.autoRushThreshold !== null &&
-    restaurant.autoRushThreshold !== undefined &&
-    restaurant.currentStatus !== "RUSH"
-  ) {
-    try {
-      const [{ value: activeOrderCount }] = await db
-        .select({ value: count() })
-        .from(orders)
-        .where(
-          and(
-            eq(orders.restaurantId, restaurant.id),
-            inArray(orders.status, ["NEW", "PREPARING"])
-          )
-        );
-
-      if (activeOrderCount >= restaurant.autoRushThreshold) {
-        await db
-          .update(restaurants)
-          .set({ currentStatus: "RUSH", updatedAt: new Date() })
-          .where(eq(restaurants.id, restaurant.id));
-
-        if (restaurant.vapiAssistantId) {
-          await updateVapiAssistant(restaurant.vapiAssistantId, {
-            ...restaurant,
-            currentStatus: "RUSH",
-          });
-        }
-
-        logger.info("Passage automatique en RUSH", {
-          restaurantId: restaurant.id,
-          activeOrderCount,
-          threshold: restaurant.autoRushThreshold,
-        });
-      }
-    } catch (rushErr) {
-      logger.error(
-        "Erreur lors du calcul auto-rush",
-        rushErr instanceof Error ? rushErr : new Error(String(rushErr)),
-        { restaurantId: restaurant.id }
-      );
-    }
-  }
+  await applyAutoRush(restaurant);
 
   if (restaurant.smsConfirmationEnabled && process.env.TWILIO_ORDER_CONFIRMATION_SMS !== "false") {
     const fromRaw = process.env.TWILIO_SMS_FROM?.trim() || restaurant.twilioPhoneNumber?.trim();

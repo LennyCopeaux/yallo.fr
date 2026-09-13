@@ -1,5 +1,4 @@
-import { getAppUser } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { requireDashboardAccess } from "@/lib/dashboard-guard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, ArrowLeft, Settings } from "lucide-react";
@@ -13,15 +12,7 @@ import { getKitchenStatus, type StatusSettings } from "@/features/kitchen-status
 import type { CallForwardingSettings, AssistantSettings, ElevenLabsVoice } from "@/features/settings/actions";
 
 export default async function SettingsPage() {
-  const user = await getAppUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  if (user.role === "ADMIN") {
-    redirect("/admin");
-  }
+  await requireDashboardAccess();
 
   const [settingsResult, kitchenStatus, assistantResult, voicesResult] = await Promise.all([
     getCallForwardingSettings(),

@@ -6,14 +6,19 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { parseMenuFromBase64Images } from "@/lib/services/menu-parser";
 import { requireAuth, getAccessibleRestaurant } from "@/lib/auth";
+import { requirePaidSubscription } from "@/lib/subscription-access";
 import { updateVapiAssistant } from "@/lib/services/vapi-agent";
 
-async function getRestaurantForOwner() {
+async function getRestaurantForOwner(options?: { requireSubscription?: boolean }) {
   const user = await requireAuth();
   if (user.role === "EMPLOYEE") throw new Error("Accès non autorisé");
 
   const restaurant = await getAccessibleRestaurant();
   if (!restaurant) throw new Error("Restaurant non trouvé");
+
+  if (options?.requireSubscription) {
+    await requirePaidSubscription();
+  }
 
   return restaurant;
 }
@@ -25,7 +30,7 @@ export async function getMenuData(): Promise<MenuData | null> {
 
 export async function saveMenuData(menuData: MenuData): Promise<{ success: boolean; error?: string }> {
   try {
-    const restaurant = await getRestaurantForOwner();
+    const restaurant = await getRestaurantForOwner({ requireSubscription: true });
 
     await db
       .update(restaurants)
@@ -60,6 +65,9 @@ export async function generateMenuFromImages(
   base64Images: string[]
 ): Promise<{ success: boolean; menuData?: MenuData; error?: string }> {
   try {
+    // L'analyse OpenAI est facturee : elle ne doit pas etre accessible sans abonnement.
+    await getRestaurantForOwner({ requireSubscription: true });
+
     if (base64Images.length === 0) {
       return { success: false, error: "Aucune image fournie" };
     }
@@ -79,7 +87,7 @@ export async function generateMenuFromImages(
 
 export async function clearMenuData(): Promise<{ success: boolean; error?: string }> {
   try {
-    const restaurant = await getRestaurantForOwner();
+    const restaurant = await getRestaurantForOwner({ requireSubscription: true });
 
     await db
       .update(restaurants)

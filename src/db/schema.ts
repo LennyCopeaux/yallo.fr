@@ -84,6 +84,9 @@ export const organizations = pgTable("organizations", {
   status: text("status").notNull().default("active"),
   isActive: boolean("is_active").default(true).notNull(),
 
+  /** Accès offert (pilote, partenaire, compte interne) : contourne le paywall Stripe. */
+  manualAccessEnabled: boolean("manual_access_enabled").default(false).notNull(),
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -142,6 +145,12 @@ export const restaurants = pgTable("restaurants", {
   smsConfirmationEnabled: boolean("sms_confirmation_enabled").default(false).notNull(),
 
   autoRushThreshold: integer("auto_rush_threshold"),
+
+  /**
+   * Vrai quand le mode RUSH a ete declenche par le seuil de charge, et non
+   * choisi a la main : seul ce cas redescend automatiquement.
+   */
+  autoRushActive: boolean("auto_rush_active").default(false).notNull(),
 
   welcomeMessage: text("welcome_message"),
 
@@ -320,12 +329,19 @@ export const callLogs = pgTable("call_logs", {
   startedAt: timestamp("started_at"),
   endedAt: timestamp("ended_at"),
   status: text("status", { enum: callStatusEnum }).default("completed").notNull(),
+
+  /** Renseigne quand l'appel a ete porte sur une facture Stripe. */
+  billedAt: timestamp("billed_at"),
+  stripeInvoiceId: text("stripe_invoice_id"),
+
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   // Stats d'appels par restaurant sur une plage de dates.
   index("call_logs_restaurant_id_created_at_idx").on(table.restaurantId, table.createdAt),
   // Consommation facturable par organisation sur la periode de facturation.
   index("call_logs_organization_id_created_at_idx").on(table.organizationId, table.createdAt),
+  // Appels restant a facturer pour une organisation.
+  index("call_logs_organization_id_billed_at_idx").on(table.organizationId, table.billedAt),
 ]);
 
 export const callLogsRelations = relations(callLogs, ({ one }) => ({

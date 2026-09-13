@@ -32,11 +32,11 @@ export type BusinessHoursOpenState = {
   timeZone: string;
 };
 
-/** Availability for taking phone orders (hours + kitchen STOP). */
+/** Availability for taking phone orders (subscription + hours + kitchen STOP). */
 export type CallOrderAvailability = {
   canTakeOrders: boolean;
   /** Why orders are blocked, or why they are allowed despite missing hours. */
-  reason: "open" | "closed_hours" | "stop" | "hours_unconfigured";
+  reason: "open" | "closed_hours" | "stop" | "hours_unconfigured" | "suspended";
   hoursState: BusinessHoursOpenState;
 };
 
@@ -48,6 +48,9 @@ type CallAvailabilityRestaurant = {
     STOP?: { message?: string };
   } | null;
   welcomeMessage?: string | null;
+  /** Desactive quand l'abonnement Stripe n'est plus actif (webhook Stripe). */
+  isActive?: boolean | null;
+  status?: "active" | "suspended" | "onboarding" | null;
 };
 
 const DAY_KEYS: DayKey[] = [
@@ -201,6 +204,7 @@ export function buildHoursStatusLineForPrompt(
 
 /**
  * Resolves whether the voice agent may take orders right now.
+ * - A suspended restaurant (abonnement inactif) always blocks.
  * - STOP kitchen status always blocks.
  * - Configured hours that are closed block.
  * - Missing / invalid hours do NOT block (fail-open) so restaurants without a schedule still work.
@@ -210,6 +214,10 @@ export function resolveCallOrderAvailability(
   now: Date = new Date()
 ): CallOrderAvailability {
   const hoursState = getBusinessHoursOpenState(restaurant.businessHours, now);
+
+  if (restaurant.isActive === false || restaurant.status === "suspended") {
+    return { canTakeOrders: false, reason: "suspended", hoursState };
+  }
 
   if (restaurant.currentStatus === "STOP") {
     return { canTakeOrders: false, reason: "stop", hoursState };
@@ -230,6 +238,10 @@ export function buildClosedFirstMessage(
   restaurant: CallAvailabilityRestaurant,
   availability: CallOrderAvailability
 ): string {
+  if (availability.reason === "suspended") {
+    return `Bonjour, ici ${restaurant.name}. La prise de commande automatique est momentanément indisponible. Merci de rappeler plus tard. Au revoir.`;
+  }
+
   if (availability.reason === "stop") {
     const stopMessage =
       restaurant.statusSettings?.STOP?.message?.trim() ||

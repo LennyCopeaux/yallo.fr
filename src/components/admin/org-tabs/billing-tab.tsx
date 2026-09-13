@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { updateOrganizationBilling } from "@/app/(admin)/admin/actions";
 import type { OrgDetail } from "@/components/admin/org-detail-tabs";
@@ -33,11 +34,13 @@ export function OrgBillingTab({ org }: Readonly<OrgBillingTabProps>) {
   const [, startTransition] = useTransition();
   const [stripeCustomerId, setStripeCustomerId] = useState(org.stripeCustomerId ?? "");
   const [billingStartDate, setBillingStartDate] = useState(org.billingStartDate ?? "");
+  const [manualAccessEnabled, setManualAccessEnabled] = useState(org.manualAccessEnabled);
   const [isSaving, setIsSaving] = useState(false);
 
   const hasChanges =
     stripeCustomerId !== (org.stripeCustomerId ?? "") ||
-    billingStartDate !== (org.billingStartDate ?? "");
+    billingStartDate !== (org.billingStartDate ?? "") ||
+    manualAccessEnabled !== org.manualAccessEnabled;
 
   function handleSave() {
     setIsSaving(true);
@@ -45,6 +48,7 @@ export function OrgBillingTab({ org }: Readonly<OrgBillingTabProps>) {
       const result = await updateOrganizationBilling(org.id, {
         stripeCustomerId,
         billingStartDate,
+        manualAccessEnabled,
       });
       setIsSaving(false);
       if (result.success) toast.success("Facturation mise à jour");
@@ -134,6 +138,23 @@ export function OrgBillingTab({ org }: Readonly<OrgBillingTabProps>) {
               value={billingStartDate}
               onChange={(e) => setBillingStartDate(e.target.value)}
               className="bg-background/50 border-border"
+            />
+          </div>
+
+          <div className="flex items-start justify-between gap-4 rounded-lg border border-border/50 bg-background/40 p-4">
+            <div className="space-y-1">
+              <Label htmlFor="manual-access" className="cursor-pointer">
+                Accès offert (sans abonnement Stripe)
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Débloque le dashboard et l&apos;assistant vocal sans paiement : comptes
+                internes, pilotes et partenaires.
+              </p>
+            </div>
+            <Switch
+              id="manual-access"
+              checked={manualAccessEnabled}
+              onCheckedChange={setManualAccessEnabled}
             />
           </div>
         </CardContent>
