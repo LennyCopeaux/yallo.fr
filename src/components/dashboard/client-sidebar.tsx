@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
@@ -67,6 +67,12 @@ export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurant
         { name: "Dashboard organisation", href: `/org/${orgId}`, icon: Building2 },
       ]
     : [];
+
+  useEffect(() => {
+    for (const item of navigation) {
+      router.prefetch(item.href);
+    }
+  }, [router]);
 
   function handleSwitchRestaurant(id: string) {
     setSelectorOpen(false);

@@ -13,5 +13,7 @@ describe("buildOrderConfirmationSmsBody", () => {
     expect(text).toContain("#123");
     expect(text).toContain("Margherita");
     expect(text).toContain("9.00");
+    expect(text).toContain("Merci de votre commande !");
+    expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);
   });
 });

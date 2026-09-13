@@ -16,8 +16,11 @@ const DEFAULT_LLM_MODEL = "gpt-4o-mini";
 
 const DEFAULT_LLM_TEMPERATURE = 0.3;
 
-/** Plafond ElevenLabs côté VAPI : 0.7–1.2. 1.2 = débit comptoir, sans accélérer jusqu'à l'illisible. */
-const DEFAULT_VOICE_SPEED = 1.2;
+/**
+ * 1.0 = débit naturel. Au-dessus, ElevenLabs accélère les phonèmes français
+ * jusqu'à basculer sur un accent / une langue illisibles (« Normallow grunge »).
+ */
+const DEFAULT_VOICE_SPEED = 1.0;
 
 const DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
 
@@ -272,10 +275,13 @@ function buildAssistantConfig(
     voice: {
       provider: "11labs",
       voiceId,
-      model: "eleven_turbo_v2_5",
+      // Flash v2.5 est le seul modèle ElevenLabs VAPI qui accepte un verrou de langue.
+      // Turbo, plus rapide, interprète souvent un fragment français comme de l'anglais.
+      model: "eleven_flash_v2_5",
+      language: "fr",
       speed: DEFAULT_VOICE_SPEED,
-      stability: 0.5,
-      similarityBoost: 0.75,
+      stability: 0.8,
+      similarityBoost: 0.8,
       optimizeStreamingLatency: 3,
     },
     backgroundSound: "off",
