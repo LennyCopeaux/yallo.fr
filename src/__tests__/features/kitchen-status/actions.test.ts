@@ -18,6 +18,15 @@ vi.mock("@/lib/auth", () => ({
   requireAuth: vi.fn(),
 }));
 
+vi.mock("@/lib/subscription-access", () => ({
+  requirePaidSubscription: vi.fn().mockResolvedValue({
+    hasAccess: true,
+    reason: "paid",
+    status: "active",
+    currentPeriodEnd: null,
+  }),
+}));
+
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));

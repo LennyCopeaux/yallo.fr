@@ -1,4 +1,3 @@
-import { getAppUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,17 +6,10 @@ import { getMenuData } from "@/features/menu/actions";
 import { MenuManager } from "@/components/menu";
 import Link from "next/link";
 import { getUserRestaurant } from "@/features/orders/actions";
+import { requireDashboardAccess } from "@/lib/dashboard-guard";
 
 export default async function MenuPage() {
-  const user = await getAppUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  if (user.role === "ADMIN") {
-    redirect("/admin");
-  }
+  await requireDashboardAccess();
 
   const restaurant = await getUserRestaurant();
 

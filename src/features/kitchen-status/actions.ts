@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { restaurants, type KitchenStatus } from "@/db/schema";
 import { requireAuth, getAccessibleRestaurant } from "@/lib/auth";
+import { requirePaidSubscription } from "@/lib/subscription-access";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -45,6 +46,7 @@ export async function getKitchenStatus() {
 
 export async function updateKitchenStatus(status: KitchenStatus) {
   await requireAuth();
+  await requirePaidSubscription();
 
   const isValidStatus = ["CALM", "NORMAL", "RUSH", "STOP"].includes(status);
   if (!isValidStatus) throw new Error("Statut invalide");
@@ -52,9 +54,11 @@ export async function updateKitchenStatus(status: KitchenStatus) {
   const ownerRestaurant = await getAccessibleRestaurant();
   if (!ownerRestaurant) throw new Error("Restaurant non trouvé");
 
+  // Choix explicite du restaurateur : la bascule automatique ne doit plus
+  // redescendre ce statut toute seule.
   await db
     .update(restaurants)
-    .set({ currentStatus: status, updatedAt: new Date() })
+    .set({ currentStatus: status, autoRushActive: false, updatedAt: new Date() })
     .where(eq(restaurants.id, ownerRestaurant.id));
 
   if (ownerRestaurant.vapiAssistantId) {
@@ -62,6 +66,7 @@ export async function updateKitchenStatus(status: KitchenStatus) {
       await updateVapiAssistant(ownerRestaurant.vapiAssistantId, {
         ...ownerRestaurant,
         currentStatus: status,
+        autoRushActive: false,
       });
     } catch (err) {
       console.error("Erreur sync assistant VAPI après mise à jour statut cuisine :", err);
@@ -74,6 +79,7 @@ export async function updateKitchenStatus(status: KitchenStatus) {
 
 export async function updateStatusSettings(settings: StatusSettings) {
   await requireAuth();
+  await requirePaidSubscription();
 
   const validatedSettings = statusSettingsSchema.parse(settings);
 

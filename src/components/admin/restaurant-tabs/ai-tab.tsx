@@ -40,7 +40,7 @@ interface AITabProps {
   restaurant: Restaurant;
 }
 
-function ElevenLabsIcon() {
+function VoiceAgentIcon() {
   return (
     <svg
       className="w-5 h-5 text-primary"
@@ -160,8 +160,8 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
               <CardTitle className="flex items-center gap-2">
-                <ElevenLabsIcon />
-                Agent ElevenLabs
+                <VoiceAgentIcon />
+                Assistant vocal VAPI
               </CardTitle>
               {isFullyOperational ? (
                 <AdminStatusBadge tone="active" label="Actif" />
@@ -171,17 +171,16 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
             </div>
             <CardDescription className="space-y-2">
               <span className="block">
-                L&apos;identifiant de l&apos;agent ElevenLabs Conversational AI qui gère les appels
-                vocaux (voix ElevenLabs Turbo v2.5 —{" "}
-                <code className="font-mono text-xs">ELEVENLABS_VOICE_ID</code> optionnel).
+                L&apos;assistant VAPI qui prend les appels : il porte le prompt système, le menu,
+                les horaires et la voix choisie par le restaurateur.
               </span>
               <span className="block text-xs text-muted-foreground border-l-2 border-amber-500/40 pl-2">
-                <strong>Vercel / prod :</strong> définissez{" "}
-                <code className="font-mono rounded bg-muted px-0.5">ELEVENLABS_WEBHOOK_SECRET</code>{" "}
-                (chaîne secrète, ex. <code className="font-mono">openssl rand -hex 32</code>) puis
-                cliquez sur <strong>Mettre à jour l&apos;agent</strong> pour que ElevenLabs envoie
-                ce secret au webhook. Sans cela, les commandes vocales échouent. Optionnel :{" "}
-                <code className="font-mono">NEXT_PUBLIC_APP_URL</code> en https vers votre app.
+                <strong>Vercel / prod :</strong> renseignez{" "}
+                <code className="font-mono rounded bg-muted px-0.5">VAPI_API_KEY</code> et{" "}
+                <code className="font-mono rounded bg-muted px-0.5">NEXT_PUBLIC_APP_URL</code> (en
+                https) pour que VAPI puisse appeler le webhook de prise de commande. Après tout
+                changement de menu ou d&apos;horaires, cliquez sur{" "}
+                <strong>Mettre à jour l&apos;agent</strong>.
               </span>
             </CardDescription>
           </CardHeader>
@@ -214,8 +213,8 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
               {!hasAgentId && (
                 <p className="text-sm text-muted-foreground">
                   {hasTwilioNumber
-                    ? `Le numéro ${restaurant.twilioPhoneNumber} sera automatiquement importé dans ElevenLabs et lié à l'agent.`
-                    : "Renseignez d'abord le numéro Twilio dans l'onglet Téléphonie, puis revenez ici pour créer l'agent."}
+                    ? `Le numéro ${restaurant.twilioPhoneNumber} sera automatiquement importé dans VAPI et lié à l'assistant.`
+                    : "Renseignez d'abord le numéro Twilio dans l'onglet Téléphonie, puis revenez ici pour créer l'assistant."}
                 </p>
               )}
               {!hasAgentId ? (

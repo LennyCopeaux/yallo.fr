@@ -1,6 +1,7 @@
 "use server";
 
 import { requireAuth, getAccessibleRestaurant } from "@/lib/auth";
+import { getSubscriptionAccess } from "@/lib/subscription-access";
 import { db } from "@/db";
 import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -73,6 +74,14 @@ export async function updateBusinessHours(formData: FormData): Promise<ActionRes
 
   const restaurant = await getAccessibleRestaurant();
   if (!restaurant) return { success: false, error: "Aucun restaurant trouvé" };
+
+  const access = await getSubscriptionAccess();
+  if (!access.hasAccess) {
+    return {
+      success: false,
+      error: "Abonnement inactif : réactivez votre abonnement pour modifier les horaires.",
+    };
+  }
 
   const hoursInput = formData.get("businessHours");
   if (!hoursInput || typeof hoursInput !== "string") {

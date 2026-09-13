@@ -3,7 +3,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { type Order } from "@/components/orders";
 import { useState, useTransition } from "react";
 import {
   TrendingUp,
@@ -15,14 +14,13 @@ import {
   ChevronRight,
   PhoneCall,
   RefreshCw,
-  Mic,
-  Star,
-  Phone,
+  Timer,
   Zap,
 } from "lucide-react";
 
 import {
   getRestaurantCallStats,
+  type DashboardMetrics,
   type RestaurantCallStats,
   type DateRangeFilter,
 } from "@/features/orders/actions";
@@ -36,7 +34,7 @@ const DATE_RANGE_OPTIONS: { value: DateRangeFilter; label: string }[] = [
 ];
 
 interface DashboardContentProps {
-  orders: Order[];
+  metrics: DashboardMetrics;
   callStats: RestaurantCallStats | null;
 }
 
@@ -44,7 +42,7 @@ type DeltaMeta =
   | { kind: "increase" | "decrease" | "flat"; value: number }
   | { kind: "new" };
 
-export function DashboardContent({ orders, callStats: initialCallStats }: Readonly<DashboardContentProps>) {
+export function DashboardContent({ metrics, callStats: initialCallStats }: Readonly<DashboardContentProps>) {
   const [callStats, setCallStats] = useState<RestaurantCallStats | null>(initialCallStats);
   const [callRangeFilter, setCallRangeFilter] = useState<DateRangeFilter>("all_time");
   const [isPendingCallStats, startCallStatsTransition] = useTransition();
@@ -111,48 +109,23 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
     return <span>0,0% vs hier</span>;
   };
 
-  const todayOrders = orders.filter((o) => {
-    if (!o.createdAt) return false;
-    const today = new Date();
-    const orderDate = new Date(o.createdAt);
-    return orderDate.toDateString() === today.toDateString();
-  });
+  const todayRevenue = metrics.todayRevenueCents;
+  const yesterdayRevenue = metrics.yesterdayRevenueCents;
 
-  const yesterdayOrders = orders.filter((o) => {
-    if (!o.createdAt) return false;
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const orderDate = new Date(o.createdAt);
-    return orderDate.toDateString() === yesterday.toDateString();
-  });
-
-  const todayRevenue = todayOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-  const yesterdayRevenue = yesterdayOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-
-  const averageBasket = todayOrders.length > 0
-    ? Math.round(todayRevenue / todayOrders.length)
-    : 0;
+  const averageBasket =
+    metrics.todayOrderCount > 0 ? Math.round(todayRevenue / metrics.todayOrderCount) : 0;
   const yesterdayAverageBasket =
-    yesterdayOrders.length > 0 ? Math.round(yesterdayRevenue / yesterdayOrders.length) : 0;
+    metrics.yesterdayOrderCount > 0
+      ? Math.round(yesterdayRevenue / metrics.yesterdayOrderCount)
+      : 0;
 
   const revenueDelta = getDeltaMeta(todayRevenue, yesterdayRevenue);
-  const ordersDelta = getDeltaMeta(todayOrders.length, yesterdayOrders.length);
+  const ordersDelta = getDeltaMeta(metrics.todayOrderCount, metrics.yesterdayOrderCount);
   const basketDelta = getDeltaMeta(averageBasket, yesterdayAverageBasket);
 
-  const hourlyBuckets = Array.from({ length: 24 }, (_, hour) => {
-    const count = todayOrders.filter((order) => {
-      if (!order.createdAt) return false;
-      return new Date(order.createdAt).getHours() === hour;
-    }).length;
-
-    return { hour, count };
-  });
-
+  const hourlyBuckets = metrics.hourlyToday;
   const maxHourlyCount = Math.max(1, ...hourlyBuckets.map((bucket) => bucket.count));
   const midHourlyCount = Math.ceil(maxHourlyCount / 2);
-
-  const newOrders = orders.filter((o) => o.status === "NEW");
-  const preparingOrders = orders.filter((o) => o.status === "PREPARING");
 
   return (
     <div className="space-y-8">
@@ -183,7 +156,7 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{todayOrders.length}</div>
+            <div className="text-2xl font-bold">{metrics.todayOrderCount}</div>
             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
               {renderDelta(ordersDelta)}
             </p>
@@ -215,7 +188,7 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{orders.length}</div>
+            <div className="text-2xl font-bold">{metrics.totalOrderCount}</div>
             <p className="text-xs text-muted-foreground mt-1">depuis le début</p>
           </CardContent>
         </Card>
@@ -249,7 +222,23 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
           </div>
         </div>
 
-        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 transition-opacity ${isPendingCallStats ? "opacity-50" : ""}`}>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 transition-opacity ${isPendingCallStats ? "opacity-50" : ""}`}>
+          {}
+          <Card className="bg-card border-border hover:border-primary/20 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Appels IA
+              </CardTitle>
+              <PhoneCall className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {callStats?.totalCallsAllTime ?? 0}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">sur la période</p>
+            </CardContent>
+          </Card>
+
           {}
           <Card className="bg-card border-border hover:border-primary/20 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -272,98 +261,13 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
           <Card className="bg-card border-border hover:border-primary/20 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Appels IA
+                Minutes d&apos;appel
               </CardTitle>
-              <PhoneCall className="h-4 w-4 text-muted-foreground" />
+              <Timer className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {callStats?.totalCallsAllTime ?? "--"}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">sur la période</p>
-            </CardContent>
-          </Card>
-
-          {}
-          <Card className="bg-card border-border hover:border-primary/20 transition-colors opacity-60">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Taux de décroché
-              </CardTitle>
-              <Phone className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">--</div>
-              <p className="text-xs text-muted-foreground mt-1">bientôt disponible</p>
-            </CardContent>
-          </Card>
-
-          {}
-          <Card className="bg-card border-border hover:border-primary/20 transition-colors opacity-60">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Satisfaction client
-              </CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">--</div>
-              <p className="text-xs text-muted-foreground mt-1">bientôt disponible</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 opacity-60">
-          <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Appels transférés
-              </CardTitle>
-              <PhoneCall className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">--</div>
-              <p className="text-xs text-muted-foreground mt-1">bientôt disponible</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Taux commande / appel
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">--</div>
-              <p className="text-xs text-muted-foreground mt-1">bientôt disponible</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Heure de pointe
-              </CardTitle>
-              <Mic className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">--</div>
-              <p className="text-xs text-muted-foreground mt-1">bientôt disponible</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                CA généré via IA
-              </CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">--</div>
-              <p className="text-xs text-muted-foreground mt-1">bientôt disponible</p>
+              <div className="text-2xl font-bold">{callStats?.totalMinutes ?? 0}</div>
+              <p className="text-xs text-muted-foreground mt-1">cumulées sur la période</p>
             </CardContent>
           </Card>
         </div>
@@ -443,10 +347,10 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
               <div>
                 <p className="font-semibold text-base">Suivi des commandes</p>
                 <p className="text-sm text-muted-foreground">
-                  {newOrders.length > 0 ? (
-                    <span className="text-blue-500 font-medium">{newOrders.length} nouvelle{newOrders.length > 1 ? "s" : ""} • </span>
+                  {metrics.newOrderCount > 0 ? (
+                    <span className="text-blue-500 font-medium">{metrics.newOrderCount} nouvelle{metrics.newOrderCount > 1 ? "s" : ""} • </span>
                   ) : null}
-                  {preparingOrders.length} en préparation aujourd&apos;hui
+                  {metrics.preparingOrderCount} en préparation
                 </p>
               </div>
             </div>
@@ -457,4 +361,3 @@ export function DashboardContent({ orders, callStats: initialCallStats }: Readon
     </div>
   );
 }
-

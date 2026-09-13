@@ -1070,16 +1070,24 @@ export async function updateOrganization(
 
 export async function updateOrganizationBilling(
   id: string,
-  data: { stripeCustomerId?: string; billingStartDate?: string }
+  data: {
+    stripeCustomerId?: string;
+    billingStartDate?: string;
+    manualAccessEnabled?: boolean;
+  }
 ): Promise<ActionResult> {
   try {
     await requireAdmin();
     const updates: Record<string, unknown> = { updatedAt: new Date() };
     if (data.stripeCustomerId !== undefined) updates.stripeCustomerId = data.stripeCustomerId || null;
     if (data.billingStartDate !== undefined) updates.billingStartDate = data.billingStartDate || null;
+    if (data.manualAccessEnabled !== undefined) {
+      updates.manualAccessEnabled = data.manualAccessEnabled;
+    }
     await db.update(organizations).set(updates).where(eq(organizations.id, id));
     revalidatePath("/admin/organizations");
     revalidatePath(`/admin/organizations/${id}`);
+    revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
     logger.error("Erreur update billing organisation", error instanceof Error ? error : new Error(String(error)));

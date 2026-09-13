@@ -12,6 +12,15 @@ vi.mock("@/lib/auth", () => ({
   getAccessibleRestaurant: () => mockGetAccessibleRestaurant(),
 }));
 
+vi.mock("@/lib/subscription-access", () => ({
+  requirePaidSubscription: vi.fn().mockResolvedValue({
+    hasAccess: true,
+    reason: "paid",
+    status: "active",
+    currentPeriodEnd: null,
+  }),
+}));
+
 vi.mock("@/db", () => ({
   db: {
     select: vi.fn().mockReturnValue({

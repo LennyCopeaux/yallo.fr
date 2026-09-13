@@ -23,6 +23,7 @@ async function getOrganization(id: string) {
       stripePriceId: organizations.stripePriceId,
       stripeCurrentPeriodEnd: organizations.stripeCurrentPeriodEnd,
       billingStartDate: organizations.billingStartDate,
+      manualAccessEnabled: organizations.manualAccessEnabled,
       createdAt: organizations.createdAt,
       updatedAt: organizations.updatedAt,
     })

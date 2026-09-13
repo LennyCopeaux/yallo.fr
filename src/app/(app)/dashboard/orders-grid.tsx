@@ -15,6 +15,8 @@ interface OrdersGridProps {
 
 const AUTO_REFRESH_INTERVAL_MS = 15_000;
 
+const IS_DEV = process.env.NODE_ENV !== "production";
+
 export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
   const [orders, setOrders] = useState(initialOrders);
   const [, startTransition] = useTransition();
@@ -94,10 +96,12 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
-        <Button size="sm" onClick={handleSimulateSubmitOrder}>
-          <PlusCircle className="w-4 h-4 mr-2" />
-          Simuler submit_order
-        </Button>
+        {IS_DEV && (
+          <Button size="sm" variant="outline" onClick={handleSimulateSubmitOrder}>
+            <PlusCircle className="w-4 h-4 mr-2" />
+            Simuler submit_order
+          </Button>
+        )}
       </div>
 
       {orders.length === 0 ? (

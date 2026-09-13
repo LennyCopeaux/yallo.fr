@@ -18,9 +18,12 @@ import {
   Check,
   ShoppingBag,
   Building2,
+  CreditCard,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { switchRestaurant } from "@/features/restaurant/switch-actions";
+
+const BILLING_HREF = "/dashboard/billing";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -28,6 +31,7 @@ const navigation = [
   { name: "Menu", href: "/dashboard/menu", icon: Utensils },
   { name: "Horaires", href: "/dashboard/hours", icon: Clock },
   { name: "Paramètres", href: "/dashboard/settings", icon: Settings },
+  { name: "Abonnement", href: BILLING_HREF, icon: CreditCard },
 ] as const;
 
 async function handleLogout(): Promise<void> {
@@ -45,9 +49,10 @@ interface ClientSidebarProps {
   orgId?: string | null;
   orgName?: string | null;
   userRole?: string;
+  subscriptionLocked?: boolean;
 }
 
-export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurantId, orgId, orgName, userRole }: Readonly<ClientSidebarProps>) {
+export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurantId, orgId, orgName, userRole, subscriptionLocked = false }: Readonly<ClientSidebarProps>) {
   const [expanded, setExpanded] = useState(true);
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [activeRestaurantId, setActiveRestaurantId] = useState<string | null>(currentRestaurantId);
@@ -80,6 +85,12 @@ export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurant
     if (userRole === "EMPLOYEE") {
       return item.href === "/dashboard" || item.href === "/dashboard/orders";
     }
+
+    // Abonnement inactif : seule la page de souscription reste atteignable.
+    if (subscriptionLocked) {
+      return item.href === BILLING_HREF;
+    }
+
     return true;
   });
 

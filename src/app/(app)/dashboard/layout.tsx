@@ -1,17 +1,19 @@
 import { ClientSidebar } from "@/components/dashboard/client-sidebar";
 import { getAppUser, getUserOrganization, getUserRestaurants } from "@/lib/auth";
 import { getSelectedRestaurantId } from "@/features/restaurant/switch-actions";
+import { getSubscriptionAccess } from "@/lib/subscription-access";
 
 export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [user, org, accessibleRestaurants, selectedId] = await Promise.all([
+  const [user, org, accessibleRestaurants, selectedId, subscriptionAccess] = await Promise.all([
     getAppUser(),
     getUserOrganization(),
     getUserRestaurants(),
     getSelectedRestaurantId(),
+    getSubscriptionAccess(),
   ]);
 
   const restaurantList = accessibleRestaurants.map((r) => ({ id: r.id, name: r.name }));
@@ -35,6 +37,7 @@ export default async function DashboardLayout({
         orgId={orgIdForSidebar}
         orgName={orgNameForSidebar}
         userRole={user?.role ?? "OWNER"}
+        subscriptionLocked={!subscriptionAccess.hasAccess}
       />
       <main key={currentRestaurant?.id ?? "no-restaurant"} className="flex-1 overflow-y-auto">
         {children}

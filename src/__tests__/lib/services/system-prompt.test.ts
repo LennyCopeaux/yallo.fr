@@ -57,6 +57,7 @@ describe("generateSystemPrompt", () => {
     upsellEnabled: false,
     smsConfirmationEnabled: false,
     autoRushThreshold: null,
+    autoRushActive: false,
     welcomeMessage: null,
     createdAt: new Date(),
     updatedAt: new Date(),

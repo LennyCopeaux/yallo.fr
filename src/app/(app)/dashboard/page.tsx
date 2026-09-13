@@ -1,45 +1,23 @@
-import { getAppUser } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 import { DashboardContent } from "./dashboard-content";
-import { getOrders, getUserRestaurant, getRestaurantCallStats } from "@/features/orders/actions";
+import {
+  getDashboardMetrics,
+  getRestaurantCallStats,
+  getUserRestaurant,
+} from "@/features/orders/actions";
+import { requireDashboardAccess } from "@/lib/dashboard-guard";
 
 export default async function DashboardPage() {
-  const user = await getAppUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  if (user.role === "ADMIN") {
-    redirect("/admin");
-  }
+  await requireDashboardAccess();
 
   const restaurant = await getUserRestaurant();
 
-  const ordersData = restaurant ? await getOrders() : [];
-  const callStats = restaurant ? await getRestaurantCallStats() : null;
+  const [metrics, callStats] = restaurant
+    ? await Promise.all([getDashboardMetrics(), getRestaurantCallStats()])
+    : [null, null];
 
-  const orders = ordersData.map((order) => ({
-    id: order.id,
-    orderNumber: order.orderNumber,
-    customerName: order.customerName,
-    customerPhone: order.customerPhone,
-    status: order.status,
-    totalAmount: order.totalAmount,
-    pickupTime: order.pickupTime,
-    notes: order.notes,
-    createdAt: order.createdAt,
-    items: order.items.map((item) => ({
-      id: item.id,
-      productName: item.productName,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      totalPrice: item.totalPrice,
-      options: item.options,
-    })),
-  }));
+  const assistantOnline = Boolean(restaurant?.vapiAssistantId);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -50,7 +28,19 @@ export default async function DashboardPage() {
           </h1>
           {restaurant ? (
             <p className="text-muted-foreground">
-              Votre assistant vocal est <span className="text-emerald-500 font-medium">en ligne</span> et prêt à prendre des commandes.
+              {assistantOnline ? (
+                <>
+                  Votre assistant vocal est{" "}
+                  <span className="text-emerald-500 font-medium">en ligne</span> et prêt à
+                  prendre des commandes.
+                </>
+              ) : (
+                <>
+                  Votre assistant vocal est{" "}
+                  <span className="text-amber-500 font-medium">en cours de configuration</span>.
+                  Il ne prend pas encore d&apos;appels.
+                </>
+              )}
             </p>
           ) : (
             <p className="text-muted-foreground">
@@ -83,7 +73,9 @@ export default async function DashboardPage() {
         )}
 
         {}
-        {restaurant && <DashboardContent orders={orders} callStats={callStats} />}
+        {restaurant && metrics && (
+          <DashboardContent metrics={metrics} callStats={callStats} />
+        )}
     </div>
   );
 }

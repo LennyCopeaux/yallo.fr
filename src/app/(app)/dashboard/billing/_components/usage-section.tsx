@@ -179,16 +179,17 @@ export function UsageSection({ usage: initialUsage }: Readonly<UsageSectionProps
         </Card>
       </div>
 
-      {callCount === 0 && (
+      {callCount === 0 ? (
         <p className="text-sm text-muted-foreground mt-6 text-center">
           Aucun appel enregistré sur cette période. Les statistiques apparaîtront dès le premier appel traité par votre IA.
+        </p>
+      ) : (
+        <p className="text-xs text-muted-foreground mt-6 text-center">
+          Les minutes consommées sont ajoutées automatiquement à votre prochaine facture
+          d&apos;abonnement, à la minute entamée.
         </p>
       )}
     </div>
   );
-}
-
-interface UsageSectionProps {
-  usage: CallUsage;
 }
 
