@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Sparkles, MessageSquare, Zap, Save, CheckCircle2, XCircle, Loader2, Mic } from "lucide-react";
+import { Sparkles, MessageSquare, Bell, Zap, Save, CheckCircle2, XCircle, Loader2, Mic } from "lucide-react";
 import { updateAssistantBehaviour } from "@/features/settings/actions";
 import type { AssistantSettings } from "@/features/settings/actions";
 
@@ -20,6 +20,7 @@ export function AssistantBehaviourCard({ initialData }: AssistantBehaviourCardPr
   const [smsConfirmationEnabled, setSmsConfirmationEnabled] = useState(
     initialData.smsConfirmationEnabled
   );
+  const [smsReadyEnabled, setSmsReadyEnabled] = useState(initialData.smsReadyEnabled);
   const [autoRushEnabled, setAutoRushEnabled] = useState(
     initialData.autoRushThreshold !== null
   );
@@ -36,6 +37,7 @@ export function AssistantBehaviourCard({ initialData }: AssistantBehaviourCardPr
   const isDirty =
     upsellEnabled !== initialData.upsellEnabled ||
     smsConfirmationEnabled !== initialData.smsConfirmationEnabled ||
+    smsReadyEnabled !== initialData.smsReadyEnabled ||
     (autoRushEnabled ? Number(autoRushThreshold) : null) !== initialData.autoRushThreshold ||
     currentWelcome !== initialData.welcomeMessage;
 
@@ -53,6 +55,7 @@ export function AssistantBehaviourCard({ initialData }: AssistantBehaviourCardPr
       const result = await updateAssistantBehaviour({
         upsellEnabled,
         smsConfirmationEnabled,
+        smsReadyEnabled,
         autoRushThreshold: threshold,
         welcomeMessage: currentWelcome,
       });
@@ -155,6 +158,30 @@ export function AssistantBehaviourCard({ initialData }: AssistantBehaviourCardPr
             checked={smsConfirmationEnabled}
             onCheckedChange={(val) => {
               setSmsConfirmationEnabled(val);
+              setSuccessMessage(null);
+              setErrorMessage(null);
+            }}
+            disabled={isPending}
+          />
+        </div>
+
+        <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-muted/50 border border-border">
+          <div className="flex items-start gap-3">
+            <Bell className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <div className="space-y-0.5">
+              <Label className="text-sm font-medium cursor-pointer" htmlFor="sms-ready-toggle">
+                SMS commande prête
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Préviens le client par SMS quand la cuisine passe la commande en Prêt
+              </p>
+            </div>
+          </div>
+          <Switch
+            id="sms-ready-toggle"
+            checked={smsReadyEnabled}
+            onCheckedChange={(val) => {
+              setSmsReadyEnabled(val);
               setSuccessMessage(null);
               setErrorMessage(null);
             }}

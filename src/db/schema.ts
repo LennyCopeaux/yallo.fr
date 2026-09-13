@@ -144,6 +144,9 @@ export const restaurants = pgTable("restaurants", {
 
   smsConfirmationEnabled: boolean("sms_confirmation_enabled").default(false).notNull(),
 
+  /** SMS au client quand la cuisine passe la commande en Prêt. */
+  smsReadyEnabled: boolean("sms_ready_enabled").default(false).notNull(),
+
   autoRushThreshold: integer("auto_rush_threshold"),
 
   /**
@@ -252,6 +255,8 @@ export const orders = pgTable("orders", {
   totalAmount: integer("total_amount").default(0).notNull(),
   pickupTime: timestamp("pickup_time"),
   notes: text("notes"),
+  /** Renseigné quand le SMS « commande prête » a déjà été envoyé. */
+  readyNotifiedAt: timestamp("ready_notified_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [

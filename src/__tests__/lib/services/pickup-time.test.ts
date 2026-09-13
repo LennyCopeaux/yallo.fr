@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { computeSuggestedPickupTime, resolvePrepMinutes } from "@/lib/services/pickup-time";
+import {
+  computeSuggestedPickupTime,
+  formatSpokenFrenchTime,
+  resolvePrepMinutes,
+} from "@/lib/services/pickup-time";
 
 describe("resolvePrepMinutes", () => {
   it("uses the fixed delay of the current kitchen status", () => {
@@ -27,5 +31,14 @@ describe("computeSuggestedPickupTime", () => {
     expect(computeSuggestedPickupTime(fourteenOhThreeParis, 15)).toBe("14:20");
     expect(computeSuggestedPickupTime(fourteenOhThreeParis, 25)).toBe("14:30");
     expect(computeSuggestedPickupTime(fourteenOhThreeParis, 45)).toBe("14:50");
+  });
+});
+
+describe("formatSpokenFrenchTime", () => {
+  it("writes dinner times in letters so the TTS cannot say euro", () => {
+    expect(formatSpokenFrenchTime("19:05")).toBe("dix-neuf heures cinq");
+    expect(formatSpokenFrenchTime("19:00")).toBe("dix-neuf heures");
+    expect(formatSpokenFrenchTime("18:40")).toBe("dix-huit heures quarante");
+    expect(formatSpokenFrenchTime("12:05")).toBe("midi cinq");
   });
 });

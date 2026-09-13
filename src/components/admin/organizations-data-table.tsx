@@ -18,8 +18,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  AdminStatusBadge,
+  stripeStatusLabel,
+  stripeStatusTone,
+} from "@/components/admin/status-badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,25 +66,13 @@ function formatDate(date: Date | null | undefined) {
 function getStatusBadge(status: string) {
   switch (status) {
     case "active":
-      return (
-        <Badge className="bg-emerald-400/10 text-emerald-400 border-emerald-400/20 hover:bg-emerald-400/15">
-          Actif
-        </Badge>
-      );
+      return <AdminStatusBadge tone="active" label="Actif" />;
     case "onboarding":
-      return (
-        <Badge className="bg-amber-400/10 text-amber-400 border-amber-400/20 hover:bg-amber-400/15">
-          Onboarding
-        </Badge>
-      );
+      return <AdminStatusBadge tone="warning" label="Onboarding" />;
     case "suspended":
-      return (
-        <Badge className="bg-red-400/10 text-red-400 border-red-400/20 hover:bg-red-400/15">
-          Suspendu
-        </Badge>
-      );
+      return <AdminStatusBadge tone="danger" label="Suspendu" />;
     default:
-      return <Badge variant="outline">{status}</Badge>;
+      return <AdminStatusBadge label={status} />;
   }
 }
 
@@ -240,12 +232,10 @@ export function OrganizationsDataTable({
                       </TableCell>
                       <TableCell>
                         {org.stripeSubscriptionStatus ? (
-                          <Badge
-                            variant={org.stripeSubscriptionStatus === "active" ? "default" : "secondary"}
-                            className="text-xs"
-                          >
-                            {org.stripeSubscriptionStatus}
-                          </Badge>
+                          <AdminStatusBadge
+                            tone={stripeStatusTone(org.stripeSubscriptionStatus)}
+                            label={stripeStatusLabel(org.stripeSubscriptionStatus)}
+                          />
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}

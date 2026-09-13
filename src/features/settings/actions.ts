@@ -125,6 +125,7 @@ export type AssistantSettings = {
   voiceId: string | null;
   upsellEnabled: boolean;
   smsConfirmationEnabled: boolean;
+  smsReadyEnabled: boolean;
   autoRushThreshold: number | null;
   welcomeMessage: string | null;
 };
@@ -147,6 +148,7 @@ export async function getAssistantSettings(): Promise<ActionResult> {
       voiceId: restaurant.voiceId ?? null,
       upsellEnabled: restaurant.upsellEnabled,
       smsConfirmationEnabled: restaurant.smsConfirmationEnabled,
+      smsReadyEnabled: restaurant.smsReadyEnabled,
       autoRushThreshold: restaurant.autoRushThreshold ?? null,
       welcomeMessage: restaurant.welcomeMessage ?? null,
     } satisfies AssistantSettings,
@@ -200,6 +202,7 @@ export async function updateVoiceId(
 const updateAssistantBehaviourSchema = z.object({
   upsellEnabled: z.boolean(),
   smsConfirmationEnabled: z.boolean(),
+  smsReadyEnabled: z.boolean(),
   autoRushThreshold: z.number().int().positive().nullable(),
   welcomeMessage: z.string().trim().max(300).nullable(),
 });
@@ -229,6 +232,7 @@ export async function updateAssistantBehaviour(
     .set({
       upsellEnabled: parsed.data.upsellEnabled,
       smsConfirmationEnabled: parsed.data.smsConfirmationEnabled,
+      smsReadyEnabled: parsed.data.smsReadyEnabled,
       autoRushThreshold: parsed.data.autoRushThreshold,
       welcomeMessage: parsed.data.welcomeMessage,
       updatedAt: new Date(),
@@ -241,6 +245,7 @@ export async function updateAssistantBehaviour(
         ...restaurant,
         upsellEnabled: parsed.data.upsellEnabled,
         smsConfirmationEnabled: parsed.data.smsConfirmationEnabled,
+        smsReadyEnabled: parsed.data.smsReadyEnabled,
         autoRushThreshold: parsed.data.autoRushThreshold,
         welcomeMessage: parsed.data.welcomeMessage,
       });

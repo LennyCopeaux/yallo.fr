@@ -56,6 +56,7 @@ describe("generateSystemPrompt", () => {
     voiceId: null,
     upsellEnabled: false,
     smsConfirmationEnabled: false,
+    smsReadyEnabled: false,
     autoRushThreshold: null,
     autoRushActive: false,
     welcomeMessage: null,
@@ -177,7 +178,7 @@ describe("generateSystemPrompt", () => {
     const prompt = await generateSystemPrompt(mockRestaurant);
 
     expect(prompt).toContain("Tu es Yallo");
-    expect(prompt).toContain("Je vous écoute");
+    expect(prompt).toContain("Oui, je vous écoute");
     expect(prompt).toContain("Quantités");
     expect(prompt).toContain("Ce sera à quel nom");
     expect(prompt).toContain("submit_order");
@@ -318,7 +319,7 @@ describe("generateSystemPrompt", () => {
     const prompt = await generateSystemPrompt(restaurant, { includeCurrentTime: true });
 
     expect(prompt).toContain("HEURE DE RETRAIT");
-    expect(prompt).toContain("Ce sera prêt vers");
+    expect(prompt).toContain("est-ce que ça vous convient");
     expect(prompt).toContain("tu la proposes, tu ne la demandes pas");
   });
 });

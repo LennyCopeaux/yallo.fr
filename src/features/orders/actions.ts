@@ -5,6 +5,7 @@ import { callLogs, orderItems, orders, type OrderStatus } from "@/db/schema";
 import { requireAuth, getAccessibleRestaurant } from "@/lib/auth";
 import { requirePaidSubscription } from "@/lib/subscription-access";
 import { applyAutoRush } from "@/lib/services/auto-rush";
+import { trySendOrderReadySms } from "@/lib/services/twilio-sms";
 import { eq, desc, and, avg, count, gte, lte, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -166,10 +167,34 @@ export async function updateOrderStatus(orderId: string, newStatus: OrderStatus)
   });
   if (!targetOrder) throw new Error("Commande non trouvée");
 
+  const shouldNotifyReady =
+    newStatus === "READY" &&
+    targetOrder.status !== "READY" &&
+    !targetOrder.readyNotifiedAt &&
+    ownerRestaurant.smsReadyEnabled;
+
   await db
     .update(orders)
     .set({ status: newStatus, updatedAt: new Date() })
     .where(eq(orders.id, orderId));
+
+  if (shouldNotifyReady) {
+    const fromRaw = process.env.TWILIO_SMS_FROM?.trim() || ownerRestaurant.twilioPhoneNumber?.trim();
+    const sent = await trySendOrderReadySms({
+      toRaw: targetOrder.customerPhone,
+      fromRaw,
+      restaurantName: ownerRestaurant.name,
+      orderNumber: targetOrder.orderNumber,
+      customerName: targetOrder.customerName,
+    });
+
+    if (sent) {
+      await db
+        .update(orders)
+        .set({ readyNotifiedAt: new Date() })
+        .where(eq(orders.id, orderId));
+    }
+  }
 
   // La charge cuisine vient de changer : le mode RUSH automatique peut retomber.
   await applyAutoRush(ownerRestaurant);

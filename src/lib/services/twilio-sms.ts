@@ -113,3 +113,59 @@ export async function trySendOrderConfirmationSms(options: Readonly<{
     );
   }
 }
+
+export function buildOrderReadySmsBody(params: Readonly<{
+  restaurantName: string;
+  orderNumber: string;
+  customerName?: string | null;
+}>): string {
+  const greeting = params.customerName?.trim()
+    ? `${params.customerName.trim()}, votre commande`
+    : "Votre commande";
+
+  return [
+    `${greeting} ${params.orderNumber} est prête.`,
+    `Vous pouvez venir la récupérer chez ${params.restaurantName}.`,
+  ].join("\n");
+}
+
+export async function trySendOrderReadySms(options: Readonly<{
+  toRaw: string | undefined | null;
+  fromRaw: string | undefined | null;
+  restaurantName: string;
+  orderNumber: string;
+  customerName?: string | null;
+}>): Promise<boolean> {
+  if (!options.toRaw?.trim() || !options.fromRaw?.trim()) {
+    return false;
+  }
+
+  const toE164 = normalizeFrenchPhoneNumber(options.toRaw.trim());
+  const fromE164 = normalizeFrenchPhoneNumber(options.fromRaw.trim());
+  if (!toE164 || !fromE164) {
+    logger.warn("SMS commande prête ignoré : numéros non normalisables", {
+      to: options.toRaw,
+      from: options.fromRaw,
+    });
+    return false;
+  }
+
+  const body = buildOrderReadySmsBody({
+    restaurantName: options.restaurantName,
+    orderNumber: options.orderNumber,
+    customerName: options.customerName,
+  });
+
+  try {
+    await sendTwilioSms({ toE164, fromE164, body });
+    logger.info("SMS commande prête envoyé", { to: toE164, orderNumber: options.orderNumber });
+    return true;
+  } catch (error) {
+    logger.error(
+      "Échec envoi SMS commande prête",
+      error instanceof Error ? error : new Error(String(error)),
+      { to: toE164, orderNumber: options.orderNumber }
+    );
+    return false;
+  }
+}

@@ -1,0 +1,5 @@
+ALTER TABLE restaurants
+  ADD COLUMN IF NOT EXISTS sms_ready_enabled BOOLEAN NOT NULL DEFAULT false;
+
+ALTER TABLE orders
+  ADD COLUMN IF NOT EXISTS ready_notified_at TIMESTAMP;
