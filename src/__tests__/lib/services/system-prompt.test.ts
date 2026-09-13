@@ -177,9 +177,9 @@ describe("generateSystemPrompt", () => {
     const prompt = await generateSystemPrompt(mockRestaurant);
 
     expect(prompt).toContain("Tu es Yallo");
-    expect(prompt).toContain("Ne liste pas");
+    expect(prompt).toContain("Je vous écoute");
     expect(prompt).toContain("Quantités");
-    expect(prompt).toContain("Prénom");
+    expect(prompt).toContain("C'est à quel nom");
     expect(prompt).toContain("submit_order");
     expect(prompt).toContain("Menu");
     expect(prompt).toContain("Horaires");
@@ -254,5 +254,71 @@ describe("generateSystemPrompt", () => {
       })
     );
     expect(prompt).toContain("Test Restaurant");
+  });
+
+  it("does not invite an upsell when the menu has no complements", async () => {
+    const restaurant = {
+      ...mockRestaurant,
+      hubriseAccessToken: null as string | null,
+      hubriseLocationId: null as string | null,
+      upsellEnabled: true,
+      menuData: {
+        categories: [
+          {
+            name: "Pizzas",
+            products: [{ name: "4 fromages", skus: [{ ref: "p1", name: "Normale", price: "12" }] }],
+          },
+        ],
+        option_lists: [],
+      },
+    };
+
+    const prompt = await generateSystemPrompt(restaurant);
+
+    expect(prompt).toContain("IMPOSSIBLE");
+    expect(prompt).not.toContain("Je vous mets une boisson");
+  });
+
+  it("lists only real complements when upsell is possible", async () => {
+    const restaurant = {
+      ...mockRestaurant,
+      hubriseAccessToken: null as string | null,
+      hubriseLocationId: null as string | null,
+      upsellEnabled: true,
+      menuData: {
+        categories: [
+          {
+            name: "Pizzas",
+            products: [{ name: "4 fromages", skus: [{ ref: "p1", name: "Normale", price: "12" }] }],
+          },
+          {
+            name: "Boissons",
+            products: [{ name: "Coca 33cl", skus: [{ ref: "c1", name: "33cl", price: "2" }] }],
+          },
+        ],
+        option_lists: [],
+      },
+    };
+
+    const prompt = await generateSystemPrompt(restaurant);
+
+    expect(prompt).toContain("Coca 33cl");
+    expect(prompt).toContain("UNE SEULE FOIS");
+  });
+
+  it("proposes a computed pickup time instead of asking the client", async () => {
+    const restaurant = {
+      ...mockRestaurant,
+      hubriseAccessToken: null as string | null,
+      hubriseLocationId: null as string | null,
+      currentStatus: "CALM" as const,
+      statusSettings: { CALM: { fixed: 15 } },
+    };
+
+    const prompt = await generateSystemPrompt(restaurant, { includeCurrentTime: true });
+
+    expect(prompt).toContain("HEURE DE RETRAIT");
+    expect(prompt).toContain("C'est prêt vers");
+    expect(prompt).toContain("tu la proposes, tu ne la demandes pas");
   });
 });

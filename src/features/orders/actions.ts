@@ -39,6 +39,17 @@ export async function getOrders() {
   });
 }
 
+/** Identifiants des commandes NEW : assez pour sonner, trop léger pour le ticket. */
+export async function getNewOrderIds(): Promise<{ id: string; status: string }[]> {
+  const restaurant = await getAccessibleRestaurant();
+  if (!restaurant) return [];
+
+  return db
+    .select({ id: orders.id, status: orders.status })
+    .from(orders)
+    .where(and(eq(orders.restaurantId, restaurant.id), eq(orders.status, "NEW")));
+}
+
 /**
  * Le fuseau de reference est Paris : les bornes "aujourd'hui" / "hier" et les
  * heures du graphe doivent correspondre a la journee du restaurateur, pas au
