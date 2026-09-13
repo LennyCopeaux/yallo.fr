@@ -43,18 +43,27 @@ export function useNewOrderAlert(orders: TrackedOrder[]): NewOrderAlert {
     getOrderSoundPreferenceServerSnapshot
   );
 
-  // Tente de lever le blocage audio dès l'ouverture de l'écran : si le
-  // navigateur refuse encore, on propose un bouton explicite plutôt que de
-  // laisser passer la première commande en silence.
+  // Les navigateurs refusent l'audio tant qu'il n'y a pas eu de geste. On
+  // débloque au premier clic n'importe où sur la page, pas seulement sur le
+  // bouton : sinon la première commande réelle passe en silence.
   useEffect(() => {
     let cancelled = false;
 
-    void unlockOrderChime().then((unlocked) => {
+    const applyUnlockState = (unlocked: boolean) => {
       if (!cancelled) setSoundBlocked(!unlocked);
-    });
+    };
+
+    void unlockOrderChime().then(applyUnlockState);
+
+    const unlockOnGesture = () => {
+      void unlockOrderChime().then(applyUnlockState);
+    };
+
+    document.addEventListener("pointerdown", unlockOnGesture);
 
     return () => {
       cancelled = true;
+      document.removeEventListener("pointerdown", unlockOnGesture);
     };
   }, []);
 

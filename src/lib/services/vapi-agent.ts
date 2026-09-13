@@ -14,7 +14,10 @@ const VAPI_API_URL = "https://api.vapi.ai";
 
 const DEFAULT_LLM_MODEL = "gpt-4o-mini";
 
-const DEFAULT_LLM_TEMPERATURE = 0.4;
+const DEFAULT_LLM_TEMPERATURE = 0.3;
+
+/** Plafond ElevenLabs côté VAPI : 0.7–1.2. 1.2 = débit comptoir, sans accélérer jusqu'à l'illisible. */
+const DEFAULT_VOICE_SPEED = 1.2;
 
 const DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
 
@@ -126,6 +129,14 @@ function buildSubmitOrderTool(webhookUrl?: string) {
         required: ["customer_name", "items", "pickup_time"],
       },
     },
+    // Sans ce message, VAPI invente un filler anglais du type « Hold on a sec »,
+    // traduit à l'oral par « Attends une seconde » — tutoiement interdit.
+    messages: [
+      {
+        type: "request-start",
+        content: "Un instant.",
+      },
+    ],
     ...(webhookUrl
       ? {
           server: {
@@ -262,7 +273,7 @@ function buildAssistantConfig(
       provider: "11labs",
       voiceId,
       model: "eleven_turbo_v2_5",
-      speed: 1.1,
+      speed: DEFAULT_VOICE_SPEED,
       stability: 0.5,
       similarityBoost: 0.75,
       optimizeStreamingLatency: 3,
