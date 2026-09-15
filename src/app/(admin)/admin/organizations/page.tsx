@@ -5,14 +5,9 @@ import { AddOrganizationDialog } from "@/components/admin/add-organization-dialo
 import { getOrganizationsWithRestaurants } from "@/app/(admin)/admin/queries";
 import { getOwners } from "@/app/(admin)/admin/queries";
 
-export default async function OrganizationsPage({
-  searchParams,
-}: Readonly<{
-  searchParams: Promise<{ status?: string; search?: string }>;
-}>) {
-  const params = await searchParams;
+export default async function OrganizationsPage() {
   const [organizations, owners] = await Promise.all([
-    getOrganizationsWithRestaurants(params),
+    getOrganizationsWithRestaurants(),
     getOwners(),
   ]);
 

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import {
   Table,
   TableBody,
@@ -58,72 +57,28 @@ interface UsersDataTableProps {
 }
 
 export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
-  const currentTab = searchParams.get("tab");
-  const [searchValue, setSearchValue] = useState(searchParams.get("search") || "");
+  const [searchValue, setSearchValue] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [resettingFor, setResettingFor] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  useEffect(() => {
-    if (currentTab === "users") {
-      startTransition(() => {
-        setSearchValue(searchParams.get("search") || "");
-      });
-    }
-  }, [currentTab, searchParams, startTransition]);
+  const filteredData = useMemo(() => {
+    const searchTerm = searchValue.trim().toLowerCase();
+    return data.filter((user) => {
+      const matchesSearch =
+        !searchTerm ||
+        user.email.toLowerCase().includes(searchTerm) ||
+        user.firstName?.toLowerCase().includes(searchTerm) ||
+        user.lastName?.toLowerCase().includes(searchTerm);
 
-  const updateFilters = (key: string, value: string | null) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", "users");
-    if (value && value !== "all") {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
-    startTransition(() => {
-      router.push(`/admin?${params.toString()}`);
+      const matchesRole = roleFilter === "all" || user.role === roleFilter;
+
+      return matchesSearch && matchesRole;
     });
-  };
-
-  const handleSearchSubmit = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", "users");
-    if (searchValue.trim()) {
-      params.set("search", searchValue.trim());
-    } else {
-      params.delete("search");
-    }
-    startTransition(() => {
-      router.push(`/admin?${params.toString()}`);
-    });
-  };
-
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSearchSubmit();
-    }
-  };
-
-  const searchTerm = searchParams.get("search")?.toLowerCase() || "";
-  const roleFilter = searchParams.get("role") || "all";
-
-  const filteredData = data.filter((user) => {
-    const matchesSearch =
-      !searchTerm ||
-      user.email.toLowerCase().includes(searchTerm) ||
-      user.firstName?.toLowerCase().includes(searchTerm) ||
-      user.lastName?.toLowerCase().includes(searchTerm);
-
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
-
-    return matchesSearch && matchesRole;
-  });
+  }, [data, roleFilter, searchValue]);
 
   const handleDelete = async () => {
     if (!userToDelete) return;
@@ -159,24 +114,15 @@ export function UsersDataTable({ data }: Readonly<UsersDataTableProps>) {
         <div className="relative flex-1 flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-            <Input
-              placeholder="Rechercher par nom ou email..."
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-              className="pl-10 bg-background/50 border-border h-10"
-            />
+              <Input
+                placeholder="Rechercher par nom ou email..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                className="pl-10 bg-background/50 border-border h-10"
+              />
+            </div>
           </div>
-          <Button
-            type="button"
-            onClick={handleSearchSubmit}
-            disabled={isPending}
-            className="bg-primary text-black hover:bg-primary/90 h-10 w-10 p-0 min-w-[44px]"
-          >
-            <Search className="w-4 h-4" />
-          </Button>
-        </div>
-        <Select value={roleFilter} onValueChange={(value) => updateFilters("role", value)}>
+        <Select value={roleFilter} onValueChange={setRoleFilter}>
           <SelectTrigger className="w-full sm:w-[180px] bg-background/50 border-border h-10">
             <SelectValue placeholder="Rôle" />
           </SelectTrigger>

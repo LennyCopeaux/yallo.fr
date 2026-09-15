@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Phone, Clock, TrendingUp, CalendarDays, Loader2 } from "lucide-react";
+import { Phone, Clock, TrendingUp, CalendarDays } from "lucide-react";
 import { getRestaurantCallStats } from "@/app/(admin)/admin/restaurants/[id]/usage-actions";
 
 interface UsageTabProps {
@@ -36,8 +36,14 @@ export function UsageTab({ restaurantId }: Readonly<UsageTabProps>) {
 
   if (isPending) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      <div className="animate-pulse space-y-6">
+        <div className="h-6 w-48 rounded-lg bg-muted" />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="h-28 rounded-xl bg-muted" />
+          <div className="h-28 rounded-xl bg-muted" />
+          <div className="h-28 rounded-xl bg-muted" />
+          <div className="h-28 rounded-xl bg-muted" />
+        </div>
       </div>
     );
   }

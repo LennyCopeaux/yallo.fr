@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { pushVoiceOrderToHubrise } from "@/lib/services/hubrise";
 import { normalizeSubmitOrderPayload } from "@/lib/services/submit-order-args";
+import { formatParisTime, parsePickupTimeInParis } from "@/lib/services/pickup-time";
 import { trySendOrderConfirmationSms } from "@/lib/services/twilio-sms";
 import { buildAssistantPayloadForCall } from "@/lib/services/vapi-agent";
 import { resolveCallOrderAvailability } from "@/lib/services/business-hours";
@@ -69,23 +70,6 @@ function generateOrderNumber(): string {
   return `#${timestamp}${random}`;
 }
 
-function parsePickupTime(pickupTimeStr?: string): Date | null {
-  if (!pickupTimeStr) return null;
-
-  const match = /^(\d{1,2}):(\d{2})$/.exec(pickupTimeStr);
-  if (!match) return null;
-
-  const now = new Date();
-  const pickup = new Date(now);
-  pickup.setHours(Number.parseInt(match[1], 10), Number.parseInt(match[2], 10), 0, 0);
-
-  if (pickup < now) {
-    pickup.setDate(pickup.getDate() + 1);
-  }
-
-  return pickup;
-}
-
 function getCurrentWaitCeilMinutes(
   status: "CALM" | "NORMAL" | "RUSH" | "STOP",
   statusSettings: typeof restaurants.$inferSelect["statusSettings"]
@@ -114,13 +98,6 @@ function roundUpToNextTenMinutes(date: Date): Date {
     rounded.setMinutes(minutes + (10 - remainder));
   }
   return rounded;
-}
-
-function formatFrenchHour(date: Date): string {
-  return date.toLocaleTimeString("fr-FR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 interface OrderItem {
@@ -186,7 +163,7 @@ async function handleSubmitOrder(
     });
   }
 
-  const pickupTime = parsePickupTime(args.pickup_time);
+  const pickupTime = parsePickupTimeInParis(args.pickup_time);
   if (!pickupTime) {
     return JSON.stringify({
       success: false,
@@ -200,8 +177,8 @@ async function handleSubmitOrder(
   if (pickupTime.getTime() < earliestReadyAt.getTime()) {
     return JSON.stringify({
       success: false,
-      message: `Le délai est trop court avec la charge actuelle en cuisine. Propose une heure de retrait à partir de ${formatFrenchHour(earliestReadyAt)}.`,
-      earliest_pickup_time: formatFrenchHour(earliestReadyAt),
+      message: `Le délai est trop court avec la charge actuelle en cuisine. Propose une heure de retrait à partir de ${formatParisTime(earliestReadyAt)}.`,
+      earliest_pickup_time: formatParisTime(earliestReadyAt),
     });
   }
 
@@ -300,9 +277,7 @@ async function handleSubmitOrder(
         }),
         totalEuros: (totalAmount / 100).toFixed(2),
         customerName: args.customer_name || null,
-        pickupTime: pickupTime
-          ? pickupTime.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
-          : null,
+        pickupTime: pickupTime ? formatParisTime(pickupTime) : null,
         notes: args.notes || null,
       });
     }

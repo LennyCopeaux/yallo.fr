@@ -1,6 +1,6 @@
 "use client";
 
-import { Phone, Clock, Euro, CalendarClock, Timer, RefreshCw } from "lucide-react";
+import { Phone, Clock, Euro, Timer, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useTransition } from "react";
 import {
@@ -89,7 +89,7 @@ export function UsageSection({ usage: initialUsage }: Readonly<UsageSectionProps
         </div>
       </div>
 
-      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 transition-opacity ${isPending ? "opacity-50" : ""}`}>
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 transition-opacity ${isPending ? "opacity-50" : ""}`}>
         {}
         <Card>
           <CardHeader className="pb-2">
@@ -154,29 +154,6 @@ export function UsageSection({ usage: initialUsage }: Readonly<UsageSectionProps
           </CardContent>
         </Card>
 
-        {}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <CalendarClock className="w-4 h-4" />
-              Remise à zéro
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {periodEnd ? (
-              <>
-                <p className="text-lg font-bold leading-tight">
-                  {periodEnd.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {formatDate(periodEnd)}
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">Non disponible</p>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
       {callCount === 0 ? (

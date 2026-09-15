@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -81,49 +82,26 @@ export function OrganizationsDataTable({
   owners: _owners,
 }: Readonly<OrganizationsDataTableProps>) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
-  const urlSearch = searchParams.get("search") || "";
-  const [searchValue, setSearchValue] = useState(urlSearch);
-  const [prevUrlSearch, setPrevUrlSearch] = useState(urlSearch);
+  const [, startTransition] = useTransition();
+  const [searchValue, setSearchValue] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState<OrganizationRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  if (prevUrlSearch !== urlSearch) {
-    setPrevUrlSearch(urlSearch);
-    setSearchValue(urlSearch);
-  }
-
-  const updateFilters = (key: string, value: string | null) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value && value !== "all") {
-      params.set(key, value);
-    } else {
-      params.delete(key);
+  useEffect(() => {
+    for (const org of organizations) {
+      router.prefetch(`/admin/organizations/${org.id}`);
     }
-    startTransition(() => {
-      router.push(`/admin/organizations?${params.toString()}`);
+  }, [organizations, router]);
+
+  const filteredOrganizations = useMemo(() => {
+    const term = searchValue.trim().toLowerCase();
+    return organizations.filter((org) => {
+      const matchesSearch = !term || org.name.toLowerCase().includes(term);
+      const matchesStatus = statusFilter === "all" || org.status === statusFilter;
+      return matchesSearch && matchesStatus;
     });
-  };
-
-  const handleSearchSubmit = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (searchValue.trim()) {
-      params.set("search", searchValue.trim());
-    } else {
-      params.delete("search");
-    }
-    startTransition(() => {
-      router.push(`/admin/organizations?${params.toString()}`);
-    });
-  };
-
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSearchSubmit();
-    }
-  };
+  }, [organizations, searchValue, statusFilter]);
 
   const handleDelete = () => {
     if (!deleteTarget) return;
@@ -148,22 +126,13 @@ export function OrganizationsDataTable({
                 placeholder="Rechercher par nom..."
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
-                onKeyDown={handleSearchKeyDown}
                 className="pl-10 bg-background/50 border-border h-10"
               />
             </div>
-            <Button
-              type="button"
-              onClick={handleSearchSubmit}
-              disabled={isPending}
-              className="bg-primary text-black hover:bg-primary/90 h-10 px-4"
-            >
-              <Search className="w-4 h-4" />
-            </Button>
           </div>
           <Select
-            value={searchParams.get("status") || "all"}
-            onValueChange={(value) => updateFilters("status", value)}
+            value={statusFilter}
+            onValueChange={setStatusFilter}
           >
             <SelectTrigger className="w-full sm:w-[180px] bg-background/50 border-border h-10">
               <SelectValue placeholder="Statut" />
@@ -178,7 +147,7 @@ export function OrganizationsDataTable({
         </div>
 
         <div className="border border-border rounded-xl bg-card/20 overflow-hidden">
-          {organizations.length === 0 ? (
+          {filteredOrganizations.length === 0 ? (
             <div className="p-8 sm:p-16 text-center">
               <Building2 className="mx-auto h-10 w-10 mb-3 opacity-40" />
               <p className="text-muted-foreground text-sm">Aucune organisation trouvée</p>
@@ -199,19 +168,22 @@ export function OrganizationsDataTable({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {organizations.map((org) => (
+                  {filteredOrganizations.map((org) => (
                     <TableRow
                       key={org.id}
-                      className="border-border hover:bg-muted/30 transition-colors cursor-pointer"
-                      onClick={() => router.push(`/admin/organizations/${org.id}`)}
+                      className="relative border-border hover:bg-muted/30 transition-colors"
                     >
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <Link
+                          href={`/admin/organizations/${org.id}`}
+                          prefetch
+                          className="flex items-center gap-2 after:absolute after:inset-0 after:content-['']"
+                        >
                           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                             <Building2 className="w-4 h-4 text-primary" />
                           </div>
                           <span className="font-medium">{org.name}</span>
-                        </div>
+                        </Link>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         <div className="flex flex-col gap-0.5">
@@ -243,7 +215,7 @@ export function OrganizationsDataTable({
                       <TableCell className="text-sm text-muted-foreground hidden md:table-cell">
                         {formatDate(org.createdAt)}
                       </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
+                      <TableCell className="relative z-10">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -254,9 +226,11 @@ export function OrganizationsDataTable({
                           <DropdownMenuContent align="end" className="bg-card border-border">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator className="bg-muted/50" />
-                            <DropdownMenuItem onClick={() => router.push(`/admin/organizations/${org.id}`)}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              Voir détails
+                            <DropdownMenuItem asChild>
+                              <Link href={`/admin/organizations/${org.id}`} prefetch>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Voir détails
+                              </Link>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator className="bg-muted/50" />
                             <DropdownMenuItem
