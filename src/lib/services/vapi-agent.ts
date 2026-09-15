@@ -34,17 +34,18 @@ const DEFAULT_VOICE_MODEL = "eleven_flash_v2_5";
 const DEFAULT_VOICE_STABILITY = 0.5;
 const DEFAULT_VOICE_SIMILARITY = 0.75;
 
-/** « off », « office », ou l'URL https d'un mp3 d'ambiance (bruit de salle). */
-const DEFAULT_BACKGROUND_SOUND = "off";
+/** Bruit de fond « office » : un appel vers un restaurant ne sonne pas comme un studio. */
+const BACKGROUND_SOUND = "office";
 
 const DEFAULT_TRANSCRIBER_PROVIDER = "deepgram";
 const DEFAULT_TRANSCRIBER_MODEL = "nova-3";
 
 /**
- * 1.0 = débit naturel. Au-dessus, ElevenLabs accélère les phonèmes français
- * jusqu'à basculer sur un accent / une langue illisibles (« Normallow grunge »).
+ * 1.05 = débit d'un employé de comptoir, légèrement vif. Au-delà de 1.1,
+ * ElevenLabs accélère les phonèmes français jusqu'à basculer sur un accent /
+ * une langue illisibles (« Normallow grunge »).
  */
-const DEFAULT_VOICE_SPEED = 1.0;
+const DEFAULT_VOICE_SPEED = 1.05;
 
 const DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
 
@@ -251,13 +252,6 @@ function parseFloatEnv(name: string, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function resolveBackgroundSound(): string {
-  const raw = process.env.VAPI_BACKGROUND_SOUND?.trim();
-  if (!raw) return DEFAULT_BACKGROUND_SOUND;
-  if (raw === "off" || raw === "office" || raw.startsWith("https://")) return raw;
-  return DEFAULT_BACKGROUND_SOUND;
-}
-
 /**
  * Noms de la carte et mots de taille, pour orienter la transcription.
  * Le client dit « la 4 fromages en petite » : sans indice, Deepgram rend
@@ -365,7 +359,7 @@ function buildAssistantConfig(
       similarityBoost: parseFloatEnv("VAPI_VOICE_SIMILARITY", DEFAULT_VOICE_SIMILARITY),
       optimizeStreamingLatency: 3,
     },
-    backgroundSound: resolveBackgroundSound(),
+    backgroundSound: BACKGROUND_SOUND,
     transcriber: buildTranscriber(restaurant),
     firstMessage: resolveAssistantFirstMessage(restaurant, availability),
     analysisPlan: buildAnalysisPlan(),
