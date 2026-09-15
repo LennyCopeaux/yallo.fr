@@ -106,32 +106,82 @@ function isComplementCategory(categoryName: string): boolean {
 }
 
 /**
- * Un produit n'est proposable que s'il a au moins un SKU : sans prix, l'assistant
- * ne pourrait pas remplir `unit_price` dans submit_order.
+ * Un produit n'est proposable que s'il a au moins un prix : sans prix,
+ * l'assistant ne pourrait pas remplir `unit_price` dans submit_order.
  */
 function isOrderable(product: { skus?: unknown }): boolean {
   return Array.isArray(product.skus) && product.skus.length > 0;
 }
 
-export function findUpsellCandidates(menu: unknown): UpsellCandidates {
-  const categories = (menu as MenuData | null | undefined)?.categories;
-  if (!Array.isArray(categories)) return EMPTY_CANDIDATES;
+/**
+ * Menu importé depuis une photo (menu-parser) : `donnees_menu[]` avec
+ * `categorie`, `articles[]`, `nom` et `tarifs[{ prix, label }]`. Ce format
+ * coexiste avec le format structuré `categories/products/skus` du même champ
+ * `menuData`, et le prompt reçoit l'un ou l'autre tel quel.
+ */
+type PhotoMenuTariff = { prix?: unknown; label?: unknown };
+type PhotoMenuArticle = { nom?: unknown; tarifs?: unknown };
+type PhotoMenuSection = { categorie?: unknown; articles?: unknown };
 
-  const suggestions: string[] = [];
+function hasPricedTariff(article: PhotoMenuArticle): boolean {
+  if (!Array.isArray(article.tarifs)) return false;
+  return (article.tarifs as PhotoMenuTariff[]).some((t) => {
+    const raw = typeof t?.prix === "number" ? String(t.prix) : String(t?.prix ?? "").trim();
+    return raw.length > 0 && Number.isFinite(Number.parseFloat(raw.replace(",", ".")));
+  });
+}
 
-  for (const category of categories) {
+function pushSuggestion(suggestions: string[], name: string): boolean {
+  if (suggestions.includes(name)) return false;
+  suggestions.push(name);
+  return suggestions.length >= MAX_SUGGESTIONS;
+}
+
+function collectFromStructuredMenu(menu: MenuData, suggestions: string[]): boolean {
+  for (const category of menu.categories) {
     if (!category?.name || !Array.isArray(category.products)) continue;
     if (!isComplementCategory(category.name)) continue;
 
     for (const product of category.products) {
       if (!product?.name || !isOrderable(product)) continue;
-      if (suggestions.includes(product.name)) continue;
-
-      suggestions.push(product.name);
-      if (suggestions.length >= MAX_SUGGESTIONS) {
-        return { hasAny: true, suggestions };
-      }
+      if (pushSuggestion(suggestions, product.name)) return true;
     }
+  }
+  return false;
+}
+
+function collectFromPhotoMenu(sections: PhotoMenuSection[], suggestions: string[]): boolean {
+  for (const section of sections) {
+    if (typeof section?.categorie !== "string" || !Array.isArray(section.articles)) continue;
+    if (!isComplementCategory(section.categorie)) continue;
+
+    for (const article of section.articles as PhotoMenuArticle[]) {
+      if (typeof article?.nom !== "string" || article.nom.trim().length === 0) continue;
+      if (!hasPricedTariff(article)) continue;
+      if (pushSuggestion(suggestions, article.nom.trim())) return true;
+    }
+  }
+  return false;
+}
+
+export function findUpsellCandidates(menu: unknown): UpsellCandidates {
+  if (menu === null || typeof menu !== "object") return EMPTY_CANDIDATES;
+
+  const suggestions: string[] = [];
+  const record = menu as Record<string, unknown>;
+
+  const sections = record.donnees_menu;
+  if (Array.isArray(sections)) {
+    collectFromPhotoMenu(sections as PhotoMenuSection[], suggestions);
+  }
+
+  const categories = record.categories;
+  if (
+    suggestions.length < MAX_SUGGESTIONS &&
+    Array.isArray(categories) &&
+    categories.some((c) => c !== null && typeof c === "object")
+  ) {
+    collectFromStructuredMenu({ categories, option_lists: [] } as MenuData, suggestions);
   }
 
   return suggestions.length > 0

@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
   computeSuggestedPickupTime,
+  formatParisTime,
   formatSpokenFrenchTime,
+  parsePickupTimeInParis,
   resolvePrepMinutes,
 } from "@/lib/services/pickup-time";
 
@@ -40,5 +42,44 @@ describe("formatSpokenFrenchTime", () => {
     expect(formatSpokenFrenchTime("19:00")).toBe("dix-neuf heures");
     expect(formatSpokenFrenchTime("18:40")).toBe("dix-huit heures quarante");
     expect(formatSpokenFrenchTime("12:05")).toBe("midi cinq");
+  });
+});
+
+describe("parsePickupTimeInParis", () => {
+  // Appel à 17:49 à Paris (15:49 UTC) un jour d'été : le client demande 19h30.
+  const callAtSeventeenFortyNineParis = new Date("2026-09-14T15:49:00.000Z");
+
+  it("interprets HH:MM as Paris time whatever the server timezone", () => {
+    const pickup = parsePickupTimeInParis("19:30", callAtSeventeenFortyNineParis);
+    expect(pickup?.toISOString()).toBe("2026-09-14T17:30:00.000Z");
+    expect(formatParisTime(pickup!)).toBe("19:30");
+  });
+
+  it("uses the winter offset when Paris is on CET", () => {
+    const winterCall = new Date("2026-01-12T11:00:00.000Z"); // 12:00 à Paris
+    const pickup = parsePickupTimeInParis("12:45", winterCall);
+    expect(pickup?.toISOString()).toBe("2026-01-12T11:45:00.000Z");
+    expect(formatParisTime(pickup!)).toBe("12:45");
+  });
+
+  it("rolls over to the next day when the time is already past in Paris", () => {
+    // 23:30 à Paris (21:30 UTC) : « 00:15 » est demain.
+    const lateCall = new Date("2026-09-14T21:30:00.000Z");
+    const pickup = parsePickupTimeInParis("00:15", lateCall);
+    expect(pickup?.toISOString()).toBe("2026-09-14T22:15:00.000Z");
+  });
+
+  it("does not roll over when the time is still ahead in Paris even if past in UTC", () => {
+    // 01:10 à Paris = 23:10 UTC la veille. « 01:30 » est dans 20 minutes.
+    const afterMidnightParis = new Date("2026-09-14T23:10:00.000Z");
+    const pickup = parsePickupTimeInParis("01:30", afterMidnightParis);
+    expect(pickup?.toISOString()).toBe("2026-09-14T23:30:00.000Z");
+  });
+
+  it("rejects malformed or impossible times", () => {
+    expect(parsePickupTimeInParis(undefined)).toBeNull();
+    expect(parsePickupTimeInParis("19h30")).toBeNull();
+    expect(parsePickupTimeInParis("25:00")).toBeNull();
+    expect(parsePickupTimeInParis("19:75")).toBeNull();
   });
 });

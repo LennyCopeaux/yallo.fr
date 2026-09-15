@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Table,
@@ -65,54 +65,32 @@ interface RestaurantsDataTableProps {
 
 export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProps>) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
-  const currentTab = searchParams.get("tab");
-  const [searchValue, setSearchValue] = useState(searchParams.get("search") || "");
+  const [searchValue, setSearchValue] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [aiFilter, setAiFilter] = useState("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [restaurantToDelete, setRestaurantToDelete] = useState<Restaurant | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    if (currentTab === "restaurants") {
-      startTransition(() => {
-        setSearchValue(searchParams.get("search") || "");
-      });
+    for (const restaurant of data) {
+      router.prefetch(`/admin/restaurants/${restaurant.id}`);
     }
-  }, [currentTab, searchParams, startTransition]);
+  }, [data, router]);
 
-  const updateFilters = (key: string, value: string | null) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", "restaurants");
-    if (value && value !== "all") {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
-    startTransition(() => {
-      router.push(`/admin?${params.toString()}`);
+  const filteredData = useMemo(() => {
+    const term = searchValue.trim().toLowerCase();
+    return data.filter((restaurant) => {
+      const matchesSearch =
+        !term ||
+        restaurant.name.toLowerCase().includes(term) ||
+        restaurant.ownerEmail.toLowerCase().includes(term) ||
+        restaurant.owners.some((email) => email.toLowerCase().includes(term));
+      const matchesStatus = statusFilter === "all" || restaurant.status === statusFilter;
+      const matchesAi = aiFilter === "all" || (aiFilter === "true" && !!restaurant.vapiAssistantId);
+      return matchesSearch && matchesStatus && matchesAi;
     });
-  };
-
-  const handleSearchSubmit = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", "restaurants");
-    if (searchValue.trim()) {
-      params.set("search", searchValue.trim());
-    } else {
-      params.delete("search");
-    }
-    startTransition(() => {
-      router.push(`/admin?${params.toString()}`);
-    });
-  };
-
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSearchSubmit();
-    }
-  };
+  }, [aiFilter, data, searchValue, statusFilter]);
 
   const handleDelete = async () => {
     if (!restaurantToDelete) return;
@@ -153,22 +131,13 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
               placeholder="Rechercher par nom ou email..."
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
               className="pl-10 bg-background/50 border-border h-10"
             />
           </div>
-          <Button
-            type="button"
-            onClick={handleSearchSubmit}
-            disabled={isPending}
-            className="bg-primary text-black hover:bg-primary/90 h-10 w-10 p-0 min-w-[44px]"
-          >
-            <Search className="w-4 h-4" />
-          </Button>
         </div>
         <Select
-          value={searchParams.get("status") || "all"}
-          onValueChange={(value) => updateFilters("status", value)}
+          value={statusFilter}
+          onValueChange={setStatusFilter}
         >
           <SelectTrigger className="w-full sm:w-[180px] bg-background/50 border-border h-10">
             <SelectValue placeholder="Statut" />
@@ -181,8 +150,8 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
           </SelectContent>
         </Select>
         <Select
-          value={searchParams.get("hasAI") || "all"}
-          onValueChange={(value) => updateFilters("hasAI", value)}
+          value={aiFilter}
+          onValueChange={setAiFilter}
         >
           <SelectTrigger className="w-full sm:w-[180px] bg-background/50 border-border h-10">
             <SelectValue placeholder="État IA" />
@@ -195,7 +164,7 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
       </div>
 
       <div className="border border-border rounded-xl bg-card/20 overflow-hidden">
-        {data.length === 0 ? (
+        {filteredData.length === 0 ? (
           <div className="p-8 sm:p-16 text-center">
             <p className="text-muted-foreground text-sm sm:text-base">Aucun restaurant trouvé</p>
             <p className="text-xs sm:text-sm text-muted-foreground mt-2">
@@ -222,15 +191,20 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.map((restaurant) => (
+                {filteredData.map((restaurant) => (
                   <TableRow
                     key={restaurant.id}
-                    className="border-border hover:bg-primary/[0.02] cursor-pointer"
-                    onClick={() => router.push(`/admin/restaurants/${restaurant.id}`)}
+                    className="relative border-border hover:bg-primary/[0.02]"
                   >
                     <TableCell className="min-w-[150px]">
                       <div>
-                        <div className="font-medium text-sm sm:text-base">{restaurant.name}</div>
+                        <Link
+                          href={`/admin/restaurants/${restaurant.id}`}
+                          prefetch
+                          className="font-medium text-sm sm:text-base hover:text-primary after:absolute after:inset-0 after:content-['']"
+                        >
+                          {restaurant.name}
+                        </Link>
                         <div className="md:hidden mt-1 flex flex-col gap-0.5">
                           {restaurant.owners.length === 0 ? (
                             <span className="text-xs text-muted-foreground">—</span>
@@ -264,16 +238,13 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
                       {restaurant.ordersCount}
                     </TableCell>
                     <TableCell className="text-center min-w-[60px]">
-                      <div
-                        className={`w-3 h-3 rounded-full mx-auto ${
-                          restaurant.vapiAssistantId
-                            ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"
-                            : "bg-zinc-600"
-                        }`}
-                        title={restaurant.vapiAssistantId ? "IA configurée" : "IA non configurée"}
-                      />
+                      {restaurant.vapiAssistantId ? (
+                        <AdminStatusBadge tone="active" label="Actif" />
+                      ) : (
+                        <AdminStatusBadge tone="neutral" label="—" />
+                      )}
                     </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()} className="min-w-[44px]">
+                    <TableCell className="relative z-10 min-w-[44px]">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -315,12 +286,6 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
           </div>
         )}
       </div>
-
-      {isPending && (
-        <div className="fixed inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="bg-card border-border">

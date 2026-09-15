@@ -3,6 +3,7 @@ import { orders, orderItems, restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import { formatParisTime, parsePickupTimeInParis } from "@/lib/services/pickup-time";
 import { pushVoiceOrderToHubrise } from "@/lib/services/hubrise";
 import { normalizeSubmitOrderPayload } from "@/lib/services/submit-order-args";
 import { trySendOrderConfirmationSms } from "@/lib/services/twilio-sms";
@@ -44,23 +45,6 @@ function generateOrderNumber(): string {
   const timestamp = Date.now().toString().slice(-6);
   const random = Math.floor(Math.random() * 1000).toString().padStart(3, "0");
   return `#${timestamp}${random}`;
-}
-
-function parsePickupTime(pickupTimeStr?: string): Date | null {
-  if (!pickupTimeStr) return null;
-
-  const match = /^(\d{1,2}):(\d{2})$/.exec(pickupTimeStr);
-  if (!match) return null;
-
-  const now = new Date();
-  const pickup = new Date(now);
-  pickup.setHours(Number.parseInt(match[1], 10), Number.parseInt(match[2], 10), 0, 0);
-
-  if (pickup < now) {
-    pickup.setDate(pickup.getDate() + 1);
-  }
-
-  return pickup;
 }
 
 async function handleSubmitOrder(
@@ -112,7 +96,7 @@ async function handleSubmitOrder(
   });
 
   const totalAmount = itemsForDb.reduce((sum, item) => sum + item.totalPrice, 0);
-  const pickupTime = parsePickupTime(args.pickup_time);
+  const pickupTime = parsePickupTimeInParis(args.pickup_time);
 
   const mergedCustomerPhone =
     (args.customer_phone?.trim() && normalizeFrenchPhoneNumber(args.customer_phone.trim())) ||
@@ -190,9 +174,7 @@ async function handleSubmitOrder(
         }),
         totalEuros: (totalAmount / 100).toFixed(2),
         customerName: args.customer_name || null,
-        pickupTime: pickupTime
-          ? pickupTime.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
-          : null,
+        pickupTime: pickupTime ? formatParisTime(pickupTime) : null,
         notes: args.notes || null,
       });
     }

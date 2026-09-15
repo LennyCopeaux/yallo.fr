@@ -212,24 +212,9 @@ export function GeneralTab({ restaurant, owners, organizations = [], restaurantM
                   <SelectValue placeholder="Sélectionner" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
-                  <SelectItem value="onboarding">
-                    <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-amber-400" />{" "}
-                      Onboarding
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="active">
-                    <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400" />{" "}
-                      Actif
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="suspended">
-                    <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-red-400" />{" "}
-                      Suspendu
-                    </span>
-                  </SelectItem>
+                  <SelectItem value="onboarding">Onboarding</SelectItem>
+                  <SelectItem value="active">Actif</SelectItem>
+                  <SelectItem value="suspended">Suspendu</SelectItem>
                 </SelectContent>
               </Select>
               {form.formState.errors.status && (

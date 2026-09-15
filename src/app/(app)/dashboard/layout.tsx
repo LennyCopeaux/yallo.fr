@@ -1,5 +1,6 @@
 import { ClientSidebar } from "@/components/dashboard/client-sidebar";
 import { DashboardKitchenAlert } from "@/components/orders/dashboard-kitchen-alert";
+import { InstantNav } from "@/components/ui/instant-nav";
 import { getAppUser, getUserOrganization, getUserRestaurants } from "@/lib/auth";
 import { getSelectedRestaurantId } from "@/features/restaurant/switch-actions";
 import { getSubscriptionAccess } from "@/lib/subscription-access";
@@ -42,7 +43,7 @@ export default async function DashboardLayout({
       />
       <main key={currentRestaurant?.id ?? "no-restaurant"} className="flex-1 overflow-y-auto">
         {subscriptionAccess.hasAccess ? <DashboardKitchenAlert /> : null}
-        {children}
+        <InstantNav>{children}</InstantNav>
       </main>
     </div>
   );

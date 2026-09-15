@@ -75,6 +75,79 @@ describe("menu-parser", () => {
       expect(result).toEqual(mockMenuData);
     });
 
+    it("forbids the model from correcting product names or merging products", async () => {
+      vi.stubEnv("OPENAI_API_KEY", "test-key");
+
+      mockCreate.mockResolvedValue({
+        choices: [{ message: { content: JSON.stringify({ categories: [], option_lists: [] }) } }],
+      });
+
+      vi.resetModules();
+      const { parseMenuFromImages } = await import("@/lib/services/menu-parser");
+      await parseMenuFromImages(["https://example.com/menu.jpg"]);
+
+      const systemContent = mockCreate.mock.calls[0][0].messages[0].content as string;
+      expect(systemContent).toContain("NOMS EXACTS, JAMAIS CORRIGÉS");
+      expect(systemContent).toContain("LETTRE POUR LETTRE");
+      expect(systemContent).toContain("N'invente JAMAIS de taille");
+      expect(systemContent).toContain('"Redbull - Monster Energy"');
+    });
+
+    it("runs a review pass that receives the first JSON and the images", async () => {
+      vi.stubEnv("OPENAI_API_KEY", "test-key");
+      vi.stubEnv("OPENAI_MENU_REVIEW_PASS", "");
+
+      const firstPass = { categories: ["Salades"], donnees_menu: [{ categorie: "Salades", articles: [{ nom: "Le Poulet" }] }] };
+      const reviewed = { categories: ["Salades"], donnees_menu: [{ categorie: "Salades", articles: [{ nom: "La Poulet" }] }], option_lists: [] };
+      mockCreate
+        .mockResolvedValueOnce({ choices: [{ message: { content: JSON.stringify(firstPass) } }] })
+        .mockResolvedValueOnce({ choices: [{ message: { content: JSON.stringify(reviewed) } }] });
+
+      vi.resetModules();
+      const { parseMenuFromImages } = await import("@/lib/services/menu-parser");
+      const result = await parseMenuFromImages(["https://example.com/menu.jpg"]);
+
+      expect(mockCreate).toHaveBeenCalledTimes(2);
+      const reviewCall = mockCreate.mock.calls[1][0];
+      expect(reviewCall.temperature).toBe(0);
+      expect(reviewCall.messages[0].content).toContain("relecteur");
+      expect(reviewCall.messages[1].content[0].text).toContain("Le Poulet");
+      expect(reviewCall.messages[1].content[1].image_url.url).toBe("https://example.com/menu.jpg");
+      expect(result).toEqual(reviewed);
+    });
+
+    it("keeps the first pass when the review pass returns invalid JSON", async () => {
+      vi.stubEnv("OPENAI_API_KEY", "test-key");
+      vi.stubEnv("OPENAI_MENU_REVIEW_PASS", "");
+
+      const firstPass = { categories: [], option_lists: [], donnees_menu: [] };
+      mockCreate
+        .mockResolvedValueOnce({ choices: [{ message: { content: JSON.stringify(firstPass) } }] })
+        .mockResolvedValueOnce({ choices: [{ message: { content: "pas du json" } }] });
+
+      vi.resetModules();
+      const { parseMenuFromImages } = await import("@/lib/services/menu-parser");
+      const result = await parseMenuFromImages(["https://example.com/menu.jpg"]);
+
+      expect(result).toEqual(firstPass);
+    });
+
+    it("skips the review pass when OPENAI_MENU_REVIEW_PASS is false", async () => {
+      vi.stubEnv("OPENAI_API_KEY", "test-key");
+      vi.stubEnv("OPENAI_MENU_REVIEW_PASS", "false");
+
+      mockCreate.mockResolvedValue({
+        choices: [{ message: { content: JSON.stringify({ categories: [], option_lists: [] }) } }],
+      });
+
+      vi.resetModules();
+      const { parseMenuFromImages } = await import("@/lib/services/menu-parser");
+      await parseMenuFromImages(["https://example.com/menu.jpg"]);
+
+      expect(mockCreate).toHaveBeenCalledTimes(1);
+      expect(mockCreate.mock.calls[0][0].temperature).toBe(0);
+    });
+
     it("should throw error when no response from OpenAI", async () => {
       vi.stubEnv("OPENAI_API_KEY", "test-key");
 

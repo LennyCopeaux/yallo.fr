@@ -16,6 +16,7 @@ import { BillingPageContent } from "@/app/(app)/dashboard/billing/_components/bi
 import { UsageSection } from "@/app/(app)/dashboard/billing/_components/usage-section";
 import { SUBSCRIPTION_PLANS } from "@/features/billing/plans";
 import type { CallUsage } from "@/features/billing/usage-actions";
+import { AdminStatusBadge, stripeStatusLabel, stripeStatusTone } from "@/components/admin/status-badge";
 
 type OrgInfo = {
   id: string;
@@ -52,13 +53,6 @@ interface OrgDashboardProps {
   usage?: CallUsage;
 }
 
-const SUB_STATUS: Record<string, { label: string; dot: string; text: string }> = {
-  active: { label: "Actif", dot: "bg-emerald-400", text: "text-emerald-400" },
-  trialing: { label: "Période d'essai", dot: "bg-amber-400", text: "text-amber-400" },
-  past_due: { label: "Paiement en retard", dot: "bg-red-400", text: "text-red-400" },
-  canceled: { label: "Annulé", dot: "bg-zinc-500", text: "text-zinc-400" },
-};
-
 export function OrgDashboard({ user, org, stats, plans, usage }: Readonly<OrgDashboardProps>) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -66,7 +60,6 @@ export function OrgDashboard({ user, org, stats, plans, usage }: Readonly<OrgDas
   const [activeTab, setActiveTab] = useState<"overview" | "billing">("overview");
 
   const greeting = user.firstName ? user.firstName : user.email.split("@")[0];
-  const sub = org.stripeSubscriptionStatus ? SUB_STATUS[org.stripeSubscriptionStatus] : null;
 
   function handleSelectRestaurant(restaurantId: string) {
     setSelectingId(restaurantId);
@@ -87,13 +80,15 @@ export function OrgDashboard({ user, org, stats, plans, usage }: Readonly<OrgDas
             </div>
             <span className="font-semibold text-sm truncate max-w-[200px]">{org.name}</span>
           </div>
-          {sub && (
-            <div className="flex items-center gap-1.5">
-              <span className={`w-1.5 h-1.5 rounded-full ${sub.dot} shrink-0`} />
-              <span className={`text-xs font-medium ${sub.text}`}>{sub.label}</span>
+          {org.stripeSubscriptionStatus && (
+            <div className="flex items-center gap-2">
+              <AdminStatusBadge
+                tone={stripeStatusTone(org.stripeSubscriptionStatus)}
+                label={stripeStatusLabel(org.stripeSubscriptionStatus)}
+              />
               {org.stripeCurrentPeriodEnd && (
                 <span className="text-xs text-muted-foreground hidden sm:inline">
-                  &middot; jusqu&apos;au {new Date(org.stripeCurrentPeriodEnd).toLocaleDateString("fr-FR")}
+                  jusqu&apos;au {new Date(org.stripeCurrentPeriodEnd).toLocaleDateString("fr-FR")}
                 </span>
               )}
             </div>
@@ -147,12 +142,12 @@ export function OrgDashboard({ user, org, stats, plans, usage }: Readonly<OrgDas
             ) : (
               stats.restaurants.map((restaurant) => {
                 const isSelecting = selectingId === restaurant.id;
-                const statusDot =
+                const statusTone =
                   restaurant.status === "active"
-                    ? "bg-emerald-400"
+                    ? "active"
                     : restaurant.status === "onboarding"
-                      ? "bg-amber-400"
-                      : "bg-red-400";
+                      ? "warning"
+                      : "danger";
                 const statusLabel =
                   restaurant.status === "active"
                     ? "Actif"
@@ -171,8 +166,7 @@ export function OrgDashboard({ user, org, stats, plans, usage }: Readonly<OrgDas
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">{restaurant.name}</p>
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        <span className={`w-1.5 h-1.5 rounded-full ${statusDot} shrink-0`} />
-                        <span className="text-xs text-muted-foreground">{statusLabel}</span>
+                        <AdminStatusBadge tone={statusTone} label={statusLabel} />
                         {restaurant.phoneNumber && (
                           <>
                             <span className="text-muted-foreground/40 text-xs">·</span>

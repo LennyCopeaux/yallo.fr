@@ -1,4 +1,5 @@
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { InstantNav } from "@/components/ui/instant-nav";
 
 export default function AdminDashboardLayout({
   children,
@@ -9,7 +10,7 @@ export default function AdminDashboardLayout({
     <div className="flex h-screen overflow-hidden bg-background">
       <AdminSidebar />
       <main className="flex-1 overflow-y-auto">
-        {children}
+        <InstantNav>{children}</InstantNav>
       </main>
     </div>
   );

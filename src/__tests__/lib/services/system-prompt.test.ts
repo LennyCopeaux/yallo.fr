@@ -280,6 +280,66 @@ describe("generateSystemPrompt", () => {
     expect(prompt).not.toContain("Je vous mets une boisson");
   });
 
+  it("never blocks a drink the client asks for, even when upsell is disabled", async () => {
+    const restaurant = {
+      ...mockRestaurant,
+      hubriseAccessToken: null as string | null,
+      hubriseLocationId: null as string | null,
+      upsellEnabled: false,
+    };
+
+    const prompt = await generateSystemPrompt(restaurant);
+
+    expect(prompt).toContain("DÉSACTIVÉE");
+    expect(prompt).toContain("se commande comme n'importe quel article");
+  });
+
+  it("finds complements in a photo-imported menu so the assistant can sell drinks", async () => {
+    const restaurant = {
+      ...mockRestaurant,
+      hubriseAccessToken: null as string | null,
+      hubriseLocationId: null as string | null,
+      upsellEnabled: true,
+      // Format photo (donnees_menu) : hors du type MenuData mais présent en base.
+      menuData: {
+        categories: ["Burgers", "Boissons"],
+        donnees_menu: [
+          {
+            categorie: "Burgers",
+            articles: [{ nom: "Le P'tit Burger", tarifs: [{ prix: "11.90", label: "" }] }],
+          },
+          {
+            categorie: "Boissons",
+            articles: [{ nom: "Redbull - Monster Energy", tarifs: [{ prix: "3.50", label: "" }] }],
+          },
+        ],
+        option_lists: [],
+      } as unknown as typeof mockRestaurant.menuData,
+    };
+
+    const prompt = await generateSystemPrompt(restaurant);
+
+    expect(prompt).not.toContain("IMPOSSIBLE");
+    expect(prompt).toContain("Redbull - Monster Energy");
+    expect(prompt).toContain("UNE SEULE FOIS");
+  });
+
+  it("only asks for a size when the article has several tariffs", async () => {
+    const prompt = await generateSystemPrompt(mockRestaurant);
+
+    expect(prompt).toContain("TAILLES ET OPTIONS");
+    expect(prompt).toContain("UN SEUL tarif n'a AUCUNE taille");
+    expect(prompt).not.toContain("normale ou grande");
+  });
+
+  it("tells the assistant to match spoken names to the closest menu entry", async () => {
+    const prompt = await generateSystemPrompt(mockRestaurant);
+
+    expect(prompt).toContain("CORRESPONDANCE DES NOMS");
+    expect(prompt).toContain("« le petit burger » = « Le P'tit Burger »");
+    expect(prompt).toContain("Ne dis JAMAIS que tu n'as pas un produit qui figure dans le JSON");
+  });
+
   it("lists only real complements when upsell is possible", async () => {
     const restaurant = {
       ...mockRestaurant,

@@ -1,5 +1,6 @@
 import { DashboardTabs } from "@/components/admin";
 import { Suspense } from "react";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { getOwners, getRestaurantsWithFilters, getUsers, getTotalOrdersCount, getOrganizationsWithRestaurants } from "./queries";
 
 export default async function AdminDashboardPage({
@@ -16,7 +17,7 @@ export default async function AdminDashboardPage({
   const [totalOrders, owners, restaurantsList, usersList, organizationsList] = await Promise.all([
     getTotalOrdersCount(),
     getOwners(),
-    getRestaurantsWithFilters(params),
+    getRestaurantsWithFilters({}),
     getUsers(),
     getOrganizationsWithRestaurants(),
   ]);
@@ -30,7 +31,7 @@ export default async function AdminDashboardPage({
         </p>
       </div>
 
-      <Suspense fallback={<div className="h-96" />}>
+      <Suspense fallback={<PageSkeleton cards={4} rows={8} />}>
         <DashboardTabs
           restaurants={restaurantsList}
           users={usersList}

@@ -47,10 +47,110 @@ export function resolvePrepMinutes(
   return extractMinutes(setting) ?? DEFAULT_PREP_MINUTES;
 }
 
+const PARIS_TIME_ZONE = "Europe/Paris";
+
+/**
+ * Décalage (en minutes) entre l'heure de Paris et l'UTC à un instant donné :
+ * +60 en hiver, +120 en été. Calculé via Intl pour ne pas dépendre du fuseau
+ * du serveur (Vercel tourne en UTC, le poste de dev en heure de Paris).
+ */
+function getParisOffsetMinutes(date: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: PARIS_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+
+  const read = (type: string): number => Number(parts.find((p) => p.type === type)?.value ?? "0");
+  const asUtc = Date.UTC(
+    read("year"),
+    read("month") - 1,
+    read("day"),
+    read("hour") % 24,
+    read("minute"),
+    read("second")
+  );
+
+  return Math.round((asUtc - date.getTime()) / 60_000);
+}
+
+/** Composantes de la date civile à Paris. */
+function getParisDateParts(date: Date): { year: number; month: number; day: number } {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: PARIS_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  const read = (type: string): number => Number(parts.find((p) => p.type === type)?.value ?? "0");
+  return { year: read("year"), month: read("month"), day: read("day") };
+}
+
+/**
+ * Convertit une heure civile de Paris (année, mois, jour, heure, minute) en
+ * instant absolu. Deux passes pour absorber les changements d'heure.
+ */
+function parisLocalToDate(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number
+): Date {
+  const naive = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
+  const firstGuess = new Date(naive - getParisOffsetMinutes(new Date(naive)) * 60_000);
+  const offset = getParisOffsetMinutes(firstGuess);
+  return new Date(naive - offset * 60_000);
+}
+
+/**
+ * Heure de retrait « HH:MM » donnée par l'assistant, interprétée comme une
+ * heure de Paris — c'est celle que le client a entendue et validée.
+ *
+ * L'ancienne version faisait `setHours()` sur le fuseau du serveur : sur
+ * Vercel (UTC), « 19:30 » devenait 19h30 UTC, soit 21h30 à Paris sur la
+ * tablette cuisine, alors que le SMS (formaté lui aussi en UTC) disait 19h30.
+ *
+ * Si l'heure est déjà passée à Paris, on bascule au lendemain.
+ */
+export function parsePickupTimeInParis(pickupTimeStr: string | undefined, now: Date = new Date()): Date | null {
+  if (!pickupTimeStr) return null;
+
+  const match = /^(\d{1,2}):(\d{2})$/.exec(pickupTimeStr.trim());
+  if (!match) return null;
+
+  const hour = Number.parseInt(match[1], 10);
+  const minute = Number.parseInt(match[2], 10);
+  if (hour > 23 || minute > 59) return null;
+
+  const { year, month, day } = getParisDateParts(now);
+  let pickup = parisLocalToDate(year, month, day, hour, minute);
+
+  if (pickup.getTime() < now.getTime()) {
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60_000);
+    const next = getParisDateParts(tomorrow);
+    pickup = parisLocalToDate(next.year, next.month, next.day, hour, minute);
+  }
+
+  return pickup;
+}
+
+/** « HH:MM » en heure de Paris, pour le SMS, le dashboard et les retours à l'assistant. */
+export function formatParisTime(date: Date): string {
+  const { hour, minute } = getParisHourMinute(date);
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
 /** Heure locale à Paris, indépendamment du fuseau du serveur. */
 function getParisHourMinute(date: Date): { hour: number; minute: number } {
   const parts = new Intl.DateTimeFormat("fr-FR", {
-    timeZone: "Europe/Paris",
+    timeZone: PARIS_TIME_ZONE,
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,

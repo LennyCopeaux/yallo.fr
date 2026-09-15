@@ -51,4 +51,53 @@ describe("findUpsellCandidates", () => {
       })
     ).toEqual({ hasAny: false, suggestions: [] });
   });
+
+  it("reads the photo-imported format (donnees_menu / articles / tarifs)", () => {
+    expect(
+      findUpsellCandidates({
+        categories: ["Burgers", "Boissons", "Desserts"],
+        donnees_menu: [
+          {
+            categorie: "Burgers",
+            notes_de_section: ["Servis avec frites"],
+            articles: [{ nom: "Le Montagnard", tarifs: [{ prix: "12.90", label: "" }], description: "" }],
+          },
+          {
+            categorie: "Boissons",
+            notes_de_section: [],
+            articles: [
+              { nom: "Sodas (33cl)", tarifs: [{ prix: "2", label: "" }], description: "Coca-Cola • Fanta" },
+              { nom: "Redbull - Monster Energy", tarifs: [{ prix: "3.50", label: "" }], description: "" },
+              { nom: "Carafe d'eau", tarifs: [{ prix: "", label: "" }], description: "" },
+            ],
+          },
+          {
+            categorie: "Desserts",
+            notes_de_section: [],
+            articles: [{ nom: "Tiramisu", tarifs: [{ prix: 3.5, label: "" }], description: "" }],
+          },
+        ],
+        option_lists: [],
+      })
+    ).toEqual({ hasAny: true, suggestions: ["Sodas (33cl)", "Redbull - Monster Energy", "Tiramisu"] });
+  });
+
+  it("ignores a photo-imported menu whose complements have no price", () => {
+    expect(
+      findUpsellCandidates({
+        categories: ["Boissons"],
+        donnees_menu: [
+          {
+            categorie: "Boissons",
+            articles: [{ nom: "Eau", tarifs: [{ prix: "", label: "" }] }],
+          },
+        ],
+      })
+    ).toEqual({ hasAny: false, suggestions: [] });
+  });
+
+  it("returns nothing for a menu that is not an object", () => {
+    expect(findUpsellCandidates(null)).toEqual({ hasAny: false, suggestions: [] });
+    expect(findUpsellCandidates("menu")).toEqual({ hasAny: false, suggestions: [] });
+  });
 });

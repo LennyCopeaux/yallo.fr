@@ -73,7 +73,10 @@ function formatPrice(cents: number): string {
 
 function formatTime(date: Date | null): string {
   if (!date) return "";
+  // Heure de Paris explicite : l'heure de retrait est celle validée avec le
+  // client au téléphone, elle ne doit pas dépendre du fuseau de la tablette.
   return new Date(date).toLocaleTimeString("fr-FR", {
+    timeZone: "Europe/Paris",
     hour: "2-digit",
     minute: "2-digit",
   });

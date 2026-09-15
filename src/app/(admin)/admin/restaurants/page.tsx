@@ -3,15 +3,10 @@ import { Suspense } from "react";
 import { Loader2, UtensilsCrossed } from "lucide-react";
 import { getOwners, getRestaurantsWithFilters } from "../queries";
 
-export default async function RestaurantsPage({
-  searchParams,
-}: Readonly<{
-  searchParams: Promise<{ status?: string; search?: string; hasAI?: string }>;
-}>) {
-  const params = await searchParams;
+export default async function RestaurantsPage() {
   const [owners, restaurantsList] = await Promise.all([
     getOwners(),
-    getRestaurantsWithFilters(params),
+    getRestaurantsWithFilters({}),
   ]);
 
   return (

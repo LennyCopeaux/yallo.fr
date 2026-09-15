@@ -72,7 +72,10 @@ export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurant
     for (const item of navigation) {
       router.prefetch(item.href);
     }
-  }, [router]);
+    if (orgId) {
+      router.prefetch(`/org/${orgId}`);
+    }
+  }, [router, orgId]);
 
   function handleSwitchRestaurant(id: string) {
     setSelectorOpen(false);
@@ -156,6 +159,7 @@ export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurant
             <Link
               key={item.href}
               href={item.href}
+              prefetch
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
                 isActive
@@ -268,6 +272,7 @@ export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurant
             <Link
               key={item.href}
               href={item.href}
+              prefetch
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
                 isActive
