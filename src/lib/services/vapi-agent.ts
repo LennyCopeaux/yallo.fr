@@ -12,9 +12,33 @@ type Restaurant = typeof restaurants.$inferSelect;
 
 const VAPI_API_URL = "https://api.vapi.ai";
 
-const DEFAULT_LLM_MODEL = "gpt-4o-mini";
+/**
+ * gpt-4o-mini ne tenait pas les consignes de dialogue (récapitulatifs répétés,
+ * heures en chiffres, taille inventée quand le mot n'a pas été transcrit).
+ * gpt-4o coûte un peu de latence mais suit un déroulé en neuf étapes.
+ */
+const DEFAULT_LLM_MODEL = "gpt-4o";
 
 const DEFAULT_LLM_TEMPERATURE = 0.3;
+
+/**
+ * Flash v2.5 = latence minimale ; multilingual v2 = français nettement plus
+ * naturel (liaisons, heures) au prix d'environ 300 ms de plus par phrase.
+ */
+const DEFAULT_VOICE_MODEL = "eleven_flash_v2_5";
+
+/**
+ * Stabilité 0.8 donnait une voix monocorde et hachée. 0.5 laisse la voix
+ * moduler les phrases ; similarityBoost reste élevé pour garder le timbre.
+ */
+const DEFAULT_VOICE_STABILITY = 0.5;
+const DEFAULT_VOICE_SIMILARITY = 0.75;
+
+/** « off », « office », ou l'URL https d'un mp3 d'ambiance (bruit de salle). */
+const DEFAULT_BACKGROUND_SOUND = "off";
+
+const DEFAULT_TRANSCRIBER_PROVIDER = "deepgram";
+const DEFAULT_TRANSCRIBER_MODEL = "nova-3";
 
 /**
  * 1.0 = débit naturel. Au-dessus, ElevenLabs accélère les phonèmes français
@@ -222,6 +246,63 @@ function buildAnalysisPlan() {
   };
 }
 
+function parseFloatEnv(name: string, fallback: number): number {
+  const parsed = Number.parseFloat(process.env[name]?.trim() ?? "");
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function resolveBackgroundSound(): string {
+  const raw = process.env.VAPI_BACKGROUND_SOUND?.trim();
+  if (!raw) return DEFAULT_BACKGROUND_SOUND;
+  if (raw === "off" || raw === "office" || raw.startsWith("https://")) return raw;
+  return DEFAULT_BACKGROUND_SOUND;
+}
+
+/**
+ * Noms de la carte et mots de taille, pour orienter la transcription.
+ * Le client dit « la 4 fromages en petite » : sans indice, Deepgram rend
+ * « la carte fromage en thaï », et le modèle invente une taille.
+ */
+export function collectTranscriberKeyterms(menu: unknown): string[] {
+  const terms = new Set<string>(["petite", "moyenne", "grande", "à emporter", "sur place"]);
+  if (menu === null || typeof menu !== "object") return [...terms];
+  const record = menu as Record<string, unknown>;
+
+  const addName = (raw: unknown) => {
+    if (typeof raw !== "string") return;
+    const name = raw.replace(/\s*\(.*?\)\s*/g, " ").trim();
+    if (name.length >= 3 && terms.size < 100) terms.add(name);
+  };
+
+  if (Array.isArray(record.donnees_menu)) {
+    for (const section of record.donnees_menu as Array<{ articles?: unknown }>) {
+      if (!Array.isArray(section?.articles)) continue;
+      for (const article of section.articles as Array<{ nom?: unknown }>) addName(article?.nom);
+    }
+  }
+  if (Array.isArray(record.categories)) {
+    for (const category of record.categories as Array<{ products?: unknown }>) {
+      if (!Array.isArray(category?.products)) continue;
+      for (const product of category.products as Array<{ name?: unknown }>) addName(product?.name);
+    }
+  }
+  return [...terms];
+}
+
+function buildTranscriber(restaurant: Restaurant) {
+  const provider = process.env.VAPI_TRANSCRIBER_PROVIDER?.trim() || DEFAULT_TRANSCRIBER_PROVIDER;
+  const model = process.env.VAPI_TRANSCRIBER_MODEL?.trim() || DEFAULT_TRANSCRIBER_MODEL;
+  const useKeyterms =
+    provider === "deepgram" && process.env.VAPI_TRANSCRIBER_KEYTERMS?.trim().toLowerCase() === "true";
+
+  return {
+    provider,
+    model,
+    language: "fr",
+    ...(useKeyterms ? { keyterm: collectTranscriberKeyterms(restaurant.menuData) } : {}),
+  };
+}
+
 function buildAssistantConfig(
   restaurant: Restaurant,
   systemPrompt: string,
@@ -275,21 +356,17 @@ function buildAssistantConfig(
     voice: {
       provider: "11labs",
       voiceId,
-      // Flash v2.5 est le seul modèle ElevenLabs VAPI qui accepte un verrou de langue.
+      // Flash v2.5 et multilingual v2 acceptent le verrou de langue.
       // Turbo, plus rapide, interprète souvent un fragment français comme de l'anglais.
-      model: "eleven_flash_v2_5",
+      model: process.env.VAPI_VOICE_MODEL?.trim() || DEFAULT_VOICE_MODEL,
       language: "fr",
       speed: DEFAULT_VOICE_SPEED,
-      stability: 0.8,
-      similarityBoost: 0.8,
+      stability: parseFloatEnv("VAPI_VOICE_STABILITY", DEFAULT_VOICE_STABILITY),
+      similarityBoost: parseFloatEnv("VAPI_VOICE_SIMILARITY", DEFAULT_VOICE_SIMILARITY),
       optimizeStreamingLatency: 3,
     },
-    backgroundSound: "off",
-    transcriber: {
-      provider: "deepgram",
-      model: "nova-3",
-      language: "fr",
-    },
+    backgroundSound: resolveBackgroundSound(),
+    transcriber: buildTranscriber(restaurant),
     firstMessage: resolveAssistantFirstMessage(restaurant, availability),
     analysisPlan: buildAnalysisPlan(),
 
