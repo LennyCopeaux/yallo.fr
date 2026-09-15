@@ -12,7 +12,7 @@ describe("findUpsellCandidates", () => {
           },
         ],
       })
-    ).toEqual({ hasAny: false, suggestions: [] });
+    ).toEqual({ hasAny: false, suggestions: [], drinks: [], desserts: [], others: [] });
   });
 
   it("lists orderable drinks and desserts only", () => {
@@ -36,7 +36,13 @@ describe("findUpsellCandidates", () => {
           },
         ],
       })
-    ).toEqual({ hasAny: true, suggestions: ["Coca 33cl", "Tiramisu"] });
+    ).toEqual({
+      hasAny: true,
+      suggestions: ["Coca 33cl", "Tiramisu"],
+      drinks: ["Coca 33cl"],
+      desserts: ["Tiramisu"],
+      others: [],
+    });
   });
 
   it("does not match a keyword hidden inside another word", () => {
@@ -49,7 +55,7 @@ describe("findUpsellCandidates", () => {
           },
         ],
       })
-    ).toEqual({ hasAny: false, suggestions: [] });
+    ).toEqual({ hasAny: false, suggestions: [], drinks: [], desserts: [], others: [] });
   });
 
   it("reads the photo-imported format (donnees_menu / articles / tarifs)", () => {
@@ -79,7 +85,13 @@ describe("findUpsellCandidates", () => {
         ],
         option_lists: [],
       })
-    ).toEqual({ hasAny: true, suggestions: ["Sodas (33cl)", "Redbull - Monster Energy", "Tiramisu"] });
+    ).toEqual({
+      hasAny: true,
+      suggestions: ["Sodas (33cl)", "Redbull - Monster Energy", "Tiramisu"],
+      drinks: ["Sodas (33cl)", "Redbull - Monster Energy"],
+      desserts: ["Tiramisu"],
+      others: [],
+    });
   });
 
   it("ignores a photo-imported menu whose complements have no price", () => {
@@ -93,11 +105,22 @@ describe("findUpsellCandidates", () => {
           },
         ],
       })
-    ).toEqual({ hasAny: false, suggestions: [] });
+    ).toEqual({ hasAny: false, suggestions: [], drinks: [], desserts: [], others: [] });
   });
 
   it("returns nothing for a menu that is not an object", () => {
-    expect(findUpsellCandidates(null)).toEqual({ hasAny: false, suggestions: [] });
-    expect(findUpsellCandidates("menu")).toEqual({ hasAny: false, suggestions: [] });
+    expect(findUpsellCandidates(null)).toEqual({ hasAny: false, suggestions: [], drinks: [], desserts: [], others: [] });
+    expect(findUpsellCandidates("menu")).toEqual({ hasAny: false, suggestions: [], drinks: [], desserts: [], others: [] });
+  });
+
+  it("files sides under others so the prompt can tell them apart from drinks and desserts", () => {
+    const result = findUpsellCandidates({
+      categories: [
+        { name: "Accompagnements", products: [{ name: "Frites", skus: [{ ref: "f", name: "Portion", price: "3" }] }] },
+      ],
+    });
+    expect(result.others).toEqual(["Frites"]);
+    expect(result.drinks).toEqual([]);
+    expect(result.desserts).toEqual([]);
   });
 });
