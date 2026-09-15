@@ -340,6 +340,63 @@ describe("generateSystemPrompt", () => {
     expect(prompt).toContain("Ne dis JAMAIS que tu n'as pas un produit qui figure dans le JSON");
   });
 
+  it("adapts the upsell to what the client already ordered when drinks and desserts exist", async () => {
+    const restaurant = {
+      ...mockRestaurant,
+      hubriseAccessToken: null as string | null,
+      hubriseLocationId: null as string | null,
+      upsellEnabled: true,
+      menuData: {
+        categories: ["Pizzas", "Boissons", "Desserts"],
+        donnees_menu: [
+          { categorie: "Pizzas", articles: [{ nom: "La Reine", tarifs: [{ prix: "10.50", label: "26 cm" }, { prix: "13.50", label: "33 cm" }] }] },
+          { categorie: "Boissons", articles: [{ nom: "Sodas (33cl)", tarifs: [{ prix: "2", label: "" }] }] },
+          { categorie: "Desserts", articles: [{ nom: "Tiramisu Cookie oréo", tarifs: [{ prix: "3.90", label: "" }] }] },
+        ],
+        option_lists: [],
+      } as unknown as typeof mockRestaurant.menuData,
+    };
+
+    const prompt = await generateSystemPrompt(restaurant);
+
+    expect(prompt).toContain("une boisson ou un dessert pour accompagner le tout");
+    expect(prompt).toContain("déjà un dessert, pas de boisson → « Je vous mets une boisson avec ça ? »");
+    expect(prompt).toContain("déjà une boisson ET un dessert → ne propose RIEN");
+    expect(prompt).toContain("Boissons proposables : Sodas (33cl)");
+    expect(prompt).toContain("Desserts proposables : Tiramisu Cookie oréo");
+    expect(prompt).toContain("Pizzas : tous les articles existent en 26 cm, 33 cm");
+    expect(prompt).toContain("Boissons, Desserts : AUCUN article n'a de taille");
+  });
+
+  it("only offers a drink when the menu has no dessert", async () => {
+    const restaurant = {
+      ...mockRestaurant,
+      hubriseAccessToken: null as string | null,
+      hubriseLocationId: null as string | null,
+      upsellEnabled: true,
+      menuData: {
+        categories: [
+          { name: "Pizzas", products: [{ name: "4 fromages", skus: [{ ref: "p1", name: "Normale", price: "12" }] }] },
+          { name: "Boissons", products: [{ name: "Coca 33cl", skus: [{ ref: "c1", name: "33cl", price: "2" }] }] },
+        ],
+        option_lists: [],
+      },
+    };
+
+    const prompt = await generateSystemPrompt(restaurant);
+
+    expect(prompt).toContain("Ce menu n'a pas de dessert");
+    expect(prompt).not.toContain("Un dessert pour finir");
+  });
+
+  it("does not reconfirm a pickup time chosen by the client", async () => {
+    const prompt = await generateSystemPrompt(mockRestaurant, { includeCurrentTime: true });
+
+    expect(prompt).toContain("Son heure vaut validation");
+    expect(prompt).toContain("Une heure choisie par le client n'est jamais reconfirmée");
+    expect(prompt).toContain("Très bien, dix-neuf heures trente. Ce sera à quel nom ?");
+  });
+
   it("lists only real complements when upsell is possible", async () => {
     const restaurant = {
       ...mockRestaurant,

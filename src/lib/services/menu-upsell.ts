@@ -18,65 +18,28 @@ const MAX_SUGGESTIONS = 8;
  * fait pas un upsell : on ne veut ni proposer une pizza en supplément d'une
  * pizza, ni proposer un composant qui n'est pas commandable seul.
  */
-const COMPLEMENT_KEYWORDS = [
-  // Boissons
-  "boisson",
-  "boissons",
-  "drink",
-  "drinks",
-  "soda",
-  "sodas",
-  "soft",
-  "softs",
-  "biere",
-  "bieres",
-  "vin",
-  "vins",
-  "eau",
-  "eaux",
-  "cafe",
-  "cafes",
-  "the",
-  "thes",
-  "jus",
-  "limonade",
-  "milkshake",
-  "milkshakes",
-  // Desserts
-  "dessert",
-  "desserts",
-  "glace",
-  "glaces",
-  "patisserie",
-  "patisseries",
-  "gateau",
-  "gateaux",
-  "sucre",
-  "sucres",
-  // Accompagnements
-  "accompagnement",
-  "accompagnements",
-  "side",
-  "sides",
-  "frite",
-  "frites",
-  "potato",
-  "potatoes",
-  "salade",
-  "salades",
-  "snack",
-  "snacks",
-  "entree",
-  "entrees",
-  // Suppléments
-  "supplement",
-  "supplements",
-  "sauce",
-  "sauces",
-  "extra",
-  "extras",
-  "topping",
-  "toppings",
+export type ComplementKind = "drink" | "dessert" | "other";
+
+const DRINK_KEYWORDS = [
+  "boisson", "boissons", "drink", "drinks", "soda", "sodas", "soft", "softs",
+  "biere", "bieres", "vin", "vins", "eau", "eaux", "cafe", "cafes", "the", "thes",
+  "jus", "limonade", "milkshake", "milkshakes",
+];
+
+const DESSERT_KEYWORDS = [
+  "dessert", "desserts", "glace", "glaces", "patisserie", "patisseries",
+  "gateau", "gateaux", "sucre", "sucres",
+];
+
+/**
+ * Accompagnements et suppléments : proposables, mais sans logique « déjà pris »
+ * particulière — on les cite seulement si le client n'a ni boisson ni dessert
+ * à proposer.
+ */
+const OTHER_COMPLEMENT_KEYWORDS = [
+  "accompagnement", "accompagnements", "side", "sides", "frite", "frites",
+  "potato", "potatoes", "salade", "salades", "snack", "snacks", "entree", "entrees",
+  "supplement", "supplements", "sauce", "sauces", "extra", "extras", "topping", "toppings",
 ];
 
 export type UpsellCandidates = {
@@ -84,9 +47,19 @@ export type UpsellCandidates = {
   hasAny: boolean;
   /** Noms exacts issus du menu : l'assistant ne doit citer que ceux-là. */
   suggestions: string[];
+  /** Les mêmes noms, triés par nature pour adapter la proposition à ce que le client a déjà pris. */
+  drinks: string[];
+  desserts: string[];
+  others: string[];
 };
 
-const EMPTY_CANDIDATES: UpsellCandidates = { hasAny: false, suggestions: [] };
+const EMPTY_CANDIDATES: UpsellCandidates = {
+  hasAny: false,
+  suggestions: [],
+  drinks: [],
+  desserts: [],
+  others: [],
+};
 
 /** Minuscules sans accents : « Boissons & Cafés » et « boissons cafes » doivent matcher. */
 function normalize(value: string): string {
@@ -96,13 +69,20 @@ function normalize(value: string): string {
     .toLowerCase();
 }
 
-function isComplementCategory(categoryName: string): boolean {
+/**
+ * Nature du complément d'après le nom de la catégorie, ou null si la
+ * catégorie n'est pas un complément (plat principal, composant…).
+ */
+function classifyComplementCategory(categoryName: string): ComplementKind | null {
   const normalized = normalize(categoryName);
 
   // Comparaison mot à mot : « the » ne doit pas matcher « thermidor », et
   // « eau » ne doit pas matcher « beaujolais ».
   const words = new Set(normalized.split(/[^a-z0-9]+/).filter(Boolean));
-  return COMPLEMENT_KEYWORDS.some((keyword) => words.has(keyword));
+  if (DRINK_KEYWORDS.some((keyword) => words.has(keyword))) return "drink";
+  if (DESSERT_KEYWORDS.some((keyword) => words.has(keyword))) return "dessert";
+  if (OTHER_COMPLEMENT_KEYWORDS.some((keyword) => words.has(keyword))) return "other";
+  return null;
 }
 
 /**
@@ -131,34 +111,46 @@ function hasPricedTariff(article: PhotoMenuArticle): boolean {
   });
 }
 
-function pushSuggestion(suggestions: string[], name: string): boolean {
-  if (suggestions.includes(name)) return false;
-  suggestions.push(name);
-  return suggestions.length >= MAX_SUGGESTIONS;
+type Collector = { suggestions: string[]; drinks: string[]; desserts: string[]; others: string[] };
+
+const BUCKET: Record<ComplementKind, keyof Collector> = {
+  drink: "drinks",
+  dessert: "desserts",
+  other: "others",
+};
+
+/** Ajoute un nom ; renvoie true quand le quota de suggestions est atteint. */
+function pushSuggestion(collector: Collector, kind: ComplementKind, name: string): boolean {
+  if (collector.suggestions.includes(name)) return false;
+  collector.suggestions.push(name);
+  collector[BUCKET[kind]].push(name);
+  return collector.suggestions.length >= MAX_SUGGESTIONS;
 }
 
-function collectFromStructuredMenu(menu: MenuData, suggestions: string[]): boolean {
+function collectFromStructuredMenu(menu: MenuData, collector: Collector): boolean {
   for (const category of menu.categories) {
     if (!category?.name || !Array.isArray(category.products)) continue;
-    if (!isComplementCategory(category.name)) continue;
+    const kind = classifyComplementCategory(category.name);
+    if (!kind) continue;
 
     for (const product of category.products) {
       if (!product?.name || !isOrderable(product)) continue;
-      if (pushSuggestion(suggestions, product.name)) return true;
+      if (pushSuggestion(collector, kind, product.name)) return true;
     }
   }
   return false;
 }
 
-function collectFromPhotoMenu(sections: PhotoMenuSection[], suggestions: string[]): boolean {
+function collectFromPhotoMenu(sections: PhotoMenuSection[], collector: Collector): boolean {
   for (const section of sections) {
     if (typeof section?.categorie !== "string" || !Array.isArray(section.articles)) continue;
-    if (!isComplementCategory(section.categorie)) continue;
+    const kind = classifyComplementCategory(section.categorie);
+    if (!kind) continue;
 
     for (const article of section.articles as PhotoMenuArticle[]) {
       if (typeof article?.nom !== "string" || article.nom.trim().length === 0) continue;
       if (!hasPricedTariff(article)) continue;
-      if (pushSuggestion(suggestions, article.nom.trim())) return true;
+      if (pushSuggestion(collector, kind, article.nom.trim())) return true;
     }
   }
   return false;
@@ -167,24 +159,24 @@ function collectFromPhotoMenu(sections: PhotoMenuSection[], suggestions: string[
 export function findUpsellCandidates(menu: unknown): UpsellCandidates {
   if (menu === null || typeof menu !== "object") return EMPTY_CANDIDATES;
 
-  const suggestions: string[] = [];
+  const collector: Collector = { suggestions: [], drinks: [], desserts: [], others: [] };
   const record = menu as Record<string, unknown>;
 
   const sections = record.donnees_menu;
   if (Array.isArray(sections)) {
-    collectFromPhotoMenu(sections as PhotoMenuSection[], suggestions);
+    collectFromPhotoMenu(sections as PhotoMenuSection[], collector);
   }
 
   const categories = record.categories;
   if (
-    suggestions.length < MAX_SUGGESTIONS &&
+    collector.suggestions.length < MAX_SUGGESTIONS &&
     Array.isArray(categories) &&
     categories.some((c) => c !== null && typeof c === "object")
   ) {
-    collectFromStructuredMenu({ categories, option_lists: [] } as MenuData, suggestions);
+    collectFromStructuredMenu({ categories, option_lists: [] } as MenuData, collector);
   }
 
-  return suggestions.length > 0
-    ? { hasAny: true, suggestions }
+  return collector.suggestions.length > 0
+    ? { hasAny: true, ...collector }
     : EMPTY_CANDIDATES;
 }

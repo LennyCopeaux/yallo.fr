@@ -7,6 +7,7 @@ import {
   type CallOrderAvailability,
 } from "./business-hours";
 import { findUpsellCandidates } from "./menu-upsell";
+import { buildSizeSummaryBlock } from "./menu-sizes";
 import { computeSuggestedPickupTime, formatSpokenFrenchTime, resolvePrepMinutes } from "./pickup-time";
 
 type Restaurant = typeof restaurants.$inferSelect;
@@ -84,11 +85,12 @@ Client : « Ce sera tout. »
 Toi : « Ce sera sur place ou à emporter ? »
 Client : « À emporter. »
 Toi : « Ce sera prêt vers dix-neuf heures quinze, est-ce que ça vous convient ? »
-Client : « Dix-neuf heures. »
-Toi : « Ce sera à quel nom ? »
+Client : « Plutôt dix-neuf heures trente, ça m'arrange. »
+Toi : « Très bien, dix-neuf heures trente. Ce sera à quel nom ? »
+   → l'heure choisie par le client n'est pas reconfirmée
 Client : « Lenny. »
    → tu appelles submit_order
-Toi : « C'est noté pour dix-neuf heures, à tout à l'heure. »`
+Toi : « C'est noté pour dix-neuf heures trente, à tout à l'heure. »`
 
 function getKitchenStatusInstruction(restaurant: Restaurant): string {
   if (restaurant.currentStatus === "STOP") {
@@ -133,17 +135,43 @@ function getUpsellInstruction(restaurant: Restaurant, menuStructure: unknown): s
 Cela ne t'interdit RIEN quand c'est le client qui demande : une boisson, un dessert ou un accompagnement présent dans le JSON se commande comme n'importe quel article.`;
   }
 
-  const { hasAny, suggestions } = findUpsellCandidates(menuStructure);
+  const { hasAny, suggestions, drinks, desserts } = findUpsellCandidates(menuStructure);
 
   if (!hasAny) {
     return `\n\nVente additionnelle : IMPOSSIBLE pour cet établissement — le JSON ne contient aucune catégorie de compléments (boissons, desserts, accompagnements). Ne propose donc RIEN de ta propre initiative et n'évoque pas de complément.
 Si le client en demande un, vérifie d'abord le JSON : s'il y figure, tu le prends ; sinon « Je n'ai pas de coca, désolé. » puis tu enchaînes.`;
   }
 
+  const hasDrinks = drinks.length > 0;
+  const hasDesserts = desserts.length > 0;
+
+  let situationRules: string;
+  if (hasDrinks && hasDesserts) {
+    situationRules = `- Regarde d'abord ce que le client a DÉJÀ commandé pendant l'appel :
+  · ni boisson ni dessert → « Vous souhaitez une boisson ou un dessert pour accompagner le tout ? »
+  · déjà un dessert, pas de boisson → « Je vous mets une boisson avec ça ? »
+  · déjà une boisson, pas de dessert → « Un dessert pour finir ? »
+  · déjà une boisson ET un dessert → ne propose RIEN, passe directement à la suite.
+- Ne propose jamais une nature de complément que le client a déjà prise.
+- Boissons proposables : ${drinks.join(", ")}.
+- Desserts proposables : ${desserts.join(", ")}.`;
+  } else if (hasDrinks) {
+    situationRules = `- Ce menu n'a pas de dessert : propose uniquement une boisson, et seulement si le client n'en a pas déjà pris une. Sinon ne propose rien.
+- Formule : « Je vous mets une boisson avec ça ? »
+- Boissons proposables : ${drinks.join(", ")}.`;
+  } else if (hasDesserts) {
+    situationRules = `- Ce menu n'a pas de boisson : propose uniquement un dessert, et seulement si le client n'en a pas déjà pris un. Sinon ne propose rien.
+- Formule : « Un dessert pour finir ? »
+- Desserts proposables : ${desserts.join(", ")}.`;
+  } else {
+    situationRules = `- Propose UN accompagnement, sauf si le client en a déjà pris un. Sinon ne propose rien.
+- Accompagnements proposables : ${suggestions.join(", ")}.`;
+  }
+
   return `\n\nVente additionnelle :
-- UNE SEULE FOIS, au moment où le client indique qu'il ne veut rien d'autre, propose UN complément.
-- Tu ne peux proposer que ces articles, qui existent réellement : ${suggestions.join(", ")}.
-- Formule courte : « Un dessert avec ça ? » ou « Je vous mets une boisson ? »
+- UNE SEULE FOIS, au moment où le client indique qu'il ne veut rien d'autre.
+${situationRules}
+- Tu ne peux citer que des articles qui existent réellement dans le JSON.
 - Si le client refuse, tu enchaînes immédiatement et tu ne reproposes jamais.`;
 }
 
@@ -191,6 +219,7 @@ export async function generateSystemPrompt(
   options?: { includeCurrentTime?: boolean; availability?: CallOrderAvailability }
 ): Promise<string> {
   const menuStructure = await getMenuStructure(restaurant);
+  const sizeSummaryBlock = buildSizeSummaryBlock(menuStructure);
 
   let timeBlock = "";
   let computedHoursStatusBlock = "";
@@ -219,7 +248,8 @@ export async function generateSystemPrompt(
 HEURE DE RETRAIT — tu la proposes, tu ne la demandes pas :
 - À l'oral, copie EXACTEMENT : « Ce sera prêt vers ${spokenPickupTime}, est-ce que ça vous convient ? »
 - Si le client redemande l'heure, répète ${spokenPickupTime}, mot pour mot. N'invente rien.
-- Si le client veut PLUS TARD, accepte immédiatement, sans négocier ni proposer une autre heure, et répète son heure EN LETTRES (dix-neuf heures trente, vingt heures…). Tu refuses seulement une heure après la fermeture.
+- Si le client veut PLUS TARD, accepte immédiatement, sans négocier ni proposer une autre heure. Son heure vaut validation : ne redemande PAS « est-ce que ça vous convient ? ». Enchaîne directement : « Très bien, dix-neuf heures. Ce sera à quel nom ? » (son heure EN LETTRES). Tu refuses seulement une heure après la fermeture.
+- La question « est-ce que ça vous convient ? » ne sert qu'à l'heure que TU proposes. Une heure choisie par le client n'est jamais reconfirmée.
 - Si le client veut PLUS TÔT, refuse : « Le plus tôt, c'est ${spokenPickupTime}. »
 - INTERDIT : chiffres, « 19h05 », « 19 heures 5 », le mot « euro » ou « euros ».
 - pickup_time dans submit_order = l'heure finalement retenue, au format HH:MM (chiffres ici seulement, jamais à l'oral).
@@ -267,6 +297,9 @@ TAILLES ET OPTIONS — uniquement ce que le JSON impose :
 - Le prix envoyé dans submit_order est celui du tarif choisi.
 - Un article sans prix dans le JSON n'est pas vendu seul : c'est un choix inclus (ex. « frites au choix » avec un burger « servi avec frites ») ou une information. Ne l'annonce pas comme un article payant et ne lui invente jamais de prix.
 - Les notes de section s'appliquent à tous les articles de la catégorie (« Servis avec frites », suppléments).
+- Chaque article se juge SEUL : avoir demandé la taille d'une pizza ne crée aucune question de taille pour la salade ou le burger qui suit.
+
+${sizeSummaryBlock}
 
 Quantités :
 - Si le client commande un article au singulier sans chiffre (« une margherita », « un burger »), la quantité est **1**. Ne demande « combien » que si c'est réellement ambigu (« des pizzas », « pour six personnes »).
