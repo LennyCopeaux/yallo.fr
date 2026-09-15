@@ -386,7 +386,8 @@ describe("generateSystemPrompt", () => {
     const prompt = await generateSystemPrompt(restaurant);
 
     expect(prompt).toContain("Ce menu n'a pas de dessert");
-    expect(prompt).not.toContain("Un dessert pour finir");
+    expect(prompt).not.toContain("Desserts proposables");
+    expect(prompt).toContain("Boissons proposables : Coca 33cl");
   });
 
   it("does not reconfirm a pickup time chosen by the client", async () => {
@@ -395,6 +396,17 @@ describe("generateSystemPrompt", () => {
     expect(prompt).toContain("Son heure vaut validation");
     expect(prompt).toContain("Une heure choisie par le client n'est jamais reconfirmée");
     expect(prompt).toContain("Très bien, dix-neuf heures trente. Ce sera à quel nom ?");
+  });
+
+  it("asks for one recap per call and only repeats a corrected article", async () => {
+    const prompt = await generateSystemPrompt(mockRestaurant);
+
+    expect(prompt).toContain("RÉCAPITULATIF ET CORRECTIONS");
+    expect(prompt).toContain("Un seul récapitulatif complet par appel, jamais deux");
+    expect(prompt).toContain("tu ne reprends QUE l'article corrigé");
+    expect(prompt).toContain("INTERDIT après un récapitulatif : « Commençons par la pizza »");
+    expect(prompt).toContain("Cette étape n'est JAMAIS sautée, même si le client est pressé");
+    expect(prompt).toContain("Pardon, je note le Classique à la place. Ce sera tout ?");
   });
 
   it("lists only real complements when upsell is possible", async () => {
