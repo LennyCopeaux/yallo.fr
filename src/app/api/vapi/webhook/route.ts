@@ -5,7 +5,13 @@ import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { pushVoiceOrderToHubrise } from "@/lib/services/hubrise";
 import { normalizeSubmitOrderPayload } from "@/lib/services/submit-order-args";
-import { formatParisTime, parsePickupTimeInParis } from "@/lib/services/pickup-time";
+import {
+  computeSuggestedPickupTime,
+  formatParisTime,
+  formatSpokenFrenchTime,
+  parsePickupTimeInParis,
+  resolvePrepMinutes,
+} from "@/lib/services/pickup-time";
 import { trySendOrderConfirmationSms } from "@/lib/services/twilio-sms";
 import { buildAssistantPayloadForCall } from "@/lib/services/vapi-agent";
 import { resolveCallOrderAvailability } from "@/lib/services/business-hours";
@@ -70,35 +76,17 @@ function generateOrderNumber(): string {
   return `#${timestamp}${random}`;
 }
 
-function getCurrentWaitCeilMinutes(
-  status: "CALM" | "NORMAL" | "RUSH" | "STOP",
-  statusSettings: typeof restaurants.$inferSelect["statusSettings"]
-): number {
-  if (!statusSettings) return 15;
-  const setting = statusSettings[status];
-  if (!setting) return 15;
-
-  if ("fixed" in setting && typeof setting.fixed === "number") {
-    return Math.max(0, Math.ceil(setting.fixed));
-  }
-
-  if ("max" in setting && typeof setting.max === "number") {
-    return Math.max(0, Math.ceil(setting.max));
-  }
-
-  return 15;
-}
-
-function roundUpToNextTenMinutes(date: Date): Date {
-  const rounded = new Date(date);
-  rounded.setSeconds(0, 0);
-  const minutes = rounded.getMinutes();
-  const remainder = minutes % 10;
-  if (remainder !== 0) {
-    rounded.setMinutes(minutes + (10 - remainder));
-  }
-  return rounded;
-}
+/**
+ * Marge entre l'heure proposée à l'oral et le contrôle à la soumission.
+ *
+ * L'heure est proposée au début de l'appel (délai minimal du statut cuisine,
+ * arrondi aux 5 minutes) et soumise deux ou trois minutes plus tard. Sans
+ * marge, le serveur refusait sa propre proposition (« 21h15 » proposé,
+ * « à partir de 21h20 » exigé) parce qu'il recalculait avec le délai maximal
+ * et un arrondi aux 10 minutes. On contrôle désormais avec la même règle que
+ * la proposition, plus quelques minutes pour la durée de l'appel.
+ */
+const PICKUP_GRACE_MINUTES = 5;
 
 interface OrderItem {
   product_name: string;
@@ -171,14 +159,16 @@ async function handleSubmitOrder(
     });
   }
 
-  const waitMinutes = getCurrentWaitCeilMinutes(restaurant.currentStatus, restaurant.statusSettings);
-  const earliestReadyAt = roundUpToNextTenMinutes(new Date(Date.now() + waitMinutes * 60 * 1000));
+  const now = new Date();
+  const prepMinutes = resolvePrepMinutes(restaurant.statusSettings, restaurant.currentStatus);
+  const earliestAllowedAt = new Date(now.getTime() + (prepMinutes - PICKUP_GRACE_MINUTES) * 60_000);
 
-  if (pickupTime.getTime() < earliestReadyAt.getTime()) {
+  if (pickupTime.getTime() < earliestAllowedAt.getTime()) {
+    const suggested = computeSuggestedPickupTime(now, prepMinutes);
     return JSON.stringify({
       success: false,
-      message: `Le délai est trop court avec la charge actuelle en cuisine. Propose une heure de retrait à partir de ${formatParisTime(earliestReadyAt)}.`,
-      earliest_pickup_time: formatParisTime(earliestReadyAt),
+      message: `Le délai est trop court avec la charge actuelle en cuisine. Propose ${formatSpokenFrenchTime(suggested)} au client (en lettres), puis rappelle submit_order avec pickup_time ${suggested}.`,
+      earliest_pickup_time: suggested,
     });
   }
 

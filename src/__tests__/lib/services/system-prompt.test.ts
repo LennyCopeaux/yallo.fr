@@ -409,6 +409,16 @@ describe("generateSystemPrompt", () => {
     expect(prompt).toContain("Pardon, je note le Classique à la place. Ce sera tout ?");
   });
 
+  it("never guesses a size, answers questions without editing, and speaks product names naturally", async () => {
+    const prompt = await generateSystemPrompt(mockRestaurant, { includeCurrentTime: true });
+
+    expect(prompt).toContain("tu ne devines JAMAIS");
+    expect(prompt).toContain("Une QUESTION du client n'est pas une correction");
+    expect(prompt).toContain("cite AU MAXIMUM UN article");
+    expect(prompt).toContain("« Sodas (33cl) » → « un soda de trente-trois centilitres »");
+    expect(prompt).toContain("Si submit_order refuse l'heure");
+  });
+
   it("lists only real complements when upsell is possible", async () => {
     const restaurant = {
       ...mockRestaurant,
