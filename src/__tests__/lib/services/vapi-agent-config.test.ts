@@ -36,7 +36,6 @@ describe("configuration de l'assistant Vapi", () => {
     vi.stubEnv("VAPI_LLM_MODEL", "");
     vi.stubEnv("VAPI_VOICE_MODEL", "");
     vi.stubEnv("VAPI_VOICE_STABILITY", "");
-    vi.stubEnv("VAPI_BACKGROUND_SOUND", "");
     vi.stubEnv("VAPI_TRANSCRIBER_PROVIDER", "");
     vi.stubEnv("VAPI_TRANSCRIBER_MODEL", "");
     vi.stubEnv("VAPI_TRANSCRIBER_KEYTERMS", "");
@@ -46,21 +45,21 @@ describe("configuration de l'assistant Vapi", () => {
     vi.unstubAllEnvs();
   });
 
-  it("uses gpt-4o, an expressive voice and no background sound by default", async () => {
+  it("uses gpt-4o, a slightly brisk expressive voice and an office ambience by default", async () => {
     const { buildAssistantPayloadForCall } = await loadAgent();
     const config = await buildAssistantPayloadForCall(restaurant);
 
     expect(config.model.model).toBe("gpt-4o");
     expect(config.voice.model).toBe("eleven_flash_v2_5");
     expect(config.voice.stability).toBe(0.5);
-    expect(config.backgroundSound).toBe("off");
+    expect(config.voice.speed).toBe(1.05);
+    expect(config.backgroundSound).toBe("office");
     expect(config.transcriber).toEqual({ provider: "deepgram", model: "nova-3", language: "fr" });
   });
 
-  it("lets the environment pick the voice model, the ambience and the transcriber", async () => {
+  it("lets the environment pick the voice model and the transcriber", async () => {
     vi.stubEnv("VAPI_VOICE_MODEL", "eleven_multilingual_v2");
     vi.stubEnv("VAPI_VOICE_STABILITY", "0.4");
-    vi.stubEnv("VAPI_BACKGROUND_SOUND", "https://app.yallo.fr/sounds/restaurant.mp3");
     vi.stubEnv("VAPI_TRANSCRIBER_PROVIDER", "openai");
     vi.stubEnv("VAPI_TRANSCRIBER_MODEL", "gpt-4o-transcribe");
 
@@ -69,17 +68,8 @@ describe("configuration de l'assistant Vapi", () => {
 
     expect(config.voice.model).toBe("eleven_multilingual_v2");
     expect(config.voice.stability).toBe(0.4);
-    expect(config.backgroundSound).toBe("https://app.yallo.fr/sounds/restaurant.mp3");
+    expect(config.backgroundSound).toBe("office");
     expect(config.transcriber).toEqual({ provider: "openai", model: "gpt-4o-transcribe", language: "fr" });
-  });
-
-  it("ignores an invalid background sound value", async () => {
-    vi.stubEnv("VAPI_BACKGROUND_SOUND", "http://insecure.example/a.mp3");
-
-    const { buildAssistantPayloadForCall } = await loadAgent();
-    const config = await buildAssistantPayloadForCall(restaurant);
-
-    expect(config.backgroundSound).toBe("off");
   });
 
   it("sends menu names and size words as Deepgram keyterms when enabled", async () => {
