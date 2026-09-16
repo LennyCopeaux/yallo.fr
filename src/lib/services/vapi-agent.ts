@@ -41,11 +41,20 @@ const DEFAULT_TRANSCRIBER_PROVIDER = "deepgram";
 const DEFAULT_TRANSCRIBER_MODEL = "nova-3";
 
 /**
- * 1.05 = débit d'un employé de comptoir, légèrement vif. Au-delà de 1.1,
+ * « multi » = Nova-3 multilingue avec alternance de langues. En français pur,
+ * Deepgram laissait tomber les mots anglais des cartes (« chicken », « wings »,
+ * « tenders », « redbull ») : le client répétait « chicken burger » et le
+ * modèle ne recevait que « le … burger ». Le mode multilingue transcrit ces
+ * mots et accepte les keyterms.
+ */
+const DEFAULT_TRANSCRIBER_LANGUAGE = "multi";
+
+/**
+ * 1.1 = débit d'un employé de comptoir, vif. Au-delà,
  * ElevenLabs accélère les phonèmes français jusqu'à basculer sur un accent /
  * une langue illisibles (« Normallow grunge »).
  */
-const DEFAULT_VOICE_SPEED = 1.05;
+const DEFAULT_VOICE_SPEED = 1.1;
 
 const DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
 
@@ -286,13 +295,17 @@ export function collectTranscriberKeyterms(menu: unknown): string[] {
 function buildTranscriber(restaurant: Restaurant) {
   const provider = process.env.VAPI_TRANSCRIBER_PROVIDER?.trim() || DEFAULT_TRANSCRIBER_PROVIDER;
   const model = process.env.VAPI_TRANSCRIBER_MODEL?.trim() || DEFAULT_TRANSCRIBER_MODEL;
+  const language =
+    process.env.VAPI_TRANSCRIBER_LANGUAGE?.trim() || (provider === "deepgram" ? DEFAULT_TRANSCRIBER_LANGUAGE : "fr");
+  // Keyterms : noms de la carte envoyés à Deepgram. Actifs par défaut,
+  // VAPI_TRANSCRIBER_KEYTERMS=false pour les couper.
   const useKeyterms =
-    provider === "deepgram" && process.env.VAPI_TRANSCRIBER_KEYTERMS?.trim().toLowerCase() === "true";
+    provider === "deepgram" && process.env.VAPI_TRANSCRIBER_KEYTERMS?.trim().toLowerCase() !== "false";
 
   return {
     provider,
     model,
-    language: "fr",
+    language,
     ...(useKeyterms ? { keyterm: collectTranscriberKeyterms(restaurant.menuData) } : {}),
   };
 }

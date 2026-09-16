@@ -273,10 +273,15 @@ async function handleSubmitOrder(
     }
   }
 
+  // La phrase de clôture est fournie toute prête, heure en lettres : laissée au
+  // modèle, elle ressortait régulièrement en chiffres (« 11 heures 30 »), que
+  // la synthèse vocale lit mal.
+  const spokenPickup = formatSpokenFrenchTime(formatParisTime(pickupTime));
+  const spokenName = args.customer_name?.trim();
   return JSON.stringify({
     success: true,
     order_number: orderNumber,
-    message: `La commande ${orderNumber} a été enregistrée avec succès.`,
+    message: `Commande enregistrée. Dis exactement, sans rien ajouter : « C'est noté pour ${spokenPickup}, à tout à l'heure${spokenName ? ` ${spokenName}` : ""}. »`,
   });
 }
 

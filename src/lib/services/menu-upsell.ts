@@ -10,8 +10,13 @@ import type { MenuData } from "@/db/schema";
  * cette liste n'est pas vide.
  */
 
-/** Nombre de suggestions injectées dans le prompt : assez pour varier, pas assez pour noyer. */
-const MAX_SUGGESTIONS = 8;
+/**
+ * Plafond PAR NATURE de complément. Un plafond global faisait qu'une première
+ * catégorie nombreuse (six salades) remplissait le quota avant même d'atteindre
+ * les boissons et les desserts : le prompt annonçait alors « ce menu n'a pas
+ * de dessert » sur une carte qui en propose dix.
+ */
+const MAX_PER_KIND = 6;
 
 /**
  * Catégories de menu considérées comme des compléments. Un plat principal ne
@@ -38,9 +43,11 @@ const DESSERT_KEYWORDS = [
  */
 const OTHER_COMPLEMENT_KEYWORDS = [
   "accompagnement", "accompagnements", "side", "sides", "frite", "frites",
-  "potato", "potatoes", "salade", "salades", "snack", "snacks", "entree", "entrees",
+  "potato", "potatoes", "snack", "snacks", "entree", "entrees", "tapas",
   "supplement", "supplements", "sauce", "sauces", "extra", "extras", "topping", "toppings",
 ];
+// « Salades » est volontairement absent : dans une carte de restaurant c'est
+// un plat principal, pas un complément à proposer après un burger.
 
 export type UpsellCandidates = {
   /** Vrai s'il existe au moins un produit commandable à proposer. */
@@ -119,12 +126,18 @@ const BUCKET: Record<ComplementKind, keyof Collector> = {
   other: "others",
 };
 
-/** Ajoute un nom ; renvoie true quand le quota de suggestions est atteint. */
+/** Ajoute un nom si la nature n'a pas atteint son plafond ; renvoie true quand tout est plein. */
 function pushSuggestion(collector: Collector, kind: ComplementKind, name: string): boolean {
-  if (collector.suggestions.includes(name)) return false;
-  collector.suggestions.push(name);
-  collector[BUCKET[kind]].push(name);
-  return collector.suggestions.length >= MAX_SUGGESTIONS;
+  const bucket = collector[BUCKET[kind]];
+  if (bucket.length < MAX_PER_KIND && !collector.suggestions.includes(name)) {
+    collector.suggestions.push(name);
+    bucket.push(name);
+  }
+  return (
+    collector.drinks.length >= MAX_PER_KIND &&
+    collector.desserts.length >= MAX_PER_KIND &&
+    collector.others.length >= MAX_PER_KIND
+  );
 }
 
 function collectFromStructuredMenu(menu: MenuData, collector: Collector): boolean {
@@ -169,7 +182,6 @@ export function findUpsellCandidates(menu: unknown): UpsellCandidates {
 
   const categories = record.categories;
   if (
-    collector.suggestions.length < MAX_SUGGESTIONS &&
     Array.isArray(categories) &&
     categories.some((c) => c !== null && typeof c === "object")
   ) {

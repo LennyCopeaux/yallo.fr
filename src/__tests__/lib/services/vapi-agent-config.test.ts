@@ -39,6 +39,7 @@ describe("configuration de l'assistant Vapi", () => {
     vi.stubEnv("VAPI_TRANSCRIBER_PROVIDER", "");
     vi.stubEnv("VAPI_TRANSCRIBER_MODEL", "");
     vi.stubEnv("VAPI_TRANSCRIBER_KEYTERMS", "");
+    vi.stubEnv("VAPI_TRANSCRIBER_LANGUAGE", "");
   });
 
   afterEach(() => {
@@ -52,9 +53,12 @@ describe("configuration de l'assistant Vapi", () => {
     expect(config.model.model).toBe("gpt-4o");
     expect(config.voice.model).toBe("eleven_flash_v2_5");
     expect(config.voice.stability).toBe(0.5);
-    expect(config.voice.speed).toBe(1.05);
+    expect(config.voice.speed).toBe(1.1);
     expect(config.backgroundSound).toBe("office");
-    expect(config.transcriber).toEqual({ provider: "deepgram", model: "nova-3", language: "fr" });
+    expect(config.transcriber).toMatchObject({ provider: "deepgram", model: "nova-3", language: "multi" });
+    expect((config.transcriber as { keyterm?: string[] }).keyterm).toEqual(
+      expect.arrayContaining(["petite", "moyenne", "grande", "La 4 fromages", "Redbull"])
+    );
   });
 
   it("lets the environment pick the voice model and the transcriber", async () => {
@@ -72,8 +76,17 @@ describe("configuration de l'assistant Vapi", () => {
     expect(config.transcriber).toEqual({ provider: "openai", model: "gpt-4o-transcribe", language: "fr" });
   });
 
-  it("sends menu names and size words as Deepgram keyterms when enabled", async () => {
-    vi.stubEnv("VAPI_TRANSCRIBER_KEYTERMS", "true");
+  it("can switch the keyterms off and the language back to French", async () => {
+    vi.stubEnv("VAPI_TRANSCRIBER_KEYTERMS", "false");
+    vi.stubEnv("VAPI_TRANSCRIBER_LANGUAGE", "fr");
+
+    const { buildAssistantPayloadForCall } = await loadAgent();
+    const config = await buildAssistantPayloadForCall(restaurant);
+
+    expect(config.transcriber).toEqual({ provider: "deepgram", model: "nova-3", language: "fr" });
+  });
+
+  it("sends menu names and size words as Deepgram keyterms", async () => {
 
     const { buildAssistantPayloadForCall, collectTranscriberKeyterms } = await loadAgent();
     const config = await buildAssistantPayloadForCall(restaurant);

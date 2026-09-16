@@ -100,6 +100,7 @@ describe("VAPI webhook — contrôle de l'heure de retrait à la soumission", ()
     const result = await readResult(await POST(submitOrderRequest("21:15")));
 
     expect(result.success).toBe(true);
+    expect(result.message).toContain("vingt-et-une heures quinze, à tout à l'heure Emilie");
     expect(db.insert).toHaveBeenCalled();
   });
 

@@ -123,4 +123,20 @@ describe("findUpsellCandidates", () => {
     expect(result.drinks).toEqual([]);
     expect(result.desserts).toEqual([]);
   });
+
+  it("does not let a large mains category starve drinks and desserts (per-kind cap)", () => {
+    const salads = Array.from({ length: 8 }, (_, i) => ({ nom: `Salade ${i}`, tarifs: [{ prix: "9.90", label: "" }] }));
+    const drinks = Array.from({ length: 8 }, (_, i) => ({ nom: `Boisson ${i}`, tarifs: [{ prix: "2", label: "" }] }));
+    const result = findUpsellCandidates({
+      donnees_menu: [
+        { categorie: "Salades", articles: salads },
+        { categorie: "Boissons", articles: drinks },
+        { categorie: "Desserts", articles: [{ nom: "Tiramisu", tarifs: [{ prix: "3.90", label: "" }] }] },
+      ],
+    });
+
+    expect(result.others).toEqual([]);
+    expect(result.drinks).toHaveLength(6);
+    expect(result.desserts).toEqual(["Tiramisu"]);
+  });
 });
