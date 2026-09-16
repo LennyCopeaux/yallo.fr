@@ -27,15 +27,20 @@ const isVercel = !!process.env.VERCEL;
 const isTransactionPooler = new URL(databaseUrl).port === "6543";
 
 /**
- * Sur Vercel, `max: 1` sérialisait toutes les requêtes d'une même invocation :
- * les `Promise.all` du layout (5 branches) s'exécutaient une par une. Le
- * pooler session est mesuré stable jusqu'à max=10 (voir ci-dessus) ; 4 suffit
- * à paralléliser un rendu sans épuiser le pooler quand plusieurs instances
- * tournent en même temps.
+ * Sur Vercel avec le pooler SESSION (:5432), chaque connexion ouverte par une
+ * fonction occupe un client du pooler, dont la limite est basse (~15 selon le
+ * compute Supabase). Monter à 4 par fonction a saturé le pooler dès que
+ * plusieurs invocations tournaient en parallèle (pollings, préchargements) :
+ * toutes les requêtes échouaient, connexion au dashboard comprise.
+ *
+ * On reste donc à 1 connexion par fonction en mode session. La parallélisation
+ * passe par le pooler TRANSACTION (:6543), qui multiplexe les clients : il
+ * suffit de pointer DATABASE_URL sur le port 6543, la branche ci-dessous
+ * prend alors le relais avec un pool large.
  */
 function resolveMaxConnections(): number {
   if (isTransactionPooler) return 20;
-  return isVercel ? 4 : 5;
+  return isVercel ? 1 : 5;
 }
 
 const client = postgres(databaseUrl, {
@@ -46,9 +51,9 @@ const client = postgres(databaseUrl, {
   fetch_types: false,
   ssl: isSupabase ? "require" : undefined,
   max: resolveMaxConnections(),
-  // 10 s forçait une reconnexion TLS (~100 ms) dès qu'une instance restait
-  // inactive entre deux pollings de 15 s.
-  idle_timeout: isVercel ? 25 : 30,
+  // Court sur Vercel : une connexion inactive rend son client au pooler au
+  // plus vite (voir resolveMaxConnections).
+  idle_timeout: isVercel ? 10 : 30,
   connect_timeout: 10,
 });
 
