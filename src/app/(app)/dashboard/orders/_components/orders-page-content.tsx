@@ -1,19 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { OrdersGrid } from "@/app/(app)/dashboard/orders-grid";
 import { type Order } from "@/components/orders";
+import { getOrdersSnapshot } from "@/features/orders/actions";
 
 interface OrdersPageContentProps {
-  orders: Order[];
+  initialOrders: Order[];
 }
 
 type FilterStatus = "all" | "new" | "preparing" | "completed";
 
-export function OrdersPageContent({ orders }: Readonly<OrdersPageContentProps>) {
+/**
+ * Rafraîchissement de la liste : un appel de données léger, pas un
+ * `router.refresh()` qui rejouerait le layout complet du dashboard.
+ */
+const POLL_INTERVAL_MS = 15_000;
+
+export function OrdersPageContent({ initialOrders }: Readonly<OrdersPageContentProps>) {
   const [filter, setFilter] = useState<FilterStatus>("all");
+  const [orders, setOrders] = useState<Order[]>(initialOrders);
+
+  // Après une action serveur (changement de statut), la page est re-rendue
+  // avec des données fraîches : on les prend comme nouvelle base.
+  useEffect(() => {
+    setOrders(initialOrders);
+  }, [initialOrders]);
+
+  const refresh = useCallback(async () => {
+    try {
+      const next = await getOrdersSnapshot();
+      setOrders(next);
+    } catch {
+      // Un polling raté ne doit pas casser la tablette : on garde l'état courant.
+    }
+  }, []);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refresh();
+      }
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(intervalId);
+  }, [refresh]);
 
   const newOrders = orders.filter((o) => o.status === "NEW");
   const preparingOrders = orders.filter((o) => o.status === "PREPARING");
@@ -24,13 +56,11 @@ export function OrdersPageContent({ orders }: Readonly<OrdersPageContentProps>) 
   const filteredOrders = (() => {
     switch (filter) {
       case "new":
-        return orders.filter((o) => o.status === "NEW");
+        return newOrders;
       case "preparing":
-        return orders.filter((o) => o.status === "PREPARING");
+        return preparingOrders;
       case "completed":
-        return orders.filter(
-          (o) => o.status === "DELIVERED" || o.status === "CANCELLED"
-        );
+        return completedOrders;
       default:
         return orders;
     }
@@ -75,7 +105,7 @@ export function OrdersPageContent({ orders }: Readonly<OrdersPageContentProps>) 
         </TabsList>
       </Tabs>
 
-      <OrdersGrid initialOrders={filteredOrders} />
+      <OrdersGrid initialOrders={filteredOrders} onRefresh={refresh} />
     </div>
   );
 }

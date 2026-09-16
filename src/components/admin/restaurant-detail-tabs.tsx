@@ -9,6 +9,7 @@ import { AITab } from "@/components/admin/restaurant-tabs/ai-tab";
 import { TelephonyTab } from "@/components/admin/restaurant-tabs/telephony-tab";
 import { HubriseTab } from "@/components/admin/restaurant-tabs/hubrise-tab";
 import { UsageTab } from "@/components/admin/restaurant-tabs/usage-tab";
+import type { RestaurantCallStats } from "@/app/(admin)/admin/queries";
 
 type Restaurant = {
   id: string;
@@ -52,9 +53,19 @@ interface RestaurantDetailTabsProps {
   owners: Owner[];
   organizations?: Organization[];
   restaurantMembers?: RestaurantMember[];
+  callStats: RestaurantCallStats;
+  /** Prompt et menu calculés côté serveur (restaurants sans HubRise). */
+  aiPreview?: { systemPrompt: string | null; menuJson: string | null } | null;
 }
 
-export function RestaurantDetailTabs({ restaurant, owners, organizations = [], restaurantMembers = [] }: Readonly<RestaurantDetailTabsProps>) {
+export function RestaurantDetailTabs({
+  restaurant,
+  owners,
+  organizations = [],
+  restaurantMembers = [],
+  callStats,
+  aiPreview = null,
+}: Readonly<RestaurantDetailTabsProps>) {
   const searchParams = useSearchParams();
   const urlTab = searchParams.get("tab") || "general";
   const [activeTab, setActiveTab] = useState(urlTab);
@@ -115,7 +126,7 @@ export function RestaurantDetailTabs({ restaurant, owners, organizations = [], r
       </TabsContent>
 
       <TabsContent value="ai">
-        <AITab restaurant={restaurant} />
+        <AITab restaurant={restaurant} initialPreview={aiPreview} />
       </TabsContent>
 
       <TabsContent value="telephony">
@@ -127,7 +138,7 @@ export function RestaurantDetailTabs({ restaurant, owners, organizations = [], r
       </TabsContent>
 
       <TabsContent value="usage">
-        <UsageTab restaurantId={restaurant.id} />
+        <UsageTab stats={callStats} />
       </TabsContent>
     </Tabs>
   );

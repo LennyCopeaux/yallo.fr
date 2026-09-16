@@ -26,9 +26,16 @@ const isVercel = !!process.env.VERCEL;
  */
 const isTransactionPooler = new URL(databaseUrl).port === "6543";
 
+/**
+ * Sur Vercel, `max: 1` sérialisait toutes les requêtes d'une même invocation :
+ * les `Promise.all` du layout (5 branches) s'exécutaient une par une. Le
+ * pooler session est mesuré stable jusqu'à max=10 (voir ci-dessus) ; 4 suffit
+ * à paralléliser un rendu sans épuiser le pooler quand plusieurs instances
+ * tournent en même temps.
+ */
 function resolveMaxConnections(): number {
   if (isTransactionPooler) return 20;
-  return isVercel ? 1 : 5;
+  return isVercel ? 4 : 5;
 }
 
 const client = postgres(databaseUrl, {
@@ -39,7 +46,9 @@ const client = postgres(databaseUrl, {
   fetch_types: false,
   ssl: isSupabase ? "require" : undefined,
   max: resolveMaxConnections(),
-  idle_timeout: isVercel ? 10 : 30,
+  // 10 s forçait une reconnexion TLS (~100 ms) dès qu'une instance restait
+  // inactive entre deux pollings de 15 s.
+  idle_timeout: isVercel ? 25 : 30,
   connect_timeout: 10,
 });
 

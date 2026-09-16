@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect, useRef } from "react";
+import { useState, useTransition, useEffect, useRef, useCallback } from "react";
 import { OrderTicket, type Order } from "@/components/orders";
 import { simulateSubmitOrder, updateOrderStatus } from "@/features/orders/actions";
 import { type OrderStatus } from "@/db/schema";
@@ -11,13 +11,13 @@ import { useRouter } from "next/navigation";
 
 interface OrdersGridProps {
   initialOrders: Order[];
+  /** Rafraîchit la liste depuis le serveur (données seules, pas le layout). */
+  onRefresh?: () => void | Promise<void>;
 }
-
-const AUTO_REFRESH_INTERVAL_MS = 15_000;
 
 const IS_DEV = process.env.NODE_ENV !== "production";
 
-export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
+export function OrdersGrid({ initialOrders, onRefresh }: Readonly<OrdersGridProps>) {
   const [orders, setOrders] = useState(initialOrders);
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(() => new Set());
   const [, startTransition] = useTransition();
@@ -26,6 +26,13 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
   // Statuts affichés avant confirmation serveur. Un rafraîchissement du serveur
   // (polling 15 s) qui arrive pendant l'attente ne doit pas les écraser.
   const optimisticStatuses = useRef(new Map<string, OrderStatus>());
+  // Miroir de l'état pour que handleStatusChange garde une identité stable
+  // (les tickets sont mémoïsés : une nouvelle fonction à chaque rendu
+  // annulerait la mémoïsation).
+  const ordersRef = useRef(orders);
+  ordersRef.current = orders;
+  const pendingRef = useRef(pendingIds);
+  pendingRef.current = pendingIds;
 
   useEffect(() => {
     const overrides = optimisticStatuses.current;
@@ -39,49 +46,52 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
     );
   }, [initialOrders]);
 
-  const updateOrderInList = (orderId: string, newStatus: OrderStatus) => {
+  const updateOrderInList = useCallback((orderId: string, newStatus: OrderStatus) => {
     setOrders((prev) =>
       prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order))
     );
-  };
+  }, []);
 
-  const setPending = (orderId: string, pending: boolean) => {
+  const setPending = useCallback((orderId: string, pending: boolean) => {
     setPendingIds((prev) => {
       const next = new Set(prev);
       if (pending) next.add(orderId);
       else next.delete(orderId);
       return next;
     });
-  };
+  }, []);
 
-  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
-    // Un clic pendant l'attente est ignoré : le bouton est aussi désactivé côté ticket.
-    if (pendingIds.has(orderId)) return;
+  const handleStatusChange = useCallback(
+    (orderId: string, newStatus: OrderStatus) => {
+      // Un clic pendant l'attente est ignoré : le bouton est aussi désactivé côté ticket.
+      if (pendingRef.current.has(orderId)) return;
 
-    const previousStatus = orders.find((order) => order.id === orderId)?.status;
-    if (!previousStatus) return;
+      const previousStatus = ordersRef.current.find((order) => order.id === orderId)?.status;
+      if (!previousStatus) return;
 
-    // Optimiste : la cuisine voit le changement tout de suite, le serveur confirme derrière.
-    optimisticStatuses.current.set(orderId, newStatus);
-    updateOrderInList(orderId, newStatus);
-    setPending(orderId, true);
+      // Optimiste : la cuisine voit le changement tout de suite, le serveur confirme derrière.
+      optimisticStatuses.current.set(orderId, newStatus);
+      updateOrderInList(orderId, newStatus);
+      setPending(orderId, true);
 
-    startTransition(async () => {
-      try {
-        // revalidatePath dans l'action renvoie déjà la page à jour : pas de router.refresh() en plus.
-        await updateOrderStatus(orderId, newStatus);
-        toast.success("Statut mis à jour");
-      } catch {
-        updateOrderInList(orderId, previousStatus);
-        toast.error("Erreur lors de la mise à jour");
-      } finally {
-        optimisticStatuses.current.delete(orderId);
-        setPending(orderId, false);
-      }
-    });
-  };
+      startTransition(async () => {
+        try {
+          // revalidatePath dans l'action renvoie déjà la page à jour : pas de router.refresh() en plus.
+          await updateOrderStatus(orderId, newStatus);
+          toast.success("Statut mis à jour");
+        } catch {
+          updateOrderInList(orderId, previousStatus);
+          toast.error("Erreur lors de la mise à jour");
+        } finally {
+          optimisticStatuses.current.delete(orderId);
+          setPending(orderId, false);
+        }
+      });
+    },
+    [setPending, updateOrderInList]
+  );
 
-  const handleSimulateSubmitOrder = async () => {
+  const handleSimulateSubmitOrder = () => {
     startTransition(async () => {
       try {
         await simulateSubmitOrder();
@@ -94,21 +104,9 @@ export function OrdersGrid({ initialOrders }: Readonly<OrdersGridProps>) {
   };
 
   const handleRefresh = () => {
-    router.refresh();
+    if (onRefresh) void onRefresh();
+    else router.refresh();
   };
-
-  useEffect(() => {
-
-    const intervalId = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        router.refresh();
-      }
-    }, AUTO_REFRESH_INTERVAL_MS);
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [router]);
 
   const activeOrders = orders.filter(
     (o) => o.status !== "DELIVERED" && o.status !== "CANCELLED"

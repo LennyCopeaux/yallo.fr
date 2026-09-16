@@ -26,7 +26,7 @@ export type OrgDetail = {
 };
 
 export type OrgMember = { id: string; email: string; role?: string };
-export type OrgRestaurant = { id: string; name: string; status: string };
+export type OrgRestaurant = { id: string; name: string };
 
 interface OrgDetailTabsProps {
   org: OrgDetail;

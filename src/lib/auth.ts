@@ -85,17 +85,26 @@ export const getUserOrganization = cache(async () => {
   const orgs = await getUserOrganizations();
   if (!orgs.length) return null;
 
+  // Le layout et la facturation ne consomment que l'identité des restaurants :
+  // charger la ligne entière rapatriait le JSON du menu et le token HubRise à
+  // chaque rendu.
   const org = await db.query.organizations.findFirst({
     where: eq(organizations.id, orgs[0].id),
     with: {
-      restaurants: true,
+      restaurants: {
+        columns: { id: true, name: true },
+      },
     },
   });
 
   return org ?? null;
 });
 
-async function getAccessibleRestaurantIds(userId: string, role: string): Promise<string[]> {
+/**
+ * Memoized per-request : appelé par getAccessibleRestaurant ET getUserRestaurants
+ * dans le même rendu, la jointure tournait deux fois.
+ */
+const getAccessibleRestaurantIds = cache(async (userId: string, role: string): Promise<string[]> => {
   if (role === "EMPLOYEE") {
     const memberships = await db
       .select({ restaurantId: restaurantMembers.restaurantId })
@@ -111,7 +120,7 @@ async function getAccessibleRestaurantIds(userId: string, role: string): Promise
     .innerJoin(restaurants, eq(restaurants.organizationId, organizations.id))
     .where(eq(organizationMembers.userId, userId));
   return orgRestaurants.map((r) => r.id);
-}
+});
 
 /**
  * Memoized per-request: évite de refaire les 2 requêtes DB d'accès restaurant
@@ -189,9 +198,3 @@ export const getUserRestaurants = cache(async (organizationId?: string) => {
   }
   return rows;
 });
-
-export async function getOwnerRestaurantFromOrg() {
-  const org = await getUserOrganization();
-  if (!org) return null;
-  return org.restaurants[0] ?? null;
-}

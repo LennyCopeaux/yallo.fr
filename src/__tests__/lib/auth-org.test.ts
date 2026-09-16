@@ -136,7 +136,7 @@ describe("getUserOrganization", () => {
 
     expect(db.query.organizations.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
-        with: expect.objectContaining({ restaurants: true }),
+        with: expect.objectContaining({ restaurants: expect.objectContaining({ columns: { id: true, name: true } }) }),
       })
     );
   });

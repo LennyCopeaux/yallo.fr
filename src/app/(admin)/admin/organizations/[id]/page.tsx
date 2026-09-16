@@ -42,8 +42,14 @@ export default async function OrgDetailPage({
 }>) {
   const { id } = await params;
 
-  const [org, owners, members, assignedRestaurants, allRestaurants] = await Promise.all([
-    getOrganization(id),
+  // L'organisation d'abord : un id inconnu répond 404 sans lancer les quatre
+  // autres lectures pour rien.
+  const org = await getOrganization(id);
+  if (!org) {
+    notFound();
+  }
+
+  const [owners, members, assignedRestaurants, allRestaurants] = await Promise.all([
     getOwners(),
     db
       .select({ id: users.id, email: users.email, role: users.role })
@@ -51,19 +57,17 @@ export default async function OrgDetailPage({
       .innerJoin(users, eq(organizationMembers.userId, users.id))
       .where(eq(organizationMembers.organizationId, id)),
     db
-      .select({ id: restaurants.id, name: restaurants.name, status: restaurants.status })
+      .select({ id: restaurants.id, name: restaurants.name })
       .from(restaurants)
       .where(eq(restaurants.organizationId, id))
       .orderBy(restaurants.name),
+    // Le sélecteur n'affiche que le nom : inutile de charger davantage pour
+    // l'ensemble des restaurants.
     db
-      .select({ id: restaurants.id, name: restaurants.name, status: restaurants.status })
+      .select({ id: restaurants.id, name: restaurants.name })
       .from(restaurants)
       .orderBy(restaurants.name),
   ]);
-
-  if (!org) {
-    notFound();
-  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">

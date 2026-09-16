@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Table,
@@ -64,19 +63,12 @@ interface RestaurantsDataTableProps {
 }
 
 export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProps>) {
-  const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [aiFilter, setAiFilter] = useState("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [restaurantToDelete, setRestaurantToDelete] = useState<Restaurant | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    for (const restaurant of data) {
-      router.prefetch(`/admin/restaurants/${restaurant.id}`);
-    }
-  }, [data, router]);
 
   const filteredData = useMemo(() => {
     const term = searchValue.trim().toLowerCase();
@@ -200,7 +192,6 @@ export function RestaurantsDataTable({ data }: Readonly<RestaurantsDataTableProp
                       <div>
                         <Link
                           href={`/admin/restaurants/${restaurant.id}`}
-                          prefetch
                           className="font-medium text-sm sm:text-base hover:text-primary after:absolute after:inset-0 after:content-['']"
                         >
                           {restaurant.name}

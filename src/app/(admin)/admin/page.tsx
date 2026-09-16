@@ -17,7 +17,7 @@ export default async function AdminDashboardPage({
   const [totalOrders, owners, restaurantsList, usersList, organizationsList] = await Promise.all([
     getTotalOrdersCount(),
     getOwners(),
-    getRestaurantsWithFilters({}),
+    getRestaurantsWithFilters(),
     getUsers(),
     getOrganizationsWithRestaurants(),
   ]);

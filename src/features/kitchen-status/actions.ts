@@ -32,12 +32,10 @@ export async function getKitchenStatus() {
   const ownerRestaurant = await getAccessibleRestaurant();
   if (!ownerRestaurant) return null;
 
+  // Lecture pure : les valeurs par défaut sont appliquées en mémoire. Écrire
+  // en base pendant un rendu de page coûtait une requête et rendait la page
+  // non idempotente ; la première sauvegarde des paramètres persiste le tout.
   if (!ownerRestaurant.statusSettings) {
-    await db
-      .update(restaurants)
-      .set({ statusSettings: DEFAULT_STATUS_SETTINGS, updatedAt: new Date() })
-      .where(eq(restaurants.id, ownerRestaurant.id));
-
     return { ...ownerRestaurant, statusSettings: DEFAULT_STATUS_SETTINGS };
   }
 
@@ -74,6 +72,7 @@ export async function updateKitchenStatus(status: KitchenStatus) {
   }
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/settings");
   return { success: true };
 }
 
@@ -106,6 +105,7 @@ export async function updateStatusSettings(settings: StatusSettings) {
   }
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/settings");
   return { success: true };
 }
 

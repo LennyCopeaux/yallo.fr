@@ -5,6 +5,14 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "20mb",
     },
+    // Par défaut Next ne réutilise jamais une page dynamique déjà chargée
+    // (dynamic: 0) : chaque retour sur /dashboard relançait le rendu complet.
+    // 30 s couvre la navigation entre onglets ; les actions serveur invalident
+    // quand même via revalidatePath.
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
   },
   allowedDevOrigins: [
     "http://localhost:3000",

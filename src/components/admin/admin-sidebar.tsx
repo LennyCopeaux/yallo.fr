@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import {
@@ -38,13 +38,6 @@ async function handleLogout(): Promise<void> {
 export function AdminSidebar() {
   const [expanded, setExpanded] = useState(true);
   const pathname = usePathname();
-  const router = useRouter();
-
-  useEffect(() => {
-    for (const href of ["/admin", "/admin/roles", "/admin/organizations", "/admin/restaurants", "/admin/users"]) {
-      router.prefetch(href);
-    }
-  }, [router]);
 
   return (
     <aside
@@ -99,7 +92,6 @@ export function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              prefetch
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
                 isActive

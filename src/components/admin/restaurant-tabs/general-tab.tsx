@@ -20,7 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Save, Building2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { updateRestaurantGeneral } from "@/app/(admin)/admin/restaurants/actions";
-import { addRestaurantMember, removeRestaurantMember } from "@/app/(admin)/admin/actions";
+import { setRestaurantMembers } from "@/app/(admin)/admin/actions";
 import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
@@ -129,15 +129,14 @@ export function GeneralTab({ restaurant, owners, organizations = [], restaurantM
 
     if (hasOwnerChanges) {
       setIsSavingMembers(true);
-      const ops: Promise<{ success: boolean; error?: string }>[] = [];
-      for (const userId of pendingAddMembers) ops.push(addRestaurantMember(restaurant.id, userId));
-      for (const userId of pendingRemoveMembers) ops.push(removeRestaurantMember(restaurant.id, userId));
-      const results = await Promise.all(ops);
+      const membersResult = await setRestaurantMembers(restaurant.id, {
+        add: pendingAddMembers,
+        remove: pendingRemoveMembers,
+      });
       setIsSavingMembers(false);
 
-      const failed = results.find((r) => !r.success);
-      if (failed) {
-        toast.error(failed.error ?? "Erreur lors de la mise à jour des membres");
+      if (!membersResult.success) {
+        toast.error(membersResult.error ?? "Erreur lors de la mise à jour des membres");
         setIsLoading(false);
         return;
       }

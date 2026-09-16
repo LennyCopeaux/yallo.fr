@@ -34,10 +34,57 @@ type Restaurant = {
   systemPrompt: string | null;
   menuContext: string | null;
   businessHours: string | null;
+  hubriseLocationId: string | null;
+  hubriseAccessToken: string | null;
 };
 
 interface AITabProps {
   restaurant: Restaurant;
+  /** Aperçu déjà généré par la page (sans HubRise) : évite tout appel au montage. */
+  initialPreview?: { systemPrompt: string | null; menuJson: string | null } | null;
+}
+
+type HubrisePreview = {
+  systemPrompt: string | null;
+  menuJson: string | null;
+};
+
+// Les onglets sont démontés à chaque changement d'onglet : sans ce cache au
+// niveau du module, chaque retour sur « IA & Menu » relançait les deux appels
+// HubRise (prompt + menu). La clé inclut la location pour repartir de zéro si
+// la configuration HubRise change.
+const hubrisePreviewCache = new Map<string, Promise<HubrisePreview>>();
+
+async function fetchJson<T>(url: string): Promise<T | null> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+function loadHubrisePreview(restaurantId: string, locationId: string): Promise<HubrisePreview> {
+  const key = `${restaurantId}:${locationId}`;
+  const pending = hubrisePreviewCache.get(key);
+  if (pending) return pending;
+
+  const request = Promise.all([
+    fetchJson<{ systemPrompt: string }>(`/api/admin/restaurants/${restaurantId}/generate-system-prompt`),
+    fetchJson<{ menuJson: string }>(`/api/admin/restaurants/${restaurantId}/generate-menu-json`),
+  ]).then(([prompt, menu]): HubrisePreview => {
+    const preview = {
+      systemPrompt: prompt?.systemPrompt ?? null,
+      menuJson: menu?.menuJson && menu.menuJson !== "Menu non configuré" ? menu.menuJson : null,
+    };
+    // Un échec total (réseau, session expirée) ne doit pas être mémorisé,
+    // sinon l'onglet resterait vide jusqu'au rechargement de la page.
+    if (!preview.systemPrompt && !preview.menuJson) hubrisePreviewCache.delete(key);
+    return preview;
+  });
+  hubrisePreviewCache.set(key, request);
+  return request;
 }
 
 function VoiceAgentIcon() {
@@ -59,14 +106,18 @@ function VoiceAgentIcon() {
   );
 }
 
-export function AITab({ restaurant }: Readonly<AITabProps>) {
+export function AITab({ restaurant, initialPreview = null }: Readonly<AITabProps>) {
   const router = useRouter();
   const [isCreatingAssistant, setIsCreatingAssistant] = useState(false);
   const [isUpdatingAssistant, setIsUpdatingAssistant] = useState(false);
   const [isDeletingAssistant, setIsDeletingAssistant] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [systemPrompt, setSystemPrompt] = useState(restaurant.systemPrompt || "");
-  const [menuContext, setMenuContext] = useState(restaurant.menuContext || "");
+  const [systemPrompt, setSystemPrompt] = useState(
+    initialPreview?.systemPrompt ?? restaurant.systemPrompt ?? ""
+  );
+  const [menuContext, setMenuContext] = useState(
+    initialPreview?.menuJson ?? restaurant.menuContext ?? ""
+  );
   const [businessHoursJson, setBusinessHoursJson] = useState<string>("");
 
   useEffect(() => {
@@ -79,23 +130,23 @@ export function AITab({ restaurant }: Readonly<AITabProps>) {
     }
   }, [restaurant.businessHours]);
 
-  useEffect(() => {
-    fetch(`/api/admin/restaurants/${restaurant.id}/generate-system-prompt`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
-      .then((data: { systemPrompt: string }) => setSystemPrompt(data.systemPrompt))
-      .catch(() => {});
-  }, [restaurant.id]);
+  // Sans HubRise, le prompt et le menu affichés sont ceux reçus en props :
+  // aucun aller-retour serveur n'est nécessaire.
+  const hubriseLocationId =
+    restaurant.hubriseLocationId && restaurant.hubriseAccessToken ? restaurant.hubriseLocationId : null;
 
   useEffect(() => {
-    fetch(`/api/admin/restaurants/${restaurant.id}/generate-menu-json`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
-      .then((data: { menuJson: string }) => {
-        if (data.menuJson && data.menuJson !== "Menu non configuré") {
-          setMenuContext(data.menuJson);
-        }
-      })
-      .catch(() => {});
-  }, [restaurant.id]);
+    if (!hubriseLocationId) return;
+    let cancelled = false;
+    loadHubrisePreview(restaurant.id, hubriseLocationId).then((preview) => {
+      if (cancelled) return;
+      if (preview.systemPrompt) setSystemPrompt(preview.systemPrompt);
+      if (preview.menuJson) setMenuContext(preview.menuJson);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [restaurant.id, hubriseLocationId]);
 
   const hasAgentId = !!restaurant.vapiAssistantId;
   const hasPhoneLinked = !!restaurant.vapiPhoneNumberId;

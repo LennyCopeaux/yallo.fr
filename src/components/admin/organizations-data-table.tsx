@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -48,11 +47,8 @@ import { toast } from "sonner";
 import { type OrganizationRow } from "@/app/(admin)/admin/queries";
 import { deleteOrganization } from "@/app/(admin)/admin/actions";
 
-type Owner = { id: string; email: string };
-
 interface OrganizationsDataTableProps {
   organizations: OrganizationRow[];
-  owners: Owner[];
 }
 
 function formatDate(date: Date | null | undefined) {
@@ -77,22 +73,12 @@ function getStatusBadge(status: string) {
   }
 }
 
-export function OrganizationsDataTable({
-  organizations,
-  owners: _owners,
-}: Readonly<OrganizationsDataTableProps>) {
-  const router = useRouter();
+export function OrganizationsDataTable({ organizations }: Readonly<OrganizationsDataTableProps>) {
   const [, startTransition] = useTransition();
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState<OrganizationRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    for (const org of organizations) {
-      router.prefetch(`/admin/organizations/${org.id}`);
-    }
-  }, [organizations, router]);
 
   const filteredOrganizations = useMemo(() => {
     const term = searchValue.trim().toLowerCase();
@@ -176,7 +162,6 @@ export function OrganizationsDataTable({
                       <TableCell>
                         <Link
                           href={`/admin/organizations/${org.id}`}
-                          prefetch
                           className="flex items-center gap-2 after:absolute after:inset-0 after:content-['']"
                         >
                           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -227,7 +212,7 @@ export function OrganizationsDataTable({
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator className="bg-muted/50" />
                             <DropdownMenuItem asChild>
-                              <Link href={`/admin/organizations/${org.id}`} prefetch>
+                              <Link href={`/admin/organizations/${org.id}`}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 Voir détails
                               </Link>

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Receipt, Clock, Phone, ChefHat, CheckCircle2, XCircle, Loader2 } from "lucide-react";
@@ -84,7 +85,12 @@ function formatTime(date: Date | null): string {
   });
 }
 
-export function OrderTicket({ order, onStatusChange, isPending = false, className }: Readonly<OrderTicketProps>) {
+/**
+ * Mémoïsé : la tablette peut afficher jusqu'à 100 tickets et la liste est
+ * remplacée toutes les 15 s par le polling. Sans memo, chaque poll
+ * re-rendait tous les tickets même quand rien n'avait changé.
+ */
+export const OrderTicket = memo(function OrderTicket({ order, onStatusChange, isPending = false, className }: Readonly<OrderTicketProps>) {
   const status = statusConfig[order.status];
 
   return (
@@ -227,7 +233,7 @@ export function OrderTicket({ order, onStatusChange, isPending = false, classNam
       )}
     </div>
   );
-}
+});
 
 export function OrderTicketCompact({ order, onClick }: Readonly<{ order: Order; onClick?: () => void }>) {
   const status = statusConfig[order.status];
