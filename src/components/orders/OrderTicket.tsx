@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Receipt, Clock, Phone, ChefHat, CheckCircle2, XCircle } from "lucide-react";
+import { Receipt, Clock, Phone, ChefHat, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { type OrderStatus } from "@/db/schema";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +31,8 @@ export interface Order {
 interface OrderTicketProps {
   order: Order;
   onStatusChange?: (orderId: string, newStatus: OrderStatus) => void;
+  /** Vrai pendant qu'un changement de statut est en cours : boutons verrouillés + spinner. */
+  isPending?: boolean;
   className?: string;
 }
 
@@ -82,7 +84,7 @@ function formatTime(date: Date | null): string {
   });
 }
 
-export function OrderTicket({ order, onStatusChange, className }: Readonly<OrderTicketProps>) {
+export function OrderTicket({ order, onStatusChange, isPending = false, className }: Readonly<OrderTicketProps>) {
   const status = statusConfig[order.status];
 
   return (
@@ -187,34 +189,37 @@ export function OrderTicket({ order, onStatusChange, className }: Readonly<Order
       </div>
 
       {onStatusChange && order.status !== "DELIVERED" && order.status !== "CANCELLED" && (
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex gap-2" aria-busy={isPending}>
           {order.status === "NEW" && (
             <Button
               size="sm"
+              disabled={isPending}
               onClick={() => onStatusChange(order.id, "PREPARING")}
               className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
             >
-              <ChefHat className="w-4 h-4 mr-1" />
+              {isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <ChefHat className="w-4 h-4 mr-1" />}
               En préparation
             </Button>
           )}
           {order.status === "PREPARING" && (
             <Button
               size="sm"
+              disabled={isPending}
               onClick={() => onStatusChange(order.id, "READY")}
               className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
             >
-              <CheckCircle2 className="w-4 h-4 mr-1" />
+              {isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
               Prêt !
             </Button>
           )}
           {order.status === "READY" && (
             <Button
               size="sm"
+              disabled={isPending}
               onClick={() => onStatusChange(order.id, "DELIVERED")}
               className="flex-1"
             >
-              <CheckCircle2 className="w-4 h-4 mr-1" />
+              {isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
               Livré
             </Button>
           )}

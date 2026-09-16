@@ -8,6 +8,7 @@ import { applyAutoRush } from "@/lib/services/auto-rush";
 import { trySendOrderReadySms } from "@/lib/services/twilio-sms";
 import { eq, desc, and, avg, count, gte, lte, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 function generateOrderNumber(): string {
   const timestamp = Date.now().toString().slice(-6);
@@ -155,6 +156,15 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   };
 }
 
+/**
+ * Changement de statut depuis la tablette cuisine.
+ *
+ * Le chemin critique se limite à l'authentification (mémoïsée) et à UNE
+ * requête UPDATE ... RETURNING qui vérifie l'appartenance de la commande au
+ * restaurant. Le SMS « commande prête » et le recalcul du mode RUSH (qui peut
+ * appeler Vapi, donc plusieurs secondes) sont exécutés après l'envoi de la
+ * réponse via `after()` : la cuisine voit le nouveau statut immédiatement.
+ */
 export async function updateOrderStatus(orderId: string, newStatus: OrderStatus) {
   await requireAuth();
   await requirePaidSubscription();
@@ -162,42 +172,45 @@ export async function updateOrderStatus(orderId: string, newStatus: OrderStatus)
   const ownerRestaurant = await getAccessibleRestaurant();
   if (!ownerRestaurant) throw new Error("Restaurant non trouvé");
 
-  const targetOrder = await db.query.orders.findFirst({
-    where: and(eq(orders.id, orderId), eq(orders.restaurantId, ownerRestaurant.id)),
-  });
-  if (!targetOrder) throw new Error("Commande non trouvée");
-
-  const shouldNotifyReady =
-    newStatus === "READY" &&
-    targetOrder.status !== "READY" &&
-    !targetOrder.readyNotifiedAt &&
-    ownerRestaurant.smsReadyEnabled;
-
-  await db
+  const [updated] = await db
     .update(orders)
     .set({ status: newStatus, updatedAt: new Date() })
-    .where(eq(orders.id, orderId));
-
-  if (shouldNotifyReady) {
-    const fromRaw = process.env.TWILIO_SMS_FROM?.trim() || ownerRestaurant.twilioPhoneNumber?.trim();
-    const sent = await trySendOrderReadySms({
-      toRaw: targetOrder.customerPhone,
-      fromRaw,
-      restaurantName: ownerRestaurant.name,
-      orderNumber: targetOrder.orderNumber,
-      customerName: targetOrder.customerName,
+    .where(and(eq(orders.id, orderId), eq(orders.restaurantId, ownerRestaurant.id)))
+    .returning({
+      id: orders.id,
+      orderNumber: orders.orderNumber,
+      customerName: orders.customerName,
+      customerPhone: orders.customerPhone,
+      readyNotifiedAt: orders.readyNotifiedAt,
     });
+  if (!updated) throw new Error("Commande non trouvée");
 
-    if (sent) {
-      await db
-        .update(orders)
-        .set({ readyNotifiedAt: new Date() })
-        .where(eq(orders.id, orderId));
+  const shouldNotifyReady =
+    newStatus === "READY" && !updated.readyNotifiedAt && ownerRestaurant.smsReadyEnabled;
+
+  after(async () => {
+    if (shouldNotifyReady) {
+      const fromRaw = process.env.TWILIO_SMS_FROM?.trim() || ownerRestaurant.twilioPhoneNumber?.trim();
+      const sent = await trySendOrderReadySms({
+        toRaw: updated.customerPhone,
+        fromRaw,
+        restaurantName: ownerRestaurant.name,
+        orderNumber: updated.orderNumber,
+        customerName: updated.customerName,
+      });
+
+      if (sent) {
+        await db
+          .update(orders)
+          .set({ readyNotifiedAt: new Date() })
+          .where(eq(orders.id, orderId));
+      }
     }
-  }
 
-  // La charge cuisine vient de changer : le mode RUSH automatique peut retomber.
-  await applyAutoRush(ownerRestaurant);
+    // La charge cuisine vient de changer : le mode RUSH automatique peut retomber.
+    // Le rafraîchissement périodique de la tablette récupère le nouveau statut.
+    await applyAutoRush(ownerRestaurant);
+  });
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/orders");

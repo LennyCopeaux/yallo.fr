@@ -4,6 +4,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getUserRestaurant, getOrders, updateOrderStatus } from "@/features/orders/actions";
 import { db } from "@/db";
 import { getAccessibleRestaurant, requireAuth } from "@/lib/auth";
+import { applyAutoRush } from "@/lib/services/auto-rush";
+import { trySendOrderReadySms } from "@/lib/services/twilio-sms";
 import type { SelectOrder } from "@/db/schema";
 
 vi.mock("@/db", () => ({
@@ -35,6 +37,20 @@ vi.mock("@/lib/subscription-access", () => ({
 
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
+}));
+
+// `after()` exécute le SMS et l'auto-rush une fois la réponse envoyée ;
+// dans les tests on l'exécute tout de suite pour couvrir le code.
+vi.mock("next/server", () => ({
+  after: vi.fn((fn: () => Promise<void>) => fn()),
+}));
+
+vi.mock("@/lib/services/auto-rush", () => ({
+  applyAutoRush: vi.fn().mockResolvedValue("NORMAL"),
+}));
+
+vi.mock("@/lib/services/twilio-sms", () => ({
+  trySendOrderReadySms: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock("next/headers", () => ({
@@ -129,26 +145,69 @@ describe("Orders Actions Integration", () => {
   });
 
   describe("updateOrderStatus", () => {
-    it("should update order status successfully", async () => {
+    const mockRestaurant = {
+      id: "rest-123",
+      ownerId: "user-123",
+      name: "Resto",
+      smsReadyEnabled: false,
+      twilioPhoneNumber: "+33939035299",
+    };
+
+    function mockUpdateReturning(rows: unknown[]) {
+      const returning = vi.fn().mockResolvedValue(rows);
+      const where = vi.fn().mockReturnValue({ returning, then: (r: (v: unknown) => void) => r(undefined) });
+      const set = vi.fn().mockReturnValue({ where });
+      vi.mocked(db.update).mockReturnValue({ set } as unknown as ReturnType<typeof db.update>);
+      return { set, where, returning };
+    }
+
+    it("updates in a single query scoped to the restaurant and recomputes auto-rush after the response", async () => {
       vi.mocked(requireAuth).mockResolvedValue(mockOwner);
-
-      const mockRestaurant = { id: "rest-123", ownerId: "user-123" };
-      const mockOrder = { id: "order-123", restaurantId: "rest-123", status: "NEW" };
-
       vi.mocked(getAccessibleRestaurant).mockResolvedValue(mockRestaurant as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
-      vi.mocked(db.query.orders.findFirst).mockResolvedValue(mockOrder as unknown as SelectOrder | undefined);
-
-      const updateMock = vi.fn().mockReturnValue({
-        set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(undefined),
-        }),
-      });
-      vi.mocked(db.update).mockReturnValue(updateMock() as unknown as ReturnType<typeof db.update>);
+      const { set, returning } = mockUpdateReturning([
+        { id: "order-123", orderNumber: "#1", customerName: "Paul", customerPhone: null, readyNotifiedAt: null },
+      ]);
 
       const result = await updateOrderStatus("order-123", "PREPARING");
 
       expect(result.success).toBe(true);
-      expect(db.update).toHaveBeenCalled();
+      expect(db.query.orders.findFirst).not.toHaveBeenCalled();
+      expect(set).toHaveBeenCalledWith(expect.objectContaining({ status: "PREPARING" }));
+      expect(returning).toHaveBeenCalledTimes(1);
+      expect(applyAutoRush).toHaveBeenCalledWith(mockRestaurant);
+      expect(trySendOrderReadySms).not.toHaveBeenCalled();
+    });
+
+    it("sends the ready SMS once when the order becomes READY and the option is on", async () => {
+      vi.mocked(requireAuth).mockResolvedValue(mockOwner);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue({
+        ...mockRestaurant,
+        smsReadyEnabled: true,
+      } as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
+      mockUpdateReturning([
+        { id: "order-123", orderNumber: "#1", customerName: "Paul", customerPhone: "+33612345678", readyNotifiedAt: null },
+      ]);
+
+      await updateOrderStatus("order-123", "READY");
+
+      expect(trySendOrderReadySms).toHaveBeenCalledWith(
+        expect.objectContaining({ toRaw: "+33612345678", orderNumber: "#1", customerName: "Paul" })
+      );
+    });
+
+    it("does not resend the ready SMS when it was already sent", async () => {
+      vi.mocked(requireAuth).mockResolvedValue(mockOwner);
+      vi.mocked(getAccessibleRestaurant).mockResolvedValue({
+        ...mockRestaurant,
+        smsReadyEnabled: true,
+      } as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
+      mockUpdateReturning([
+        { id: "order-123", orderNumber: "#1", customerName: "Paul", customerPhone: "+33612345678", readyNotifiedAt: new Date() },
+      ]);
+
+      await updateOrderStatus("order-123", "READY");
+
+      expect(trySendOrderReadySms).not.toHaveBeenCalled();
     });
 
     it("should throw error for unauthenticated user", async () => {
@@ -159,21 +218,18 @@ describe("Orders Actions Integration", () => {
 
     it("should throw error if restaurant not found", async () => {
       vi.mocked(requireAuth).mockResolvedValue(mockOwner);
-
       vi.mocked(getAccessibleRestaurant).mockResolvedValue(null);
 
       await expect(updateOrderStatus("order-123", "PREPARING")).rejects.toThrow("Restaurant non trouvé");
     });
 
-    it("should throw error if order not found", async () => {
+    it("should throw error if the order does not belong to the restaurant", async () => {
       vi.mocked(requireAuth).mockResolvedValue(mockOwner);
-
-      const mockRestaurant = { id: "rest-123", ownerId: "user-123" };
-
       vi.mocked(getAccessibleRestaurant).mockResolvedValue(mockRestaurant as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
-      vi.mocked(db.query.orders.findFirst).mockResolvedValue(undefined);
+      mockUpdateReturning([]);
 
       await expect(updateOrderStatus("order-123", "PREPARING")).rejects.toThrow("Commande non trouvée");
+      expect(applyAutoRush).not.toHaveBeenCalled();
     });
   });
 });
