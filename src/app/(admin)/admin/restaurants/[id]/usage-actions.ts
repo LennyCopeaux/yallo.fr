@@ -27,8 +27,14 @@ export async function getRestaurantCallStats(restaurantId: string) {
         totalSeconds: sql<number>`COALESCE(SUM(${callLogs.durationSeconds}), 0)`,
       })
       .from(callLogs)
+      // `started_at` n'est pas toujours renseigné par le rapport de fin d'appel :
+      // filtrer dessus excluait ces appels et affichait 0 alors que le dashboard
+      // restaurateur (qui filtre sur created_at) les comptait.
       .where(
-        and(eq(callLogs.restaurantId, restaurantId), gte(callLogs.startedAt, thirtyDaysAgo))
+        and(
+          eq(callLogs.restaurantId, restaurantId),
+          gte(sql`COALESCE(${callLogs.startedAt}, ${callLogs.createdAt})`, thirtyDaysAgo)
+        )
       )
       .then((r) => r[0] ?? { callCount: 0, totalSeconds: 0 }),
   ]);
