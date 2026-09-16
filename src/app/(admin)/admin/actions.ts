@@ -84,6 +84,44 @@ export type ActionResult<T = void> = {
   data?: T;
 };
 
+const memberChangesSchema = z.object({
+  add: z.array(z.string().uuid()).default([]),
+  remove: z.array(z.string().uuid()).default([]),
+});
+
+export type MemberChanges = z.input<typeof memberChangesSchema>;
+
+// Le dashboard (/admin), la liste et la fiche affichent les mêmes données :
+// oublier l'un de ces chemins laissait une vue périmée jusqu'à expiration du
+// cache client (staleTimes.dynamic).
+function revalidateRestaurantPaths(restaurantId?: string) {
+  revalidatePath("/admin");
+  revalidatePath("/admin/restaurants");
+  if (restaurantId) revalidatePath(`/admin/restaurants/${restaurantId}`);
+}
+
+function revalidateOrganizationPaths(...organizationIds: Array<string | null | undefined>) {
+  revalidatePath("/admin");
+  revalidatePath("/admin/organizations");
+  for (const organizationId of new Set(organizationIds)) {
+    if (organizationId) revalidatePath(`/admin/organizations/${organizationId}`);
+  }
+}
+
+function revalidateUserPaths() {
+  revalidatePath("/admin");
+  revalidatePath("/admin/users");
+}
+
+async function memberRolesFor(userIds: string[]): Promise<Record<string, "owner" | "member">> {
+  if (userIds.length === 0) return {};
+  const rows = await db
+    .select({ id: users.id, role: users.role })
+    .from(users)
+    .where(inArray(users.id, userIds));
+  return Object.fromEntries(rows.map((u) => [u.id, u.role === "OWNER" ? "owner" : "member"]));
+}
+
 export async function createUser(formData: FormData): Promise<ActionResult> {
   try {
     await requireAdmin();
@@ -139,6 +177,9 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
       role,
     });
 
+    // Le compte existe désormais, que l'email de bienvenue parte ou non.
+    revalidateUserPaths();
+
     try {
       await sendWelcomeEmail(email, tempPassword);
     } catch (mailError) {
@@ -146,7 +187,6 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
         "Erreur envoi email de bienvenue",
         mailError instanceof Error ? mailError : new Error(String(mailError))
       );
-      revalidatePath("/admin");
       return {
         success: true,
         error:
@@ -154,7 +194,6 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
       };
     }
 
-    revalidatePath("/admin");
     return { success: true };
   } catch (error) {
     logger.error(
@@ -253,7 +292,7 @@ export async function updateUser(
     }
 
     await db.update(users).set(updateData).where(eq(users.id, id));
-    revalidatePath("/admin");
+    revalidateUserPaths();
     return { success: true };
   } catch (error) {
     logger.error(
@@ -330,7 +369,7 @@ export async function deleteUser(id: string): Promise<ActionResult> {
     }
 
     await db.delete(users).where(eq(users.id, id));
-    revalidatePath("/admin");
+    revalidateUserPaths();
     return { success: true };
   } catch (error) {
     logger.error(
@@ -390,7 +429,8 @@ export async function createRestaurant(formData: FormData): Promise<ActionResult
       ).onConflictDoNothing();
     }
 
-    revalidatePath("/admin");
+    revalidateRestaurantPaths();
+    if (organizationId) revalidateOrganizationPaths(organizationId);
     return { success: true };
   } catch (error) {
     logger.error(
@@ -430,9 +470,23 @@ export async function updateRestaurantGeneral(
       updateData.isActive = parsed.data.status === "active";
     }
 
+    // Quand le rattachement change, l'ancienne organisation doit aussi être revalidée.
+    const previousOrganizationId =
+      parsed.data.organizationId !== undefined
+        ? (
+            await db
+              .select({ organizationId: restaurants.organizationId })
+              .from(restaurants)
+              .where(eq(restaurants.id, id))
+              .limit(1)
+          )[0]?.organizationId
+        : undefined;
+
     await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
-    revalidatePath("/admin");
-    revalidatePath(`/admin/restaurants/${id}`);
+    revalidateRestaurantPaths(id);
+    if (parsed.data.organizationId !== undefined) {
+      revalidateOrganizationPaths(previousOrganizationId, parsed.data.organizationId);
+    }
     return { success: true };
   } catch (error) {
     logger.error(
@@ -717,8 +771,7 @@ export async function updateRestaurantAI(
     if (parsed.data.menuContext !== undefined) updateData.menuContext = parsed.data.menuContext;
 
     await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
-    revalidatePath("/admin");
-    revalidatePath(`/admin/restaurants/${id}`);
+    revalidateRestaurantPaths(id);
     return { success: true };
   } catch (error) {
     logger.error(
@@ -776,8 +829,7 @@ export async function updateRestaurantTelephony(
     }
 
     await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
-    revalidatePath("/admin");
-    revalidatePath(`/admin/restaurants/${id}`);
+    revalidateRestaurantPaths(id);
     return { success: true };
   } catch (error) {
     logger.error(
@@ -815,8 +867,7 @@ export async function updateRestaurantBilling(
     }
 
     await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
-    revalidatePath("/admin");
-    revalidatePath(`/admin/restaurants/${id}`);
+    revalidateRestaurantPaths(id);
     return { success: true };
   } catch (error) {
     logger.error(
@@ -854,8 +905,7 @@ export async function updateHubriseConfig(
       updateData.hubriseAccessToken = parsed.data.hubriseAccessToken;
     }
     await db.update(restaurants).set(updateData).where(eq(restaurants.id, id));
-    revalidatePath("/admin");
-    revalidatePath(`/admin/restaurants/${id}`);
+    revalidateRestaurantPaths(id);
     return { success: true };
   } catch (error) {
     logger.error(
@@ -874,8 +924,12 @@ export async function deleteRestaurant(id: string): Promise<ActionResult> {
       return { success: false, error: "ID restaurant requis" };
     }
 
-    await db.delete(restaurants).where(eq(restaurants.id, id));
-    revalidatePath("/admin");
+    const [deleted] = await db
+      .delete(restaurants)
+      .where(eq(restaurants.id, id))
+      .returning({ organizationId: restaurants.organizationId });
+    revalidateRestaurantPaths();
+    if (deleted?.organizationId) revalidateOrganizationPaths(deleted.organizationId);
     return { success: true };
   } catch (error) {
     logger.error(
@@ -965,7 +1019,7 @@ export async function toggleRestaurantStatus(id: string, isActive: boolean): Pro
       })
       .where(eq(restaurants.id, id));
 
-    revalidatePath("/admin");
+    revalidateRestaurantPaths(id);
     return { success: true };
   } catch (error) {
     logger.error(
@@ -1101,14 +1155,19 @@ export async function deleteOrganization(id: string): Promise<ActionResult> {
 
     if (!id) return { success: false, error: "ID requis" };
 
-    await db
+    const detachedRestaurants = await db
       .update(restaurants)
       .set({ organizationId: null })
-      .where(eq(restaurants.organizationId, id));
+      .where(eq(restaurants.organizationId, id))
+      .returning({ id: restaurants.id });
 
     await db.delete(organizations).where(eq(organizations.id, id));
 
-    revalidatePath("/admin");
+    revalidateOrganizationPaths(id);
+    revalidateRestaurantPaths();
+    for (const restaurant of detachedRestaurants) {
+      revalidatePath(`/admin/restaurants/${restaurant.id}`);
+    }
     return { success: true };
   } catch (error) {
     logger.error("Erreur suppression organisation", error instanceof Error ? error : new Error(String(error)));
@@ -1124,6 +1183,13 @@ export async function setRestaurantOrganization(
     await requireAdmin();
 
     if (!restaurantId) return { success: false, error: "ID restaurant requis" };
+
+    // L'organisation quittée doit aussi être revalidée (liste de ses restaurants).
+    const [previous] = await db
+      .select({ organizationId: restaurants.organizationId })
+      .from(restaurants)
+      .where(eq(restaurants.id, restaurantId))
+      .limit(1);
 
     await db
       .update(restaurants)
@@ -1147,7 +1213,8 @@ export async function setRestaurantOrganization(
       }
     }
 
-    revalidatePath("/admin");
+    revalidateRestaurantPaths(restaurantId);
+    revalidateOrganizationPaths(previous?.organizationId, organizationId);
     return { success: true };
   } catch (error) {
     logger.error("Erreur attach/detach restaurant", error instanceof Error ? error : new Error(String(error)));
@@ -1155,121 +1222,188 @@ export async function setRestaurantOrganization(
   }
 }
 
-export async function addOrganizationMember(orgId: string, userId: string): Promise<ActionResult> {
+export async function setOrganizationMembers(
+  orgId: string,
+  changes: MemberChanges
+): Promise<ActionResult> {
   try {
     await requireAdmin();
-    if (!orgId || !userId) return { success: false, error: "IDs requis" };
+    if (!orgId) return { success: false, error: "ID organisation requis" };
 
-    const [user] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
-    const memberRole: "owner" | "member" = user?.role === "OWNER" ? "owner" : "member";
+    const parsed = memberChangesSchema.safeParse(changes);
+    if (!parsed.success) return { success: false, error: "Données invalides" };
 
-    await db.insert(organizationMembers).values({
-      organizationId: orgId,
-      userId,
-      role: memberRole,
-    }).onConflictDoNothing();
+    const add = [...new Set(parsed.data.add)];
+    const remove = [...new Set(parsed.data.remove)].filter((userId) => !add.includes(userId));
+    if (add.length === 0 && remove.length === 0) return { success: true };
 
-    const orgRestaurants = await db
-      .select({ id: restaurants.id })
-      .from(restaurants)
-      .where(eq(restaurants.organizationId, orgId));
-
-    if (orgRestaurants.length > 0) {
-      await db.insert(restaurantMembers).values(
-        orgRestaurants.map((r) => ({
-          restaurantId: r.id,
-          userId,
-          role: memberRole,
-        }))
-      ).onConflictDoNothing();
+    // Vérifié avant toute écriture : seuls les ajouts réellement nouveaux et les
+    // retraits de membres existants comptent, pour ne refuser que les lots qui
+    // laisseraient l'organisation sans membre.
+    const [counts] = await db
+      .select({
+        total: sql<number>`COUNT(*)`,
+        alreadyMembers: add.length
+          ? sql<number>`COUNT(*) FILTER (WHERE ${inArray(organizationMembers.userId, add)})`
+          : sql<number>`0`,
+        removing: remove.length
+          ? sql<number>`COUNT(*) FILTER (WHERE ${inArray(organizationMembers.userId, remove)})`
+          : sql<number>`0`,
+      })
+      .from(organizationMembers)
+      .where(eq(organizationMembers.organizationId, orgId));
+    const remaining =
+      Number(counts?.total ?? 0) +
+      (add.length - Number(counts?.alreadyMembers ?? 0)) -
+      Number(counts?.removing ?? 0);
+    if (remaining < 1) {
+      return { success: false, error: "Impossible de retirer le dernier membre" };
     }
 
-    revalidatePath("/admin");
-    revalidatePath("/admin/organizations");
+    let orgRestaurants: { id: string }[] = [];
+
+    if (add.length > 0) {
+      const roles = await memberRolesFor(add);
+
+      await db
+        .insert(organizationMembers)
+        .values(
+          add.map((userId) => ({
+            organizationId: orgId,
+            userId,
+            role: roles[userId] ?? "member",
+          }))
+        )
+        .onConflictDoNothing();
+
+      // Un membre de l'organisation a accès à tous ses restaurants.
+      orgRestaurants = await db
+        .select({ id: restaurants.id })
+        .from(restaurants)
+        .where(eq(restaurants.organizationId, orgId));
+
+      if (orgRestaurants.length > 0) {
+        await db
+          .insert(restaurantMembers)
+          .values(
+            orgRestaurants.flatMap((restaurant) =>
+              add.map((userId) => ({
+                restaurantId: restaurant.id,
+                userId,
+                role: roles[userId] ?? "member",
+              }))
+            )
+          )
+          .onConflictDoNothing();
+      }
+    }
+
+    if (remove.length > 0) {
+      await db
+        .delete(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, orgId),
+            inArray(organizationMembers.userId, remove)
+          )
+        );
+    }
+
+    revalidateOrganizationPaths(orgId);
+    if (orgRestaurants.length > 0) {
+      revalidateRestaurantPaths();
+      for (const restaurant of orgRestaurants) {
+        revalidatePath(`/admin/restaurants/${restaurant.id}`);
+      }
+    }
     return { success: true };
   } catch (error) {
-    logger.error("Erreur ajout membre org", error instanceof Error ? error : new Error(String(error)));
-    return { success: false, error: "Erreur lors de l'ajout du membre" };
+    logger.error("Erreur mise à jour membres org", error instanceof Error ? error : new Error(String(error)));
+    return { success: false, error: "Erreur lors de la mise à jour des membres" };
   }
+}
+
+export async function setRestaurantMembers(
+  restaurantId: string,
+  changes: MemberChanges
+): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    if (!restaurantId) return { success: false, error: "ID restaurant requis" };
+
+    const parsed = memberChangesSchema.safeParse(changes);
+    if (!parsed.success) return { success: false, error: "Données invalides" };
+
+    const add = [...new Set(parsed.data.add)];
+    const remove = [...new Set(parsed.data.remove)].filter((userId) => !add.includes(userId));
+    if (add.length === 0 && remove.length === 0) return { success: true };
+
+    // Même garde-fou que pour les organisations : vérifié avant toute écriture.
+    const [counts] = await db
+      .select({
+        total: sql<number>`COUNT(*)`,
+        alreadyMembers: add.length
+          ? sql<number>`COUNT(*) FILTER (WHERE ${inArray(restaurantMembers.userId, add)})`
+          : sql<number>`0`,
+        removing: remove.length
+          ? sql<number>`COUNT(*) FILTER (WHERE ${inArray(restaurantMembers.userId, remove)})`
+          : sql<number>`0`,
+      })
+      .from(restaurantMembers)
+      .where(eq(restaurantMembers.restaurantId, restaurantId));
+    const remaining =
+      Number(counts?.total ?? 0) +
+      (add.length - Number(counts?.alreadyMembers ?? 0)) -
+      Number(counts?.removing ?? 0);
+    if (remaining < 1) {
+      return { success: false, error: "Impossible de retirer le dernier membre" };
+    }
+
+    if (add.length > 0) {
+      const roles = await memberRolesFor(add);
+      await db
+        .insert(restaurantMembers)
+        .values(
+          add.map((userId) => ({
+            restaurantId,
+            userId,
+            role: roles[userId] ?? "member",
+          }))
+        )
+        .onConflictDoNothing();
+    }
+
+    if (remove.length > 0) {
+      await db
+        .delete(restaurantMembers)
+        .where(
+          and(
+            eq(restaurantMembers.restaurantId, restaurantId),
+            inArray(restaurantMembers.userId, remove)
+          )
+        );
+    }
+
+    revalidateRestaurantPaths(restaurantId);
+    return { success: true };
+  } catch (error) {
+    logger.error("Erreur mise à jour membres restaurant", error instanceof Error ? error : new Error(String(error)));
+    return { success: false, error: "Erreur lors de la mise à jour des membres" };
+  }
+}
+
+export async function addOrganizationMember(orgId: string, userId: string): Promise<ActionResult> {
+  return setOrganizationMembers(orgId, { add: [userId] });
 }
 
 export async function removeOrganizationMember(orgId: string, userId: string): Promise<ActionResult> {
-  try {
-    await requireAdmin();
-    if (!orgId || !userId) return { success: false, error: "IDs requis" };
-
-    const count = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(organizationMembers)
-      .where(eq(organizationMembers.organizationId, orgId));
-    if (Number(count[0]?.count ?? 0) <= 1) {
-      return { success: false, error: "Impossible de retirer le dernier membre" };
-    }
-
-    await db.delete(organizationMembers).where(
-      and(
-        eq(organizationMembers.organizationId, orgId),
-        eq(organizationMembers.userId, userId)
-      )
-    );
-
-    revalidatePath("/admin");
-    revalidatePath("/admin/organizations");
-    return { success: true };
-  } catch (error) {
-    logger.error("Erreur retrait membre org", error instanceof Error ? error : new Error(String(error)));
-    return { success: false, error: "Erreur lors du retrait" };
-  }
+  return setOrganizationMembers(orgId, { remove: [userId] });
 }
 
 export async function addRestaurantMember(restaurantId: string, userId: string): Promise<ActionResult> {
-  try {
-    await requireAdmin();
-    if (!restaurantId || !userId) return { success: false, error: "IDs requis" };
-
-    const [user] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
-    const memberRole: "owner" | "member" = user?.role === "OWNER" ? "owner" : "member";
-
-    await db.insert(restaurantMembers).values({
-      restaurantId,
-      userId,
-      role: memberRole,
-    }).onConflictDoNothing();
-
-    revalidatePath("/admin");
-    revalidatePath(`/admin/restaurants/${restaurantId}`);
-    return { success: true };
-  } catch (error) {
-    logger.error("Erreur ajout membre restaurant", error instanceof Error ? error : new Error(String(error)));
-    return { success: false, error: "Erreur lors de l'ajout" };
-  }
+  return setRestaurantMembers(restaurantId, { add: [userId] });
 }
 
 export async function removeRestaurantMember(restaurantId: string, userId: string): Promise<ActionResult> {
-  try {
-    await requireAdmin();
-    if (!restaurantId || !userId) return { success: false, error: "IDs requis" };
-
-    const count = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(restaurantMembers)
-      .where(eq(restaurantMembers.restaurantId, restaurantId));
-    if (Number(count[0]?.count ?? 0) <= 1) {
-      return { success: false, error: "Impossible de retirer le dernier membre" };
-    }
-
-    await db.delete(restaurantMembers).where(
-      and(
-        eq(restaurantMembers.restaurantId, restaurantId),
-        eq(restaurantMembers.userId, userId)
-      )
-    );
-
-    revalidatePath("/admin");
-    revalidatePath(`/admin/restaurants/${restaurantId}`);
-    return { success: true };
-  } catch (error) {
-    logger.error("Erreur retrait membre restaurant", error instanceof Error ? error : new Error(String(error)));
-    return { success: false, error: "Erreur lors du retrait" };
-  }
+  return setRestaurantMembers(restaurantId, { remove: [userId] });
 }

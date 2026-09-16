@@ -135,7 +135,7 @@ export function DashboardTabs({ restaurants, users, owners, totalOrders, organiz
           </div>
         </div>
 
-        <OrganizationsDataTable organizations={organizations} owners={owners} />
+        <OrganizationsDataTable organizations={organizations} />
       </TabsContent>
 
       <TabsContent value="restaurants" className="space-y-4 sm:space-y-6">

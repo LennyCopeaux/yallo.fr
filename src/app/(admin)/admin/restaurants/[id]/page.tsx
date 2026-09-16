@@ -1,12 +1,34 @@
 import { db } from "@/db";
 import { restaurants, users, organizations, restaurantMembers, type RestaurantStatus } from "@/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RestaurantDetailTabs } from "@/components/admin";
 import { AdminStatusBadge } from "@/components/admin/status-badge";
+import { getOwners, getRestaurantCallStats } from "@/app/(admin)/admin/queries";
+import { generateSystemPrompt } from "@/lib/services/system-prompt";
+
+/**
+ * Aperçu « IA & Menu » pour un restaurant sans HubRise : le prompt est
+ * régénéré depuis la ligne complète (aucun appel externe dans ce cas) et le
+ * menu est le JSON stocké. Avant, l'onglet le demandait au serveur à chaque
+ * montage ; avec HubRise, l'onglet garde son chargement côté client (mis en
+ * cache) car la génération interroge l'API HubRise.
+ */
+async function getAiPreview(id: string, hasHubrise: boolean) {
+  if (hasHubrise) return null;
+
+  const [row] = await db.select().from(restaurants).where(eq(restaurants.id, id)).limit(1);
+  if (!row) return null;
+
+  const [systemPrompt, menuJson] = [
+    await generateSystemPrompt(row),
+    row.menuData ? JSON.stringify(row.menuData, null, 2) : (row.menuContext ?? null),
+  ];
+  return { systemPrompt, menuJson };
+}
 
 function getStatusBadge(status: RestaurantStatus) {
   switch (status) {
@@ -17,18 +39,6 @@ function getStatusBadge(status: RestaurantStatus) {
     default:
       return <AdminStatusBadge tone="danger" label="Suspendu" />;
   }
-}
-
-async function getOwners() {
-  return await db
-    .select({
-      id: users.id,
-      email: users.email,
-      role: users.role,
-    })
-    .from(users)
-    .where(inArray(users.role, ["OWNER", "EMPLOYEE"]))
-    .orderBy(users.email);
 }
 
 async function getRestaurant(id: string) {
@@ -69,20 +79,28 @@ export default async function RestaurantDetailPage({
   params: Promise<{ id: string }>;
 }>) {
   const { id } = await params;
-  const [restaurant, owners, organizationsList, restaurantMembersList] = await Promise.all([
-    getRestaurant(id),
+
+  // Le restaurant d'abord : un id inconnu répond 404 sans lancer les autres
+  // lectures pour rien.
+  const restaurant = await getRestaurant(id);
+  if (!restaurant) {
+    notFound();
+  }
+
+  const hasHubrise = !!(restaurant.hubriseLocationId && restaurant.hubriseAccessToken);
+
+  const [owners, organizationsList, restaurantMembersList, callStats, aiPreview] = await Promise.all([
     getOwners(),
+    // Le sélecteur n'affiche que le nom : inutile de charger les lignes complètes.
     db.select({ id: organizations.id, name: organizations.name }).from(organizations).orderBy(organizations.name),
     db
       .select({ id: users.id, email: users.email, role: users.role })
       .from(restaurantMembers)
       .innerJoin(users, eq(restaurantMembers.userId, users.id))
       .where(eq(restaurantMembers.restaurantId, id)),
+    getRestaurantCallStats(id),
+    getAiPreview(id, hasHubrise),
   ]);
-
-  if (!restaurant) {
-    notFound();
-  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
@@ -122,8 +140,14 @@ export default async function RestaurantDetailPage({
         </div>
       </div>
 
-      <RestaurantDetailTabs restaurant={restaurant} owners={owners} organizations={organizationsList} restaurantMembers={restaurantMembersList} />
+      <RestaurantDetailTabs
+        restaurant={restaurant}
+        owners={owners}
+        organizations={organizationsList}
+        restaurantMembers={restaurantMembersList}
+        callStats={callStats}
+        aiPreview={aiPreview}
+      />
     </div>
   );
 }
-

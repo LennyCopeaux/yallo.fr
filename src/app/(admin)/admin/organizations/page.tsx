@@ -67,7 +67,7 @@ export default async function OrganizationsPage() {
           </div>
         }
       >
-        <OrganizationsDataTable organizations={organizations} owners={owners} />
+        <OrganizationsDataTable organizations={organizations} />
       </Suspense>
     </div>
   );

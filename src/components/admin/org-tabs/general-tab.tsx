@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -21,8 +21,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   updateOrganization,
-  addOrganizationMember,
-  removeOrganizationMember,
+  setOrganizationMembers,
   setRestaurantOrganization,
 } from "@/app/(admin)/admin/actions";
 import type { OrgDetail, OrgMember, OrgRestaurant } from "@/components/admin/org-detail-tabs";
@@ -50,7 +49,6 @@ export function OrgGeneralTab({
   allRestaurants,
 }: Readonly<OrgGeneralTabProps>) {
   const [isLoading, setIsLoading] = useState(false);
-  const [, startTransition] = useTransition();
 
   const [pendingAddRestaurants, setPendingAddRestaurants] = useState<string[]>([]);
   const [pendingRemoveRestaurants, setPendingRemoveRestaurants] = useState<string[]>([]);
@@ -168,15 +166,13 @@ export function OrgGeneralTab({
     }
 
     setIsSavingMembers(true);
-    const ops = [
-      ...pendingAddMembers.map((userId) => addOrganizationMember(org.id, userId)),
-      ...pendingRemoveMembers.map((userId) => removeOrganizationMember(org.id, userId)),
-    ];
-    const results = await Promise.all(ops);
+    const result = await setOrganizationMembers(org.id, {
+      add: pendingAddMembers,
+      remove: pendingRemoveMembers,
+    });
     setIsSavingMembers(false);
 
-    const failed = results.find((r) => !r.success);
-    if (failed) return { success: false, error: failed.error ?? "Erreur" };
+    if (!result.success) return { success: false, error: result.error ?? "Erreur" };
 
     setPendingAddMembers([]);
     setPendingRemoveMembers([]);

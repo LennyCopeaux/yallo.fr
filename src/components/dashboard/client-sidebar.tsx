@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { cn, getAppUrl } from "@/lib/utils";
 import {
@@ -58,7 +58,6 @@ export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurant
   const [activeRestaurantId, setActiveRestaurantId] = useState<string | null>(currentRestaurantId);
   const [, startTransition] = useTransition();
   const pathname = usePathname();
-  const router = useRouter();
 
   const currentRestaurant = restaurants.find((r) => r.id === activeRestaurantId) ?? restaurants[0] ?? null;
   const hasMultipleRestaurants = restaurants.length > 1;
@@ -68,21 +67,13 @@ export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurant
       ]
     : [];
 
-  useEffect(() => {
-    for (const item of navigation) {
-      router.prefetch(item.href);
-    }
-    if (orgId) {
-      router.prefetch(`/org/${orgId}`);
-    }
-  }, [router, orgId]);
-
   function handleSwitchRestaurant(id: string) {
     setSelectorOpen(false);
     setActiveRestaurantId(id);
+    // L'action pose le cookie et revalide le layout : Next renvoie l'arbre à
+    // jour dans la même réponse, un router.refresh() en plus doublait le travail.
     startTransition(async () => {
       await switchRestaurant(id);
-      router.refresh();
     });
   }
 
@@ -159,7 +150,6 @@ export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurant
             <Link
               key={item.href}
               href={item.href}
-              prefetch
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
                 isActive
@@ -272,7 +262,6 @@ export function ClientSidebar({ hasHubriseConfig, restaurants, currentRestaurant
             <Link
               key={item.href}
               href={item.href}
-              prefetch
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
                 isActive

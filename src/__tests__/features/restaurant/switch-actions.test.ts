@@ -9,6 +9,10 @@ vi.mock("next/headers", () => ({
   cookies: vi.fn(),
 }));
 
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
+
 vi.mock("@/lib/auth", () => ({
   getUserRestaurants: vi.fn(),
   RESTAURANT_COOKIE: "yallo_restaurant_id",

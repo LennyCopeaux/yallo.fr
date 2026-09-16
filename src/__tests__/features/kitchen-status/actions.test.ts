@@ -61,7 +61,7 @@ describe("Kitchen Status Actions", () => {
       expect(result).toEqual(mockRestaurant);
     });
 
-    it("should initialize default settings if none exist", async () => {
+    it("applies default settings in memory without writing during a read", async () => {
       const mockRestaurant = {
         id: "rest-123",
         currentStatus: "NORMAL",
@@ -70,16 +70,9 @@ describe("Kitchen Status Actions", () => {
 
       vi.mocked(getAccessibleRestaurant).mockResolvedValue(mockRestaurant as unknown as Awaited<ReturnType<typeof getAccessibleRestaurant>>);
 
-      const updateMock = vi.fn().mockReturnValue({
-        set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(undefined),
-        }),
-      });
-      vi.mocked(db.update).mockReturnValue(updateMock() as unknown as ReturnType<typeof db.update>);
-
       const result = await getKitchenStatus();
 
-      expect(db.update).toHaveBeenCalled();
+      expect(db.update).not.toHaveBeenCalled();
       expect(result?.statusSettings).toEqual(DEFAULT_STATUS_SETTINGS);
     });
 

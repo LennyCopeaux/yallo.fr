@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Phone, Clock, TrendingUp, CalendarDays } from "lucide-react";
-import { getRestaurantCallStats } from "@/app/(admin)/admin/restaurants/[id]/usage-actions";
+import type { RestaurantCallStats } from "@/app/(admin)/admin/queries";
 
 interface UsageTabProps {
-  restaurantId: string;
+  stats: RestaurantCallStats;
 }
-
-type Stats = Awaited<ReturnType<typeof getRestaurantCallStats>>;
 
 function formatSeconds(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
@@ -18,44 +15,9 @@ function formatSeconds(seconds: number): string {
   return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
 }
 
-export function UsageTab({ restaurantId }: Readonly<UsageTabProps>) {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    startTransition(async () => {
-      try {
-        const data = await getRestaurantCallStats(restaurantId);
-        setStats(data);
-      } catch {
-        setError("Impossible de charger les données d'utilisation");
-      }
-    });
-  }, [restaurantId]);
-
-  if (isPending) {
-    return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-6 w-48 rounded-lg bg-muted" />
-        <div className="grid grid-cols-2 gap-4">
-          <div className="h-28 rounded-xl bg-muted" />
-          <div className="h-28 rounded-xl bg-muted" />
-          <div className="h-28 rounded-xl bg-muted" />
-          <div className="h-28 rounded-xl bg-muted" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="py-8 text-center text-sm text-destructive">{error}</div>
-    );
-  }
-
-  if (!stats) return null;
-
+// Les statistiques arrivent en props depuis la page serveur : l'onglet est
+// démonté à chaque changement d'onglet et relançait sinon la lecture à chaque retour.
+export function UsageTab({ stats }: Readonly<UsageTabProps>) {
   return (
     <div className="space-y-6">
       <div>

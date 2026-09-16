@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getAppUser, getUserOrganizations } from "@/lib/auth";
 import { db } from "@/db";
 import { organizations, restaurants, orders, callLogs } from "@/db/schema";
-import { eq, count, sum, gte, inArray } from "drizzle-orm";
+import { and, eq, count, sum, gte, inArray } from "drizzle-orm";
 import { OrgDashboard } from "@/components/org/org-dashboard";
 import { cookies } from "next/headers";
 import { getCallUsageForCurrentPeriod } from "@/features/billing/usage-actions";
@@ -25,21 +25,22 @@ async function getOrgStats(orgId: string) {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const ordersStats =
+  // Les deux agrégats sont indépendants : en parallèle, et bornés à 30 jours
+  // pour les commandes (c'est ce que l'écran annonce ; l'ancienne version
+  // calculait la borne puis ne l'appliquait pas).
+  const [ordersStats, callsStats] =
     restaurantIds.length > 0
-      ? await db
-          .select({ count: count(), total: sum(orders.totalAmount) })
-          .from(orders)
-          .where(inArray(orders.restaurantId, restaurantIds))
-      : [{ count: 0, total: null }];
-
-  const callsStats =
-    restaurantIds.length > 0
-      ? await db
-          .select({ count: count() })
-          .from(callLogs)
-          .where(inArray(callLogs.restaurantId, restaurantIds))
-      : [{ count: 0 }];
+      ? await Promise.all([
+          db
+            .select({ count: count(), total: sum(orders.totalAmount) })
+            .from(orders)
+            .where(and(inArray(orders.restaurantId, restaurantIds), gte(orders.createdAt, thirtyDaysAgo))),
+          db
+            .select({ count: count() })
+            .from(callLogs)
+            .where(inArray(callLogs.restaurantId, restaurantIds)),
+        ])
+      : [[{ count: 0, total: null }], [{ count: 0 }]];
 
   return {
     restaurants: restaurantList,
@@ -60,19 +61,14 @@ export default async function OrgDetailPage({
   const org = userOrgs.find((o) => o.id === id);
   if (!org) redirect("/org");
 
-  const [orgDetails] = await db
-    .select()
-    .from(organizations)
-    .where(eq(organizations.id, id))
-    .limit(1);
-  if (!orgDetails) redirect("/org");
-
-  const [stats, usageResult] = await Promise.all([
+  const [[orgDetails], stats, usageResult, cookieStore] = await Promise.all([
+    db.select().from(organizations).where(eq(organizations.id, id)).limit(1),
     getOrgStats(id),
     getCallUsageForCurrentPeriod(),
+    cookies(),
   ]);
+  if (!orgDetails) redirect("/org");
 
-  const cookieStore = await cookies();
   const selectedRestaurantId = cookieStore.get("yallo_restaurant_id")?.value;
   const validRestaurant = stats.restaurants.find((r) => r.id === selectedRestaurantId);
 

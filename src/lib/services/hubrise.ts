@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+
 export class HubriseError extends Error {
   constructor(
     message: string,
@@ -129,6 +131,29 @@ export async function fetchHubriseCatalog(
 
     throw new HubriseError("Erreur inconnue lors de la récupération du catalogue HubRise");
   }
+}
+
+let cachedCatalogFetcher: typeof fetchHubriseCatalog | null = null;
+
+/**
+ * Variante mise en cache pour les aperçus admin : le catalogue change rarement
+ * alors que chaque ouverture de l'onglet IA déclenchait deux appels HubRise
+ * (liste des catalogues + catalogue). La clé inclut les arguments (token et
+ * location) ; les erreurs ne sont pas mémorisées. Les mises à jour d'agent
+ * vocal continuent d'utiliser `fetchHubriseCatalog` pour lire un catalogue à jour.
+ *
+ * `unstable_cache` est résolu au premier appel et non à l'import : plusieurs
+ * tests mockent partiellement `next/cache` (revalidatePath seul) et chargent ce
+ * module via system-prompt.
+ */
+export async function fetchHubriseCatalogCached(
+  accessToken: string,
+  locationId: string
+): Promise<string> {
+  cachedCatalogFetcher ??= unstable_cache(fetchHubriseCatalog, ["hubrise-catalog"], {
+    revalidate: 300,
+  });
+  return cachedCatalogFetcher(accessToken, locationId);
 }
 
 export interface HubriseVoiceOrderItem {

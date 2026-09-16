@@ -1,23 +1,7 @@
-import { db } from "@/db";
-import { users } from "@/db/schema";
-import { sql } from "drizzle-orm";
 import { UsersDataTable, AddUserDialog } from "@/components/admin";
 import { Suspense } from "react";
 import { Loader2, Users } from "lucide-react";
-
-async function getUsers() {
-  return await db
-    .select({
-      id: users.id,
-      email: users.email,
-      firstName: users.firstName,
-      lastName: users.lastName,
-      role: users.role,
-      createdAt: users.createdAt,
-    })
-    .from(users)
-    .orderBy(sql`${users.createdAt} DESC`);
-}
+import { getUsers } from "../queries";
 
 export default async function UsersPage() {
   const usersList = await getUsers();
@@ -77,4 +61,3 @@ export default async function UsersPage() {
     </div>
   );
 }
-

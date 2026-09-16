@@ -4,7 +4,7 @@ import { restaurants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { fetchHubriseCatalog } from "@/lib/services/hubrise";
+import { fetchHubriseCatalogCached } from "@/lib/services/hubrise";
 
 export async function GET(
   request: Request,
@@ -31,7 +31,7 @@ export async function GET(
 
     if (restaurant.hubriseAccessToken && restaurant.hubriseLocationId) {
       try {
-        const hubriseMenuJson = await fetchHubriseCatalog(
+        const hubriseMenuJson = await fetchHubriseCatalogCached(
           restaurant.hubriseAccessToken,
           restaurant.hubriseLocationId
         );

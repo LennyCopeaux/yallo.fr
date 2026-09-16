@@ -6,7 +6,7 @@ import { getOwners, getRestaurantsWithFilters } from "../queries";
 export default async function RestaurantsPage() {
   const [owners, restaurantsList] = await Promise.all([
     getOwners(),
-    getRestaurantsWithFilters({}),
+    getRestaurantsWithFilters(),
   ]);
 
   return (

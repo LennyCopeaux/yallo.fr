@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Card,
@@ -25,7 +24,6 @@ export function LoginForm() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -45,8 +43,9 @@ export function LoginForm() {
         return;
       }
 
-      router.push("/api/auth/redirect");
-      router.refresh();
+      // Route handler, pas une page : navigation complète directe. Le
+      // router.push + router.refresh d'avant ajoutait une requête RSC inutile.
+      globalThis.window.location.assign("/api/auth/redirect");
     } catch {
       setError("Une erreur est survenue");
       setIsLoading(false);

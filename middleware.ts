@@ -32,6 +32,38 @@ function isAllowedRoute(pathname: string): boolean {
   return allowedRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
 
+/**
+ * Préchargement du routeur Next (survol d'un lien, `router.prefetch`).
+ * Les pages protégées vérifient elles-mêmes la session au rendu : inutile de
+ * payer un aller-retour Supabase Auth pour un préchargement.
+ */
+function isRouterPrefetch(req: NextRequest): boolean {
+  return (
+    req.headers.get("next-router-prefetch") === "1" ||
+    req.headers.get("purpose") === "prefetch" ||
+    req.headers.get("sec-purpose")?.includes("prefetch") === true
+  );
+}
+
+/**
+ * Une redirection construite avec NextResponse.redirect() perd les cookies de
+ * session que Supabase vient de rafraîchir : le token expiré était alors
+ * rafraîchi à nouveau à chaque requête suivante.
+ */
+function redirectKeepingSession(url: URL, sessionResponse: NextResponse): NextResponse {
+  const response = NextResponse.redirect(url, 307);
+  for (const cookie of sessionResponse.cookies.getAll()) {
+    response.cookies.set(cookie);
+  }
+  return response;
+}
+
+function redirectForRole(userRole: string | undefined, host: string, sessionResponse: NextResponse): NextResponse {
+  if (userRole === "ADMIN") return redirectKeepingSession(buildAppUrl("/admin", host), sessionResponse);
+  if (userRole === "EMPLOYEE") return redirectKeepingSession(buildAppUrl("/dashboard", host), sessionResponse);
+  return redirectKeepingSession(buildAppUrl("/org", host), sessionResponse);
+}
+
 export async function middleware(req: NextRequest) {
   try {
     const { nextUrl } = req;
@@ -46,6 +78,24 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
+    const isApiRoute = pathname.startsWith("/api");
+    const isRootRoute = pathname === "/";
+
+    // Tout ce qui ne dépend pas de la session est tranché AVANT l'appel réseau
+    // à Supabase Auth : webhooks et routes API (elles ont leur propre
+    // authentification), 404, préchargements du routeur.
+    if (isApiRoute) {
+      return NextResponse.next();
+    }
+
+    if (!isRootRoute && !isAllowedRoute(pathname)) {
+      return new NextResponse("Not Found", { status: 404 });
+    }
+
+    if (isRouterPrefetch(req)) {
+      return NextResponse.next();
+    }
+
     const { supabaseResponse, user: authUser } = await createClient(req);
 
     const isLoggedIn = !!authUser;
@@ -57,54 +107,36 @@ export async function middleware(req: NextRequest) {
     const isOrgRoute = pathname.startsWith("/org");
     const isAdminRoute = pathname.startsWith("/admin");
     const isProtectedRoute = isDashboardRoute || isAdminRoute || isOrgRoute;
-    const isApiRoute = pathname.startsWith("/api");
-    const isRootRoute = pathname === "/";
 
     if (isRootRoute) {
       if (!isLoggedIn) {
-        return NextResponse.redirect(buildAppUrl("/login", host), 307);
+        return redirectKeepingSession(buildAppUrl("/login", host), supabaseResponse);
       }
-      if (userRole === "ADMIN") {
-        return NextResponse.redirect(buildAppUrl("/admin", host), 307);
-      }
-      if (userRole === "EMPLOYEE") {
-        return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
-      }
-      return NextResponse.redirect(buildAppUrl("/org", host), 307);
-    }
-
-    if (!isAllowedRoute(pathname) && !isApiRoute) {
-      return new NextResponse("Not Found", { status: 404 });
+      return redirectForRole(userRole, host, supabaseResponse);
     }
 
     if (isProtectedRoute && !isLoggedIn) {
-      return NextResponse.redirect(buildAppUrl("/login", host), 307);
+      return redirectKeepingSession(buildAppUrl("/login", host), supabaseResponse);
     }
 
     if (isLoginPage && isLoggedIn) {
-      if (userRole === "ADMIN") {
-        return NextResponse.redirect(buildAppUrl("/admin", host), 307);
-      }
-      if (userRole === "EMPLOYEE") {
-        return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
-      }
-      return NextResponse.redirect(buildAppUrl("/org", host), 307);
+      return redirectForRole(userRole, host, supabaseResponse);
     }
 
     if (isAdminRoute && isLoggedIn && userRole !== "ADMIN") {
-      return NextResponse.redirect(buildAppUrl("/org", host), 307);
+      return redirectKeepingSession(buildAppUrl("/org", host), supabaseResponse);
     }
 
     if (isOrgRoute && isLoggedIn && userRole === "EMPLOYEE") {
-      return NextResponse.redirect(buildAppUrl("/dashboard", host), 307);
+      return redirectKeepingSession(buildAppUrl("/dashboard", host), supabaseResponse);
     }
 
     if ((isDashboardRoute || isOrgRoute) && isLoggedIn && userRole === "ADMIN") {
-      return NextResponse.redirect(buildAppUrl("/admin", host), 307);
+      return redirectKeepingSession(buildAppUrl("/admin", host), supabaseResponse);
     }
 
     if (isUpdatePasswordPage && !isLoggedIn) {
-      return NextResponse.redirect(buildAppUrl("/login", host), 307);
+      return redirectKeepingSession(buildAppUrl("/login", host), supabaseResponse);
     }
 
     return supabaseResponse;
@@ -116,6 +148,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:ico|png|jpg|jpeg|gif|svg|webp|woff|woff2|ttf|eot)).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:ico|png|jpg|jpeg|gif|svg|webp|woff|woff2|ttf|eot|txt|xml)).*)",
   ],
 };

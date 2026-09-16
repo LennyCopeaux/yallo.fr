@@ -41,6 +41,60 @@ export async function getOrders() {
   });
 }
 
+/**
+ * Forme sérialisable consommée par la tablette cuisine. Partagée entre le
+ * rendu initial de la page et le polling client, pour que les deux chemins
+ * produisent exactement les mêmes objets.
+ */
+export type OrderSnapshot = {
+  id: string;
+  orderNumber: string;
+  customerName: string | null;
+  customerPhone: string | null;
+  status: OrderStatus;
+  totalAmount: number;
+  pickupTime: Date | null;
+  notes: string | null;
+  createdAt: Date | null;
+  items: {
+    id: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    options: string | null;
+  }[];
+};
+
+/**
+ * Commandes de la tablette, prêtes à afficher. Utilisé par la page ET par le
+ * polling : avant, la tablette faisait `router.refresh()` toutes les 15 s, ce
+ * qui réexécutait tout le layout (organisation, abonnement, restaurants) pour
+ * ne lire que cette liste.
+ */
+export async function getOrdersSnapshot(): Promise<OrderSnapshot[]> {
+  const rows = await getOrders();
+  return rows.map((order) => ({
+    id: order.id,
+    orderNumber: order.orderNumber,
+    customerName: order.customerName,
+    customerPhone: order.customerPhone,
+    status: order.status,
+    totalAmount: order.totalAmount,
+    pickupTime: order.pickupTime,
+    notes: order.notes,
+    createdAt: order.createdAt,
+    items: order.items.map((item) => ({
+      id: item.id,
+      productName: item.productName,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      totalPrice: item.totalPrice,
+      options: item.options,
+    })),
+  }));
+}
+
 /** Identifiants des commandes NEW : assez pour sonner, trop léger pour le ticket. */
 export async function getNewOrderIds(): Promise<{ id: string; status: string }[]> {
   const restaurant = await getAccessibleRestaurant();

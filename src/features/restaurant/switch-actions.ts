@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { getUserRestaurants, RESTAURANT_COOKIE } from "@/lib/auth";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
@@ -17,6 +18,9 @@ export async function switchRestaurant(restaurantId: string): Promise<void> {
     sameSite: "lax",
     path: "/",
   });
+
+  // Tout le dashboard dépend du restaurant sélectionné.
+  revalidatePath("/dashboard", "layout");
 }
 
 export async function getSelectedRestaurantId(): Promise<string | null> {
