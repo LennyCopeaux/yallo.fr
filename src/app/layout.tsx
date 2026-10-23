@@ -1,22 +1,11 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Geist } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const aeonik = localFont({
-  src: [
-    {
-      path: "../lib/fonts/fonnts.com-Aeonik-Regular.ttf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../lib/fonts/fonnts.com-Aeonik-Bold.ttf",
-      weight: "700",
-      style: "normal",
-    },
-  ],
-  variable: "--font-aeonik",
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist",
   display: "swap",
   fallback: ["system-ui", "sans-serif"],
 });
@@ -138,7 +127,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={aeonik.variable}>
+    <html lang="fr" className={geist.variable}>
       <head>
         <script
           type="application/ld+json"
